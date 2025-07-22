@@ -4,7 +4,19 @@ const app = express();
 import dotenv from "dotenv";
 dotenv.config();
 
+import cors from "cors";
+
 import { connect_db } from "./config/connect_db";
+import { not_found } from "./middleware/not_found";
+
+import UserRouter from "./routes/user";
+
+app.use(cors());
+app.use(express.json());
+
+app.use("/api/v1/users", UserRouter);
+
+app.use(not_found);
 
 const port = process.env.PORT || "5000";
 const mongo_url = process.env.MONGO_URI as string;

@@ -5,12 +5,12 @@ export interface UserType extends Document {
   name: string;
   email: string;
   password?: string;
-  googleId?: string;
+  google_id?: string;
   avatar?: string;
-  phoneNumber?: string;
+  phone?: string;
   provider: "email" | "google";
-  isDriver: boolean;
-  isVerified: boolean;
+  is_driver: boolean;
+  is_verified: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,16 +20,16 @@ const UserSchema = new Schema<UserType>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String }, // optional if Google user
-    googleId: { type: String, unique: true, sparse: true }, // only Google users
+    google_id: { type: String, unique: true, sparse: true }, // only Google users
     avatar: { type: String },
-    phoneNumber: { type: String },
+    phone: { type: String },
     provider: {
       type: String,
       enum: ["email", "google"],
       default: "email",
     },
-    isDriver: { type: Boolean, default: false },
-    isVerified: { type: Boolean, default: false },
+    is_driver: { type: Boolean, default: false },
+    is_verified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

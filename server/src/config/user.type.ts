@@ -1,7 +1,7 @@
 import express from "express";
 
 export interface TokenPayload {
-  userId: string;
+  id: string;
   email: string;
 }
 
