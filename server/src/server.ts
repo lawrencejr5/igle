@@ -6,7 +6,7 @@ dotenv.config();
 
 import { connect_db } from "./config/connect_db";
 
-const port = process.env.PORT;
+const port = process.env.PORT || "5000";
 const mongo_url = process.env.MONGO_URI as string;
 
 const start_server = async (): Promise<void> => {
