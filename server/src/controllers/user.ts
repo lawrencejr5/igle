@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
 import User, { UserType } from "../models/user";
+import user from "../models/user";
 
 const jwt_secret = process.env.JWT_SECRET;
 
@@ -133,5 +134,44 @@ export const google_auth = async (
       message: "Google sign-in failed",
       error: error.message || error,
     });
+  }
+};
+
+// Update user location
+export const update_location = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { coordinates } = req.body; // [longitude, latitude]
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { location: { type: "Point", coordinates } },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ msg: "User not found." });
+      return;
+    }
+
+    res.status(200).json({ msg: "User location updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const get_user_data = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = req.user?.id;
+    const user = await User.findById(id).select("-password");
+    res.status(200).json({ msg: "success", user });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
   }
 };

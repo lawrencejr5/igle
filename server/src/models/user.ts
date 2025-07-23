@@ -9,6 +9,10 @@ export interface UserType extends Document {
   avatar?: string;
   phone?: string;
   provider: "email" | "google";
+  current_location: {
+    type: string;
+    coordinates: [number, number];
+  };
   is_driver: boolean;
   is_verified: boolean;
   createdAt: Date;
@@ -27,6 +31,17 @@ const UserSchema = new Schema<UserType>(
       type: String,
       enum: ["email", "google"],
       default: "email",
+    },
+    current_location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0],
+      },
     },
     is_driver: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },

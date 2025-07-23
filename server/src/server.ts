@@ -10,11 +10,13 @@ import { connect_db } from "./config/connect_db";
 import { not_found } from "./middleware/not_found";
 
 import UserRouter from "./routes/user";
+import DriverRouter from "./routes/driver";
 
 app.use(cors());
 app.use(express.json());
 
 app.use("/api/v1/users", UserRouter);
+app.use("/api/v1/drivers", DriverRouter);
 
 app.use(not_found);
 
