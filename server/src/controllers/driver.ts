@@ -12,7 +12,7 @@ export const create_driver = async (
       vehicle_number,
       license_plate,
       driver_license_image,
-      current_location,
+      coordinates,
     } = req.body;
     const user = req.user?.id;
 
@@ -28,10 +28,10 @@ export const create_driver = async (
       vehicle_number,
       license_plate,
       driver_license_image,
-      current_location,
+      "current_location.coordinates": coordinates,
     });
 
-    res.status(201).json({ driver });
+    res.status(201).json({ msg: "Driver created successfully", driver });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }
@@ -48,7 +48,7 @@ export const update_location = async (
 
     const driver = await Driver.findByIdAndUpdate(
       id,
-      { current_location: { coordinates } },
+      { "current_location.coordinates": coordinates },
       { new: true }
     );
 
@@ -57,7 +57,11 @@ export const update_location = async (
       return;
     }
 
-    res.status(200).json({ driver });
+    res.status(200).json({
+      msg: "Driver location updated successfully",
+      driver_id: id,
+      new_coordinates: driver?.current_location?.coordinates,
+    });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }
@@ -77,7 +81,7 @@ export const get_driver = async (
       return;
     }
 
-    res.status(200).json({ driver });
+    res.status(200).json({ msg: "success", driver });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }

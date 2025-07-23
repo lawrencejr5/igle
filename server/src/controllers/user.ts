@@ -144,7 +144,7 @@ export const update_location = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const { coordinates } = req.body; // [longitude, latitude]
+    const { coordinates } = req.body;
 
     const user = await User.findByIdAndUpdate(
       id,
@@ -171,6 +171,49 @@ export const get_user_data = async (
     const id = req.user?.id;
     const user = await User.findById(id).select("-password");
     res.status(200).json({ msg: "success", user });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const update_password = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const user_id = req.user?.id;
+    const { old_password, new_password, confirm_password } = req.body;
+
+    if (!old_password || !new_password || !confirm_password) {
+      res.status(400).json({ msg: "All password fields are required." });
+      return;
+    }
+
+    if (new_password !== confirm_password) {
+      res.status(400).json({ msg: "New passwords do not match." });
+      return;
+    }
+
+    const user = await User.findById(user_id);
+    if (!user || !user.password) {
+      res.status(404).json({ msg: "User not found." });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(old_password, user.password);
+    if (!isMatch) {
+      res.status(401).json({ msg: "Old password is incorrect." });
+      return;
+    }
+
+    const hashed_password = await bcrypt.hash(
+      new_password,
+      await bcrypt.genSalt(10)
+    );
+    user.password = hashed_password;
+    await user.save();
+
+    res.status(200).json({ msg: "Password updated successfully." });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }

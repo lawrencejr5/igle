@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface RideType extends Document {
   rider: mongoose.Types.ObjectId;
   driver?: mongoose.Types.ObjectId;
-  origin: {
+  pickup: {
     address: string;
     coordinates: [number, number];
   };
@@ -11,10 +11,16 @@ export interface RideType extends Document {
     address: string;
     coordinates: [number, number];
   };
-  status: "pending" | "accepted" | "ongoing" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "accepted"
+    | "arrived"
+    | "ongoing"
+    | "completed"
+    | "cancelled";
   fare: number;
-  paymentStatus: "unpaid" | "paid";
-  paymentMethod: "cash" | "card";
+  payment_status: "unpaid" | "paid";
+  payment_method: "cash" | "card";
   commission: number;
 }
 
@@ -22,7 +28,7 @@ const RideSchema = new Schema<RideType>(
   {
     rider: { type: Schema.Types.ObjectId, ref: "User", required: true },
     driver: { type: Schema.Types.ObjectId, ref: "User" },
-    origin: {
+    pickup: {
       address: String,
       coordinates: [Number],
     },
@@ -32,16 +38,23 @@ const RideSchema = new Schema<RideType>(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "ongoing", "completed", "cancelled"],
+      enum: [
+        "pending",
+        "accepted",
+        "arrived",
+        "ongoing",
+        "completed",
+        "cancelled",
+      ],
       default: "pending",
     },
     fare: { type: Number, required: true },
-    paymentStatus: {
+    payment_status: {
       type: String,
       enum: ["unpaid", "paid"],
       default: "unpaid",
     },
-    paymentMethod: { type: String, enum: ["cash", "card"], default: "cash" },
+    payment_method: { type: String, enum: ["cash", "card"], default: "cash" },
     commission: { type: Number, default: 0 },
   },
   { timestamps: true }

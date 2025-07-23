@@ -11,9 +11,9 @@ import { auth } from "../middleware/auth";
 
 const DriverRouter = Router();
 
-app.use(auth);
+// app.use(auth);
 
-DriverRouter.post("/", create_driver);
+DriverRouter.post("/create", auth, create_driver);
 DriverRouter.patch("/location/:id", update_location);
 DriverRouter.get("/:id", get_driver);
 

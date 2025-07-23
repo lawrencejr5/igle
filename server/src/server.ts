@@ -11,12 +11,14 @@ import { not_found } from "./middleware/not_found";
 
 import UserRouter from "./routes/user";
 import DriverRouter from "./routes/driver";
+import RideRouter from "./routes/ride";
 
 app.use(cors());
 app.use(express.json());
 
 app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/drivers", DriverRouter);
+app.use("/api/v1/ride", RideRouter);
 
 app.use(not_found);
 
