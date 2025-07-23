@@ -19,6 +19,17 @@ export interface RideType extends Document {
     | "completed"
     | "cancelled";
   fare: number;
+  timestamps: {
+    accepted_at?: Date;
+    arrived_at?: Date;
+    started_at?: Date;
+    completed_at?: Date;
+    cancelled_at?: Date;
+  };
+  cancelled: {
+    by?: "rider" | "driver";
+    reason?: string;
+  };
   payment_status: "unpaid" | "paid";
   payment_method: "cash" | "card";
   commission: number;
@@ -49,6 +60,20 @@ const RideSchema = new Schema<RideType>(
       default: "pending",
     },
     fare: { type: Number, required: true },
+    timestamps: {
+      accepted_at: Date,
+      arrived_at: Date,
+      started_at: Date,
+      completed_at: Date,
+      cancelled_at: Date,
+    },
+    cancelled: {
+      by: {
+        type: String,
+        enum: ["rider", "driver"],
+      },
+      reason: String,
+    },
     payment_status: {
       type: String,
       enum: ["unpaid", "paid"],
