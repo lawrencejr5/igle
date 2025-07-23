@@ -18,7 +18,7 @@ app.use(express.json());
 
 app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/drivers", DriverRouter);
-app.use("/api/v1/ride", RideRouter);
+app.use("/api/v1/rides", RideRouter);
 
 app.use(not_found);
 

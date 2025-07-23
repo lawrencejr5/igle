@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
+
 import Driver from "../models/driver";
+import Ride from "../models/ride";
 
 // Create a new driver
 export const create_driver = async (
