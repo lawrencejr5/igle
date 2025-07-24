@@ -1,22 +1,57 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface TransactionType extends Document {
-  ride: mongoose.Types.ObjectId;
-  rider: mongoose.Types.ObjectId;
+  wallet_id: Types.ObjectId;
+  type: "funding" | "payment" | "payout";
   amount: number;
-  commission: number;
-  method: "cash" | "card";
-  status: "success" | "failed";
+  status?: "pending" | "success" | "failed";
+  channel: "card" | "transfer" | "cash" | "wallet";
+  ride_id?: Types.ObjectId;
+  reference?: string;
+  metadata?: Record<string, any>;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const TransactionSchema = new Schema<TransactionType>(
   {
-    ride: { type: Schema.Types.ObjectId, ref: "Ride", required: true },
-    rider: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    type: {
+      type: String,
+      enum: ["funding", "payment", "payout"],
+      required: true,
+    },
+
+    wallet_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Wallet",
+      required: true,
+    },
+
+    ride_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Ride",
+      required: function () {
+        return this.type === "payment";
+      },
+    },
+
     amount: { type: Number, required: true },
-    commission: { type: Number, required: true },
-    method: { type: String, enum: ["cash", "card"], default: "cash" },
-    status: { type: String, enum: ["success", "failed"], default: "success" },
+
+    status: {
+      type: String,
+      enum: ["pending", "success", "failed"],
+      default: "pending",
+    },
+
+    channel: {
+      type: String,
+      enum: ["card", "transfer", "cash", "wallet"],
+      required: true,
+    },
+
+    reference: { type: String, unique: true },
+
+    metadata: { type: Schema.Types.Mixed }, // any extra info (e.g., driver id, transfer details)
   },
   { timestamps: true }
 );
