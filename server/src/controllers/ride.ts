@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Ride from "../models/ride";
 
+import { get_driver_id } from "../utils/get_driver";
+
 export const request_ride = async (
   req: Request,
   res: Response
@@ -89,7 +91,8 @@ export const accept_ride = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { ride_id, driver_id } = req.query;
+    const { ride_id } = req.query;
+    const driver_id = await get_driver_id(req.user?.id!);
 
     const ride = await Ride.findOneAndUpdate(
       { _id: ride_id, status: "pending", driver: { $exists: false } },
@@ -162,8 +165,10 @@ export const update_ride_status = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { ride_id, driver_id } = req.query;
+    const { ride_id } = req.query;
     const { status } = req.body;
+
+    const driver_id = await get_driver_id(req.user?.id!);
 
     if (!status) {
       res.status(404).json({ msg: "No status was provided" });
@@ -189,7 +194,7 @@ export const update_ride_status = async (
       case "arrived":
         if (ride.status !== "accepted") {
           res.status(400).json({
-            msg: "This ride has not been accepted yet",
+            msg: "Failed to update ride status",
           });
           return;
         }
@@ -201,7 +206,7 @@ export const update_ride_status = async (
       case "ongoing":
         if (ride.status !== "arrived") {
           res.status(400).json({
-            msg: "The driver hasn't arrived yet",
+            msg: "Failed to start ride",
           });
           return;
         } else if (ride.payment_status !== "paid") {
@@ -218,7 +223,7 @@ export const update_ride_status = async (
       case "completed":
         if (ride.status !== "ongoing") {
           res.status(400).json({
-            msg: "This ride has not even started",
+            msg: "Failed to complete this ride",
           });
           return;
         }
