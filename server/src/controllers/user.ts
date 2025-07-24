@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
 import User, { UserType } from "../models/user";
-import user from "../models/user";
+import Wallet from "../models/wallet";
 
 const jwt_secret = process.env.JWT_SECRET;
 
@@ -41,6 +41,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign({ id: new_user._id }, jwt_secret as string, {
       expiresIn: "1d",
     });
+
+    await Wallet.create({ owner_id: new_user?._id, owner_type: "User" });
+
     res
       .status(201)
       .json({ token, user: { id: new_user._id, name, email, phone } });

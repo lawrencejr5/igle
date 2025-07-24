@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import Driver from "../models/driver";
-import Ride from "../models/ride";
+import Wallet from "../models/wallet";
 
 // Create a new driver
 export const create_driver = async (
@@ -32,6 +32,8 @@ export const create_driver = async (
       driver_license_image,
       "current_location.coordinates": coordinates,
     });
+
+    await Wallet.create({ owner_id: driver?._id, owner_type: "Driver" });
 
     res.status(201).json({ msg: "Driver created successfully", driver });
   } catch (err) {

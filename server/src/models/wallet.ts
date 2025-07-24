@@ -16,7 +16,7 @@ const WalletSchema = new Schema<WalletType>(
     },
     owner_type: {
       type: String,
-      enum: ["user", "driver"],
+      enum: ["User", "Driver"],
     },
     balance: { type: Number, default: 0 },
   },

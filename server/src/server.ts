@@ -12,6 +12,7 @@ import { not_found } from "./middleware/not_found";
 import UserRouter from "./routes/user";
 import DriverRouter from "./routes/driver";
 import RideRouter from "./routes/ride";
+import TransactionRouter from "./routes/transaction";
 
 app.use(cors());
 app.use(express.json());
@@ -19,10 +20,11 @@ app.use(express.json());
 app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/drivers", DriverRouter);
 app.use("/api/v1/rides", RideRouter);
+app.use("/api/v1/transactions", TransactionRouter);
 
 app.use(not_found);
 
-const port = process.env.PORT || "5000";
+const port = process.env.PORT || "5001";
 const mongo_url = process.env.MONGO_URI as string;
 
 const start_server = async (): Promise<void> => {
