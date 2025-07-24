@@ -1,21 +1,26 @@
 import { Schema, model, Types, Document } from "mongoose";
 
 export interface WalletType extends Document {
-  user_id: Types.ObjectId;
+  owner_id: Types.ObjectId;
+  owner_type: "User" | "Driver";
   balance: number;
 }
 
 const WalletSchema = new Schema<WalletType>(
   {
-    user_id: {
+    owner_id: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      refPath: "owner_type",
       required: true,
       unique: true,
+    },
+    owner_type: {
+      type: String,
+      enum: ["user", "driver"],
     },
     balance: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
-export default model("Wallet", WalletSchema);
+export default model<WalletType>("Wallet", WalletSchema);
