@@ -31,7 +31,7 @@ export interface RideType extends Document {
     reason?: string;
   };
   payment_status: "unpaid" | "paid";
-  payment_method: "cash" | "card";
+  payment_method: "cash" | "card" | "wallet";
   commission: number;
 }
 
@@ -79,7 +79,11 @@ const RideSchema = new Schema<RideType>(
       enum: ["unpaid", "paid"],
       default: "unpaid",
     },
-    payment_method: { type: String, enum: ["cash", "card"], default: "cash" },
+    payment_method: {
+      type: String,
+      enum: ["cash", "card", "wallet"],
+      default: "cash",
+    },
     commission: { type: Number, default: 0 },
   },
   { timestamps: true }

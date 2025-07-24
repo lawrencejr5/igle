@@ -10,16 +10,20 @@ import {
   get_ride_data,
   get_user_rides,
   update_ride_status,
+  pay_for_ride,
 } from "../controllers/ride";
 
 const RideRouter = Router();
 
-RideRouter.post("/request", auth, request_ride);
-RideRouter.get("/available", auth, get_available_rides);
-RideRouter.patch("/accept", auth, accept_ride);
-RideRouter.patch("/cancel", auth, cancel_ride);
-RideRouter.get("/data", auth, get_ride_data);
-RideRouter.get("/user", auth, get_user_rides);
-RideRouter.patch("/status", auth, update_ride_status);
+RideRouter.use(auth);
+
+RideRouter.post("/request", request_ride);
+RideRouter.get("/available", get_available_rides);
+RideRouter.patch("/accept", accept_ride);
+RideRouter.patch("/cancel", cancel_ride);
+RideRouter.get("/data", get_ride_data);
+RideRouter.get("/user", get_user_rides);
+RideRouter.patch("/status", update_ride_status);
+RideRouter.post("/pay", pay_for_ride);
 
 export default RideRouter;

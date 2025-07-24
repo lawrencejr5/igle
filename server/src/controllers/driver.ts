@@ -33,7 +33,11 @@ export const create_driver = async (
       "current_location.coordinates": coordinates,
     });
 
-    await Wallet.create({ owner_id: driver?._id, owner_type: "Driver" });
+    await Wallet.create({
+      owner_id: driver?._id,
+      owner_type: "Driver",
+      balance: 0,
+    });
 
     res.status(201).json({ msg: "Driver created successfully", driver });
   } catch (err) {

@@ -42,7 +42,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       expiresIn: "1d",
     });
 
-    await Wallet.create({ owner_id: new_user?._id, owner_type: "User" });
+    await Wallet.create({
+      owner_id: new_user?._id,
+      owner_type: "User",
+      balance: 0,
+    });
 
     res
       .status(201)

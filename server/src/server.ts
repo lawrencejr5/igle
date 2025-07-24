@@ -13,6 +13,7 @@ import UserRouter from "./routes/user";
 import DriverRouter from "./routes/driver";
 import RideRouter from "./routes/ride";
 import TransactionRouter from "./routes/transaction";
+import WalletRouter from "./routes/wallet";
 
 app.use(cors());
 app.use(express.json());
@@ -21,6 +22,7 @@ app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/drivers", DriverRouter);
 app.use("/api/v1/rides", RideRouter);
 app.use("/api/v1/transactions", TransactionRouter);
+app.use("/api/v1/wallet", WalletRouter);
 
 app.use(not_found);
 

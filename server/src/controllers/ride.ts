@@ -1,7 +1,12 @@
 import { Request, Response } from "express";
+import { Types } from "mongoose";
+
 import Ride from "../models/ride";
+import Wallet from "../models/wallet";
 
 import { get_driver_id } from "../utils/get_driver";
+import { generate_unique_reference } from "../utils/gen_unique_ref";
+import { debit_wallet } from "../utils/wallet";
 
 export const request_ride = async (
   req: Request,
@@ -242,5 +247,49 @@ export const update_ride_status = async (
     res.status(200).json({ msg: "Ride status updated successfully", ride });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const pay_for_ride = async (req: Request, res: Response) => {
+  try {
+    const { ride_id } = req.query;
+    const user_id = req.user?.id;
+
+    const ride = await Ride.findById(ride_id);
+    if (!ride || ride.status !== "arrived") {
+      return res.status(400).json({ msg: "Invalid ride or status" });
+    }
+
+    const wallet = await Wallet.findOne({ owner_id: user_id });
+    if (!wallet) return res.status(404).json({ msg: "Wallet not found" });
+
+    const transaction = await debit_wallet({
+      wallet_id: new Types.ObjectId(wallet._id as string),
+      amount: ride.fare,
+      type: "payment",
+      channel: "wallet",
+      ride_id: new Types.ObjectId(ride._id as string),
+      reference: generate_unique_reference(),
+      metadata: { for: "ride_payment" },
+    });
+
+    // Updating ride status
+    ride.status = "ongoing";
+    ride.payment_status = "paid";
+    ride.payment_method = "wallet";
+    await ride.save();
+
+    res.status(200).json({ msg: "Payment successful", transaction });
+  } catch (err: any) {
+    console.error(err);
+
+    if (err.message === "insufficient") {
+      return res.status(400).json({ msg: "Insufficient wallet balance" });
+    }
+    if (err.message === "no_wallet") {
+      return res.status(404).json({ msg: "Wallet not found" });
+    }
+
+    res.status(500).json({ msg: "Server error", err });
   }
 };
