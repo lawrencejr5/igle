@@ -27,7 +27,7 @@ export const complete_ride = async (ride: RideType) => {
       channel: "wallet",
       status: "pending",
       ride_id: new Types.ObjectId(ride._id as string),
-      reference: generate_unique_reference(),
+      reference,
       metadata: { for: "driver_wallet_crediting" },
     });
 

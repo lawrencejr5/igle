@@ -254,7 +254,6 @@ export const update_ride_status = async (
           res.status(result.statusCode!).json({ msg: result.message });
           return;
         }
-
         break;
 
       // If status is not arrived, ongoing or completed
