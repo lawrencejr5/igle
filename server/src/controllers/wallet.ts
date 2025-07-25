@@ -7,6 +7,32 @@ import { credit_wallet } from "../utils/wallet";
 import { get_driver_id } from "../utils/get_driver";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 
+export const get_wallet_balance = async (req: any, res: any) => {
+  try {
+    const { mode } = req.query;
+
+    let owner_id;
+    if (mode === "User") {
+      owner_id = req.user?.id;
+    } else if (mode === "Driver") {
+      owner_id = await get_driver_id(req.user?.id!);
+    } else {
+      res.status(400).json({ msg: "Owner type is invalid" });
+      return;
+    }
+
+    const wallet = await Wallet.findOne({ owner_id });
+
+    if (!wallet) {
+      return res.status(404).json({ message: "Wallet not found" });
+    }
+
+    res.status(200).json({ msg: "success", wallet });
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", err });
+  }
+};
+
 export const create_wallet = async (
   req: Request,
   res: Response

@@ -2,8 +2,12 @@ import { Router } from "express";
 
 const TransactionRouter = Router();
 
-import { make_transaction } from "../controllers/transaction";
+import { auth } from "../middleware/auth";
 
-TransactionRouter.post("/make", make_transaction);
+import { get_user_transactions } from "../controllers/transaction";
+
+TransactionRouter.use(auth);
+
+TransactionRouter.get("/", get_user_transactions);
 
 export default TransactionRouter;
