@@ -9,12 +9,12 @@ import { generate_unique_reference } from "../utils/gen_unique_ref";
 
 export const get_wallet_balance = async (req: any, res: any) => {
   try {
-    const { mode } = req.query;
+    const { owner_type } = req.query;
 
     let owner_id;
-    if (mode === "User") {
+    if (owner_type === "User") {
       owner_id = req.user?.id;
-    } else if (mode === "Driver") {
+    } else if (owner_type === "Driver") {
       owner_id = await get_driver_id(req.user?.id!);
     } else {
       res.status(400).json({ msg: "Owner type is invalid" });

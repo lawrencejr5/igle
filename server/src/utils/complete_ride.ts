@@ -1,6 +1,8 @@
 import { Types } from "mongoose";
 
 import Wallet from "../models/wallet";
+import AppWallet from "../models/app_wallet";
+import Commission from "../models/commission";
 
 import { credit_wallet } from "../utils/wallet";
 
@@ -25,17 +27,31 @@ export const complete_ride = async (ride: RideType) => {
       metadata: { for: "driver_payment" },
     });
 
+    const fund_app_wallet = await AppWallet.findOneAndUpdate(
+      {},
+      { $inc: { balance: Number(ride.commission) } },
+      { new: true }
+    );
+    if (!fund_app_wallet) throw new Error("Funding app wallet failed");
+
+    const commision_record = await Commission.create({
+      ride_id: new Types.ObjectId(ride._id as string),
+      amount: Number(ride.commission),
+      credited: true,
+    });
+    if (!commision_record) throw new Error("Recording commission failed");
+
     ride.timestamps.completed_at = new Date();
     ride.status = "completed";
     ride.driver_paid = true;
     await ride.save();
 
     return { success: true };
-  } catch (err) {
+  } catch (err: any) {
     return {
       success: false,
       statusCode: 500,
-      message: "Ride completion failed",
+      message: err.message,
     };
   }
 };
