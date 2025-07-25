@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import Wallet from "../models/wallet";
 import AppWallet from "../models/app_wallet";
 import Commission from "../models/commission";
+import Transaction from "../models/transaction";
 
 import { credit_wallet } from "../utils/wallet";
 
@@ -17,15 +18,20 @@ export const complete_ride = async (ride: RideType) => {
       return { success: false, statusCode: 404, message: "Wallet not found" };
     }
 
-    await credit_wallet({
+    const reference = generate_unique_reference();
+
+    await Transaction.create({
       wallet_id: new Types.ObjectId(wallet._id as string),
       amount: ride.driver_earnings,
       type: "payment",
       channel: "wallet",
+      status: "pending",
       ride_id: new Types.ObjectId(ride._id as string),
       reference: generate_unique_reference(),
-      metadata: { for: "driver_payment" },
+      metadata: { for: "driver_wallet_crediting" },
     });
+
+    await credit_wallet(reference);
 
     const fund_app_wallet = await AppWallet.findOneAndUpdate(
       {},

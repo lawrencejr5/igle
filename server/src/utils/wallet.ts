@@ -9,35 +9,27 @@ interface WalletInput {
   channel: "card" | "transfer" | "cash" | "wallet";
   ride_id?: Types.ObjectId;
   reference?: string;
+  status?: "pending" | "success" | "failed";
   metadata?: Record<string, any>;
 }
 
-export const credit_wallet = async ({
-  wallet_id,
-  amount,
-  channel,
-  ride_id,
-  reference,
-  metadata,
-}: WalletInput) => {
+export const credit_wallet = async (reference: string) => {
+  const transaction = await Transaction.findOne({ reference });
+  if (!transaction) throw new Error("Transaction was not found");
+
+  const wallet_id = transaction?.wallet_id;
   const wallet = await Wallet.findById(wallet_id);
   if (!wallet) throw new Error("Wallet not found");
+
+  const amount = transaction?.amount!;
 
   wallet.balance += amount;
   await wallet.save();
 
-  await Transaction.create({
-    wallet_id,
-    type: "funding",
-    amount,
-    status: "success",
-    channel,
-    ride_id,
-    reference,
-    metadata,
-  });
+  transaction.status = "success";
+  await transaction.save();
 
-  return wallet;
+  return { balance: wallet.balance, transaction };
 };
 
 export const debit_wallet = async ({
@@ -45,6 +37,7 @@ export const debit_wallet = async ({
   ride_id,
   amount,
   reference,
+  status = "success",
   metadata,
 }: WalletInput) => {
   const wallet = await Wallet.findById(wallet_id);
@@ -55,16 +48,16 @@ export const debit_wallet = async ({
   wallet.balance -= amount;
   await wallet.save();
 
-  await Transaction.create({
+  const transaction = await Transaction.create({
     wallet_id,
     type: "payment",
     amount,
-    status: "success",
+    status,
     channel: "wallet",
     ride_id,
     reference,
     metadata,
   });
 
-  return wallet;
+  return { balance: wallet.balance, transaction };
 };

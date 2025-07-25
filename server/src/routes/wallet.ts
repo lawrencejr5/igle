@@ -6,12 +6,14 @@ import {
   create_wallet,
   fund_wallet,
   get_wallet_balance,
+  verify_payment,
 } from "../controllers/wallet";
 
-// WalletRouter.use(auth);
+WalletRouter.use(auth);
 
-WalletRouter.get("/balance", auth, get_wallet_balance);
-WalletRouter.post("/fund", auth, fund_wallet);
-WalletRouter.post("/create", auth, create_wallet);
+WalletRouter.get("/balance", get_wallet_balance);
+WalletRouter.post("/fund", fund_wallet);
+WalletRouter.post("/verify", verify_payment);
+WalletRouter.post("/create", create_wallet);
 
 export default WalletRouter;
