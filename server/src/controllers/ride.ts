@@ -8,6 +8,8 @@ import { get_driver_id } from "../utils/get_driver";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 import { debit_wallet } from "../utils/wallet";
 import { calculate_fare } from "../utils/calc_fare";
+import { calculate_commission } from "../utils/calc_commision";
+import { complete_ride } from "../utils/complete_ride";
 
 export const request_ride = async (
   req: Request,
@@ -35,12 +37,16 @@ export const request_ride = async (
     }
 
     const fare = calculate_fare(Number(km), Number(min));
+    const commission = calculate_commission(fare);
+    const driver_earnings = fare - commission;
 
     const new_ride = await Ride.create({
       rider: user_id,
       pickup,
       destination,
       fare,
+      driver_earnings,
+      commission,
       status: "pending",
     });
 
@@ -239,13 +245,16 @@ export const update_ride_status = async (
       // end ride
       case "completed":
         if (ride.status !== "ongoing") {
-          res.status(400).json({
-            msg: "Failed to complete this ride",
-          });
+          res.status(400).json({ msg: "Failed to complete this ride" });
           return;
         }
-        ride.timestamps.completed_at = new Date();
-        ride.status = "completed";
+
+        const result = await complete_ride(ride);
+        if (!result.success) {
+          res.status(result.statusCode!).json({ msg: result.message });
+          return;
+        }
+
         break;
 
       // If status is not arrived, ongoing or completed
