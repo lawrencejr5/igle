@@ -7,14 +7,16 @@ import Wallet from "../models/wallet";
 import { get_driver_id } from "../utils/get_driver";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 import { debit_wallet } from "../utils/wallet";
+import { calculate_fare } from "../utils/calc_fare";
 
 export const request_ride = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const user_id = req.user?.id; // from auth middleware
-    const { pickup, destination, fare } = req.body;
+    const user_id = req.user?.id;
+    const { km, min } = req.query;
+    const { pickup, destination } = req.body;
 
     if (
       !pickup ||
@@ -25,6 +27,14 @@ export const request_ride = async (
       res.status(400).json({ message: "Pickup and destination are required." });
       return;
     }
+
+    if (!km || !min) {
+      res.status(400).json({
+        msg: "Distance or Duration cannot be empty",
+      });
+    }
+
+    const fare = calculate_fare(Number(km), Number(min));
 
     const new_ride = await Ride.create({
       rider: user_id,
@@ -40,8 +50,10 @@ export const request_ride = async (
       message: "Ride request created",
       ride: new_ride,
     });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to create ride request", error });
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ message: "Failed to create ride request", err: err.message });
   }
 };
 
