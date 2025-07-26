@@ -13,18 +13,29 @@
 
       socket.on("connect", () => {
         console.log("Connected as Rider:", socket.id);
+        const data = {
+          socket_id: socket.id,
+          user_id: "687ffcf8c8676401f6f1d547",
+        };
+        socket.emit("register_user", data);
+      });
+
+      socket.on("ride_accepted", (data) => {
+        console.log("Ride accepted by driver:", data);
+        alert("Driver accepted your ride!");
       });
 
       function requestRide() {
         const payload = {
-          rider_id: "rider123",
+          rider_id: "687ffcf8c8676401f6f1d547",
+          rider_socket_id: socket.id,
           pickup: {
             address: "Lekki Phase 1",
-            coordinates: { lat: 6.4367, lng: 3.4505 },
+            coordinates: [6.4367, 3.4505],
           },
           destination: {
             address: "Victoria Island",
-            coordinates: { lat: 6.4281, lng: 3.4216 },
+            coordinates: [6.4281, 3.4216],
           },
         };
 

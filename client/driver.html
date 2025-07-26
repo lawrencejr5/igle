@@ -8,6 +8,11 @@
     <h2>Driver App</h2>
     <p id="message">Waiting for ride requests...</p>
 
+    <form action="">
+      <input type="text" value="" id="rider_socket" placeholder="socket" />
+      <button onclick="accept_ride()"></button>
+    </form>
+
     <script>
       const socket = io("http://localhost:5000");
 
@@ -18,7 +23,11 @@
       socket.on("new_ride_request", (data) => {
         console.log("New ride request received:", data);
         document.getElementById("message").innerText =
-          "Incoming ride from " + data.pickup.address + " to " + data.destination.address;
+          "Incoming ride from " +
+          data.pickup.address +
+          " to " +
+          data.destination.address;
+        document.getElementById("rider_socket").value(data.rider_socket_id);
       });
     </script>
   </body>

@@ -7,7 +7,7 @@ import Transaction from "../models/transaction";
 import Driver from "../models/driver";
 
 import { credit_wallet } from "../utils/wallet";
-import { get_driver_id } from "../utils/get_driver";
+import { get_driver_id } from "../utils/get_id";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 
 import axios from "axios";

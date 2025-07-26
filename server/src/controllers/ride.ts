@@ -3,8 +3,9 @@ import { Types } from "mongoose";
 
 import Ride from "../models/ride";
 import Wallet from "../models/wallet";
+import User from "../models/user";
 
-import { get_driver_id } from "../utils/get_driver";
+import { get_driver_id, get_user_socket_id } from "../utils/get_id";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 import { debit_wallet } from "../utils/wallet";
 import { calculate_fare } from "../utils/calc_fare";
@@ -53,9 +54,11 @@ export const request_ride = async (
     });
 
     // Find drivers nearby and emit via Socket.IO
+    const rider_socket_id = await get_user_socket_id(user_id!);
     io.emit("new_ride_request", {
       ride_id: new_ride._id,
       rider_id: user_id,
+      rider_socket_id,
       pickup,
       destination,
       fare,
@@ -131,6 +134,13 @@ export const accept_ride = async (
       { driver: driver_id, status: "accepted" },
       { new: true }
     );
+
+    const rider_socket_id = await get_user_socket_id(ride?.rider!);
+    io.to(rider_socket_id!).emit("ride_accepted", {
+      ride_id,
+      driver_id,
+      rider_socket_id,
+    });
 
     if (!ride) {
       res.status(404).json({ msg: "Ride is invalid or not available." });

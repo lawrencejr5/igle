@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import Driver from "../models/driver";
 import Wallet from "../models/wallet";
 
-import { get_driver_id } from "../utils/get_driver";
+import { get_driver_id } from "../utils/get_id";
 
 import axios from "axios";
 
