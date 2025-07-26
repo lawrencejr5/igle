@@ -12,6 +12,13 @@ export interface DriverType extends Document {
     type: string;
     coordinates: [number, number];
   };
+  bank: {
+    bank_name: string;
+    account_number: string;
+    account_name: string;
+    bank_code: string;
+    recipient_code: string;
+  };
   rating?: number;
   total_trips: number;
 }
@@ -39,6 +46,13 @@ const DriverSchema = new Schema<DriverType>({
       type: [Number],
       default: [0, 0],
     },
+  },
+  bank: {
+    bank_name: String,
+    account_number: String,
+    account_name: String,
+    bank_code: String,
+    recipient_code: String,
   },
   rating: { type: Number, default: 5 },
   total_trips: { type: Number, default: 0 },
