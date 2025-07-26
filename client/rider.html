@@ -25,6 +25,11 @@
         alert("Driver accepted your ride!");
       });
 
+      socket.on("ride_cancel", (data) => {
+        console.log(`Ride cancelled by ${data.by}`);
+        alert(`Ride cancelled by ${data.by}`);
+      });
+
       function requestRide() {
         const payload = {
           rider_id: "687ffcf8c8676401f6f1d547",

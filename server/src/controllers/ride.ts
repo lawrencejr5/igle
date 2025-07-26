@@ -5,7 +5,11 @@ import Ride from "../models/ride";
 import Wallet from "../models/wallet";
 import User from "../models/user";
 
-import { get_driver_id, get_user_socket_id } from "../utils/get_id";
+import {
+  get_driver_id,
+  get_user_socket_id,
+  get_driver_socket_id,
+} from "../utils/get_id";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 import { debit_wallet } from "../utils/wallet";
 import { calculate_fare } from "../utils/calc_fare";
@@ -182,6 +186,14 @@ export const cancel_ride = async (
       });
       return;
     }
+
+    // Emitting ride cancellation
+    const user_socket = await get_user_socket_id(ride.rider!);
+    const driver_socket = await get_driver_socket_id(ride.driver!);
+    if (user_socket)
+      io.to(user_socket).emit("ride_cancel", { reason, by, ride_id });
+    if (driver_socket)
+      io.to(driver_socket).emit("ride_cancel", { reason, by, ride_id });
 
     // Mark ride as cancelled
     ride.status = "cancelled";

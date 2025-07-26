@@ -12,3 +12,10 @@ export const get_user_socket_id = async (user_id: string | Types.ObjectId) => {
   const user = await User.findById(user_id);
   return user?.socket_id;
 };
+
+export const get_driver_socket_id = async (
+  user_id: string | Types.ObjectId
+) => {
+  const driver = await Driver.findById(user_id);
+  return driver?.socket_id;
+};

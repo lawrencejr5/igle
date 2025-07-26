@@ -28,6 +28,12 @@
           " to " +
           data.destination.address;
       });
+
+      socket.on("ride_cancel", (data) => {
+        document.getElementById(
+          "message"
+        ).innerHTML = `Ride has been cancelled. Reason: ${data.reason}`;
+      });
     </script>
   </body>
 </html>
