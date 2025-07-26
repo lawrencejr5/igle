@@ -1,6 +1,9 @@
 import express from "express";
 const app = express();
 
+import http from "http";
+import { Server as SocketServer } from "socket.io";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -29,10 +32,29 @@ app.use(not_found);
 const port = process.env.PORT || "5001";
 const mongo_url = process.env.MONGO_URI as string;
 
+const http_server = http.createServer(app);
+
+const io = new SocketServer(http_server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST "],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("Connection to the socket was made:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("Dissconnected from socket:", socket.id);
+  });
+});
+
+export { io };
+
 const start_server = async (): Promise<void> => {
   try {
     await connect_db(mongo_url);
-    app.listen(port, () =>
+    http_server.listen(port, () =>
       console.log(`Connected! Server running at port ${port}...`)
     );
   } catch (err) {
