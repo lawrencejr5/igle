@@ -11,6 +11,8 @@ import { calculate_fare } from "../utils/calc_fare";
 import { calculate_commission } from "../utils/calc_commision";
 import { complete_ride } from "../utils/complete_ride";
 
+import { io } from "../server";
+
 export const request_ride = async (
   req: Request,
   res: Response
@@ -50,7 +52,14 @@ export const request_ride = async (
       status: "pending",
     });
 
-    // Later: Find drivers nearby and emit via Socket.IO
+    // Find drivers nearby and emit via Socket.IO
+    io.emit("new_ride_request", {
+      ride_id: new_ride._id,
+      rider_id: user_id,
+      pickup,
+      destination,
+      fare,
+    });
 
     res.status(201).json({
       message: "Ride request created",

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Driver Socket Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h2>Driver App</h2>
+    <p id="message">Waiting for ride requests...</p>
+
+    <script>
+      const socket = io("http://localhost:5000");
+
+      socket.on("connect", () => {
+        console.log("Connected as Driver:", socket.id);
+      });
+
+      socket.on("new_ride_request", (data) => {
+        console.log("New ride request received:", data);
+        document.getElementById("message").innerText =
+          "Incoming ride from " + data.pickup.address + " to " + data.destination.address;
+      });
+    </script>
+  </body>
+</html>

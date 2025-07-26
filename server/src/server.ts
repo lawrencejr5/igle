@@ -18,6 +18,8 @@ import RideRouter from "./routes/ride";
 import TransactionRouter from "./routes/transaction";
 import WalletRouter from "./routes/wallet";
 
+import { handle_socket_events } from "./sockets";
+
 app.use(cors());
 app.use(express.json());
 
@@ -37,16 +39,12 @@ const http_server = http.createServer(app);
 const io = new SocketServer(http_server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST "],
+    methods: ["GET", "POST"],
   },
 });
 
 io.on("connection", (socket) => {
-  console.log("Connection to the socket was made:", socket.id);
-
-  socket.on("disconnect", () => {
-    console.log("Dissconnected from socket:", socket.id);
-  });
+  handle_socket_events(io, socket);
 });
 
 export { io };

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Rider Socket Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h2>Rider App</h2>
+    <button onclick="requestRide()">Send Ride Request</button>
+
+    <script>
+      const socket = io("http://localhost:5000");
+
+      socket.on("connect", () => {
+        console.log("Connected as Rider:", socket.id);
+      });
+
+      function requestRide() {
+        const payload = {
+          rider_id: "rider123",
+          pickup: {
+            address: "Lekki Phase 1",
+            coordinates: { lat: 6.4367, lng: 3.4505 },
+          },
+          destination: {
+            address: "Victoria Island",
+            coordinates: { lat: 6.4281, lng: 3.4216 },
+          },
+        };
+
+        socket.emit("ride_request", payload);
+        console.log("Ride request sent:", payload);
+      }
+    </script>
+  </body>
+</html>
