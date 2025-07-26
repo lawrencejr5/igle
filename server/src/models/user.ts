@@ -7,7 +7,7 @@ export interface UserType extends Document {
   password?: string;
   google_id?: string;
   socket_id?: string;
-  online?: boolean;
+  is_online?: boolean;
   avatar?: string;
   phone?: string;
   provider: "email" | "google";
@@ -28,7 +28,7 @@ const UserSchema = new Schema<UserType>(
     password: { type: String }, // optional if Google user
     google_id: { type: String, unique: true, sparse: true }, // only Google users
     socket_id: { type: String, default: null },
-    online: { type: Boolean, default: true },
+    is_online: { type: Boolean, default: true },
     avatar: { type: String },
     phone: { type: String },
     provider: {
