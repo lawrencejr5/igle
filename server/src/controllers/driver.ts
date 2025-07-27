@@ -143,3 +143,34 @@ export const get_driver = async (
     res.status(500).json({ msg: "Server error." });
   }
 };
+
+export const set_driver_availability = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { status } = req.body;
+    if (!status) {
+      res.status(404).json({ msg: "Input status" });
+      return;
+    }
+
+    const driver_id = await get_driver_id(req.user?.id!);
+
+    const driver = await Driver.findById(driver_id);
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    driver.is_available = status;
+    await driver.save();
+
+    res.status(200).json({
+      msg: "Driver availability set successfully",
+      is_available: driver.is_available,
+    });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
