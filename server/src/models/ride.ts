@@ -11,6 +11,7 @@ export interface RideType extends Document {
     address: string;
     coordinates: [number, number];
   };
+  driver_location?: [number, number];
   status:
     | "pending"
     | "accepted"
@@ -49,6 +50,7 @@ const RideSchema = new Schema<RideType>(
       address: String,
       coordinates: [Number],
     },
+    driver_location: [Number, Number],
     status: {
       type: String,
       enum: [

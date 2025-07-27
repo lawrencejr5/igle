@@ -8,6 +8,9 @@
     <h2>Driver App</h2>
     <p id="message">Waiting for ride requests...</p>
 
+    <button onclick="start_sharing_location()">Share location</button>
+    <button onclick="stop_sharing_location()">Stop</button>
+
     <script>
       const socket = io("http://localhost:5000");
 
@@ -50,6 +53,27 @@
         console.log(data.msg);
         document.getElementById("message").innerHTML = data.msg;
       });
+
+      let location_interval;
+      const start_sharing_location = () => {
+        let lat = 35.2761;
+        let lon = 7.6902;
+
+        location_interval = setInterval(() => {
+          lat += 1;
+          lon += 1;
+          const payload = {
+            rider_id: "687ffcf8c8676401f6f1d547",
+            driver_id: "6880e36bb0b3d5a590cd7d94",
+            coordinates: [lat, lon],
+          };
+          socket.emit("driver_location", payload);
+        }, 5000);
+      };
+
+      const stop_sharing_location = () => {
+        clearInterval(location_interval);
+      };
     </script>
   </body>
 </html>

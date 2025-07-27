@@ -7,7 +7,8 @@
   <body>
     <h2>Rider App</h2>
     <button onclick="requestRide()">Send Ride Request</button>
-
+    <h4>Rider location</h4>
+    <p id="location"></p>
     <script>
       const socket = io("http://localhost:5000");
 
@@ -43,6 +44,10 @@
       socket.on("ride_completed", (data) => {
         console.log(data.msg);
         alert(data.msg);
+      });
+
+      socket.on("driver_location_update", (data) => {
+        document.getElementById("location").innerHTML = data.coordinates;
       });
 
       function requestRide() {
