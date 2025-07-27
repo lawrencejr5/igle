@@ -30,9 +30,25 @@
       });
 
       socket.on("ride_cancel", (data) => {
+        console.log(`Ride has been cancelled. Reason: ${data.reason}`);
         document.getElementById(
           "message"
         ).innerHTML = `Ride has been cancelled. Reason: ${data.reason}`;
+      });
+
+      socket.on("ride_arrival", (data) => {
+        console.log(data.msg);
+        document.getElementById("message").innerHTML = data.msg;
+      });
+
+      socket.on("ride_in_progress", (data) => {
+        console.log(data.msg);
+        document.getElementById("message").innerHTML = data.msg;
+      });
+
+      socket.on("ride_completed", (data) => {
+        console.log(data.msg);
+        document.getElementById("message").innerHTML = data.msg;
       });
     </script>
   </body>

@@ -243,6 +243,9 @@ export const update_ride_status = async (
       ride.timestamps = {};
     }
 
+    const user_socket = await get_user_socket_id(ride.rider!);
+    const driver_socket = await get_driver_socket_id(ride.driver!);
+
     switch (status) {
       // arrived at destination
       case "arrived":
@@ -252,6 +255,16 @@ export const update_ride_status = async (
           });
           return;
         }
+        // Emitting ride status
+        if (user_socket)
+          io.to(user_socket).emit("ride_arrival", {
+            msg: "Your ride has arrived",
+          });
+        if (driver_socket)
+          io.to(driver_socket).emit("ride_arrival", {
+            msg: "You have arrived",
+          });
+
         ride.timestamps.arrived_at = new Date();
         ride.status = "arrived";
         break;
@@ -269,6 +282,16 @@ export const update_ride_status = async (
           });
           return;
         }
+        // Emitting ride status
+        if (user_socket)
+          io.to(user_socket).emit("ride_in_progree", {
+            msg: "Your ride has arrived",
+          });
+        if (driver_socket)
+          io.to(driver_socket).emit("ride_in_progress", {
+            msg: "You have arrived",
+          });
+
         ride.timestamps.started_at = new Date();
         ride.status = "ongoing";
         break;
@@ -281,6 +304,17 @@ export const update_ride_status = async (
         }
 
         const result = await complete_ride(ride);
+
+        // Emitting ride status
+        if (user_socket)
+          io.to(user_socket).emit("ride_completed", {
+            msg: "Your ride has been completed",
+          });
+        if (driver_socket)
+          io.to(driver_socket).emit("ride_completed", {
+            msg: "You have finished the ride",
+          });
+
         if (!result.success) {
           res.status(result.statusCode!).json({ msg: result.message });
           return;
@@ -323,6 +357,19 @@ export const pay_for_ride = async (req: Request, res: Response) => {
       reference: generate_unique_reference(),
       metadata: { for: "ride_payment" },
     });
+
+    // Emitting ride status
+    const user_socket = await get_user_socket_id(ride.rider!);
+    const driver_socket = await get_driver_socket_id(ride.driver!);
+
+    if (user_socket)
+      io.to(user_socket).emit("ride_in_progress", {
+        msg: "Payment successfull, ur ride can start",
+      });
+    if (driver_socket)
+      io.to(driver_socket).emit("ride_in_progress", {
+        msg: "Your ride can start",
+      });
 
     // Updating ride status
     ride.status = "ongoing";

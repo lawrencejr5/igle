@@ -30,6 +30,21 @@
         alert(`Ride cancelled by ${data.by}`);
       });
 
+      socket.on("ride_arrival", (data) => {
+        console.log(data.msg);
+        alert(data.msg);
+      });
+
+      socket.on("ride_in_progress", (data) => {
+        console.log(data.msg);
+        alert(data.msg);
+      });
+
+      socket.on("ride_completed", (data) => {
+        console.log(data.msg);
+        alert(data.msg);
+      });
+
       function requestRide() {
         const payload = {
           rider_id: "687ffcf8c8676401f6f1d547",
