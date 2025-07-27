@@ -72,6 +72,33 @@ export const request_ride = async (
       message: "Ride request created",
       ride: new_ride,
     });
+
+    // ⏳ Start timeout — e.g. 30 seconds
+    setTimeout(async () => {
+      const ride = await Ride.findById(new_ride._id);
+
+      if (ride && ride.status === "pending") {
+        // No driver accepted in time
+        ride.status = "expired";
+        await ride.save();
+
+        const user_socket = await get_user_socket_id(req.user?.id!);
+
+        // Notify rider
+        if (user_socket) {
+          io.to(user_socket).emit("ride_timeout", {
+            ride_id: new_ride._id,
+            msg: "No drivers accepted your ride in time.",
+          });
+        }
+
+        // Notify drivers to ignore this ride request
+        io.emit("ride_request_expired", {
+          ride_id: new_ride._id,
+          msg: "This ride has expired",
+        });
+      }
+    }, 30000);
   } catch (err: any) {
     res
       .status(500)

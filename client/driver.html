@@ -54,6 +54,11 @@
         document.getElementById("message").innerHTML = data.msg;
       });
 
+      socket.on("ride_request_expired", (data) => {
+        console.log(data.msg);
+        document.getElementById("message").innerHTML = data.msg;
+      });
+
       let location_interval;
       const start_sharing_location = () => {
         let lat = 35.2761;

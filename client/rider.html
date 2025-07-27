@@ -46,6 +46,11 @@
         alert(data.msg);
       });
 
+      socket.on("ride_timeout", (data) => {
+        console.log(data.msg);
+        alert(data.msg);
+      });
+
       socket.on("driver_location_update", (data) => {
         document.getElementById("location").innerHTML = data.coordinates;
       });
