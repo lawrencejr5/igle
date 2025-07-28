@@ -11,7 +11,7 @@ export default function SafeArea({ children }: any) {
   return (
     <View
       style={{
-        paddingTop: 20,
+        paddingTop: 50,
         paddingBottom: 5,
         flex: 1,
       }}
