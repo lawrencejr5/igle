@@ -3,13 +3,13 @@ import React, { useEffect, useState } from "react";
 
 import SplashScreen from "./splash_screen";
 
-const Start = () => {
+const StartScreen = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTimeout = setTimeout(() => {
       setLoading(false);
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(loadTimeout);
   }, []);
@@ -34,6 +34,6 @@ const Start = () => {
   );
 };
 
-export default Start;
+export default StartScreen;
 
 const styles = StyleSheet.create({});
