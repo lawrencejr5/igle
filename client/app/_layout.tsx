@@ -16,6 +16,7 @@ const RootLayout = () => {
     "raleway-regular": require("../assets/fonts/raleway/Raleway-Regular.ttf"),
     "raleway-semibold": require("../assets/fonts/raleway/Raleway-SemiBold.ttf"),
     "raleway-black": require("../assets/fonts/raleway/Raleway-Black.ttf"),
+    "poppins-regular": require("../assets/fonts/poppins/Poppins-Regular.ttf"),
   });
 
   if (!fontsLoaded) {
@@ -24,7 +25,12 @@ const RootLayout = () => {
 
   return (
     <SafeArea>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          // animation: "slide_from_right"
+        }}
+      />
     </SafeArea>
   );
 };
