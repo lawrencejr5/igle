@@ -1,7 +1,14 @@
-import { StyleSheet, Text, View, Image } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableWithoutFeedback,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 
 import SplashScreen from "./splash_screen";
+import { router } from "expo-router";
 
 const StartScreen = () => {
   const [loading, setLoading] = useState(true);
@@ -73,14 +80,17 @@ const StartScreen = () => {
               />
               <Text style={styles.sign_text}>Continue with Google</Text>
             </View>
-
-            <View style={styles.sign_btn}>
-              <Image
-                source={require("../assets/images/icons/mail.png")}
-                style={styles.sign_image}
-              />
-              <Text style={styles.sign_text}>Continue with Email</Text>
-            </View>
+            <TouchableWithoutFeedback
+              onPress={() => router.push("/(auth)/signin")}
+            >
+              <View style={styles.sign_btn}>
+                <Image
+                  source={require("../assets/images/icons/mail.png")}
+                  style={styles.sign_image}
+                />
+                <Text style={styles.sign_text}>Continue with Email</Text>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
         </View>
       )}
