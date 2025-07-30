@@ -1,4 +1,4 @@
-import { Image } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import React from "react";
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -29,13 +29,12 @@ const TabsLayout = () => {
         tabBarInactiveTintColor: "#121212",
         tabBarLabelStyle: { fontFamily: "raleway-semibold", fontSize: 10 },
         tabBarBackground: () => (
-          <BlurView
-            tint="light" // or "dark", or "default"
-            intensity={80}
+          <View
             style={{
               flex: 1,
               borderRadius: 20,
               overflow: "hidden",
+              backgroundColor: "#ffffff50",
             }}
           />
         ),

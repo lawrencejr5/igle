@@ -24,14 +24,14 @@ const RootLayout = () => {
   }
 
   return (
-    <SafeArea>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          // animation: "slide_from_right"
-        }}
-      />
-    </SafeArea>
+    // <SafeArea>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        // animation: "slide_from_right"
+      }}
+    />
+    // </SafeArea>
   );
 };
 
