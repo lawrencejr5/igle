@@ -81,7 +81,7 @@ const StartScreen = () => {
               <Text style={styles.sign_text}>Continue with Google</Text>
             </View>
             <TouchableWithoutFeedback
-              onPress={() => router.push("/(auth)/signup")}
+              onPress={() => router.push("/(tabs)/home")}
             >
               <View style={styles.sign_btn}>
                 <Image
