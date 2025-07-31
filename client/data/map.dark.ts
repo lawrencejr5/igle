@@ -28,7 +28,7 @@ export const darkMapStyle = [
     elementType: "labels.text.fill",
     stylers: [
       {
-        color: "#d59563",
+        color: "#aaaaaa",
       },
     ],
   },
@@ -37,7 +37,7 @@ export const darkMapStyle = [
     elementType: "labels.text.fill",
     stylers: [
       {
-        color: "#d59563",
+        color: "#aaaaaa",
       },
     ],
   },
@@ -127,7 +127,7 @@ export const darkMapStyle = [
     elementType: "labels.text.fill",
     stylers: [
       {
-        color: "#d59563",
+        color: "#aaaaaa",
       },
     ],
   },
