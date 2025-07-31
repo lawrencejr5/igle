@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
 import React, { useState, useEffect } from "react";
 
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
-import { darkStyle } from "../../data/map.dark";
+import { darkMapStyle } from "../../data/map.dark";
 
 import * as Location from "expo-location";
 
@@ -30,34 +30,26 @@ const Home = () => {
     })();
   }, []);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => setReady(true), 100); // wait 100ms
-    return () => clearTimeout(timeout);
-  }, []);
-
   return (
     <View style={{ backgroundColor: "#121212", flex: 1 }}>
       <MapView
         style={StyleSheet.absoluteFill}
+        provider={PROVIDER_GOOGLE}
         initialRegion={region}
-        customMapStyle={darkStyle}
+        customMapStyle={darkMapStyle}
       >
-        <Marker
-          coordinate={{ latitude: 6.5244, longitude: 3.3792 }}
-          title="You are here"
-        />
+        {region && (
+          <Marker
+            coordinate={{
+              latitude: region.latitude,
+              longitude: region.longitude,
+            }}
+            title="You are here"
+          />
+        )}
       </MapView>
     </View>
   );
 };
 
 export default Home;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    flex: 1,
-  },
-});

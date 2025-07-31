@@ -15,26 +15,20 @@ const TabsLayout = () => {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          position: "absolute",
-          marginBottom: 5,
-          marginHorizontal: 15,
-          borderRadius: 20,
           paddingTop: 10,
-          height: 70,
-          backgroundColor: "transparent", // Key: make it transparent
+          height: 80,
           borderTopWidth: 0, // Hide default border
           elevation: 0, // Remove Android shadow
         },
         tabBarActiveTintColor: "#fff",
-        tabBarInactiveTintColor: "#121212",
+        tabBarInactiveTintColor: "#606060",
         tabBarLabelStyle: { fontFamily: "raleway-semibold", fontSize: 10 },
         tabBarBackground: () => (
           <View
             style={{
               flex: 1,
-              borderRadius: 20,
               overflow: "hidden",
-              backgroundColor: "#ffffff50",
+              backgroundColor: "#121212",
             }}
           />
         ),
@@ -49,7 +43,7 @@ const TabsLayout = () => {
               source={
                 focused
                   ? require("../../assets/images/icons/home-fill.png")
-                  : require("../../assets/images/icons/home-regular-black.png")
+                  : require("../../assets/images/icons/home-fill-grey.png")
               }
               style={{ height: 25, width: 25 }}
               resizeMode="contain"
@@ -66,7 +60,7 @@ const TabsLayout = () => {
               source={
                 focused
                   ? require("../../assets/images/icons/schedule-fill.png")
-                  : require("../../assets/images/icons/schedule-regular-black.png")
+                  : require("../../assets/images/icons/schedule-fill-grey.png")
               }
               style={{ height: 25, width: 25 }}
               resizeMode="contain"
@@ -83,7 +77,7 @@ const TabsLayout = () => {
               source={
                 focused
                   ? require("../../assets/images/icons/user-fill.png")
-                  : require("../../assets/images/icons/user-regular-black.png")
+                  : require("../../assets/images/icons/user-fill-grey.png")
               }
               style={{ height: 25, width: 25 }}
               resizeMode="contain"
