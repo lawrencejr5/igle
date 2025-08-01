@@ -1,10 +1,18 @@
-import { StyleSheet, Text, View, Image } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableWithoutFeedback,
+} from "react-native";
 import React, { useState } from "react";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 const Rides = () => {
-  const [category, setCategory] = useState<string>("ongoing");
+  const [category, setCategory] = useState<
+    "ongoing" | "completed" | "cancelled"
+  >("ongoing");
 
   return (
     <View style={styles.container}>
@@ -12,18 +20,62 @@ const Rides = () => {
 
       {/* Categories nav... */}
       <View style={styles.nav_container}>
-        <View style={[styles.nav_box, styles.nav_box_active]}>
-          <Text style={[styles.nav_text, styles.nav_text_active]}>Ongoing</Text>
-        </View>
-        <View style={styles.nav_box}>
-          <Text style={styles.nav_text}>Completed</Text>
-        </View>
-        <View style={styles.nav_box}>
-          <Text style={styles.nav_text}>Cancelled</Text>
-        </View>
+        <TouchableWithoutFeedback onPress={() => setCategory("ongoing")}>
+          <View
+            style={[
+              styles.nav_box,
+              category === "ongoing" && styles.nav_box_active,
+            ]}
+          >
+            <Text
+              style={[
+                styles.nav_text,
+                category === "ongoing" && styles.nav_text_active,
+              ]}
+            >
+              Ongoing
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+
+        <TouchableWithoutFeedback onPress={() => setCategory("completed")}>
+          <View
+            style={[
+              styles.nav_box,
+              category === "completed" && styles.nav_box_active,
+            ]}
+          >
+            <Text
+              style={[
+                styles.nav_text,
+                category === "completed" && styles.nav_text_active,
+              ]}
+            >
+              Completed
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+
+        <TouchableWithoutFeedback onPress={() => setCategory("cancelled")}>
+          <View
+            style={[
+              styles.nav_box,
+              category === "cancelled" && styles.nav_box_active,
+            ]}
+          >
+            <Text
+              style={[
+                styles.nav_text,
+                category === "cancelled" && styles.nav_text_active,
+              ]}
+            >
+              Cancelled
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
       </View>
 
-      {/* Content */}
+      {/* Ongoing data */}
       {category === "ongoing" && (
         <View style={styles.ride_card}>
           <View style={styles.ride_header}>
@@ -66,6 +118,78 @@ const Rides = () => {
           <View style={styles.pay_btn}>
             <Text style={styles.pay_btn_text}>Pay 5,000 NGN</Text>
           </View>
+        </View>
+      )}
+
+      {/* Completed data */}
+      {category === "completed" && (
+        <View style={{ marginTop: 10 }}>
+          <View
+            style={{
+              backgroundColor: "#2c2c2cff",
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              gap: 12,
+              paddingVertical: 15,
+              paddingHorizontal: 15,
+              borderRadius: 10,
+              marginTop: 15,
+            }}
+          >
+            <Image
+              source={require("../../assets/images/icons/keke-icon.png")}
+              style={{ width: 30, height: 30 }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                flex: 1,
+              }}
+            >
+              <View>
+                <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
+                  Konwea plaza
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "raleway-semibold",
+                    color: "grey",
+                    fontSize: 11,
+                  }}
+                >
+                  20 Dec, 2025 . 5:00am
+                </Text>
+              </View>
+              <View>
+                <Text
+                  style={{
+                    color: "#6fe30fff",
+                    fontFamily: "poppins-bold",
+                    fontSize: 12,
+                  }}
+                >
+                  500 NGN
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "raleway-semibold",
+                    color: "grey",
+                    fontSize: 11,
+                  }}
+                >
+                  Wallet
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Cancelled data */}
+      {category === "cancelled" && (
+        <View>
+          <Text></Text>
         </View>
       )}
     </View>
