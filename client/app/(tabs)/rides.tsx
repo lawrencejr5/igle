@@ -1,9 +1,11 @@
 import { StyleSheet, Text, View, Image } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 const Rides = () => {
+  const [category, setCategory] = useState<string>("ongoing");
+
   return (
     <View style={styles.container}>
       <Text style={styles.header_text}>Rides</Text>
@@ -22,45 +24,50 @@ const Rides = () => {
       </View>
 
       {/* Content */}
-      <View style={styles.ride_card}>
-        <View style={styles.ride_header}>
-          <Text style={styles.ride_header_text}>Today, 22 Feb, 2025</Text>
-          <Text style={styles.ride_header_text}>5:00AM - 6:30Am</Text>
-        </View>
-        <View style={styles.info_sec}>
-          <View style={styles.driver_sec}>
-            <Image
-              source={require("../../assets/images/black-profile.jpeg")}
-              style={styles.driver_img}
-              resizeMode="cover"
-            />
+      {category === "ongoing" && (
+        <View style={styles.ride_card}>
+          <View style={styles.ride_header}>
+            <Text style={styles.ride_header_text}>Today, 22 Feb, 2025</Text>
+            <Text style={styles.ride_header_text}>5:00AM - 6:30Am</Text>
+          </View>
+          <View style={styles.info_sec}>
+            <View style={styles.driver_sec}>
+              <Image
+                source={require("../../assets/images/black-profile.jpeg")}
+                style={styles.driver_img}
+                resizeMode="cover"
+              />
+              <View>
+                <Text style={styles.driver_name}>Chidubem Oputa</Text>
+              </View>
+            </View>
             <View>
-              <Text style={styles.driver_name}>Chidubem Oputa</Text>
+              <Text style={styles.amount_text}>5,000 NGN</Text>
             </View>
           </View>
-          <View>
-            <Text style={styles.amount_text}>5,000 NGN</Text>
+          <View style={styles.route_sec}>
+            <View style={styles.route}>
+              <View style={styles.pickup_icon} />
+              <View style={styles.route_texts}>
+                <Text style={styles.route_type}>Pickup location:</Text>
+                <Text style={styles.route_text}>
+                  Anglican girls grammar school
+                </Text>
+              </View>
+            </View>
+            <View style={styles.route}>
+              <View style={styles.dropoff_icon} />
+              <View style={styles.route_texts}>
+                <Text style={styles.route_type}>Drop off location:</Text>
+                <Text style={styles.route_text}>Konwea Plaza</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.pay_btn}>
+            <Text style={styles.pay_btn_text}>Pay 5,000 NGN</Text>
           </View>
         </View>
-        <View style={styles.route_sec}>
-          <View style={styles.route}>
-            <View style={styles.pickup_icon} />
-            <View style={styles.route_texts}>
-              <Text style={styles.route_type}>Pickup location:</Text>
-              <Text style={styles.route_text}>
-                Anglican girls grammar school
-              </Text>
-            </View>
-          </View>
-          <View style={styles.route}>
-            <View style={styles.dropoff_icon} />
-            <View style={styles.route_texts}>
-              <Text style={styles.route_type}>Drop off location:</Text>
-              <Text style={styles.route_text}>Konwea Plaza</Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      )}
     </View>
   );
 };
@@ -107,7 +114,9 @@ const styles = StyleSheet.create({
   },
 
   ride_card: {
-    backgroundColor: "#343434",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#4b4b4bff",
     width: "100%",
     borderRadius: 10,
     marginTop: 30,
@@ -124,8 +133,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   info_sec: {
-    backgroundColor: "#5d5d5d",
-    marginTop: 10,
+    backgroundColor: "#363636",
+    marginTop: 20,
     borderRadius: 5,
     padding: 10,
     flexDirection: "row",
@@ -153,23 +162,23 @@ const styles = StyleSheet.create({
     color: "#5ffd7f",
   },
   route_sec: {
-    marginTop: 20,
+    marginTop: 30,
   },
   route: {
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   pickup_icon: {
-    backgroundColor: "#5ffd7f",
+    backgroundColor: "#fff",
     height: 15,
     width: 15,
     borderRadius: "50%",
   },
   dropoff_icon: {
-    backgroundColor: "#fd6c5f",
+    backgroundColor: "#fff",
     height: 12,
     width: 12,
   },
@@ -185,5 +194,17 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontFamily: "raleway-bold",
     fontSize: 14,
+  },
+  pay_btn: {
+    backgroundColor: "#008a1c",
+    flexDirection: "row",
+    justifyContent: "center",
+    borderRadius: 30,
+    padding: 10,
+    marginTop: 10,
+  },
+  pay_btn_text: {
+    color: "#ffffff",
+    fontFamily: "poppins-bold",
   },
 });
