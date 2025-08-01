@@ -86,7 +86,7 @@ const StartScreen = () => {
               </View>
             </TouchableWithoutFeedback>
             <TouchableWithoutFeedback
-              onPress={() => router.push("/(tabs)/signin")}
+              onPress={() => router.push("/(auth)/signin")}
             >
               <View style={styles.sign_btn}>
                 <Image

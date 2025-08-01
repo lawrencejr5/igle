@@ -1,5 +1,13 @@
-import { StyleSheet, Text, View, TextInput, ScrollView } from "react-native";
-import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Animated,
+} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
@@ -11,6 +19,38 @@ import { darkMapStyle } from "../../data/map.dark";
 import * as Location from "expo-location";
 
 const Home = () => {
+  const [modalUp, setModalUp] = useState<boolean>(false);
+
+  const height = useRef(new Animated.Value(180)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  const expand_route_modal = () => {
+    setModalUp(true);
+    Animated.timing(height, {
+      toValue: 600,
+      duration: 500,
+      useNativeDriver: false,
+    }).start();
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+  const collapse_route_modal = () => {
+    setModalUp(false);
+    Animated.timing(height, {
+      toValue: 180,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const [region, setRegion] = useState<any>(null);
 
   useEffect(() => {
@@ -30,8 +70,10 @@ const Home = () => {
         longitudeDelta: 0.05,
       });
     };
-
     get_and_set_location();
+
+    // Collapsing route model on render
+    collapse_route_modal();
   }, []);
 
   return (
@@ -63,27 +105,40 @@ const Home = () => {
           <Feather name="bell" size={22} color="white" />
         </View>
       </View>
+
       {/* Modal */}
-      <View style={styles.modal}>
+      <Animated.View style={[styles.modal, { height: height }]}>
         {/* Expand line */}
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
+        <TouchableWithoutFeedback onPress={collapse_route_modal}>
+          <View style={styles.expand_line_conatiner}>
+            <View style={styles.expand_line} />
+          </View>
+        </TouchableWithoutFeedback>
 
         {/* Header text */}
-        {/* <Text style={styles.header_text}>Let's go places...</Text> */}
-        <Text style={[styles.header_text, { textAlign: "center" }]}>
-          Choose your route...
-        </Text>
+        {modalUp ? (
+          <Text style={[styles.header_text, { textAlign: "center" }]}>
+            Choose your route...
+          </Text>
+        ) : (
+          <Text style={styles.header_text}>Let's go places...</Text>
+        )}
 
         {/* Form */}
-        <View style={styles.form}>
-          <TextInput
-            placeholder="Where we dey go?"
-            placeholderTextColor={"grey"}
-            editable={false}
-            style={styles.text_input}
-          />
+        {!modalUp && (
+          <TouchableWithoutFeedback onPress={expand_route_modal}>
+            <View style={styles.form}>
+              <TextInput
+                placeholder="Where we dey go?"
+                placeholderTextColor={"grey"}
+                editable={false}
+                style={styles.text_input}
+              />
+            </View>
+          </TouchableWithoutFeedback>
+        )}
+
+        <Animated.View style={[styles.form, { opacity }]}>
           <View style={{ flex: 1, marginTop: 20 }}>
             <View style={styles.route_inp_container}>
               <View style={styles.from_circle} />
@@ -102,23 +157,25 @@ const Home = () => {
               />
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Suggestions */}
-        <ScrollView style={styles.suggestions_container}>
+        <Animated.ScrollView
+          style={[styles.suggestions_container, { opacity }]}
+        >
           <View style={styles.suggestion_box}>
-            <Ionicons name="location" size={20} color="#b7b7b7" />
+            <Ionicons name="location" size={24} color="#b7b7b7" />
             <View>
               <Text style={styles.suggestion_header_text}>
                 Anglican girls grammar school
               </Text>
               <Text style={styles.suggestion_sub_text}>
-                409 Nnebisi Road, Umuagu, Asaba 320242, Delta
+                6P38+VWR, Unnamed Road, Umuagu, Asaba 320242, Delta
               </Text>
             </View>
           </View>
-        </ScrollView>
-      </View>
+        </Animated.ScrollView>
+      </Animated.View>
     </View>
   );
 };
@@ -145,7 +202,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   modal: {
-    height: "85%",
+    // height: "85%",
     width: "100%",
     backgroundColor: "#121212",
     position: "absolute",
@@ -157,6 +214,7 @@ const styles = StyleSheet.create({
   },
   expand_line_conatiner: {
     width: "100%",
+    padding: 10,
     flexDirection: "row",
     justifyContent: "center",
   },
@@ -170,7 +228,7 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-bold",
     color: "#fff",
     fontSize: 20,
-    marginTop: 10,
+    // marginTop: 10,
   },
   form: {
     marginTop: 10,
@@ -188,7 +246,6 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-bold",
     fontSize: 18,
     paddingHorizontal: 10,
-    display: "none",
   },
   route_inp_container: {
     flexDirection: "row",
