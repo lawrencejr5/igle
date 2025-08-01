@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Animated,
+  Image,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -19,6 +20,8 @@ import { darkMapStyle } from "../../data/map.dark";
 import * as Location from "expo-location";
 
 const Home = () => {
+  const [carType, setCarType] = useState<"sedan" | "keke" | "suv">("keke");
+
   const [modalUp, setModalUp] = useState<boolean>(false);
 
   const height = useRef(new Animated.Value(180)).current;
@@ -73,7 +76,7 @@ const Home = () => {
     get_and_set_location();
 
     // Collapsing route model on render
-    collapse_route_modal();
+    // collapse_route_modal();
   }, []);
 
   return (
@@ -121,25 +124,102 @@ const Home = () => {
             Choose your route...
           </Text>
         ) : (
-          <Text style={styles.header_text}>Let's go places...</Text>
+          <Text style={styles.header_text}>Ifeanyi, let's go places...</Text>
         )}
 
         {/* Form */}
         {!modalUp && (
           <TouchableWithoutFeedback onPress={expand_route_modal}>
             <View style={styles.form}>
-              <TextInput
-                placeholder="Where we dey go?"
-                placeholderTextColor={"grey"}
-                editable={false}
-                style={styles.text_input}
-              />
+              <View style={styles.text_inp_container}>
+                <Image
+                  source={require("../../assets/images/icons/car-icon.png")}
+                  style={{ height: 30, width: 30 }}
+                />
+                <TextInput
+                  placeholder="Where we dey go?"
+                  placeholderTextColor={"#8d8d8d"}
+                  editable={false}
+                  style={styles.text_input}
+                />
+              </View>
             </View>
           </TouchableWithoutFeedback>
         )}
 
+        {/* Route slection form */}
         <Animated.View style={[styles.form, { opacity }]}>
-          <View style={{ flex: 1, marginTop: 20 }}>
+          <View style={{ flex: 1, marginTop: 10 }}>
+            {/* Pick car type */}
+            <View style={styles.select_ride_container}>
+              <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
+                <View
+                  style={[
+                    styles.select_ride_box,
+                    carType === "keke" && styles.select_ride_box_active,
+                  ]}
+                >
+                  <Image
+                    source={require("../../assets/images/icons/keke-icon.png")}
+                    style={{ width: 25, height: 25 }}
+                  />
+                  <Text
+                    style={[
+                      { color: "#fff", fontFamily: "raleway-bold" },
+                      carType === "keke" && styles.select_ride_text_active,
+                    ]}
+                  >
+                    Keke
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+
+              <TouchableWithoutFeedback onPress={() => setCarType("sedan")}>
+                <View
+                  style={[
+                    styles.select_ride_box,
+                    carType === "sedan" && styles.select_ride_box_active,
+                  ]}
+                >
+                  <Image
+                    source={require("../../assets/images/icons/sedan-icon.png")}
+                    style={{ width: 25, height: 25 }}
+                  />
+                  <Text
+                    style={[
+                      { color: "#fff", fontFamily: "raleway-bold" },
+                      carType === "sedan" && styles.select_ride_text_active,
+                    ]}
+                  >
+                    Sedan
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+
+              <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
+                <View
+                  style={[
+                    styles.select_ride_box,
+                    carType === "suv" && styles.select_ride_box_active,
+                  ]}
+                >
+                  <Image
+                    source={require("../../assets/images/icons/suv-icon.png")}
+                    style={{ width: 25, height: 25 }}
+                  />
+                  <Text
+                    style={[
+                      { color: "#fff", fontFamily: "raleway-bold" },
+                      carType === "suv" && styles.select_ride_text_active,
+                    ]}
+                  >
+                    SUV
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+
+            {/* Select pickup and drop off */}
             <View style={styles.route_inp_container}>
               <View style={styles.from_circle} />
               <TextInput
@@ -228,7 +308,6 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-bold",
     color: "#fff",
     fontSize: 20,
-    // marginTop: 10,
   },
   form: {
     marginTop: 10,
@@ -236,16 +315,54 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 20,
   },
-  text_input: {
+
+  select_ride_container: {
+    marginBottom: 20,
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#515151",
+    borderStyle: "solid",
+    paddingBottom: 20,
+  },
+  select_ride_box: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 7,
+    borderColor: "grey",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "grey",
+  },
+  select_ride_box_active: {
+    backgroundColor: "#fff",
+  },
+  select_ride_text_active: {
+    color: "#121212",
+  },
+  text_inp_container: {
+    flexDirection: "row",
+    flex: 1,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 15,
     backgroundColor: "#3f3f3f",
-    borderBottomWidth: 0,
-    outlineWidth: 0,
     marginTop: 20,
     borderRadius: 7,
+  },
+  text_input: {
+    backgroundColor: "transparent",
     flex: 1,
     fontFamily: "raleway-bold",
     fontSize: 18,
-    paddingHorizontal: 10,
   },
   route_inp_container: {
     flexDirection: "row",
