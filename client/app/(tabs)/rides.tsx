@@ -188,8 +188,57 @@ const Rides = () => {
 
       {/* Cancelled data */}
       {category === "cancelled" && (
-        <View>
-          <Text></Text>
+        <View style={{ marginTop: 10 }}>
+          <View
+            style={{
+              backgroundColor: "#2c2c2cff",
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              gap: 12,
+              paddingVertical: 15,
+              paddingHorizontal: 15,
+              borderRadius: 10,
+              marginTop: 15,
+            }}
+          >
+            <Image
+              source={require("../../assets/images/icons/sedan-icon.png")}
+              style={{ width: 30, height: 30 }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                flex: 1,
+              }}
+            >
+              <View>
+                <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
+                  Asaba shoprite
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "raleway-semibold",
+                    color: "grey",
+                    fontSize: 11,
+                  }}
+                >
+                  20 Dec, 2025 . 5:00am
+                </Text>
+              </View>
+              <View>
+                <Text
+                  style={{
+                    color: "#e30f0fff",
+                    fontFamily: "poppins-bold",
+                    fontSize: 12,
+                  }}
+                >
+                  Cancelled
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
       )}
     </View>
