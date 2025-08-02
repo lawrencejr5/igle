@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     color: "#5ffd7f",
   },
   pay_btn: {
-    backgroundColor: "#008a1c",
+    backgroundColor: "#fff",
     flexDirection: "row",
     justifyContent: "center",
     borderRadius: 30,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   pay_btn_text: {
-    color: "#ffffff",
+    color: "#121212",
     fontFamily: "poppins-bold",
   },
 });
