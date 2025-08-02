@@ -9,6 +9,7 @@ import React, { useState } from "react";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
+import RideRoute from "../../../components/ride_route";
 
 const Rides = () => {
   const [category, setCategory] = useState<
@@ -98,23 +99,8 @@ const Rides = () => {
               <Text style={styles.amount_text}>5,000 NGN</Text>
             </View>
           </View>
-          <View style={styles.route_sec}>
-            <View style={styles.route}>
-              <View style={styles.pickup_icon} />
-              <View style={styles.route_texts}>
-                <Text style={styles.route_type}>Pickup location:</Text>
-                <Text style={styles.route_text}>
-                  Anglican girls grammar school
-                </Text>
-              </View>
-            </View>
-            <View style={styles.route}>
-              <View style={styles.dropoff_icon} />
-              <View style={styles.route_texts}>
-                <Text style={styles.route_type}>Drop off location:</Text>
-                <Text style={styles.route_text}>Konwea Plaza</Text>
-              </View>
-            </View>
+          <View style={{ marginTop: 20 }}>
+            <RideRoute from="Anglican girls grammar school" to="Konwea Plaza" />
           </View>
           <View style={styles.pay_btn}>
             <Text style={styles.pay_btn_text}>Pay 5,000 NGN</Text>
@@ -338,40 +324,6 @@ const styles = StyleSheet.create({
   amount_text: {
     fontFamily: "poppins-bold",
     color: "#5ffd7f",
-  },
-  route_sec: {
-    marginTop: 30,
-  },
-  route: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 20,
-  },
-  pickup_icon: {
-    backgroundColor: "#fff",
-    height: 15,
-    width: 15,
-    borderRadius: "50%",
-  },
-  dropoff_icon: {
-    backgroundColor: "#fff",
-    height: 12,
-    width: 12,
-  },
-  route_type: {
-    color: "#aaaaaa",
-    fontFamily: "raleway-bold",
-    fontSize: 10,
-  },
-  route_texts: {
-    // marginTop: 10,
-  },
-  route_text: {
-    color: "#ffffff",
-    fontFamily: "raleway-bold",
-    fontSize: 14,
   },
   pay_btn: {
     backgroundColor: "#008a1c",

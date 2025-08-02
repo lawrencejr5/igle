@@ -1,13 +1,7 @@
 import { Image, StyleSheet, View } from "react-native";
 import React from "react";
 
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-
-import { BlurView } from "expo-blur";
-
 import { Tabs } from "expo-router";
-import { Feather } from "@expo/vector-icons";
 
 const TabsLayout = () => {
   return (
@@ -17,8 +11,8 @@ const TabsLayout = () => {
         tabBarStyle: {
           paddingTop: 10,
           height: 80,
-          borderTopWidth: 0, // Hide default border
-          elevation: 0, // Remove Android shadow
+          borderTopWidth: 0,
+          elevation: 0,
         },
         tabBarActiveTintColor: "#fff",
         tabBarInactiveTintColor: "#606060",
