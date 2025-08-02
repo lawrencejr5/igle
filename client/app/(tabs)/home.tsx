@@ -191,7 +191,7 @@ const Home = () => {
                       carType === "sedan" && styles.select_ride_text_active,
                     ]}
                   >
-                    Sedan
+                    Cab
                   </Text>
                 </View>
               </TouchableWithoutFeedback>

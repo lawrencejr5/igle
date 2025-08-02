@@ -8,6 +8,7 @@ import {
 import React, { useState } from "react";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { router } from "expo-router";
 
 const Rides = () => {
   const [category, setCategory] = useState<
@@ -85,7 +86,7 @@ const Rides = () => {
           <View style={styles.info_sec}>
             <View style={styles.driver_sec}>
               <Image
-                source={require("../../assets/images/black-profile.jpeg")}
+                source={require("../../../assets/images/black-profile.jpeg")}
                 style={styles.driver_img}
                 resizeMode="cover"
               />
@@ -123,67 +124,71 @@ const Rides = () => {
 
       {/* Completed data */}
       {category === "completed" && (
-        <View style={{ marginTop: 10 }}>
-          <View
-            style={{
-              backgroundColor: "#2c2c2cff",
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              gap: 12,
-              paddingVertical: 15,
-              paddingHorizontal: 15,
-              borderRadius: 10,
-              marginTop: 15,
-            }}
-          >
-            <Image
-              source={require("../../assets/images/icons/keke-icon.png")}
-              style={{ width: 30, height: 30 }}
-            />
+        <TouchableWithoutFeedback
+          onPress={() => router.push("./rides/ride_detail")}
+        >
+          <View style={{ marginTop: 10 }}>
             <View
               style={{
+                backgroundColor: "#2c2c2c",
                 flexDirection: "row",
-                justifyContent: "space-between",
-                flex: 1,
+                justifyContent: "flex-start",
+                gap: 12,
+                paddingVertical: 15,
+                paddingHorizontal: 15,
+                borderRadius: 10,
+                marginTop: 15,
               }}
             >
-              <View>
-                <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
-                  Konwea plaza
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "raleway-semibold",
-                    color: "grey",
-                    fontSize: 11,
-                  }}
-                >
-                  20 Dec, 2025 . 5:00am
-                </Text>
-              </View>
-              <View>
-                <Text
-                  style={{
-                    color: "#6fe30fff",
-                    fontFamily: "poppins-bold",
-                    fontSize: 12,
-                  }}
-                >
-                  500 NGN
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "raleway-semibold",
-                    color: "grey",
-                    fontSize: 11,
-                  }}
-                >
-                  Wallet
-                </Text>
+              <Image
+                source={require("../../../assets/images/icons/keke-icon.png")}
+                style={{ width: 30, height: 30 }}
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  flex: 1,
+                }}
+              >
+                <View>
+                  <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
+                    Konwea plaza
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "raleway-semibold",
+                      color: "grey",
+                      fontSize: 11,
+                    }}
+                  >
+                    20 Dec, 2025 . 5:00am
+                  </Text>
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      color: "#6fe30fff",
+                      fontFamily: "poppins-bold",
+                      fontSize: 12,
+                    }}
+                  >
+                    500 NGN
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "raleway-semibold",
+                      color: "grey",
+                      fontSize: 11,
+                    }}
+                  >
+                    Wallet
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       )}
 
       {/* Cancelled data */}
@@ -202,7 +207,7 @@ const Rides = () => {
             }}
           >
             <Image
-              source={require("../../assets/images/icons/sedan-icon.png")}
+              source={require("../../../assets/images/icons/sedan-icon.png")}
               style={{ width: 30, height: 30 }}
             />
             <View
