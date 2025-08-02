@@ -7,10 +7,12 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
+
 import RideRoute from "../../../components/ride_route";
 import DriverCard from "../../../components/driver_card";
+
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 const Rides = () => {
   const [category, setCategory] = useState<
@@ -88,8 +90,58 @@ const Rides = () => {
           {/* Driver details */}
           <DriverCard />
 
+          <View
+            style={{
+              marginTop: 10,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              source={require("../../../assets/images/icons/keke-icon.png")}
+              style={{ height: 50, width: 50 }}
+            />
+            <View>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-bold",
+                  fontSize: 12,
+                }}
+              >
+                Keke ride
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-end",
+                  alignItems: "flex-start",
+                  gap: 5,
+                  marginTop: 7,
+                }}
+              >
+                <FontAwesome5
+                  name="user-alt"
+                  size={12}
+                  color="#c6c6c6"
+                  style={{ marginTop: 3 }}
+                />
+                <Text
+                  style={{
+                    color: "#c6c6c6",
+                    fontFamily: "poppins-semibold",
+                    fontSize: 12,
+                  }}
+                >
+                  1x
+                </Text>
+              </View>
+            </View>
+          </View>
+
           {/* Ride route */}
-          <View style={{ marginTop: 20 }}>
+          <View style={{ marginTop: 10 }}>
             <RideRoute from="Anglican girls grammar school" to="Konwea Plaza" />
           </View>
 
