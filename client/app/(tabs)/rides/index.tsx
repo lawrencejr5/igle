@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
 import RideRoute from "../../../components/ride_route";
+import DriverCard from "../../../components/driver_card";
 
 const Rides = () => {
   const [category, setCategory] = useState<
@@ -84,24 +85,15 @@ const Rides = () => {
             <Text style={styles.ride_header_text}>Today, 22 Feb, 2025</Text>
             <Text style={styles.ride_header_text}>5:00AM - 6:30Am</Text>
           </View>
-          <View style={styles.info_sec}>
-            <View style={styles.driver_sec}>
-              <Image
-                source={require("../../../assets/images/black-profile.jpeg")}
-                style={styles.driver_img}
-                resizeMode="cover"
-              />
-              <View>
-                <Text style={styles.driver_name}>Chidubem Oputa</Text>
-              </View>
-            </View>
-            <View>
-              <Text style={styles.amount_text}>5,000 NGN</Text>
-            </View>
-          </View>
+          {/* Driver details */}
+          <DriverCard />
+
+          {/* Ride route */}
           <View style={{ marginTop: 20 }}>
             <RideRoute from="Anglican girls grammar school" to="Konwea Plaza" />
           </View>
+
+          {/* Pay */}
           <View style={styles.pay_btn}>
             <Text style={styles.pay_btn_text}>Pay 5,000 NGN</Text>
           </View>
