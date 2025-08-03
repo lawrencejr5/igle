@@ -9,8 +9,8 @@ import React, { useState } from "react";
 
 import { router } from "expo-router";
 
-import RideRoute from "../../../components/ride_route";
-import DriverCard from "../../../components/driver_card";
+import RideRoute from "../../../components/RideRoute";
+import DriverCard from "../../../components/DriverCard";
 
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 

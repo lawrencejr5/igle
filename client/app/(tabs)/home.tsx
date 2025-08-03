@@ -6,6 +6,7 @@ import {
   TouchableWithoutFeedback,
   Animated,
   Image,
+  Dimensions,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -14,6 +15,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Entypo from "@expo/vector-icons/Entypo";
 
@@ -75,6 +77,26 @@ const Home = () => {
     }).start(() => setSideNavOpen(false));
   };
 
+  const [notiOpen, setNotiOpen] = useState(false);
+  const window_height = Dimensions.get("window").height;
+  const notiTranslate = useRef(new Animated.Value(window_height)).current; // 400 = offscreen, adjust as needed
+  const openNotification = () => {
+    setNotiOpen(true);
+    Animated.timing(notiTranslate, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeNotification = () => {
+    Animated.timing(notiTranslate, {
+      toValue: window_height,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => setNotiOpen(false));
+  };
+
   const [region, setRegion] = useState<any>(null);
 
   useEffect(() => {
@@ -127,9 +149,11 @@ const Home = () => {
             <Feather name="menu" size={22} color="white" />
           </View>
         </TouchableWithoutFeedback>
-        <View style={styles.nav_box}>
-          <Feather name="bell" size={22} color="white" />
-        </View>
+        <TouchableWithoutFeedback onPress={openNotification}>
+          <View style={styles.nav_box}>
+            <Feather name="bell" size={22} color="white" />
+          </View>
+        </TouchableWithoutFeedback>
       </View>
 
       {/* Side nav */}
@@ -288,7 +312,89 @@ const Home = () => {
         </TouchableWithoutFeedback>
       )}
 
-      {/* Modal */}
+      {/* Notification modal */}
+      {notiOpen && (
+        <Animated.View
+          style={{
+            backgroundColor: "#121212",
+            height: "100%",
+            width: "100%",
+            position: "absolute",
+            bottom: 0,
+            zIndex: 2,
+            paddingTop: 50,
+            paddingHorizontal: 20,
+            transform: [{ translateY: notiTranslate }],
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                fontSize: 25,
+              }}
+            >
+              Notifications
+            </Text>
+            <TouchableWithoutFeedback
+              onPress={closeNotification}
+              style={{ padding: 10 }}
+            >
+              <FontAwesome5 name="times" size={24} color="#fff" />
+            </TouchableWithoutFeedback>
+          </View>
+          {/* ...Notification content... */}
+          <View
+            style={{
+              marginTop: 20,
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "flex-start",
+              gap: 10,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#5f5d5d",
+                padding: 10,
+                borderRadius: "50%",
+              }}
+            >
+              <Feather name="bell" size={20} color={"#fff"} />
+            </View>
+            <View style={{ paddingRight: 25 }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-semibold",
+                  paddingRight: 25,
+                }}
+              >
+                Your ride to okpanam rd was accepted by so so time
+              </Text>
+              <Text
+                style={{
+                  color: "#c9c9c9ff",
+                  fontFamily: "raleway-regular",
+                  fontSize: 12,
+                }}
+              >
+                2 hrs ago
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Choose route Modal */}
       <Animated.View style={[styles.modal, { height: height }]}>
         {/* Expand line */}
         <TouchableWithoutFeedback onPress={collapse_route_modal}>

@@ -15,8 +15,8 @@ import { darkMapStyle } from "../../../data/map.dark";
 
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import RideRoute from "../../../components/ride_route";
-import DriverCard from "../../../components/driver_card";
+import RideRoute from "../../../components/RideRoute";
+import DriverCard from "../../../components/DriverCard";
 
 const RideDetails = () => {
   const [region, setRegion] = useState<any>(null);
