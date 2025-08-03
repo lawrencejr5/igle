@@ -162,17 +162,98 @@ const Rides = () => {
             <View
               style={{
                 backgroundColor: "#2c2c2c",
-                flexDirection: "row",
-                justifyContent: "flex-start",
-                gap: 12,
-                paddingVertical: 15,
+                paddingTop: 15,
                 paddingHorizontal: 15,
                 borderRadius: 10,
                 marginTop: 15,
               }}
             >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  gap: 12,
+                }}
+              >
+                <Image
+                  source={require("../../../assets/images/icons/keke-icon.png")}
+                  style={{ width: 30, height: 30 }}
+                />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    flex: 1,
+                    paddingBottom: 10,
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
+                      Konwea plaza
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-semibold",
+                        color: "grey",
+                        fontSize: 11,
+                      }}
+                    >
+                      20 Dec, 2025 . 5:00am
+                    </Text>
+                  </View>
+                  <View>
+                    <Text
+                      style={{
+                        color: "#6fe30fff",
+                        fontFamily: "poppins-bold",
+                        fontSize: 12,
+                      }}
+                    >
+                      500 NGN
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-semibold",
+                        color: "grey",
+                        fontSize: 11,
+                      }}
+                    >
+                      Wallet
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              {/* Ride route */}
+              <RideRoute
+                from="Anglican girls grammar school"
+                to="Konwea Plaza"
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      )}
+
+      {/* Cancelled data */}
+      {category === "cancelled" && (
+        <View style={{ marginTop: 10 }}>
+          <View
+            style={{
+              backgroundColor: "#2c2c2cff",
+              paddingTop: 15,
+              paddingHorizontal: 15,
+              borderRadius: 10,
+              marginTop: 15,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                gap: 12,
+              }}
+            >
               <Image
-                source={require("../../../assets/images/icons/keke-icon.png")}
+                source={require("../../../assets/images/icons/sedan-icon.png")}
                 style={{ width: 30, height: 30 }}
               />
               <View
@@ -180,11 +261,12 @@ const Rides = () => {
                   flexDirection: "row",
                   justifyContent: "space-between",
                   flex: 1,
+                  paddingBottom: 10,
                 }}
               >
                 <View>
                   <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
-                    Konwea plaza
+                    Asaba shoprite
                   </Text>
                   <Text
                     style={{
@@ -199,81 +281,18 @@ const Rides = () => {
                 <View>
                   <Text
                     style={{
-                      color: "#6fe30fff",
+                      color: "#e30f0fff",
                       fontFamily: "poppins-bold",
                       fontSize: 12,
                     }}
                   >
-                    500 NGN
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-semibold",
-                      color: "grey",
-                      fontSize: 11,
-                    }}
-                  >
-                    Wallet
+                    Cancelled
                   </Text>
                 </View>
               </View>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
-      )}
-
-      {/* Cancelled data */}
-      {category === "cancelled" && (
-        <View style={{ marginTop: 10 }}>
-          <View
-            style={{
-              backgroundColor: "#2c2c2cff",
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              gap: 12,
-              paddingVertical: 15,
-              paddingHorizontal: 15,
-              borderRadius: 10,
-              marginTop: 15,
-            }}
-          >
-            <Image
-              source={require("../../../assets/images/icons/sedan-icon.png")}
-              style={{ width: 30, height: 30 }}
-            />
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                flex: 1,
-              }}
-            >
-              <View>
-                <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
-                  Asaba shoprite
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "raleway-semibold",
-                    color: "grey",
-                    fontSize: 11,
-                  }}
-                >
-                  20 Dec, 2025 . 5:00am
-                </Text>
-              </View>
-              <View>
-                <Text
-                  style={{
-                    color: "#e30f0fff",
-                    fontFamily: "poppins-bold",
-                    fontSize: 12,
-                  }}
-                >
-                  Cancelled
-                </Text>
-              </View>
-            </View>
+            {/* Ride route */}
+            <RideRoute from="Ibuza junction" to="Asaba Shoprite" />
           </View>
         </View>
       )}
