@@ -94,8 +94,9 @@ const Rides = () => {
             style={{
               marginTop: 10,
               flexDirection: "row",
-              justifyContent: "space-between",
+              justifyContent: "flex-start",
               alignItems: "center",
+              gap: 10,
             }}
           >
             <Image
@@ -115,10 +116,10 @@ const Rides = () => {
               <View
                 style={{
                   flexDirection: "row",
-                  justifyContent: "flex-end",
+                  justifyContent: "flex-start",
                   alignItems: "flex-start",
                   gap: 5,
-                  marginTop: 7,
+                  // marginTop: 7,
                 }}
               >
                 <FontAwesome5
