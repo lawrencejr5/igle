@@ -6,7 +6,6 @@ import {
   TouchableWithoutFeedback,
   Animated,
   Image,
-  Dimensions,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -14,14 +13,12 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import Entypo from "@expo/vector-icons/Entypo";
 
 import { darkMapStyle } from "../../data/map.dark";
 
 import * as Location from "expo-location";
+import SideNav from "../../components/SideNav";
+import NotificationScreen from "../../components/NotificationScreen";
 
 const Home = () => {
   const [carType, setCarType] = useState<"sedan" | "keke" | "suv">("keke");
@@ -58,47 +55,13 @@ const Home = () => {
     }).start();
   };
 
+  // Side nav state
   const [sideNavOpen, setSideNavOpen] = useState<boolean>(false);
-  const sideNavTranslate = useRef(new Animated.Value(-320)).current;
-  const openSideNav = () => {
-    setSideNavOpen(true);
-    Animated.timing(sideNavTranslate, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
 
-  const closeSideNav = () => {
-    Animated.timing(sideNavTranslate, {
-      toValue: -320,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => setSideNavOpen(false));
-  };
-
-  const [notiOpen, setNotiOpen] = useState(false);
-  const window_height = Dimensions.get("window").height;
-  const notiTranslate = useRef(new Animated.Value(window_height)).current; // 400 = offscreen, adjust as needed
-  const openNotification = () => {
-    setNotiOpen(true);
-    Animated.timing(notiTranslate, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeNotification = () => {
-    Animated.timing(notiTranslate, {
-      toValue: window_height,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => setNotiOpen(false));
-  };
+  // Notification screen state
+  const [openNotification, setOpenNotification] = useState<boolean>(false);
 
   const [region, setRegion] = useState<any>(null);
-
   useEffect(() => {
     // Getting current location
     const get_and_set_location = async () => {
@@ -144,12 +107,12 @@ const Home = () => {
 
       {/* Nav */}
       <View style={styles.nav_container}>
-        <TouchableWithoutFeedback onPress={openSideNav}>
+        <TouchableWithoutFeedback onPress={() => setSideNavOpen(true)}>
           <View style={styles.nav_box}>
             <Feather name="menu" size={22} color="white" />
           </View>
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback onPress={openNotification}>
+        <TouchableWithoutFeedback onPress={() => setOpenNotification(true)}>
           <View style={styles.nav_box}>
             <Feather name="bell" size={22} color="white" />
           </View>
@@ -157,242 +120,13 @@ const Home = () => {
       </View>
 
       {/* Side nav */}
-      {sideNavOpen && (
-        <TouchableWithoutFeedback onPress={closeSideNav}>
-          <View
-            style={{
-              position: "absolute",
-              zIndex: 1,
-              height: "100%",
-              width: "100%",
-              backgroundColor: "#12121290",
-            }}
-          >
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <Animated.View
-                style={{
-                  position: "absolute",
-                  zIndex: 1,
-                  height: "100%",
-                  width: 320,
-                  backgroundColor: "#121212",
-                  paddingTop: 50,
-                  paddingHorizontal: 20,
-                  flex: 1,
-                  justifyContent: "space-between",
-                  transform: [{ translateX: sideNavTranslate }],
-                }}
-              >
-                <View>
-                  {/* Logo */}
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      paddingRight: 5,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#fff",
-                        fontFamily: "raleway-bold",
-                        fontSize: 30,
-                      }}
-                    >
-                      Igle
-                    </Text>
-                    <TouchableWithoutFeedback
-                      onPress={closeSideNav}
-                      style={{ padding: 10 }}
-                    >
-                      <Feather name="sidebar" size={24} color="#fff" />
-                    </TouchableWithoutFeedback>
-                  </View>
+      <SideNav open={sideNavOpen} setSideNavOpen={setSideNavOpen} />
 
-                  {/* User */}
-                  <View
-                    style={{
-                      marginVertical: 30,
-                      backgroundColor: "#393939",
-                      paddingHorizontal: 10,
-                      paddingVertical: 10,
-                      borderRadius: 10,
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      alignItems: "flex-start",
-                      gap: 10,
-                    }}
-                  >
-                    <Image
-                      source={require("../../assets/images/black-profile.jpeg")}
-                      style={{ height: 50, width: 50, borderRadius: 25 }}
-                    />
-
-                    <View>
-                      <Text
-                        style={{
-                          color: "#fff",
-                          fontFamily: "raleway-bold",
-                          fontSize: 16,
-                        }}
-                      >
-                        Oputa Lawrence
-                      </Text>
-                      <Text
-                        style={{
-                          color: "#ffffff",
-                          fontFamily: "raleway-regular",
-                          marginTop: 3,
-                        }}
-                      >
-                        Rider
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Side bar values */}
-                <View>
-                  <View style={styles.sidenav_content_box}>
-                    <FontAwesome name="car" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>My Rides</Text>
-                  </View>
-                  <View style={styles.sidenav_content_box}>
-                    <Entypo name="wallet" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Wallet</Text>
-                  </View>
-                  <View style={styles.sidenav_content_box}>
-                    <Ionicons name="pricetag" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Promotions</Text>
-                  </View>
-                  <View style={styles.sidenav_content_box}>
-                    <Feather name="help-circle" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Support</Text>
-                  </View>
-                  <View style={styles.sidenav_content_box}>
-                    <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>About</Text>
-                  </View>
-                  <View style={styles.sidenav_content_box}>
-                    <FontAwesome name="star" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Rate us</Text>
-                  </View>
-                </View>
-
-                {/* Switch mode */}
-                <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
-                  <View
-                    style={{
-                      backgroundColor: "#fff",
-                      padding: 10,
-                      paddingHorizontal: 30,
-                      borderRadius: 5,
-                      flexDirection: "row",
-                      gap: 10,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#121212",
-                        fontFamily: "raleway-bold",
-                        fontSize: 16,
-                      }}
-                    >
-                      Driver mode
-                    </Text>
-                    <FontAwesome6 name="rotate" size={20} color="black" />
-                  </View>
-                </View>
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      )}
-
-      {/* Notification modal */}
-      {notiOpen && (
-        <Animated.View
-          style={{
-            backgroundColor: "#121212",
-            height: "100%",
-            width: "100%",
-            position: "absolute",
-            bottom: 0,
-            zIndex: 2,
-            paddingTop: 50,
-            paddingHorizontal: 20,
-            transform: [{ translateY: notiTranslate }],
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-            }}
-          >
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-bold",
-                fontSize: 25,
-              }}
-            >
-              Notifications
-            </Text>
-            <TouchableWithoutFeedback
-              onPress={closeNotification}
-              style={{ padding: 10 }}
-            >
-              <FontAwesome5 name="times" size={24} color="#fff" />
-            </TouchableWithoutFeedback>
-          </View>
-          {/* ...Notification content... */}
-          <View
-            style={{
-              marginTop: 20,
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              alignItems: "flex-start",
-              gap: 10,
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "#5f5d5d",
-                padding: 10,
-                borderRadius: "50%",
-              }}
-            >
-              <Feather name="bell" size={20} color={"#fff"} />
-            </View>
-            <View style={{ paddingRight: 25 }}>
-              <Text
-                numberOfLines={1}
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-semibold",
-                  paddingRight: 25,
-                }}
-              >
-                Your ride to okpanam rd was accepted by so so time
-              </Text>
-              <Text
-                style={{
-                  color: "#c9c9c9ff",
-                  fontFamily: "raleway-regular",
-                  fontSize: 12,
-                }}
-              >
-                2 hrs ago
-              </Text>
-            </View>
-          </View>
-        </Animated.View>
-      )}
+      {/* Notification screen */}
+      <NotificationScreen
+        open={openNotification}
+        setOpen={setOpenNotification}
+      />
 
       {/* Choose route Modal */}
       <Animated.View style={[styles.modal, { height: height }]}>
