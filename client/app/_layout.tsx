@@ -18,6 +18,7 @@ const RootLayout = () => {
     "raleway-black": require("../assets/fonts/raleway/Raleway-Black.ttf"),
     "poppins-regular": require("../assets/fonts/poppins/Poppins-Regular.ttf"),
     "poppins-bold": require("../assets/fonts/poppins/Poppins-Bold.ttf"),
+    "poppins-black": require("../assets/fonts/poppins/Poppins-Black.ttf"),
   });
 
   if (!fontsLoaded) {

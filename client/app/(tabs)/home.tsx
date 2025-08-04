@@ -8,8 +8,9 @@ import Feather from "@expo/vector-icons/Feather";
 import { darkMapStyle } from "../../data/map.dark";
 
 import * as Location from "expo-location";
+
 import SideNav from "../../components/SideNav";
-import NotificationScreen from "../../components/NotificationScreen";
+import NotificationScreen from "../../components/screens/NotificationScreen";
 import RouteModal from "../../components/RouteModal";
 
 const Home = () => {
