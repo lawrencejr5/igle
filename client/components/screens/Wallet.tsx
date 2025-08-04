@@ -4,6 +4,8 @@ import {
   View,
   TouchableWithoutFeedback,
   TextInput,
+  Animated,
+  Dimensions,
 } from "react-native";
 import React, {
   FC,
@@ -16,18 +18,45 @@ import React, {
 
 import { FontAwesome5 } from "@expo/vector-icons";
 
-const WalletScreen = () => {
+const WalletScreen: FC<{
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}> = ({ open, setOpen }) => {
+  const window_height = Dimensions.get("window").height;
+  const walletTranslate = useRef(new Animated.Value(window_height)).current;
+
+  useEffect(() => {
+    if (open)
+      Animated.timing(walletTranslate, {
+        duration: 300,
+        toValue: 0,
+        useNativeDriver: true,
+      }).start();
+  }, [open]);
+
+  const closeWallet = () => {
+    setOpen(false);
+    Animated.timing(walletTranslate, {
+      duration: 300,
+      toValue: window_height,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <View
-      style={{
-        backgroundColor: "#121212",
-        height: "100%",
-        width: "100%",
-        position: "absolute",
-        zIndex: 2,
-        paddingTop: 50,
-        paddingHorizontal: 20,
-      }}
+    <Animated.View
+      style={[
+        {
+          backgroundColor: "#121212",
+          height: "100%",
+          width: "100%",
+          position: "absolute",
+          zIndex: 2,
+          paddingTop: 50,
+          paddingHorizontal: 20,
+        },
+        { transform: [{ translateY: walletTranslate }] },
+      ]}
     >
       <View
         style={{
@@ -45,7 +74,7 @@ const WalletScreen = () => {
         >
           Wallet
         </Text>
-        <TouchableWithoutFeedback style={{ padding: 10 }}>
+        <TouchableWithoutFeedback style={{ padding: 10 }} onPress={closeWallet}>
           <FontAwesome5 name="times" size={24} color="#fff" />
         </TouchableWithoutFeedback>
       </View>
@@ -174,7 +203,7 @@ const WalletScreen = () => {
           </View>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

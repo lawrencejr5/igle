@@ -1,5 +1,12 @@
-import { StyleSheet, Text, View, Image, ScrollView } from "react-native";
-import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ScrollView,
+  TouchableWithoutFeedback,
+} from "react-native";
+import React, { useState } from "react";
 
 import Entypo from "@expo/vector-icons/Entypo";
 import Feather from "@expo/vector-icons/Feather";
@@ -7,6 +14,8 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import WalletScreen from "../../../components/screens/Wallet";
 
 const Account = () => {
+  const [walletOpen, setWalletOpen] = useState<boolean>(false);
+
   return (
     <>
       <ScrollView
@@ -44,43 +53,45 @@ const Account = () => {
         </View>
 
         {/* Wallet */}
-        <View
-          style={{
-            backgroundColor: "#2c2c2c",
-            paddingVertical: 15,
-            paddingHorizontal: 20,
-            marginTop: 20,
-            borderRadius: 10,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <TouchableWithoutFeedback onPress={() => setWalletOpen(true)}>
           <View
             style={{
+              backgroundColor: "#2c2c2c",
+              paddingVertical: 15,
+              paddingHorizontal: 20,
+              marginTop: 20,
+              borderRadius: 10,
               flexDirection: "row",
-              justifyContent: "flex-start",
+              justifyContent: "space-between",
               alignItems: "center",
-              gap: 10,
             }}
           >
-            <Entypo name="wallet" size={24} color="#c8c5c5" />
-            <Text
+            <View
               style={{
-                color: "#c8c5c5",
-                fontFamily: "raleway-bold",
-                fontSize: 16,
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                gap: 10,
               }}
             >
-              Wallet
-            </Text>
+              <Entypo name="wallet" size={24} color="#c8c5c5" />
+              <Text
+                style={{
+                  color: "#c8c5c5",
+                  fontFamily: "raleway-bold",
+                  fontSize: 16,
+                }}
+              >
+                Wallet
+              </Text>
+            </View>
+            <View>
+              <Text style={{ fontFamily: "poppins-bold", color: "#fff" }}>
+                12,000 NGN
+              </Text>
+            </View>
           </View>
-          <View>
-            <Text style={{ fontFamily: "poppins-bold", color: "#fff" }}>
-              12,000 NGN
-            </Text>
-          </View>
-        </View>
+        </TouchableWithoutFeedback>
 
         {/* Other settings */}
         <View style={{ marginTop: 30, paddingHorizontal: 10 }}>
@@ -127,7 +138,7 @@ const Account = () => {
       </ScrollView>
 
       {/* Wallet screen */}
-      <WalletScreen />
+      <WalletScreen open={walletOpen} setOpen={setWalletOpen} />
     </>
   );
 };
