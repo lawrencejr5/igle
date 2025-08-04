@@ -1,7 +1,6 @@
 import {
   Image,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableWithoutFeedback,
   View,
@@ -85,7 +84,20 @@ const RideDetails = () => {
       </MapView>
 
       {/* Ride details */}
-      <ScrollView style={{ marginTop: 20, paddingHorizontal: 20 }}>
+      <ScrollView
+        style={{
+          marginTop: 20,
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          position: "absolute",
+          bottom: 0,
+          width: "100%",
+          height: "68%",
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          backgroundColor: "#121212",
+        }}
+      >
         <View
           style={{
             flexDirection: "row",
