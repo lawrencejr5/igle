@@ -20,7 +20,7 @@ const Signup = () => {
   const styles = auth_styles();
 
   const [checked, setChecked] = useState(false);
-  const [passwordShow, setPasswordShow] = useState(false);
+  const [passwordShow, setPasswordShow] = useState<boolean>(true);
 
   return (
     <View style={styles.container}>
@@ -53,6 +53,7 @@ const Signup = () => {
                 style={styles.text_input}
                 placeholder="Input your full name"
                 placeholderTextColor={"#c5c5c5ff"}
+                autoCapitalize="words"
               />
             </View>
           </View>
@@ -66,6 +67,7 @@ const Signup = () => {
                 style={styles.text_input}
                 placeholder="Input your email"
                 placeholderTextColor={"#c5c5c5"}
+                autoCapitalize="none"
               />
             </View>
           </View>
@@ -80,6 +82,7 @@ const Signup = () => {
                 placeholder="Input your password"
                 placeholderTextColor={"#c5c5c5ff"}
                 secureTextEntry={passwordShow}
+                autoCapitalize="none"
               />
               {passwordShow ? (
                 <Feather
@@ -109,6 +112,7 @@ const Signup = () => {
                 placeholder="Confirm your password"
                 placeholderTextColor={"#c5c5c5ff"}
                 secureTextEntry={passwordShow}
+                autoCapitalize="none"
               />
               {passwordShow ? (
                 <Feather

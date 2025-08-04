@@ -19,8 +19,8 @@ import { auth_styles } from "../../styles/auth.styles";
 const Signin = () => {
   const styles = auth_styles();
 
-  const [checked, setChecked] = useState(false);
-  const [passwordShow, setPasswordShow] = useState(false);
+  const [checked, setChecked] = useState<boolean>(false);
+  const [passwordShow, setPasswordShow] = useState<boolean>(true);
 
   return (
     <ScrollView style={styles.container}>
@@ -50,6 +50,7 @@ const Signin = () => {
               style={styles.text_input}
               placeholder="Input your email"
               placeholderTextColor={"#c5c5c5ff"}
+              autoCapitalize="none"
             />
           </View>
         </View>
@@ -64,6 +65,7 @@ const Signin = () => {
               placeholder="Input your password"
               placeholderTextColor={"#c5c5c5ff"}
               secureTextEntry={passwordShow}
+              autoCapitalize="none"
             />
             {passwordShow ? (
               <Feather
