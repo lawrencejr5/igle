@@ -8,6 +8,7 @@ import {
 import React, { useState } from "react";
 
 import Feather from "@expo/vector-icons/Feather";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 import { Link, router } from "expo-router";
 
@@ -41,12 +42,16 @@ const AddPhone = () => {
       <View style={{ marginTop: 20, paddingHorizontal: 10, flex: 1 }}>
         {/* Phone input */}
         <View style={styles.inp_container}>
-          <Text style={styles.inp_text}>Phone</Text>
-          <TextInput
-            style={[styles.text_input, { fontFamily: "poppins-regular" }]}
-            keyboardType="numeric"
-            autoCapitalize="none"
-          />
+          <Text style={styles.inp_label}>Phone</Text>
+          <View style={styles.inp_holder}>
+            <Feather name="phone" size={20} color="white" />
+            <TextInput
+              style={[styles.text_input, { fontFamily: "poppins-regular" }]}
+              placeholder="Input your phone number"
+              placeholderTextColor={"#c5c5c5"}
+              keyboardType="numeric"
+            />
+          </View>
         </View>
 
         {/* Send code button */}
@@ -66,13 +71,16 @@ const AddPhone = () => {
         <View style={{ marginTop: 50, paddingHorizontal: 10, flex: 1 }}>
           {/* Verfication code input */}
           <View style={styles.inp_container}>
-            <TextInput
-              style={[styles.text_input, { fontFamily: "poppins-regular" }]}
-              placeholder="verification code"
-              placeholderTextColor={"#d0cfcfff"}
-              keyboardType="numeric"
-              autoCapitalize="none"
-            />
+            <Text style={styles.inp_label}>Verification code</Text>
+            <View style={styles.inp_holder}>
+              <Feather name="lock" size={20} color="white" />
+              <TextInput
+                style={[styles.text_input, { fontFamily: "poppins-regular" }]}
+                placeholder="verification code"
+                placeholderTextColor={"#c5c5c5"}
+                keyboardType="numeric"
+              />
+            </View>
           </View>
 
           {/* Verify button */}

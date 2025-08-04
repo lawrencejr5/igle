@@ -6,7 +6,8 @@ export const auth_styles = () =>
       flex: 1,
       backgroundColor: "#121212",
       paddingHorizontal: 10,
-      paddingVertical: 5,
+      paddingTop: 50,
+      paddingBottom: 30,
     },
     header_text: {
       fontFamily: "raleway-bold",
@@ -15,16 +16,26 @@ export const auth_styles = () =>
     },
     sub_header_text: {
       fontFamily: "raleway-semibold",
-      color: "#bfbabaff",
+      color: "#bfbaba",
       fontSize: 12,
       marginTop: 5,
     },
-    inp_container: {
-      backgroundColor: "#ffffff60",
+    inp_container: { marginTop: 15 },
+    inp_label: {
+      color: "#fff",
+      fontFamily: "raleway-semibold",
+      fontSize: 12,
+    },
+    inp_holder: {
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      alignItems: "center",
+      backgroundColor: "#757575ff",
+      gap: 10,
       paddingHorizontal: 15,
-      paddingTop: 10,
-      borderRadius: 12,
-      marginTop: 25,
+      paddingVertical: 7,
+      marginTop: 10,
+      borderRadius: 7,
     },
     inp_text: {
       fontFamily: "raleway-semibold",
@@ -33,12 +44,11 @@ export const auth_styles = () =>
       marginLeft: 3,
     },
     text_input: {
-      color: "#fff",
+      backgroundColor: "transparent",
+      flex: 1,
       fontFamily: "raleway-semibold",
+      color: "#fff",
       fontSize: 14,
-      paddingBottom: 15,
-      paddingTop: 5,
-      width: "90%",
     },
     password_input: {
       flexDirection: "row",
@@ -55,7 +65,7 @@ export const auth_styles = () =>
       width: "100%",
       padding: 12,
       borderRadius: 30,
-      marginTop: 20,
+      marginTop: 30,
       alignItems: "center",
     },
     sign_btn_text: {
@@ -66,7 +76,7 @@ export const auth_styles = () =>
     or_container: {
       flexDirection: "row",
       alignItems: "center",
-      marginVertical: 20,
+      marginTop: 20,
     },
     or_text: {
       marginHorizontal: 10,
@@ -78,18 +88,18 @@ export const auth_styles = () =>
       width: 160,
       flexDirection: "row",
       justifyContent: "center",
-      gap: 5,
+      gap: 10,
       paddingVertical: 15,
       paddingHorizontal: 10,
       borderRadius: 30,
     },
     oauth_img: {
-      width: 15,
-      height: 15,
+      width: 20,
+      height: 20,
     },
     oauth_text: {
       color: "#fff",
       fontFamily: "raleway-bold",
-      fontSize: 10,
+      fontSize: 14,
     },
   });

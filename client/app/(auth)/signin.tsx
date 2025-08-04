@@ -9,6 +9,7 @@ import {
 import React, { useState } from "react";
 
 import Feather from "@expo/vector-icons/Feather";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 import { Checkbox } from "react-native-paper";
 import { Link, router } from "expo-router";
@@ -42,18 +43,27 @@ const Signin = () => {
       <View style={{ marginTop: 20, paddingHorizontal: 10, flex: 1 }}>
         {/* Email input */}
         <View style={styles.inp_container}>
-          <Text style={styles.inp_text}>Email</Text>
-          <TextInput style={styles.text_input} autoCapitalize="none" />
+          <Text style={styles.inp_label}>Email</Text>
+          <View style={styles.inp_holder}>
+            <FontAwesome name="envelope-o" size={20} color="white" />
+            <TextInput
+              style={styles.text_input}
+              placeholder="Input your email"
+              placeholderTextColor={"#c5c5c5ff"}
+            />
+          </View>
         </View>
 
         {/* Passsord input */}
         <View style={styles.inp_container}>
-          <Text style={styles.inp_text}>Password</Text>
-          <View style={styles.password_input}>
+          <Text style={styles.inp_label}>Password</Text>
+          <View style={styles.inp_holder}>
+            <Feather name="lock" size={20} color="white" />
             <TextInput
               style={styles.text_input}
+              placeholder="Input your password"
+              placeholderTextColor={"#c5c5c5ff"}
               secureTextEntry={passwordShow}
-              autoCapitalize="none"
             />
             {passwordShow ? (
               <Feather
@@ -95,19 +105,25 @@ const Signin = () => {
         {/* ----- OR ----- */}
         <View style={styles.or_container}>
           <View style={{ flex: 1, height: 1, backgroundColor: "#8b8b8bff" }} />
-          <Text style={styles.or_text}>OR</Text>
+          <Text style={styles.or_text}>Or Continue With</Text>
           <View style={{ flex: 1, height: 1, backgroundColor: "#8b8b8bff" }} />
         </View>
 
         {/* 0auth buttons */}
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginTop: 30,
+          }}
+        >
           {/* Sign with google */}
           <View style={styles.oauth_btn}>
             <Image
               source={require("../../assets/images/icons/google-logo.png")}
               style={styles.oauth_img}
             />
-            <Text style={styles.oauth_text}>Signin with Google</Text>
+            <Text style={styles.oauth_text}>Google</Text>
           </View>
 
           {/* Sign with apple */}
@@ -116,7 +132,7 @@ const Signin = () => {
               source={require("../../assets/images/icons/apple-logo-white.png")}
               style={styles.oauth_img}
             />
-            <Text style={styles.oauth_text}>Signin with Apple</Text>
+            <Text style={styles.oauth_text}>Apple</Text>
           </View>
         </View>
 
