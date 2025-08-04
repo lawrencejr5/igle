@@ -12,6 +12,7 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Entypo from "@expo/vector-icons/Entypo";
+import { router } from "expo-router";
 
 const SideNav: React.FC<{
   open: boolean;
@@ -45,113 +46,117 @@ const SideNav: React.FC<{
   return (
     <TouchableWithoutFeedback onPress={closeSideNav}>
       <View style={styles.overlay}>
-        <Animated.View
-          style={[
-            styles.sidenav,
-            { transform: [{ translateX: sideNavTranslate }] },
-          ]}
-        >
-          <TouchableWithoutFeedback onPress={() => {}}>
+        <TouchableWithoutFeedback onPress={() => {}}>
+          <Animated.View
+            style={[
+              styles.sidenav,
+              { transform: [{ translateX: sideNavTranslate }] },
+            ]}
+          >
             <View>
-              <View>
-                {/* Logo */}
-                <View
+              {/* Logo */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingRight: 5,
+                }}
+              >
+                <Text
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    paddingRight: 5,
+                    color: "#fff",
+                    fontFamily: "raleway-bold",
+                    fontSize: 30,
                   }}
                 >
+                  Igle
+                </Text>
+                <TouchableWithoutFeedback
+                  onPress={closeSideNav}
+                  style={{ padding: 10 }}
+                >
+                  <Feather name="sidebar" size={24} color="#fff" />
+                </TouchableWithoutFeedback>
+              </View>
+
+              {/* User */}
+              <View
+                style={{
+                  marginVertical: 30,
+                  backgroundColor: "#393939",
+                  paddingHorizontal: 10,
+                  paddingVertical: 10,
+                  borderRadius: 10,
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  alignItems: "flex-start",
+                  gap: 10,
+                }}
+              >
+                <Image
+                  source={require("../assets/images/black-profile.jpeg")}
+                  style={{ height: 50, width: 50, borderRadius: 25 }}
+                />
+
+                <View>
                   <Text
                     style={{
                       color: "#fff",
                       fontFamily: "raleway-bold",
-                      fontSize: 30,
+                      fontSize: 16,
                     }}
                   >
-                    Igle
+                    Oputa Lawrence
                   </Text>
-                  <TouchableWithoutFeedback
-                    onPress={closeSideNav}
-                    style={{ padding: 10 }}
+                  <Text
+                    style={{
+                      color: "#ffffff",
+                      fontFamily: "raleway-regular",
+                      marginTop: 3,
+                    }}
                   >
-                    <Feather name="sidebar" size={24} color="#fff" />
-                  </TouchableWithoutFeedback>
-                </View>
-
-                {/* User */}
-                <View
-                  style={{
-                    marginVertical: 30,
-                    backgroundColor: "#393939",
-                    paddingHorizontal: 10,
-                    paddingVertical: 10,
-                    borderRadius: 10,
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    alignItems: "flex-start",
-                    gap: 10,
-                  }}
-                >
-                  <Image
-                    source={require("../assets/images/black-profile.jpeg")}
-                    style={{ height: 50, width: 50, borderRadius: 25 }}
-                  />
-
-                  <View>
-                    <Text
-                      style={{
-                        color: "#fff",
-                        fontFamily: "raleway-bold",
-                        fontSize: 16,
-                      }}
-                    >
-                      Oputa Lawrence
-                    </Text>
-                    <Text
-                      style={{
-                        color: "#ffffff",
-                        fontFamily: "raleway-regular",
-                        marginTop: 3,
-                      }}
-                    >
-                      Rider
-                    </Text>
-                  </View>
+                    Rider
+                  </Text>
                 </View>
               </View>
+            </View>
 
-              {/* Side bar values */}
-              <View>
-                <View style={styles.sidenav_content_box}>
-                  <FontAwesome name="car" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>My Rides</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
-                  <Entypo name="wallet" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Wallet</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
-                  <Ionicons name="pricetag" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Promotions</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
-                  <Feather name="help-circle" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Support</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
-                  <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>About</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
-                  <FontAwesome name="star" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Rate us</Text>
-                </View>
+            {/* Side bar values */}
+            <View>
+              <View style={styles.sidenav_content_box}>
+                <FontAwesome name="car" size={20} color="#c6c6c6" />
+                <Text style={styles.sidenav_content_text}>My Rides</Text>
               </View>
+              <View style={styles.sidenav_content_box}>
+                <Entypo name="wallet" size={20} color="#c6c6c6" />
+                <Text style={styles.sidenav_content_text}>Wallet</Text>
+              </View>
+              <View style={styles.sidenav_content_box}>
+                <Ionicons name="pricetag" size={20} color="#c6c6c6" />
+                <Text style={styles.sidenav_content_text}>Promotions</Text>
+              </View>
+              <View style={styles.sidenav_content_box}>
+                <Feather name="help-circle" size={20} color="#c6c6c6" />
+                <Text style={styles.sidenav_content_text}>Support</Text>
+              </View>
+              <View style={styles.sidenav_content_box}>
+                <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
+                <Text style={styles.sidenav_content_text}>About</Text>
+              </View>
+              <View style={styles.sidenav_content_box}>
+                <FontAwesome name="star" size={20} color="#c6c6c6" />
+                <Text style={styles.sidenav_content_text}>Rate us</Text>
+              </View>
+            </View>
 
-              {/* Switch mode */}
-              <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
+            {/* Switch mode */}
+            <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
+              <TouchableWithoutFeedback
+                onPress={() =>
+                  router.push("../(driver_auth)/personal_information")
+                }
+              >
                 <View
                   style={{
                     backgroundColor: "#fff",
@@ -175,10 +180,10 @@ const SideNav: React.FC<{
                   </Text>
                   <FontAwesome6 name="rotate" size={20} color="black" />
                 </View>
-              </View>
+              </TouchableWithoutFeedback>
             </View>
-          </TouchableWithoutFeedback>
-        </Animated.View>
+          </Animated.View>
+        </TouchableWithoutFeedback>
       </View>
     </TouchableWithoutFeedback>
   );
