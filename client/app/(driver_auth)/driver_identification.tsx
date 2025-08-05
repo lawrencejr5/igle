@@ -16,12 +16,23 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 
+import { driver_reg_styles } from "../../styles/driver_reg_styles";
+import Header from "../../components/driver_reg/Header";
+
 const DriverIdentification = () => {
+  const styles = driver_reg_styles();
+
   const [imageUri, setImageUri] = useState<string>("");
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true, // for cropping
-      aspect: [1, 1], // square crop
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      console.log("Permission required", "Camera access is needed.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [15, 10],
       quality: 1,
     });
 
@@ -34,55 +45,23 @@ const DriverIdentification = () => {
       style={{
         flex: 1,
         backgroundColor: "#121212",
-        paddingTop: 60,
-        paddingHorizontal: 20,
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: "raleway-semibold",
-            color: "#fff",
-            fontSize: 18,
-          }}
-        >
-          Driver Registration
-        </Text>
-        <TouchableWithoutFeedback style={{ padding: 10 }}>
-          <FontAwesome5 name="times" size={24} color="#fff" />
-        </TouchableWithoutFeedback>
-      </View>
+      {/* Header component obviously */}
+      <Header />
+
+      {/* Registration progress bar */}
       <View style={styles.progress_bar_container}>
         <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
-        <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
+        <View style={[styles.progress_bar, { backgroundColor: "#999999" }]} />
         <View style={styles.progress_bar} />
       </View>
 
-      <ScrollView>
-        {/* Header */}
+      <ScrollView style={{ paddingHorizontal: 20 }}>
+        {/* Form Header */}
         <View style={{ marginTop: 20 }}>
-          <Text
-            style={{
-              color: "#dbdbdb",
-              fontFamily: "raleway-bold",
-              fontSize: 22,
-            }}
-          >
-            Driver Identification
-          </Text>
-          <Text
-            style={{
-              color: "#dbdbdb",
-              fontFamily: "raleway-regular",
-              fontSize: 12,
-            }}
-          >
+          <Text style={styles.form_header_text}>Driver Identification</Text>
+          <Text style={styles.form_subheader_text}>
             Just fill in your driver identification details
           </Text>
         </View>
@@ -107,32 +86,19 @@ const DriverIdentification = () => {
             </Text>
             <View style={styles.inp_holder}>
               <FontAwesome name="calendar-o" size={20} color="white" />
-              <TextInput style={styles.text_input} autoCapitalize="none" />
+              <TextInput
+                style={styles.text_input}
+                placeholder="License card expiration date"
+                placeholderTextColor={"#c5c5c5"}
+                autoCapitalize="none"
+              />
             </View>
           </View>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              gap: 20,
-            }}
-          >
+          <View style={styles.two_column_conatainer}>
             <View style={styles.inp_container}>
               <Text style={styles.inp_label}>Driver's Licence front</Text>
               <TouchableWithoutFeedback onPress={pickImage}>
-                <View
-                  style={{
-                    backgroundColor: "grey",
-                    height: 100,
-                    width: 150,
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderRadius: 10,
-                    marginTop: 10,
-                  }}
-                >
+                <View style={styles.img_input}>
                   <Feather name="camera" color={"#fff"} size={30} />
                 </View>
               </TouchableWithoutFeedback>
@@ -140,18 +106,7 @@ const DriverIdentification = () => {
             <View style={styles.inp_container}>
               <Text style={styles.inp_label}>Driver's Licence front</Text>
               <TouchableWithoutFeedback onPress={pickImage}>
-                <View
-                  style={{
-                    backgroundColor: "grey",
-                    height: 100,
-                    width: 150,
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderRadius: 10,
-                    marginTop: 10,
-                  }}
-                >
+                <View style={styles.img_input}>
                   <Feather name="camera" color={"#fff"} size={30} />
                 </View>
               </TouchableWithoutFeedback>
@@ -160,18 +115,7 @@ const DriverIdentification = () => {
           <View style={styles.inp_container}>
             <Text style={styles.inp_label}>Selfie with Driver's License</Text>
             <TouchableWithoutFeedback onPress={pickImage}>
-              <View
-                style={{
-                  backgroundColor: "grey",
-                  height: 100,
-                  width: 100,
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 10,
-                  marginTop: 10,
-                }}
-              >
+              <View style={styles.img_input}>
                 <Feather name="camera" color={"#fff"} size={30} />
               </View>
             </TouchableWithoutFeedback>
@@ -190,62 +134,3 @@ const DriverIdentification = () => {
 };
 
 export default DriverIdentification;
-
-const styles = StyleSheet.create({
-  progress_bar_container: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 30,
-  },
-  progress_bar: {
-    height: 3,
-    width: 50,
-    backgroundColor: "#9f9f9fff",
-    borderRadius: 3,
-  },
-  inp_container: { marginTop: 15 },
-  inp_label: {
-    color: "#fff",
-    fontFamily: "raleway-semibold",
-    fontSize: 12,
-  },
-  inp_holder: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    backgroundColor: "#757575ff",
-    gap: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 7,
-    marginTop: 10,
-    borderRadius: 7,
-  },
-  inp_text: {
-    fontFamily: "raleway-semibold",
-    color: "#e2e1e1ff",
-    fontSize: 10,
-    marginLeft: 3,
-  },
-  text_input: {
-    backgroundColor: "transparent",
-    flex: 1,
-    fontFamily: "raleway-semibold",
-    color: "#fff",
-    fontSize: 14,
-  },
-  sign_btn: {
-    backgroundColor: "#fff",
-    width: "100%",
-    padding: 12,
-    borderRadius: 30,
-    marginTop: 40,
-    alignItems: "center",
-  },
-  sign_btn_text: {
-    color: "#000",
-    fontFamily: "raleway-bold",
-    fontSize: 16,
-  },
-});

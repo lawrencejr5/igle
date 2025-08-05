@@ -1,0 +1,103 @@
+import { StyleSheet } from "react-native";
+
+export const driver_reg_styles = () =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingTop: 60,
+      paddingBottom: 20,
+      paddingHorizontal: 20,
+      backgroundColor: "#303030",
+    },
+    header_text: {
+      fontFamily: "raleway-semibold",
+      color: "#fff",
+      fontSize: 18,
+    },
+    progress_bar_container: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 10,
+      marginTop: 30,
+      paddingBottom: 10,
+    },
+    progress_bar: {
+      height: 3,
+      width: 50,
+      backgroundColor: "#484848",
+      borderRadius: 3,
+    },
+    form_header_text: {
+      color: "#dbdbdb",
+      fontFamily: "raleway-bold",
+      fontSize: 22,
+    },
+    form_subheader_text: {
+      color: "#dbdbdb",
+      fontFamily: "raleway-regular",
+      fontSize: 12,
+    },
+    two_column_conatainer: {
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      alignItems: "center",
+      gap: 20,
+    },
+    inp_container: { marginTop: 15 },
+    inp_label: {
+      color: "#fff",
+      fontFamily: "raleway-semibold",
+      fontSize: 12,
+    },
+    inp_holder: {
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      alignItems: "center",
+      backgroundColor: "#757575",
+      gap: 10,
+      paddingHorizontal: 15,
+      paddingVertical: 7,
+      marginTop: 10,
+      borderRadius: 7,
+    },
+    inp_text: {
+      fontFamily: "raleway-semibold",
+      color: "#e2e1e1",
+      fontSize: 10,
+      marginLeft: 3,
+    },
+    text_input: {
+      backgroundColor: "transparent",
+      flex: 1,
+      fontFamily: "raleway-semibold",
+      color: "#fff",
+      fontSize: 14,
+    },
+    sign_btn: {
+      backgroundColor: "#fff",
+      width: "100%",
+      padding: 12,
+      borderRadius: 30,
+      marginTop: 40,
+      alignItems: "center",
+      marginBottom: 50,
+    },
+    img_input: {
+      backgroundColor: "grey",
+      height: 100,
+      width: 150,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      borderRadius: 10,
+      marginTop: 10,
+    },
+    sign_btn_text: {
+      color: "#000",
+      fontFamily: "raleway-bold",
+      fontSize: 16,
+    },
+  });

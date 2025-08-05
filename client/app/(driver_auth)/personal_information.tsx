@@ -16,7 +16,12 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 
+import { driver_reg_styles } from "../../styles/driver_reg_styles";
+import Header from "../../components/driver_reg/Header";
+
 const PersonalInformation = () => {
+  const styles = driver_reg_styles();
+
   const [imageUri, setImageUri] = useState<string>("");
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -34,48 +39,20 @@ const PersonalInformation = () => {
       style={{
         flex: 1,
         backgroundColor: "#121212",
-        paddingTop: 60,
-        paddingHorizontal: 20,
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: "raleway-semibold",
-            color: "#fff",
-            fontSize: 18,
-          }}
-        >
-          Driver Registration
-        </Text>
-        <TouchableWithoutFeedback style={{ padding: 10 }}>
-          <FontAwesome5 name="times" size={24} color="#fff" />
-        </TouchableWithoutFeedback>
-      </View>
+      <Header />
+
       <View style={styles.progress_bar_container}>
-        <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
+        <View style={[styles.progress_bar, { backgroundColor: "#999999" }]} />
         <View style={styles.progress_bar} />
         <View style={styles.progress_bar} />
       </View>
 
-      <ScrollView>
+      <ScrollView style={{ paddingHorizontal: 20 }}>
         {/* Header */}
         <View style={{ marginTop: 20 }}>
-          <Text
-            style={{
-              color: "#dbdbdb",
-              fontFamily: "raleway-bold",
-              fontSize: 22,
-            }}
-          >
-            Personal Details
-          </Text>
+          <Text style={styles.form_header_text}>Personal Details</Text>
           <Text
             style={{
               color: "#dbdbdb",
@@ -92,18 +69,7 @@ const PersonalInformation = () => {
           <View style={styles.inp_container}>
             <Text style={styles.inp_label}>Profile Picture</Text>
             <TouchableWithoutFeedback onPress={pickImage}>
-              <View
-                style={{
-                  backgroundColor: "grey",
-                  height: 100,
-                  width: 100,
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 10,
-                  marginTop: 10,
-                }}
-              >
+              <View style={styles.img_input}>
                 <Feather name="camera" color={"#fff"} size={30} />
               </View>
             </TouchableWithoutFeedback>
@@ -157,62 +123,3 @@ const PersonalInformation = () => {
 };
 
 export default PersonalInformation;
-
-const styles = StyleSheet.create({
-  progress_bar_container: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 30,
-  },
-  progress_bar: {
-    height: 3,
-    width: 50,
-    backgroundColor: "#9f9f9fff",
-    borderRadius: 3,
-  },
-  inp_container: { marginTop: 15 },
-  inp_label: {
-    color: "#fff",
-    fontFamily: "raleway-semibold",
-    fontSize: 12,
-  },
-  inp_holder: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    backgroundColor: "#757575ff",
-    gap: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 7,
-    marginTop: 10,
-    borderRadius: 7,
-  },
-  inp_text: {
-    fontFamily: "raleway-semibold",
-    color: "#e2e1e1ff",
-    fontSize: 10,
-    marginLeft: 3,
-  },
-  text_input: {
-    backgroundColor: "transparent",
-    flex: 1,
-    fontFamily: "raleway-semibold",
-    color: "#fff",
-    fontSize: 14,
-  },
-  sign_btn: {
-    backgroundColor: "#fff",
-    width: "100%",
-    padding: 12,
-    borderRadius: 30,
-    marginTop: 40,
-    alignItems: "center",
-  },
-  sign_btn_text: {
-    color: "#000",
-    fontFamily: "raleway-bold",
-    fontSize: 16,
-  },
-});
