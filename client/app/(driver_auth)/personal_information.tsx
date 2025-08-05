@@ -104,7 +104,7 @@ const PersonalInformation = () => {
                   marginTop: 10,
                 }}
               >
-                <Feather name="plus" color={"#fff"} size={50} />
+                <Feather name="camera" color={"#fff"} size={30} />
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -136,7 +136,11 @@ const PersonalInformation = () => {
             <Text style={styles.inp_label}>Date of birth</Text>
             <View style={styles.inp_holder}>
               <FontAwesome name="calendar-o" size={20} color="white" />
-              <TextInput style={styles.text_input} />
+              <TextInput
+                style={styles.text_input}
+                placeholder="Date of birth"
+                placeholderTextColor={"#c5c5c5"}
+              />
             </View>
           </View>
           <TouchableWithoutFeedback

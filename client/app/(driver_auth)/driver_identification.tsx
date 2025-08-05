@@ -110,24 +110,52 @@ const DriverIdentification = () => {
               <TextInput style={styles.text_input} autoCapitalize="none" />
             </View>
           </View>
-          <View style={styles.inp_container}>
-            <Text style={styles.inp_label}>Driver's Licence image</Text>
-            <TouchableWithoutFeedback onPress={pickImage}>
-              <View
-                style={{
-                  backgroundColor: "grey",
-                  height: 100,
-                  width: 200,
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 10,
-                  marginTop: 10,
-                }}
-              >
-                <Feather name="plus" color={"#fff"} size={50} />
-              </View>
-            </TouchableWithoutFeedback>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              gap: 20,
+            }}
+          >
+            <View style={styles.inp_container}>
+              <Text style={styles.inp_label}>Driver's Licence front</Text>
+              <TouchableWithoutFeedback onPress={pickImage}>
+                <View
+                  style={{
+                    backgroundColor: "grey",
+                    height: 100,
+                    width: 150,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: 10,
+                    marginTop: 10,
+                  }}
+                >
+                  <Feather name="camera" color={"#fff"} size={30} />
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+            <View style={styles.inp_container}>
+              <Text style={styles.inp_label}>Driver's Licence front</Text>
+              <TouchableWithoutFeedback onPress={pickImage}>
+                <View
+                  style={{
+                    backgroundColor: "grey",
+                    height: 100,
+                    width: 150,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: 10,
+                    marginTop: 10,
+                  }}
+                >
+                  <Feather name="camera" color={"#fff"} size={30} />
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
           </View>
           <View style={styles.inp_container}>
             <Text style={styles.inp_label}>Selfie with Driver's License</Text>
@@ -144,12 +172,12 @@ const DriverIdentification = () => {
                   marginTop: 10,
                 }}
               >
-                <Feather name="plus" color={"#fff"} size={50} />
+                <Feather name="camera" color={"#fff"} size={30} />
               </View>
             </TouchableWithoutFeedback>
           </View>
           <TouchableWithoutFeedback
-            onPress={() => router.push("/driver_identification")}
+            onPress={() => router.push("/vehicle_information")}
           >
             <View style={styles.sign_btn}>
               <Text style={styles.sign_btn_text}>Next</Text>
