@@ -28,7 +28,7 @@ const ReviewMessage = () => {
       >
         <Image
           source={require("../../assets/images/illustrations/confirmed.png")}
-          style={{ height: 150, width: 150 }}
+          style={{ height: 200, width: 200 }}
         />
 
         <View>
@@ -36,8 +36,9 @@ const ReviewMessage = () => {
             style={{
               color: "#fff",
               fontFamily: "raleway-bold",
-              fontSize: 16,
+              fontSize: 20,
               textAlign: "center",
+              marginVertical: 10,
             }}
           >
             Submitted successfully

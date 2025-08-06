@@ -110,7 +110,7 @@ const SideNav: React.FC<{
             {/* Switch mode */}
             <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
               <TouchableWithoutFeedback
-                onPress={() => router.push("../(driver_auth)/choose_car_type")}
+                onPress={() => router.push("../(driver)/home")}
               >
                 <View style={styles.switch_btn}>
                   <Text style={styles.switch_btn_text}>Driver mode</Text>
