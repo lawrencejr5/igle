@@ -142,7 +142,10 @@ const VehicleInformation = () => {
             </View>
           </View>
 
-          <TouchableWithoutFeedback style={{ height: 200, marginBottom: 20 }}>
+          <TouchableWithoutFeedback
+            style={{ height: 200, marginBottom: 20 }}
+            onPress={() => router.push("reviewing_message")}
+          >
             <View style={styles.sign_btn}>
               <Text style={styles.sign_btn_text}>Next</Text>
             </View>

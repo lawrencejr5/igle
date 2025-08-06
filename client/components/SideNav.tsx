@@ -55,23 +55,8 @@ const SideNav: React.FC<{
           >
             <View>
               {/* Logo */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  paddingRight: 5,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontFamily: "raleway-bold",
-                    fontSize: 30,
-                  }}
-                >
-                  Igle
-                </Text>
+              <View style={styles.logo_container}>
+                <Text style={styles.logo_text}>Igle</Text>
                 <TouchableWithoutFeedback
                   onPress={closeSideNav}
                   style={{ padding: 10 }}
@@ -81,43 +66,15 @@ const SideNav: React.FC<{
               </View>
 
               {/* User */}
-              <View
-                style={{
-                  marginVertical: 30,
-                  backgroundColor: "#393939",
-                  paddingHorizontal: 10,
-                  paddingVertical: 10,
-                  borderRadius: 10,
-                  flexDirection: "row",
-                  justifyContent: "flex-start",
-                  alignItems: "flex-start",
-                  gap: 10,
-                }}
-              >
+              <View style={styles.user_card}>
                 <Image
                   source={require("../assets/images/black-profile.jpeg")}
-                  style={{ height: 50, width: 50, borderRadius: 25 }}
+                  style={styles.user_img}
                 />
 
                 <View>
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontFamily: "raleway-bold",
-                      fontSize: 16,
-                    }}
-                  >
-                    Oputa Lawrence
-                  </Text>
-                  <Text
-                    style={{
-                      color: "#ffffff",
-                      fontFamily: "raleway-regular",
-                      marginTop: 3,
-                    }}
-                  >
-                    Rider
-                  </Text>
+                  <Text style={styles.user_name}>Oputa Lawrence</Text>
+                  <Text style={styles.user_type}>Rider</Text>
                 </View>
               </View>
             </View>
@@ -153,32 +110,15 @@ const SideNav: React.FC<{
             {/* Switch mode */}
             <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
               <TouchableWithoutFeedback
-                onPress={() =>
-                  router.push("../(driver_auth)/personal_information")
-                }
+                onPress={() => router.push("../(driver_auth)/choose_car_type")}
               >
-                <View
-                  style={{
-                    backgroundColor: "#fff",
-                    padding: 10,
-                    paddingHorizontal: 30,
-                    borderRadius: 5,
-                    flexDirection: "row",
-                    gap: 10,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#121212",
-                      fontFamily: "raleway-bold",
-                      fontSize: 16,
-                    }}
-                  >
-                    Driver mode
-                  </Text>
-                  <FontAwesome6 name="rotate" size={20} color="black" />
+                <View style={styles.switch_btn}>
+                  <Text style={styles.switch_btn_text}>Driver mode</Text>
+                  <FontAwesome6
+                    name="arrow-right-arrow-left"
+                    size={18}
+                    color="black"
+                  />
                 </View>
               </TouchableWithoutFeedback>
             </View>
@@ -208,6 +148,43 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
+  logo_container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingRight: 5,
+  },
+  logo_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 30,
+  },
+  user_card: {
+    marginVertical: 30,
+    backgroundColor: "#393939",
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderRadius: 10,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  user_img: {
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+  },
+  user_name: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+  },
+  user_type: {
+    color: "#ffffff",
+    fontFamily: "raleway-regular",
+    marginTop: 3,
+  },
   sidenav_content_box: {
     flexDirection: "row",
     justifyContent: "flex-start",
@@ -220,6 +197,21 @@ const styles = StyleSheet.create({
     color: "#c6c6c6",
     fontFamily: "raleway-semibold",
     fontSize: 18,
+  },
+  switch_btn: {
+    backgroundColor: "#fff",
+    padding: 10,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  switch_btn_text: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
   },
 });
 
