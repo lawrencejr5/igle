@@ -116,21 +116,10 @@ const HomePage = () => {
           justifyContent: "space-between",
         }}
       >
-        {/* <View
-          style={{
-            backgroundColor: "#ffd60937",
-            height: 50,
-            width: 50,
-            justifyContent: "center",
-            alignItems: "center",
-            borderRadius: "50%",
-          }}
-        > */}
         <Image
-          source={require("../../assets/images/icons/keke-icon.png")}
-          style={{ height: 40, width: 40 }}
+          source={require("../../assets/images/black-profile.jpeg")}
+          style={{ height: 40, width: 40, borderRadius: 20 }}
         />
-        {/* </View> */}
         <View
           style={{
             // backgroundColor: "#40863a4f",

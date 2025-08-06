@@ -21,7 +21,7 @@ const NotificationScreen: React.FC<{
   useEffect(() => {
     if (open)
       Animated.timing(notiTranslate, {
-        toValue: 0,
+        toValue: -100,
         duration: 200,
         useNativeDriver: true,
       }).start();
@@ -41,7 +41,7 @@ const NotificationScreen: React.FC<{
         height: "100%",
         width: "100%",
         position: "absolute",
-        bottom: 0,
+        bottom: -100,
         zIndex: 2,
         paddingTop: 50,
         paddingHorizontal: 20,
