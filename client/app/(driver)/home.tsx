@@ -51,16 +51,22 @@ const HomePage = () => {
     get_and_set_location();
   }, []);
 
-  const [available, setAvailable] = useState<boolean>(true);
+  const [available, setAvailable] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [accepted, setAccepted] = useState<boolean>(false);
 
   useEffect(() => {
-    const findOffer = setTimeout(() => {
-      setLoading(false);
-    }, 3000);
-
-    return () => clearTimeout(findOffer);
-  }, [loading]);
+    if (available) {
+      const findOffer = setTimeout(() => {
+        setLoading(false);
+      }, 3000);
+      return () => clearTimeout(findOffer);
+    }
+    if (!available) {
+      setLoading(true);
+      setAccepted(false);
+    }
+  }, [available, loading]);
 
   return (
     <View style={{ backgroundColor: "#121212", flex: 1 }}>
@@ -193,12 +199,28 @@ const HomePage = () => {
                         </Text>
                       </View>
                     </View>
-                    {/* Close icon */}
-                    <Text
-                      style={{ fontFamily: "poppins-regular", color: "#fff" }}
-                    >
-                      90s
-                    </Text>
+
+                    {/* Timeout or call */}
+                    {!accepted ? (
+                      <Text
+                        style={{ fontFamily: "poppins-regular", color: "#fff" }}
+                      >
+                        90s
+                      </Text>
+                    ) : (
+                      <View
+                        style={{
+                          backgroundColor: "#fff",
+                          borderRadius: "50%",
+                          width: 35,
+                          height: 35,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FontAwesome name="phone" color={"#121212"} size={20} />
+                      </View>
+                    )}
                   </View>
 
                   {/* Estimated time and duration */}
@@ -243,58 +265,97 @@ const HomePage = () => {
                   </Text>
 
                   {/* Action btns */}
-                  <View
-                    style={{
-                      marginTop: 20,
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      gap: 20,
-                    }}
-                  >
+                  {!accepted ? (
                     <View
                       style={{
-                        backgroundColor: "#fff",
-                        borderRadius: 30,
-                        padding: 10,
-                        flex: 1,
+                        marginTop: 20,
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        gap: 20,
                       }}
                     >
-                      <Text
-                        style={{
-                          color: "#121212",
-                          fontFamily: "raleway-bold",
-                          fontSize: 16,
-                          textAlign: "center",
-                        }}
+                      <TouchableWithoutFeedback
+                        onPress={() => setAccepted(true)}
                       >
-                        Accept
-                      </Text>
-                    </View>
-                    <TouchableWithoutFeedback onPress={() => setLoading(true)}>
-                      <View
-                        style={{
-                          backgroundColor: "transparent",
-                          borderRadius: 30,
-                          borderStyle: "solid",
-                          borderColor: "#fff",
-                          borderWidth: 1,
-                          padding: 10,
-                          flex: 1,
-                        }}
-                      >
-                        <Text
+                        <View
                           style={{
-                            color: "#fff",
-                            fontFamily: "raleway-bold",
-                            fontSize: 16,
-                            textAlign: "center",
+                            backgroundColor: "#fff",
+                            borderRadius: 30,
+                            padding: 10,
+                            flex: 1,
                           }}
                         >
-                          Cancel
-                        </Text>
-                      </View>
-                    </TouchableWithoutFeedback>
-                  </View>
+                          <Text
+                            style={{
+                              color: "#121212",
+                              fontFamily: "raleway-bold",
+                              fontSize: 16,
+                              textAlign: "center",
+                            }}
+                          >
+                            Accept
+                          </Text>
+                        </View>
+                      </TouchableWithoutFeedback>
+
+                      <TouchableWithoutFeedback
+                        onPress={() => setLoading(true)}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: "transparent",
+                            borderRadius: 30,
+                            borderStyle: "solid",
+                            borderColor: "#fff",
+                            borderWidth: 1,
+                            padding: 10,
+                            flex: 1,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#fff",
+                              fontFamily: "raleway-bold",
+                              fontSize: 16,
+                              textAlign: "center",
+                            }}
+                          >
+                            Cancel
+                          </Text>
+                        </View>
+                      </TouchableWithoutFeedback>
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        marginTop: 20,
+                      }}
+                    >
+                      <TouchableWithoutFeedback
+                        onPress={() => setAccepted(true)}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: "#fff",
+                            borderRadius: 30,
+                            padding: 10,
+                            flex: 1,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#121212",
+                              fontFamily: "raleway-bold",
+                              fontSize: 16,
+                              textAlign: "center",
+                            }}
+                          >
+                            Start trip
+                          </Text>
+                        </View>
+                      </TouchableWithoutFeedback>
+                    </View>
+                  )}
                 </View>
               </>
             )}
