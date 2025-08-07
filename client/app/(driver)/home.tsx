@@ -52,28 +52,35 @@ const HomePage = () => {
   }, []);
 
   const [available, setAvailable] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [accepted, setAccepted] = useState<boolean>(false);
-  const [pickupNavigating, setPickupNavigating] = useState<boolean>(false);
+  const [status, setStatus] = useState<
+    | "searching"
+    | "incoming"
+    | "accepted"
+    | "arriving"
+    | "arrived"
+    | "ongoing"
+    | "completed"
+    | ""
+  >("");
 
   useEffect(() => {
-    if (available) {
+    if (available && status === "searching") {
+      setStatus("searching");
       const findOffer = setTimeout(() => {
-        setLoading(false);
+        setStatus("incoming");
       }, 3000);
       return () => clearTimeout(findOffer);
     }
     if (!available) {
-      setLoading(true);
-      setAccepted(false);
+      setStatus("searching");
     }
-  }, [available, loading]);
+  }, [available, status]);
 
   return (
-    <View style={{ backgroundColor: "#121212", flex: 1 }}>
+    <View style={styles.container}>
       {/* Map */}
       <MapView
-        style={{ height: "95%" }}
+        style={styles.map}
         provider={PROVIDER_GOOGLE}
         initialRegion={region}
         customMapStyle={darkMapStyle}
@@ -86,10 +93,10 @@ const HomePage = () => {
             }}
             title="Your location"
           >
-            <View style={{ width: 35, height: 35 }}>
+            <View style={styles.markerIcon}>
               <Image
                 source={require("../../assets/images/icons/keke-icon.png")}
-                style={{ width: "100%", height: "100%", resizeMode: "contain" }}
+                style={styles.markerImage}
               />
             </View>
           </Marker>
@@ -120,292 +127,208 @@ const HomePage = () => {
       />
 
       {/* Searching for drivers */}
-      <View style={[styles.main_modal_container]}>
+      <View style={styles.main_modal_container}>
         {available && (
-          <View
-            style={{
-              backgroundColor: "#121212",
-              width: "100%",
-              flex: 1,
-              marginBottom: 40,
-            }}
-          >
-            {loading ? (
+          <View style={styles.availableContainer}>
+            {status === "searching" && (
               <View>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontFamily: "raleway-bold",
-                    textAlign: "center",
-                  }}
-                >
+                <Text style={styles.searchingText}>
                   Searching for new ride offers...
                 </Text>
               </View>
-            ) : //   Incoming ride request
-            !pickupNavigating ? (
+            )}
+            {status === "incoming" && (
               <>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontSize: 14,
-                    fontFamily: "raleway-bold",
-                    marginBottom: 10,
-                  }}
-                >
-                  {accepted ? "Ongoing ride" : "Incoming ride request"}
-                </Text>
+                <Text style={styles.rideStatusText}>Incoming ride request</Text>
 
                 {/* Ride request card */}
-                <View
-                  style={{
-                    borderStyle: "solid",
-                    borderColor: "#a0a0a0ff",
-                    borderWidth: 0.5,
-                    borderRadius: 10,
-                    paddingVertical: 15,
-                    paddingHorizontal: 20,
-                  }}
-                >
+                <View style={styles.rideRequestCard}>
                   {/* Header */}
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  >
+                  <View style={styles.rideRequestHeader}>
                     {/* User */}
-                    <View style={{ flexDirection: "row", gap: 20 }}>
+                    <View style={styles.userInfo}>
                       <Image
                         source={require("../../assets/images/black-profile.jpeg")}
-                        style={{ width: 30, height: 30 }}
+                        style={styles.userImage}
                       />
                       <View>
-                        <Text
-                          style={{
-                            color: "#fff",
-                            fontFamily: "raleway-semibold",
-                          }}
-                        >
-                          Oputa Lawrence
-                        </Text>
-                        <Text
-                          style={{
-                            color: "#d7d7d7",
-                            fontSize: 10,
-                            fontFamily: "raleway-regular",
-                          }}
-                        >
-                          34 ride completed
-                        </Text>
+                        <Text style={styles.userName}>Oputa Lawrence</Text>
+                        <Text style={styles.userRides}>34 ride completed</Text>
                       </View>
                     </View>
 
                     {/* Timeout or call */}
-                    {!accepted ? (
-                      <Text
-                        style={{
-                          fontFamily: "poppins-regular",
-                          color: "#fff",
-                        }}
-                      >
-                        90s
-                      </Text>
-                    ) : (
-                      <View
-                        style={{
-                          backgroundColor: "#fff",
-                          borderRadius: "50%",
-                          width: 35,
-                          height: 35,
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <FontAwesome name="phone" color={"#121212"} size={20} />
-                      </View>
-                    )}
+                    <Text style={styles.timeoutText}>90s</Text>
                   </View>
 
                   {/* Estimated time and duration */}
-                  <View
-                    style={{
-                      marginTop: 20,
-                      marginBottom: 10,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 10,
-                    }}
-                  >
+                  <View style={styles.timeRow}>
                     <MaterialIcons
                       name="access-time"
                       color={"#d7d7d7"}
                       size={16}
                     />
-                    <Text
-                      style={{
-                        color: "#d7d7d7",
-                        fontFamily: "poppins-regular",
-                        fontSize: 12,
-                        marginTop: 3,
-                      }}
-                    >
-                      24 mins (3.45 km)
-                    </Text>
+                    <Text style={styles.timeText}>24 mins (3.45 km)</Text>
                   </View>
 
                   {/* Ride route card */}
                   <RideRoute from="Konwea plaza" to="Slot, Nnebisi road" />
 
                   {/* Price */}
-                  <Text
-                    style={{
-                      color: "#10b804ff",
-                      fontFamily: "poppins-bold",
-                      fontSize: 18,
-                    }}
-                  >
-                    1,500 NGN
-                  </Text>
+                  <Text style={styles.priceText}>1,500 NGN</Text>
 
                   {/* Action btns */}
-                  {!accepted ? (
-                    <View
-                      style={{
-                        marginTop: 20,
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        gap: 20,
-                      }}
+                  <View style={styles.actionBtnsRow}>
+                    <TouchableWithoutFeedback
+                      onPress={() => setStatus("accepted")}
                     >
-                      <TouchableWithoutFeedback
-                        onPress={() => setAccepted(true)}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: "#fff",
-                            borderRadius: 30,
-                            padding: 10,
-                            flex: 1,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: "#121212",
-                              fontFamily: "raleway-bold",
-                              fontSize: 16,
-                              textAlign: "center",
-                            }}
-                          >
-                            Accept
-                          </Text>
-                        </View>
-                      </TouchableWithoutFeedback>
+                      <View style={styles.acceptBtn}>
+                        <Text style={styles.acceptBtnText}>Accept</Text>
+                      </View>
+                    </TouchableWithoutFeedback>
 
-                      <TouchableWithoutFeedback
-                        onPress={() => setLoading(true)}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: "transparent",
-                            borderRadius: 30,
-                            borderStyle: "solid",
-                            borderColor: "#fff",
-                            borderWidth: 1,
-                            padding: 10,
-                            flex: 1,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: "#fff",
-                              fontFamily: "raleway-bold",
-                              fontSize: 16,
-                              textAlign: "center",
-                            }}
-                          >
-                            Cancel
-                          </Text>
-                        </View>
-                      </TouchableWithoutFeedback>
-                    </View>
-                  ) : (
-                    <View
-                      style={{
-                        marginTop: 20,
-                      }}
+                    <TouchableWithoutFeedback
+                      onPress={() => setStatus("searching")}
                     >
-                      <TouchableWithoutFeedback
-                        onPress={() => setPickupNavigating(true)}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: "#fff",
-                            borderRadius: 30,
-                            padding: 10,
-                            flex: 1,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: "#121212",
-                              fontFamily: "raleway-bold",
-                              fontSize: 16,
-                              textAlign: "center",
-                            }}
-                          >
-                            Navigate to pickup
-                          </Text>
-                        </View>
-                      </TouchableWithoutFeedback>
-                    </View>
-                  )}
+                      <View style={styles.cancelBtn}>
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </View>
                 </View>
               </>
-            ) : (
-              <View style={{ backgroundColor: "#121212" }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10,
-                  }}
-                >
+            )}
+            {status === "accepted" && (
+              <>
+                <Text style={styles.rideStatusText}>IOngoing ride</Text>
+
+                {/* Ride request card */}
+                <View style={styles.rideRequestCard}>
+                  {/* Header */}
+                  <View style={styles.rideRequestHeader}>
+                    {/* User */}
+                    <View style={styles.userInfo}>
+                      <Image
+                        source={require("../../assets/images/black-profile.jpeg")}
+                        style={styles.userImage}
+                      />
+                      <View>
+                        <Text style={styles.userName}>Oputa Lawrence</Text>
+                        <Text style={styles.userRides}>34 ride completed</Text>
+                      </View>
+                    </View>
+
+                    {/* Call btn */}
+                    <View style={styles.callBtn}>
+                      <FontAwesome name="phone" color={"#121212"} size={20} />
+                    </View>
+                  </View>
+
+                  {/* Estimated time and duration */}
+                  <View style={styles.timeRow}>
+                    <MaterialIcons
+                      name="access-time"
+                      color={"#d7d7d7"}
+                      size={16}
+                    />
+                    <Text style={styles.timeText}>24 mins (3.45 km)</Text>
+                  </View>
+
+                  {/* Ride route card */}
+                  <RideRoute from="Konwea plaza" to="Slot, Nnebisi road" />
+
+                  {/* Price */}
+                  <Text style={styles.priceText}>1,500 NGN</Text>
+
+                  {/* Action btns */}
+
+                  <View style={styles.navigateBtnRow}>
+                    <TouchableWithoutFeedback
+                      onPress={() => setStatus("arriving")}
+                    >
+                      <View style={styles.navigateBtn}>
+                        <Text style={styles.navigateBtnText}>
+                          Navigate to pickup
+                        </Text>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </View>
+                </View>
+              </>
+            )}
+            {status === "arriving" && (
+              <View style={styles.navigationContainer}>
+                <View style={styles.directionsRow}>
                   <FontAwesome5 name="directions" color={"#fff"} size={24} />
-                  <Text
-                    style={{
-                      textAlign: "center",
-                      color: "#fff",
-                      fontFamily: "raleway-bold",
-                    }}
-                  >
+                  <Text style={styles.directionsText}>
                     Go 3km and then turn right
                   </Text>
                 </View>
-                <View
-                  style={{
-                    marginTop: 20,
-                  }}
-                >
-                  <TouchableWithoutFeedback onPress={() => setAccepted(true)}>
-                    <View
-                      style={{
-                        backgroundColor: "#fff",
-                        borderRadius: 30,
-                        padding: 10,
-                        flex: 1,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "#121212",
-                          fontFamily: "raleway-bold",
-                          fontSize: 16,
-                          textAlign: "center",
-                        }}
-                      >
+                <View style={styles.arrivedBtnRow}>
+                  <TouchableWithoutFeedback
+                    onPress={() => setStatus("arrived")}
+                  >
+                    <View style={styles.arrivedBtn}>
+                      <Text style={styles.arrivedBtnText}>
                         I have arrived at pickup
+                      </Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </View>
+            )}
+            {status === "arrived" && (
+              <View style={styles.navigationContainer}>
+                <View style={styles.directionsRow}>
+                  <Text style={styles.directionsText}>
+                    When payment is confirmed, start the trip
+                  </Text>
+                </View>
+                <View style={styles.arrivedBtnRow}>
+                  <TouchableWithoutFeedback
+                    onPress={() => setStatus("ongoing")}
+                  >
+                    <View style={styles.arrivedBtn}>
+                      <Text style={styles.arrivedBtnText}>Start trip</Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </View>
+            )}
+            {status === "ongoing" && (
+              <View style={styles.navigationContainer}>
+                <View style={styles.directionsRow}>
+                  <FontAwesome5 name="directions" color={"#fff"} size={24} />
+                  <Text style={styles.directionsText}>
+                    Go 3km and then turn right
+                  </Text>
+                </View>
+                <View style={styles.arrivedBtnRow}>
+                  <TouchableWithoutFeedback
+                    onPress={() => setStatus("completed")}
+                  >
+                    <View style={styles.arrivedBtn}>
+                      <Text style={styles.arrivedBtnText}>Finish ride</Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </View>
+            )}
+            {status === "completed" && (
+              <View style={styles.navigationContainer}>
+                <View style={styles.directionsRow}>
+                  <MaterialIcons name="celebration" color={"#fff"} size={24} />
+                  <Text style={styles.directionsText}>
+                    You have finished this ride
+                  </Text>
+                </View>
+                <View style={styles.arrivedBtnRow}>
+                  <TouchableWithoutFeedback
+                    onPress={() => setStatus("searching")}
+                  >
+                    <View style={styles.arrivedBtn}>
+                      <Text style={styles.arrivedBtnText}>
+                        Search for another ride
                       </Text>
                     </View>
                   </TouchableWithoutFeedback>
@@ -419,7 +342,7 @@ const HomePage = () => {
         <View style={styles.main_modal}>
           <Image
             source={require("../../assets/images/black-profile.jpeg")}
-            style={{ height: 40, width: 40, borderRadius: 20 }}
+            style={styles.profileImage}
           />
           <TouchableWithoutFeedback onPress={() => setAvailable(!available)}>
             {available ? (
@@ -444,6 +367,22 @@ const HomePage = () => {
 export default HomePage;
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#121212",
+    flex: 1,
+  },
+  map: {
+    height: "95%",
+  },
+  markerIcon: {
+    width: 35,
+    height: 35,
+  },
+  markerImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
+  },
   nav_container: {
     width: "100%",
     flexDirection: "row",
@@ -472,10 +411,168 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     justifyContent: "space-between",
   },
+  availableContainer: {
+    backgroundColor: "#121212",
+    width: "100%",
+    flex: 1,
+    marginBottom: 40,
+  },
+  searchingText: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    textAlign: "center",
+  },
+  rideStatusText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "raleway-bold",
+    marginBottom: 10,
+  },
+  rideRequestCard: {
+    borderStyle: "solid",
+    borderColor: "#a0a0a0ff",
+    borderWidth: 0.5,
+    borderRadius: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  rideRequestHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  userInfo: {
+    flexDirection: "row",
+    gap: 20,
+  },
+  userImage: {
+    width: 30,
+    height: 30,
+  },
+  userName: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+  },
+  userRides: {
+    color: "#d7d7d7",
+    fontSize: 10,
+    fontFamily: "raleway-regular",
+  },
+  timeoutText: {
+    fontFamily: "poppins-regular",
+    color: "#fff",
+  },
+  callBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 50,
+    width: 35,
+    height: 35,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timeRow: {
+    marginTop: 20,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  timeText: {
+    color: "#d7d7d7",
+    fontFamily: "poppins-regular",
+    fontSize: 12,
+    marginTop: 3,
+  },
+  priceText: {
+    color: "#10b804ff",
+    fontFamily: "poppins-bold",
+    fontSize: 18,
+  },
+  actionBtnsRow: {
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 20,
+  },
+  acceptBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    padding: 10,
+    flex: 1,
+  },
+  acceptBtnText: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  cancelBtn: {
+    backgroundColor: "transparent",
+    borderRadius: 30,
+    borderStyle: "solid",
+    borderColor: "#fff",
+    borderWidth: 1,
+    padding: 10,
+    flex: 1,
+  },
+  cancelBtnText: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  navigateBtnRow: {
+    marginTop: 20,
+  },
+  navigateBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    padding: 10,
+    flex: 1,
+  },
+  navigateBtnText: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  navigationContainer: {
+    backgroundColor: "#121212",
+  },
+  directionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  directionsText: {
+    textAlign: "center",
+    color: "#fff",
+    fontFamily: "raleway-bold",
+  },
+  arrivedBtnRow: {
+    marginTop: 20,
+  },
+  arrivedBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    padding: 10,
+    flex: 1,
+  },
+  arrivedBtnText: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
   main_modal: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  profileImage: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
   },
   status: {
     backgroundColor: "#ff44002a",
