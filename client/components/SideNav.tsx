@@ -15,9 +15,10 @@ import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
 
 const SideNav: React.FC<{
+  mode: "driver" | "rider";
   open: boolean;
   setSideNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ open, setSideNavOpen }) => {
+}> = ({ open, setSideNavOpen, mode }) => {
   const sideNavTranslate = useRef(new Animated.Value(-320)).current;
   const [visible, setVisible] = useState(open);
 
@@ -43,90 +44,184 @@ const SideNav: React.FC<{
 
   if (!visible) return null;
 
-  return (
-    <TouchableWithoutFeedback onPress={closeSideNav}>
-      <View style={styles.overlay}>
-        <TouchableWithoutFeedback onPress={() => {}}>
-          <Animated.View
-            style={[
-              styles.sidenav,
-              { transform: [{ translateX: sideNavTranslate }] },
-            ]}
-          >
-            <View>
-              {/* Logo */}
-              <View style={styles.logo_container}>
-                <Text style={styles.logo_text}>Igle</Text>
+  if (mode === "rider")
+    return (
+      <TouchableWithoutFeedback onPress={closeSideNav}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <Animated.View
+              style={[
+                styles.sidenav,
+                { transform: [{ translateX: sideNavTranslate }] },
+              ]}
+            >
+              <View>
+                {/* Logo */}
+                <View style={styles.logo_container}>
+                  <Text style={styles.logo_text}>Igle</Text>
+                  <TouchableWithoutFeedback
+                    onPress={closeSideNav}
+                    style={{ padding: 10 }}
+                  >
+                    <Feather name="sidebar" size={24} color="#fff" />
+                  </TouchableWithoutFeedback>
+                </View>
+
+                {/* User */}
+                <View style={styles.user_card}>
+                  <Image
+                    source={require("../assets/images/black-profile.jpeg")}
+                    style={styles.user_img}
+                  />
+
+                  <View>
+                    <Text style={styles.user_name}>Oputa Lawrence</Text>
+                    <Text style={styles.user_type}>Rider</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Side bar values */}
+              <View>
+                <TouchableWithoutFeedback onPress={() => router.push("rides/")}>
+                  <View style={styles.sidenav_content_box}>
+                    <FontAwesome name="car" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>My Rides</Text>
+                  </View>
+                </TouchableWithoutFeedback>
+                <View style={styles.sidenav_content_box}>
+                  <Entypo name="wallet" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Wallet</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <Ionicons name="pricetag" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Promotions</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <Feather name="help-circle" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Support</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>About</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <FontAwesome name="star" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Rate us</Text>
+                </View>
+              </View>
+
+              {/* Switch mode */}
+              <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
                 <TouchableWithoutFeedback
-                  onPress={closeSideNav}
-                  style={{ padding: 10 }}
+                  onPress={() => router.push("../(driver)/home")}
                 >
-                  <Feather name="sidebar" size={24} color="#fff" />
+                  <View style={styles.switch_btn}>
+                    <Text style={styles.switch_btn_text}>Driver mode</Text>
+                    <FontAwesome6
+                      name="arrow-right-arrow-left"
+                      size={18}
+                      color="black"
+                    />
+                  </View>
                 </TouchableWithoutFeedback>
               </View>
-
-              {/* User */}
-              <View style={styles.user_card}>
-                <Image
-                  source={require("../assets/images/black-profile.jpeg")}
-                  style={styles.user_img}
-                />
-
-                <View>
-                  <Text style={styles.user_name}>Oputa Lawrence</Text>
-                  <Text style={styles.user_type}>Rider</Text>
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  else if (mode === "driver")
+    return (
+      <TouchableWithoutFeedback onPress={closeSideNav}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <Animated.View
+              style={[
+                styles.sidenav,
+                {
+                  transform: [{ translateX: sideNavTranslate }],
+                  paddingBottom: 50,
+                },
+              ]}
+            >
+              <View>
+                {/* Logo */}
+                <View style={styles.logo_container}>
+                  <Text style={styles.logo_text}>Igle</Text>
+                  <TouchableWithoutFeedback
+                    onPress={closeSideNav}
+                    style={{ padding: 10 }}
+                  >
+                    <Feather name="sidebar" size={24} color="#fff" />
+                  </TouchableWithoutFeedback>
                 </View>
-              </View>
-            </View>
 
-            {/* Side bar values */}
-            <View>
-              <View style={styles.sidenav_content_box}>
-                <FontAwesome name="car" size={20} color="#c6c6c6" />
-                <Text style={styles.sidenav_content_text}>My Rides</Text>
-              </View>
-              <View style={styles.sidenav_content_box}>
-                <Entypo name="wallet" size={20} color="#c6c6c6" />
-                <Text style={styles.sidenav_content_text}>Wallet</Text>
-              </View>
-              <View style={styles.sidenav_content_box}>
-                <Ionicons name="pricetag" size={20} color="#c6c6c6" />
-                <Text style={styles.sidenav_content_text}>Promotions</Text>
-              </View>
-              <View style={styles.sidenav_content_box}>
-                <Feather name="help-circle" size={20} color="#c6c6c6" />
-                <Text style={styles.sidenav_content_text}>Support</Text>
-              </View>
-              <View style={styles.sidenav_content_box}>
-                <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
-                <Text style={styles.sidenav_content_text}>About</Text>
-              </View>
-              <View style={styles.sidenav_content_box}>
-                <FontAwesome name="star" size={20} color="#c6c6c6" />
-                <Text style={styles.sidenav_content_text}>Rate us</Text>
-              </View>
-            </View>
-
-            {/* Switch mode */}
-            <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
-              <TouchableWithoutFeedback
-                onPress={() => router.push("../(driver)/home")}
-              >
-                <View style={styles.switch_btn}>
-                  <Text style={styles.switch_btn_text}>Driver mode</Text>
-                  <FontAwesome6
-                    name="arrow-right-arrow-left"
-                    size={18}
-                    color="black"
+                {/* User */}
+                <View style={styles.user_card}>
+                  <Image
+                    source={require("../assets/images/black-profile.jpeg")}
+                    style={styles.user_img}
                   />
+
+                  <View>
+                    <Text style={styles.user_name}>Oputa Lawrence</Text>
+                    <Text style={styles.user_type}>
+                      Driver . 36 rides completed
+                    </Text>
+                  </View>
                 </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </Animated.View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
-  );
+              </View>
+
+              {/* Side bar values */}
+              <View>
+                <View style={styles.sidenav_content_box}>
+                  <FontAwesome name="car" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>My Rides</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <Entypo name="wallet" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Wallet</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <Ionicons name="pricetag" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Promotions</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <Feather name="help-circle" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Support</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>About</Text>
+                </View>
+                <View style={styles.sidenav_content_box}>
+                  <FontAwesome name="star" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Rate us</Text>
+                </View>
+              </View>
+
+              {/* Switch mode */}
+              <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
+                <TouchableWithoutFeedback
+                  onPress={() => router.push("../(tabs)/home")}
+                >
+                  <View style={styles.switch_btn}>
+                    <Text style={styles.switch_btn_text}>Rider mode</Text>
+                    <FontAwesome6
+                      name="arrow-right-arrow-left"
+                      size={18}
+                      color="black"
+                    />
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  else return null;
 };
 
 const styles = StyleSheet.create({
@@ -182,6 +277,7 @@ const styles = StyleSheet.create({
   },
   user_type: {
     color: "#ffffff",
+    fontSize: 12,
     fontFamily: "raleway-regular",
     marginTop: 3,
   },

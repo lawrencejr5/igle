@@ -139,7 +139,11 @@ const HomePage = () => {
       </View>
 
       {/* Side nav */}
-      <SideNav open={sideNavOpen} setSideNavOpen={setSideNavOpen} />
+      <SideNav
+        open={sideNavOpen}
+        setSideNavOpen={setSideNavOpen}
+        mode="driver"
+      />
 
       {/* Notification screen */}
       <NotificationScreen

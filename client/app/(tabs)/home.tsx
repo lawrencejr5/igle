@@ -76,7 +76,11 @@ const Home = () => {
       </View>
 
       {/* Side nav */}
-      <SideNav open={sideNavOpen} setSideNavOpen={setSideNavOpen} />
+      <SideNav
+        open={sideNavOpen}
+        setSideNavOpen={setSideNavOpen}
+        mode="rider"
+      />
 
       {/* Notification screen */}
       <NotificationScreen
