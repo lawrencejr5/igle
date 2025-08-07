@@ -76,6 +76,27 @@ const HomePage = () => {
     }
   }, [available, status]);
 
+  const [countDown, setCountDown] = useState<number>(90);
+
+  useEffect(() => {
+    if (status !== "incoming") {
+      setCountDown(90);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setCountDown((prev) => {
+        if (prev === 1) {
+          setStatus("searching");
+          return 90;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [status]);
+
   return (
     <View style={styles.container}>
       {/* Map */}
@@ -158,7 +179,7 @@ const HomePage = () => {
                     </View>
 
                     {/* Timeout or call */}
-                    <Text style={styles.timeoutText}>90s</Text>
+                    <Text style={styles.timeoutText}>{countDown}s</Text>
                   </View>
 
                   {/* Estimated time and duration */}
