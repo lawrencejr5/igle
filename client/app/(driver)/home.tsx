@@ -20,7 +20,7 @@ import NotificationScreen from "../../components/screens/NotificationScreen";
 import RouteModal from "../../components/RouteModal";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import RideRoute from "../../components/RideRoute";
 
 const HomePage = () => {
@@ -54,6 +54,7 @@ const HomePage = () => {
   const [available, setAvailable] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [accepted, setAccepted] = useState<boolean>(false);
+  const [pickupNavigating, setPickupNavigating] = useState<boolean>(false);
 
   useEffect(() => {
     if (available) {
@@ -141,8 +142,8 @@ const HomePage = () => {
                   Searching for new ride offers...
                 </Text>
               </View>
-            ) : (
-              //   Incoming ride request
+            ) : //   Incoming ride request
+            !pickupNavigating ? (
               <>
                 <Text
                   style={{
@@ -152,7 +153,7 @@ const HomePage = () => {
                     marginBottom: 10,
                   }}
                 >
-                  Incoming ride request
+                  {accepted ? "Ongoing ride" : "Incoming ride request"}
                 </Text>
 
                 {/* Ride request card */}
@@ -203,7 +204,10 @@ const HomePage = () => {
                     {/* Timeout or call */}
                     {!accepted ? (
                       <Text
-                        style={{ fontFamily: "poppins-regular", color: "#fff" }}
+                        style={{
+                          fontFamily: "poppins-regular",
+                          color: "#fff",
+                        }}
                       >
                         90s
                       </Text>
@@ -332,7 +336,7 @@ const HomePage = () => {
                       }}
                     >
                       <TouchableWithoutFeedback
-                        onPress={() => setAccepted(true)}
+                        onPress={() => setPickupNavigating(true)}
                       >
                         <View
                           style={{
@@ -350,7 +354,7 @@ const HomePage = () => {
                               textAlign: "center",
                             }}
                           >
-                            Start trip
+                            Navigate to pickup
                           </Text>
                         </View>
                       </TouchableWithoutFeedback>
@@ -358,10 +362,60 @@ const HomePage = () => {
                   )}
                 </View>
               </>
+            ) : (
+              <View style={{ backgroundColor: "#121212" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                  }}
+                >
+                  <FontAwesome5 name="directions" color={"#fff"} size={24} />
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      color: "#fff",
+                      fontFamily: "raleway-bold",
+                    }}
+                  >
+                    Go 3km and then turn right
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    marginTop: 20,
+                  }}
+                >
+                  <TouchableWithoutFeedback onPress={() => setAccepted(true)}>
+                    <View
+                      style={{
+                        backgroundColor: "#fff",
+                        borderRadius: 30,
+                        padding: 10,
+                        flex: 1,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#121212",
+                          fontFamily: "raleway-bold",
+                          fontSize: 16,
+                          textAlign: "center",
+                        }}
+                      >
+                        I have arrived at pickup
+                      </Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </View>
             )}
           </View>
         )}
 
+        {/* Offline mode */}
         <View style={styles.main_modal}>
           <Image
             source={require("../../assets/images/black-profile.jpeg")}
