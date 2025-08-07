@@ -16,9 +16,15 @@ import React, {
   FC,
 } from "react";
 
-import Ionicons from "@expo/vector-icons/Ionicons";
+import RideRoute from "./RideRoute";
+
+import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 const RouteModal = () => {
+  const [status, setStatus] = useState<
+    "" | "booking" | "searching" | "accepted"
+  >("");
+
   const height = useRef(new Animated.Value(180)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -26,181 +32,392 @@ const RouteModal = () => {
 
   const [carType, setCarType] = useState<"sedan" | "keke" | "suv">("keke");
 
-  const expand_route_modal = () => {
-    setModalUp(true);
-    Animated.parallel([
-      Animated.timing(height, {
-        toValue: 600,
-        duration: 500,
-        useNativeDriver: false,
-      }),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-  const collapse_route_modal = () => {
-    setModalUp(false);
-    Animated.parallel([
-      Animated.timing(height, {
-        toValue: 180,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  useEffect(() => {
+    if (modalUp) {
+      Animated.parallel([
+        Animated.timing(height, {
+          toValue: 600,
+          duration: 500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(height, {
+          toValue: 180,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [modalUp]);
+
+  useEffect(() => {
+    if (status === "searching") {
+      const searchTimeout = setTimeout(() => {
+        setStatus("accepted");
+        setModalUp(true);
+      }, 3000);
+
+      () => clearTimeout(searchTimeout);
+    }
+  }, [status]);
 
   return (
     <Animated.View style={[styles.modal, { height: height }]}>
-      {/* Expand line */}
-      <TouchableWithoutFeedback onPress={collapse_route_modal}>
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
-      {/* Header text */}
-      {modalUp ? (
-        <Text style={[styles.header_text, { textAlign: "center" }]}>
-          Choose your route...
-        </Text>
-      ) : (
-        <Text style={styles.header_text}>Ifeanyi, let's go places...</Text>
-      )}
-
       {/* Form */}
-      {!modalUp && (
-        <TouchableWithoutFeedback onPress={expand_route_modal}>
-          <View style={styles.form}>
-            <View style={styles.text_inp_container}>
-              <Image
-                source={require("../assets/images/icons/car-icon.png")}
-                style={{ height: 30, width: 30 }}
-              />
-              <TextInput
-                placeholder="Where we dey go?"
-                placeholderTextColor={"#8d8d8d"}
-                editable={false}
-                style={styles.text_input}
-              />
+      {status === "" && (
+        <>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(true);
+              setStatus("booking");
+            }}
+          >
+            <View style={styles.expand_line_conatiner}>
+              <View style={styles.expand_line} />
             </View>
-          </View>
-        </TouchableWithoutFeedback>
+          </TouchableWithoutFeedback>
+
+          <Text style={styles.header_text}>Ifeanyi, let's go places...</Text>
+
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(true);
+              setStatus("booking");
+            }}
+          >
+            <View style={styles.form}>
+              <View style={styles.text_inp_container}>
+                <Image
+                  source={require("../assets/images/icons/car-icon.png")}
+                  style={{ height: 30, width: 30 }}
+                />
+                <TextInput
+                  placeholder="Where we dey go?"
+                  placeholderTextColor={"#8d8d8d"}
+                  editable={false}
+                  style={styles.text_input}
+                />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </>
       )}
 
-      {/* Route slection form */}
-      <Animated.View style={[styles.form, { opacity }]}>
-        <View style={{ flex: 1, marginTop: 10 }}>
-          {/* Pick car type */}
-          <View style={styles.select_ride_container}>
-            <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
-              <View
-                style={[
-                  styles.select_ride_box,
-                  carType === "keke" && styles.select_ride_box_active,
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/icons/keke-icon.png")}
-                  style={{ width: 25, height: 25 }}
+      {status === "booking" && (
+        <>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(false);
+              setStatus("");
+            }}
+          >
+            <View style={styles.expand_line_conatiner}>
+              <View style={styles.expand_line} />
+            </View>
+          </TouchableWithoutFeedback>
+
+          <Text style={[styles.header_text, { textAlign: "center" }]}>
+            Choose your route...
+          </Text>
+
+          {/* Route slection form */}
+          <Animated.View style={[styles.form, { opacity }]}>
+            <View style={{ flex: 1, marginTop: 10 }}>
+              {/* Pick car type */}
+              <View style={styles.select_ride_container}>
+                <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
+                  <View
+                    style={[
+                      styles.select_ride_box,
+                      carType === "keke" && styles.select_ride_box_active,
+                    ]}
+                  >
+                    <Image
+                      source={require("../assets/images/icons/keke-icon.png")}
+                      style={{ width: 25, height: 25 }}
+                    />
+                    <Text
+                      style={[
+                        { color: "#fff", fontFamily: "raleway-bold" },
+                        carType === "keke" && styles.select_ride_text_active,
+                      ]}
+                    >
+                      Keke
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+
+                <TouchableWithoutFeedback onPress={() => setCarType("sedan")}>
+                  <View
+                    style={[
+                      styles.select_ride_box,
+                      carType === "sedan" && styles.select_ride_box_active,
+                    ]}
+                  >
+                    <Image
+                      source={require("../assets/images/icons/sedan-icon.png")}
+                      style={{ width: 25, height: 25 }}
+                    />
+                    <Text
+                      style={[
+                        { color: "#fff", fontFamily: "raleway-bold" },
+                        carType === "sedan" && styles.select_ride_text_active,
+                      ]}
+                    >
+                      Cab
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+
+                <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
+                  <View
+                    style={[
+                      styles.select_ride_box,
+                      carType === "suv" && styles.select_ride_box_active,
+                    ]}
+                  >
+                    <Image
+                      source={require("../assets/images/icons/suv-icon.png")}
+                      style={{ width: 25, height: 25 }}
+                    />
+                    <Text
+                      style={[
+                        { color: "#fff", fontFamily: "raleway-bold" },
+                        carType === "suv" && styles.select_ride_text_active,
+                      ]}
+                    >
+                      SUV
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+
+              {/* Select pickup and drop off */}
+              <View style={styles.route_inp_container}>
+                <View style={styles.from_circle} />
+                <TextInput
+                  style={styles.route_input}
+                  placeholder="24 Lucia avenue, Okwe"
+                  placeholderTextColor={"#ffffff"}
                 />
-                <Text
-                  style={[
-                    { color: "#fff", fontFamily: "raleway-bold" },
-                    carType === "keke" && styles.select_ride_text_active,
-                  ]}
-                >
-                  Keke
+              </View>
+              <View style={styles.route_inp_container}>
+                <View style={styles.to_square} />
+                <TextInput
+                  style={styles.route_input}
+                  placeholder="Destination"
+                  placeholderTextColor={"#b7b7b7"}
+                />
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Suggestions */}
+          <Animated.ScrollView
+            style={[styles.suggestions_container, { opacity }]}
+          >
+            <View style={styles.suggestion_box}>
+              <Ionicons name="location" size={24} color="#b7b7b7" />
+              <View>
+                <Text style={styles.suggestion_header_text}>
+                  Anglican girls grammar school
+                </Text>
+                <Text style={styles.suggestion_sub_text}>
+                  6P38+VWR, Unnamed Road, Umuagu, Asaba 320242, Delta
                 </Text>
               </View>
-            </TouchableWithoutFeedback>
+            </View>
+          </Animated.ScrollView>
 
-            <TouchableWithoutFeedback onPress={() => setCarType("sedan")}>
-              <View
-                style={[
-                  styles.select_ride_box,
-                  carType === "sedan" && styles.select_ride_box_active,
-                ]}
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(false);
+              setStatus("searching");
+            }}
+          >
+            <View
+              style={{
+                marginVertical: 20,
+                padding: 10,
+                borderRadius: 30,
+                backgroundColor: "#fff",
+              }}
+            >
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontFamily: "raleway-bold",
+                  color: "#121212",
+                }}
               >
-                <Image
-                  source={require("../assets/images/icons/sedan-icon.png")}
-                  style={{ width: 25, height: 25 }}
-                />
-                <Text
-                  style={[
-                    { color: "#fff", fontFamily: "raleway-bold" },
-                    carType === "sedan" && styles.select_ride_text_active,
-                  ]}
-                >
-                  Cab
-                </Text>
-              </View>
-            </TouchableWithoutFeedback>
+                Book now
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </>
+      )}
+      {status === "searching" && (
+        <>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(!modalUp);
+            }}
+          >
+            <View style={styles.expand_line_conatiner}>
+              <View style={styles.expand_line} />
+            </View>
+          </TouchableWithoutFeedback>
 
-            <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
-              <View
-                style={[
-                  styles.select_ride_box,
-                  carType === "suv" && styles.select_ride_box_active,
-                ]}
-              >
-                <Image
-                  source={require("../assets/images/icons/suv-icon.png")}
-                  style={{ width: 25, height: 25 }}
-                />
-                <Text
-                  style={[
-                    { color: "#fff", fontFamily: "raleway-bold" },
-                    carType === "suv" && styles.select_ride_text_active,
-                  ]}
-                >
-                  SUV
-                </Text>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
+          <Text
+            style={[styles.header_text, { textAlign: "center", marginTop: 20 }]}
+          >
+            Searching for driver
+          </Text>
 
-          {/* Select pickup and drop off */}
-          <View style={styles.route_inp_container}>
-            <View style={styles.from_circle} />
-            <TextInput
-              style={styles.route_input}
-              placeholder="24 Lucia avenue, Okwe"
-              placeholderTextColor={"#ffffff"}
-            />
-          </View>
-          <View style={styles.route_inp_container}>
-            <View style={styles.to_square} />
-            <TextInput
-              style={styles.route_input}
-              placeholder="Destination"
-              placeholderTextColor={"#b7b7b7"}
-            />
-          </View>
-        </View>
-      </Animated.View>
-
-      {/* Suggestions */}
-      <Animated.ScrollView style={[styles.suggestions_container, { opacity }]}>
-        <View style={styles.suggestion_box}>
-          <Ionicons name="location" size={24} color="#b7b7b7" />
-          <View>
-            <Text style={styles.suggestion_header_text}>
-              Anglican girls grammar school
+          <View style={{ marginTop: 20 }}>
+            <Text
+              style={{
+                fontFamily: "raleway-regular",
+                color: "#fff",
+                textAlign: "center",
+              }}
+            >
+              We're trying to locate drivers around you...
             </Text>
-            <Text style={styles.suggestion_sub_text}>
-              6P38+VWR, Unnamed Road, Umuagu, Asaba 320242, Delta
+          </View>
+        </>
+      )}
+      {status === "accepted" && (
+        <>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(!modalUp);
+            }}
+          >
+            <View style={styles.expand_line_conatiner}>
+              <View style={styles.expand_line} />
+            </View>
+          </TouchableWithoutFeedback>
+
+          <Text style={[styles.header_text, { textAlign: "center" }]}>
+            Driver found
+          </Text>
+
+          <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+            This driver is on his way...
+          </Text>
+
+          {/* Ride request card */}
+          <View style={styles.rideRequestCard}>
+            {/* Header */}
+            <View style={styles.rideRequestHeader}>
+              {/* User */}
+              <View style={styles.userInfo}>
+                <Image
+                  source={require("../assets/images/black-profile.jpeg")}
+                  style={styles.userImage}
+                />
+                <View>
+                  <Text style={styles.userName}>Oputa Lawrence</Text>
+                  <Text style={styles.userRides}>34 ride completed</Text>
+                </View>
+              </View>
+
+              {/* Call btn */}
+              <View style={styles.callBtn}>
+                <FontAwesome name="phone" color={"#121212"} size={20} />
+              </View>
+            </View>
+
+            {/* Estimated time and duration */}
+            <View style={{ marginVertical: 20 }}>
+              <View style={styles.timeRow}>
+                <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
+                <Text style={styles.timeText}>24 mins (3.45 km)</Text>
+              </View>
+
+              <View style={styles.timeRow}>
+                <Ionicons name="car" color={"#d7d7d7"} size={16} />
+                <Text style={styles.timeText}>Yellow Keke</Text>
+              </View>
+            </View>
+
+            {/* Ride route card */}
+            <RideRoute from="Konwea plaza" to="Slot, Nnebisi road" />
+
+            {/* Price */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={styles.priceText}>1,500 NGN</Text>
+              <TouchableWithoutFeedback>
+                <View
+                  style={{
+                    backgroundColor: "#fff",
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#121212",
+                      fontFamily: "raleway-bold",
+                      textAlign: "center",
+                      fontSize: 12,
+                    }}
+                  >
+                    Pay from wallet
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+            <Text
+              style={{
+                marginVertical: 20,
+                color: "#fff",
+                fontFamily: "raleway-regular",
+                fontSize: 12,
+              }}
+            >
+              *Please ensure the driver has arrived before paying for this ride
             </Text>
           </View>
-        </View>
-      </Animated.ScrollView>
+
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setStatus(""), setModalUp(false);
+            }}
+          >
+            <Text
+              style={{
+                marginTop: 50,
+                color: "#ff0000",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Canel this ride
+            </Text>
+          </TouchableWithoutFeedback>
+        </>
+      )}
     </Animated.View>
   );
 };
@@ -342,5 +559,120 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-semibold",
     fontSize: 12,
     marginTop: 5,
+  },
+
+  rideStatusText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "raleway-bold",
+    marginBottom: 10,
+  },
+  rideRequestCard: {
+    borderStyle: "solid",
+    borderColor: "#a0a0a0ff",
+    borderWidth: 0.5,
+    borderRadius: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  rideRequestHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  userInfo: {
+    flexDirection: "row",
+    gap: 20,
+  },
+  userImage: {
+    width: 30,
+    height: 30,
+  },
+  userName: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+  },
+  userRides: {
+    color: "#d7d7d7",
+    fontSize: 10,
+    fontFamily: "raleway-regular",
+  },
+  timeoutText: {
+    fontFamily: "poppins-regular",
+    color: "#fff",
+  },
+  callBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 50,
+    width: 35,
+    height: 35,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  timeText: {
+    color: "#d7d7d7",
+    fontFamily: "poppins-regular",
+    fontSize: 12,
+    marginTop: 3,
+  },
+  priceText: {
+    color: "#10b804ff",
+    fontFamily: "poppins-bold",
+    fontSize: 18,
+  },
+  actionBtnsRow: {
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 20,
+  },
+  acceptBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    padding: 10,
+    flex: 1,
+  },
+  acceptBtnText: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  cancelBtn: {
+    backgroundColor: "transparent",
+    borderRadius: 30,
+    borderStyle: "solid",
+    borderColor: "#fff",
+    borderWidth: 1,
+    padding: 10,
+    flex: 1,
+  },
+  cancelBtnText: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  navigateBtnRow: {
+    marginTop: 20,
+  },
+  navigateBtn: {
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    padding: 10,
+    flex: 1,
+  },
+  navigateBtnText: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  navigationContainer: {
+    backgroundColor: "#121212",
   },
 });
