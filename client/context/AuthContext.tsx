@@ -10,30 +10,34 @@ import React, {
 import axios from "axios";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { jwtDecode } from "jwt-decode";
+
 import {
   NotificationContextType,
   useNotificationContext,
 } from "./NotificationContext";
-
-export interface AuthContextType {
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    confirmPassword: string
-  ) => Promise<void>;
-  login: (
-    email: string, // email or phone
-    password: string
-  ) => Promise<void>;
-  updatePhone: (phone: string) => Promise<void>;
-}
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } =
     useNotificationContext() as NotificationContextType;
+
+  const [signedIn, setSignedIn] = useState<UserType>({
+    user_id: "",
+    email: "",
+    phone: "",
+    name: "",
+  });
+
+  const [tokenLoading, setTokenLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  useEffect(() => {
+    getUserData();
+    checkTokenValidity();
+  }, []);
 
   // Registration function
   const register = async (
@@ -57,6 +61,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem("user_id", data.user.id);
+
+      await getUserData();
+
       showNotification("Registration successful", "success");
     } catch (err: any) {
       console.log(err);
@@ -75,6 +82,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         { phone },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      await getUserData();
+
       showNotification("Phone updated successfully.", "success");
     } catch (err: any) {
       showNotification(
@@ -95,6 +105,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem("user_id", data.user.id);
+
+      await getUserData();
+
       showNotification("Login successful.", "success");
     } catch (err: any) {
       showNotification(err.response?.data?.msg || "Login failed", "error");
@@ -102,8 +115,60 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const getUserData = async (): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      if (!token) return;
+
+      const { data } = await axios.get(
+        `http://192.168.36.123:5000/api/v1/users/data`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const { _id, name, email, phone } = data.user;
+      setSignedIn({
+        user_id: _id,
+        name,
+        email,
+        phone,
+      });
+    } catch (err) {
+      console.log("Failed to fetch user data:", err);
+    }
+  };
+
+  // Check for user token
+  const checkTokenValidity = async () => {
+    const storedToken = await AsyncStorage.getItem("token");
+    setTokenLoading(false);
+    if (storedToken) {
+      try {
+        const decoded: any = jwtDecode(storedToken);
+        const now = Date.now() / 1000;
+        if (decoded.exp && decoded.exp > now) {
+          setIsAuthenticated(true);
+        } else {
+          await AsyncStorage.removeItem("token"); // Expired
+        }
+      } catch (err) {
+        console.log("Invalid token");
+        await AsyncStorage.removeItem("token");
+      }
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ register, login, updatePhone }}>
+    <AuthContext.Provider
+      value={{
+        register,
+        login,
+        updatePhone,
+        getUserData,
+        signedIn,
+        isAuthenticated,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -114,3 +179,27 @@ export default AuthProvider;
 export const useAuthContext = () => {
   return useContext(AuthContext);
 };
+
+type UserType = {
+  user_id: string;
+  name: string;
+  email: string;
+  phone: string;
+};
+
+export interface AuthContextType {
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    confirmPassword: string
+  ) => Promise<void>;
+  login: (
+    email: string, // email or phone
+    password: string
+  ) => Promise<void>;
+  updatePhone: (phone: string) => Promise<void>;
+  getUserData: () => Promise<void>;
+  signedIn: UserType;
+  isAuthenticated: boolean;
+}

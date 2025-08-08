@@ -10,96 +10,97 @@ import React, { useEffect, useState } from "react";
 import SplashScreen from "./splash_screen";
 import { router } from "expo-router";
 
+import { useAuthContext } from "../context/AuthContext";
+
 const StartScreen = () => {
+  const { isAuthenticated } = useAuthContext()!;
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTimeout = setTimeout(() => {
       setLoading(false);
+      if (isAuthenticated) {
+        router.replace("/(tabs)/home");
+      }
     }, 2000);
 
     return () => clearTimeout(loadTimeout);
-  }, []);
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return <SplashScreen />;
+  }
 
   return (
-    <>
-      {loading ? (
-        <SplashScreen />
-      ) : (
-        <View
+    <View
+      style={{
+        backgroundColor: "#121212",
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+      }}
+    >
+      <View
+        style={{
+          width: "100%",
+          height: "auto",
+          justifyContent: "center",
+          alignItems: "center",
+          marginTop: 80,
+        }}
+      >
+        <Image
+          source={require("../assets/images/logo.png")}
+          style={{ height: 300, width: 300 }}
+        />
+        <Text
           style={{
-            backgroundColor: "#121212",
-            flex: 1,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
+            color: "#fff",
+            fontFamily: "raleway-black",
+            fontSize: 25,
+            textAlign: "center",
+            lineHeight: 35,
           }}
         >
-          <View
-            style={{
-              width: "100%",
-              height: "auto",
-              justifyContent: "center",
-              alignItems: "center",
-              marginTop: 80,
-            }}
-          >
-            <Image
-              source={require("../assets/images/logo.png")}
-              style={{ height: 300, width: 300 }}
-            />
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-black",
-                fontSize: 25,
-                textAlign: "center",
-                lineHeight: 35,
-              }}
-            >
-              Let's get you started with Igle...
-            </Text>
-          </View>
-          <View
-            style={{
-              justifyContent: "flex-end",
-              flex: 1,
-              alignItems: "center",
-              marginBottom: 40,
-            }}
-          >
-            <View style={styles.sign_btn}>
-              <Image
-                source={require("../assets/images/icons/apple-logo.png")}
-                style={styles.sign_image}
-              />
-              <Text style={styles.sign_text}>Continue with Apple</Text>
-            </View>
-            <TouchableWithoutFeedback
-              onPress={() => router.push("/(tabs)/home")}
-            >
-              <View style={styles.sign_btn}>
-                <Image
-                  source={require("../assets/images/icons/google-logo.png")}
-                  style={styles.sign_image}
-                />
-                <Text style={styles.sign_text}>Continue with Google</Text>
-              </View>
-            </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback
-              onPress={() => router.push("/(auth)/signin")}
-            >
-              <View style={styles.sign_btn}>
-                <Image
-                  source={require("../assets/images/icons/mail.png")}
-                  style={styles.sign_image}
-                />
-                <Text style={styles.sign_text}>Continue with Email</Text>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
+          Let's get you started with Igle...
+        </Text>
+      </View>
+      <View
+        style={{
+          justifyContent: "flex-end",
+          flex: 1,
+          alignItems: "center",
+          marginBottom: 40,
+        }}
+      >
+        <View style={styles.sign_btn}>
+          <Image
+            source={require("../assets/images/icons/apple-logo.png")}
+            style={styles.sign_image}
+          />
+          <Text style={styles.sign_text}>Continue with Apple</Text>
         </View>
-      )}
-    </>
+        <TouchableWithoutFeedback onPress={() => router.push("/(tabs)/home")}>
+          <View style={styles.sign_btn}>
+            <Image
+              source={require("../assets/images/icons/google-logo.png")}
+              style={styles.sign_image}
+            />
+            <Text style={styles.sign_text}>Continue with Google</Text>
+          </View>
+        </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={() => router.push("/(auth)/signin")}>
+          <View style={styles.sign_btn}>
+            <Image
+              source={require("../assets/images/icons/mail.png")}
+              style={styles.sign_image}
+            />
+            <Text style={styles.sign_text}>Continue with Email</Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
   );
 };
 

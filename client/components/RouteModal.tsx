@@ -20,7 +20,11 @@ import RideRoute from "./RideRoute";
 
 import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 
+import { useAuthContext } from "../context/AuthContext";
+
 const RouteModal = () => {
+  const { signedIn } = useAuthContext()!;
+
   const [status, setStatus] = useState<
     "" | "booking" | "searching" | "accepted" | "paying" | "paid"
   >("");
@@ -89,7 +93,9 @@ const RouteModal = () => {
             </View>
           </TouchableWithoutFeedback>
 
-          <Text style={styles.header_text}>Ifeanyi, let's go places...</Text>
+          <Text style={styles.header_text}>
+            {signedIn.name.split(" ")[1]}, let's go places...
+          </Text>
 
           <TouchableWithoutFeedback
             onPress={() => {
