@@ -16,151 +16,197 @@ import { Link, router } from "expo-router";
 
 import { auth_styles } from "../../styles/auth.styles";
 
+import { useNotificationContext } from "../../context/NotificationContext";
+import { useAuthContext } from "../../context/AuthContext";
+import Notification from "../../components/Notification";
+
 const Signin = () => {
   const styles = auth_styles();
 
-  const [checked, setChecked] = useState<boolean>(false);
+  const { showNotification, notification } = useNotificationContext()!;
+  const { login } = useAuthContext()!;
+
+  const [checked, setChecked] = useState<boolean>(true);
   const [passwordShow, setPasswordShow] = useState<boolean>(true);
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (): Promise<void> => {
+    if (!email || !password) {
+      showNotification("All fields are required", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await login(email, password);
+      setTimeout(() => {
+        router.push("/(tabs)/home");
+      }, 1500);
+    } catch (err: any) {
+      showNotification(err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      {/* Back button */}
-      <TouchableWithoutFeedback
-        onPress={() => router.back()}
-        style={{ padding: 10 }}
-      >
-        <Feather name="chevron-left" size={40} color="#d3d0d0ff" />
-      </TouchableWithoutFeedback>
-
-      {/* Header texts... */}
-      <View style={{ marginTop: 10, paddingHorizontal: 10 }}>
-        <Text style={styles.header_text}>Welcome back</Text>
-        {/* Sub header texts */}
-        <Text style={styles.sub_header_text}>Login with your email...</Text>
-      </View>
-
-      {/* Form start here */}
-      <View style={{ marginTop: 20, paddingHorizontal: 10, flex: 1 }}>
-        {/* Email input */}
-        <View style={styles.inp_container}>
-          <Text style={styles.inp_label}>Email</Text>
-          <View style={styles.inp_holder}>
-            <FontAwesome name="envelope-o" size={20} color="white" />
-            <TextInput
-              style={styles.text_input}
-              placeholder="Input your email"
-              placeholderTextColor={"#c5c5c5ff"}
-              autoCapitalize="none"
-            />
-          </View>
-        </View>
-
-        {/* Passsord input */}
-        <View style={styles.inp_container}>
-          <Text style={styles.inp_label}>Password</Text>
-          <View style={styles.inp_holder}>
-            <Feather name="lock" size={20} color="white" />
-            <TextInput
-              style={styles.text_input}
-              placeholder="Input your password"
-              placeholderTextColor={"#c5c5c5ff"}
-              secureTextEntry={passwordShow}
-              autoCapitalize="none"
-            />
-            {passwordShow ? (
-              <Feather
-                name="eye-off"
-                size={20}
-                color="white"
-                onPress={() => setPasswordShow(!passwordShow)}
-              />
-            ) : (
-              <Feather
-                name="eye"
-                size={20}
-                color="white"
-                onPress={() => setPasswordShow(!passwordShow)}
-              />
-            )}
-          </View>
-        </View>
-
-        {/* Remember me checkbox */}
-        <View style={{ marginTop: 15 }}>
-          <View style={styles.check_container}>
-            <Checkbox
-              status={checked ? "checked" : "unchecked"}
-              onPress={() => setChecked(!checked)}
-              color="#fff"
-            />
-            <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
-              Remember me
-            </Text>
-          </View>
-        </View>
-
-        {/* Submit button */}
-        <View style={styles.sign_btn}>
-          <Text style={styles.sign_btn_text}>Sign in</Text>
-        </View>
-
-        {/* ----- OR ----- */}
-        <View style={styles.or_container}>
-          <View style={{ flex: 1, height: 1, backgroundColor: "#8b8b8bff" }} />
-          <Text style={styles.or_text}>Or Continue With</Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: "#8b8b8bff" }} />
-        </View>
-
-        {/* 0auth buttons */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginTop: 30,
-          }}
+    <>
+      <Notification notification={notification} />
+      <ScrollView style={styles.container}>
+        {/* Back button */}
+        <TouchableWithoutFeedback
+          onPress={() => router.back()}
+          style={{ padding: 10 }}
         >
-          {/* Sign with google */}
-          <View style={styles.oauth_btn}>
-            <Image
-              source={require("../../assets/images/icons/google-logo.png")}
-              style={styles.oauth_img}
-            />
-            <Text style={styles.oauth_text}>Google</Text>
-          </View>
+          <Feather name="chevron-left" size={40} color="#d3d0d0" />
+        </TouchableWithoutFeedback>
 
-          {/* Sign with apple */}
-          <View style={styles.oauth_btn}>
-            <Image
-              source={require("../../assets/images/icons/apple-logo-white.png")}
-              style={styles.oauth_img}
-            />
-            <Text style={styles.oauth_text}>Apple</Text>
-          </View>
+        {/* Header texts... */}
+        <View style={{ marginTop: 10, paddingHorizontal: 10 }}>
+          <Text style={styles.header_text}>Welcome back</Text>
+          {/* Sub header texts */}
+          <Text style={styles.sub_header_text}>Login with your email...</Text>
         </View>
 
-        {/* Don't or already have an account */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: 5,
-            marginVertical: 40,
-          }}
-        >
-          <Text style={{ color: "#fff", fontFamily: "raleway-regular" }}>
-            Don't have an account?
-          </Text>
+        {/* Form start here */}
+        <View style={{ marginTop: 20, paddingHorizontal: 10, flex: 1 }}>
+          {/* Email input */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Email</Text>
+            <View style={styles.inp_holder}>
+              <FontAwesome name="envelope-o" size={20} color="white" />
+              <TextInput
+                style={styles.text_input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Input your email"
+                placeholderTextColor={"#c5c5c5ff"}
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
 
-          {/* Link... */}
-          <Link
-            href={"/(auth)/signup"}
-            style={{ color: "#fff", fontFamily: "raleway-bold" }}
+          {/* Passsord input */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Password</Text>
+            <View style={styles.inp_holder}>
+              <Feather name="lock" size={20} color="white" />
+              <TextInput
+                style={styles.text_input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Input your password"
+                placeholderTextColor={"#c5c5c5ff"}
+                secureTextEntry={passwordShow}
+                autoCapitalize="none"
+              />
+              {passwordShow ? (
+                <Feather
+                  name="eye-off"
+                  size={20}
+                  color="white"
+                  onPress={() => setPasswordShow(!passwordShow)}
+                />
+              ) : (
+                <Feather
+                  name="eye"
+                  size={20}
+                  color="white"
+                  onPress={() => setPasswordShow(!passwordShow)}
+                />
+              )}
+            </View>
+          </View>
+
+          {/* Remember me checkbox */}
+          <View style={{ marginTop: 15 }}>
+            <View style={styles.check_container}>
+              <Checkbox
+                status={checked ? "checked" : "unchecked"}
+                onPress={() => setChecked(!checked)}
+                color="#fff"
+              />
+              <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
+                Remember me
+              </Text>
+            </View>
+          </View>
+
+          {/* Submit button */}
+          <TouchableWithoutFeedback onPress={handleLogin}>
+            <View style={styles.sign_btn}>
+              <Text style={styles.sign_btn_text}>
+                {loading ? "Signing in..." : "Sign in"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+
+          {/* ----- OR ----- */}
+          <View style={styles.or_container}>
+            <View
+              style={{ flex: 1, height: 1, backgroundColor: "#8b8b8bff" }}
+            />
+            <Text style={styles.or_text}>Or Continue With</Text>
+            <View
+              style={{ flex: 1, height: 1, backgroundColor: "#8b8b8bff" }}
+            />
+          </View>
+
+          {/* 0auth buttons */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginTop: 30,
+            }}
           >
-            Signup
-          </Link>
+            {/* Sign with google */}
+            <View style={styles.oauth_btn}>
+              <Image
+                source={require("../../assets/images/icons/google-logo.png")}
+                style={styles.oauth_img}
+              />
+              <Text style={styles.oauth_text}>Google</Text>
+            </View>
+
+            {/* Sign with apple */}
+            <View style={styles.oauth_btn}>
+              <Image
+                source={require("../../assets/images/icons/apple-logo-white.png")}
+                style={styles.oauth_img}
+              />
+              <Text style={styles.oauth_text}>Apple</Text>
+            </View>
+          </View>
+
+          {/* Don't or already have an account */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 5,
+              marginVertical: 40,
+            }}
+          >
+            <Text style={{ color: "#fff", fontFamily: "raleway-regular" }}>
+              Don't have an account?
+            </Text>
+
+            {/* Link... */}
+            <Link
+              href={"/(auth)/signup"}
+              style={{ color: "#fff", fontFamily: "raleway-bold" }}
+            >
+              Signup
+            </Link>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 };
 

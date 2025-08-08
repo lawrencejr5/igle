@@ -66,29 +66,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  // Login function (email or phone)
-  const login = async (identifier: string, password: string): Promise<void> => {
-    try {
-      let data;
-      if (identifier.includes("@")) {
-        ({ data } = await axios.post(
-          "http://localhost:5000/api/v1/users/login",
-          { email: identifier, password }
-        ));
-      } else {
-        ({ data } = await axios.post(
-          "http://localhost:5000/api/v1/users/login",
-          { phone: identifier, password }
-        ));
-      }
-      await AsyncStorage.setItem("token", data.token);
-      await AsyncStorage.setItem("user_id", data.user.id);
-      showNotification("Login successful.", "success");
-    } catch (err: any) {
-      showNotification(err.response?.data?.msg || "Login failed.", "error");
-    }
-  };
-
   // Update phone number function
   const updatePhone = async (phone: string): Promise<void> => {
     try {
@@ -105,6 +82,23 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "error"
       );
       throw new Error(err.response?.data?.msg);
+    }
+  };
+
+  // Login function (email or phone)
+  const login = async (email: string, password: string): Promise<void> => {
+    try {
+      const { data } = await axios.post(
+        "http://192.168.36.123:5000/api/v1/users/login",
+        { email, password }
+      );
+
+      await AsyncStorage.setItem("token", data.token);
+      await AsyncStorage.setItem("user_id", data.user.id);
+      showNotification("Login successful.", "success");
+    } catch (err: any) {
+      showNotification(err.response?.data?.msg || "Login failed", "error");
+      throw new Error(err.response?.data?.msg || "Login failed");
     }
   };
 
