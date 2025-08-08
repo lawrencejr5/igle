@@ -104,7 +104,7 @@ const DriverIdentification = () => {
               </TouchableWithoutFeedback>
             </View>
             <View style={styles.inp_container}>
-              <Text style={styles.inp_label}>Driver's Licence front</Text>
+              <Text style={styles.inp_label}>Driver's Licence back</Text>
               <TouchableWithoutFeedback onPress={pickImage}>
                 <View style={styles.img_input}>
                   <Feather name="camera" color={"#fff"} size={30} />

@@ -16,13 +16,7 @@ export const create_driver = async (
   res: Response
 ): Promise<void> => {
   try {
-    const {
-      vehicle_type,
-      vehicle_number,
-      license_plate,
-      driver_license_image,
-      coordinates,
-    } = req.body;
+    const { vehicle, driver_licence, date_of_birth, coordinates } = req.body;
     const user = req.user?.id;
 
     const existing_driver = await Driver.findOne({ user });
@@ -33,11 +27,13 @@ export const create_driver = async (
 
     const driver = await Driver.create({
       user,
-      vehicle_type,
-      vehicle_number,
-      license_plate,
-      driver_license_image,
-      "current_location.coordinates": coordinates,
+      vehicle,
+      driver_licence,
+      date_of_birth,
+      current_location: {
+        type: "Point",
+        coordinates: coordinates,
+      },
     });
 
     await Wallet.create({
@@ -169,6 +165,142 @@ export const set_driver_availability = async (
     res.status(200).json({
       msg: "Driver availability set successfully",
       is_available: driver.is_available,
+    });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Update vehicle information
+export const update_vehicle_info = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { vehicle } = req.body;
+    const driver_id = await get_driver_id(req.user?.id!);
+
+    const driver = await Driver.findByIdAndUpdate(
+      driver_id,
+      { vehicle },
+      { new: true }
+    );
+
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    res.status(200).json({
+      msg: "Vehicle information updated successfully",
+      vehicle: driver.vehicle,
+    });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Update driver license information
+export const update_driver_license = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { driver_licence } = req.body;
+    const driver_id = await get_driver_id(req.user?.id!);
+
+    const driver = await Driver.findByIdAndUpdate(
+      driver_id,
+      { driver_licence },
+      { new: true }
+    );
+
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    res.status(200).json({
+      msg: "Driver license information updated successfully",
+      driver_licence: driver.driver_licence,
+    });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Set driver online status
+export const set_driver_online_status = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { is_online } = req.body;
+    const driver_id = await get_driver_id(req.user?.id!);
+
+    const driver = await Driver.findByIdAndUpdate(
+      driver_id,
+      { is_online },
+      { new: true }
+    );
+
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    res.status(200).json({
+      msg: "Driver online status updated successfully",
+      is_online: driver.is_online,
+    });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Get driver by user ID
+export const get_driver_by_user = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const user_id = req.user?.id;
+    const driver = await Driver.findOne({ user: user_id }).populate("user");
+
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    res.status(200).json({ msg: "success", driver });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Update driver rating
+export const update_driver_rating = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { rating } = req.body;
+    const driver_id = await get_driver_id(req.user?.id!);
+
+    const driver = await Driver.findByIdAndUpdate(
+      driver_id,
+      { rating },
+      { new: true }
+    );
+
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    res.status(200).json({
+      msg: "Driver rating updated successfully",
+      rating: driver.rating,
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });

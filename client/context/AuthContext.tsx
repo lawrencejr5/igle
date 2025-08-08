@@ -17,6 +17,7 @@ import {
   NotificationContextType,
   useNotificationContext,
 } from "./NotificationContext";
+import { router } from "expo-router";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -158,6 +159,22 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const logout = async (): Promise<void> => {
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("user");
+
+    showNotification("User logged out", "error");
+
+    setSignedIn({
+      user_id: "",
+      name: "",
+      phone: "",
+      email: "",
+    });
+
+    router.push("/");
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -167,6 +184,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         getUserData,
         signedIn,
         isAuthenticated,
+        logout,
       }}
     >
       {children}
@@ -202,4 +220,5 @@ export interface AuthContextType {
   getUserData: () => Promise<void>;
   signedIn: UserType;
   isAuthenticated: boolean;
+  logout: () => void;
 }
