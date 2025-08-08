@@ -46,7 +46,6 @@ const io = new SocketServer(http_server, {
 io.on("connection", (socket) => {
   handle_socket_events(io, socket);
 });
-
 export { io };
 
 const start_server = async (): Promise<void> => {

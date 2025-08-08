@@ -5,6 +5,7 @@ import {
   TouchableWithoutFeedback,
   View,
   Image,
+  GestureResponderEvent,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -15,15 +16,48 @@ import { Checkbox } from "react-native-paper";
 import { Link, router } from "expo-router";
 
 import { auth_styles } from "../../styles/auth.styles";
+import { useAuthContext } from "../../context/AuthContext";
+import Notification from "../../components/Notification";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const Signup = () => {
   const styles = auth_styles();
 
+  const { register } = useAuthContext()!;
+  const { showNotification, notification } = useNotificationContext()!;
+
   const [checked, setChecked] = useState(false);
   const [passwordShow, setPasswordShow] = useState<boolean>(true);
 
+  // Add state for form fields
+  const [fullname, setFullname] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Handle registration
+  const handleRegister = async () => {
+    if (!fullname || !email || !password || !confirmPassword) {
+      showNotification("All fields are required.", "error");
+      return;
+    }
+    setLoading(true);
+    try {
+      await register(fullname, email, password, confirmPassword);
+      setTimeout(() => {
+        router.push("/(auth)/phone");
+      }, 1500);
+    } catch (err: any) {
+      showNotification(err.message || "Registration failed", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      <Notification notification={notification} />
       <ScrollView>
         {/* Back button */}
         <TouchableWithoutFeedback
@@ -54,6 +88,8 @@ const Signup = () => {
                 placeholder="Input your full name"
                 placeholderTextColor={"#c5c5c5ff"}
                 autoCapitalize="words"
+                value={fullname}
+                onChangeText={setFullname}
               />
             </View>
           </View>
@@ -68,11 +104,13 @@ const Signup = () => {
                 placeholder="Input your email"
                 placeholderTextColor={"#c5c5c5"}
                 autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
               />
             </View>
           </View>
 
-          {/* Passsord input */}
+          {/* Password input */}
           <View style={styles.inp_container}>
             <Text style={styles.inp_label}>Password</Text>
             <View style={styles.inp_holder}>
@@ -83,6 +121,8 @@ const Signup = () => {
                 placeholderTextColor={"#c5c5c5ff"}
                 secureTextEntry={passwordShow}
                 autoCapitalize="none"
+                value={password}
+                onChangeText={setPassword}
               />
               {passwordShow ? (
                 <Feather
@@ -113,6 +153,8 @@ const Signup = () => {
                 placeholderTextColor={"#c5c5c5ff"}
                 secureTextEntry={passwordShow}
                 autoCapitalize="none"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
               />
               {passwordShow ? (
                 <Feather
@@ -133,11 +175,11 @@ const Signup = () => {
           </View>
 
           {/* Submit button */}
-          <TouchableWithoutFeedback
-            onPress={() => router.push("/(auth)/phone")}
-          >
+          <TouchableWithoutFeedback onPress={handleRegister}>
             <View style={styles.sign_btn}>
-              <Text style={styles.sign_btn_text}>Save</Text>
+              <Text style={styles.sign_btn_text}>
+                {loading ? "Saving..." : "Save"}
+              </Text>
             </View>
           </TouchableWithoutFeedback>
 

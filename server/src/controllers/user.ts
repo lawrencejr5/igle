@@ -16,7 +16,7 @@ const jwt_secret = process.env.JWT_SECRET;
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password, phone }: UserType = req.body;
-    if (!name || !email || !password || !phone) {
+    if (!name || !email || !password) {
       res.status(400).json({ msg: "All fields are required." });
       return;
     }
@@ -48,9 +48,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       balance: 0,
     });
 
-    res
-      .status(201)
-      .json({ token, user: { id: new_user._id, name, email, phone } });
+    res.status(201).json({ token, user: { id: new_user._id, name, email } });
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error." });
@@ -221,6 +219,37 @@ export const update_password = async (
     await user.save();
 
     res.status(200).json({ msg: "Password updated successfully." });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Update user phone number
+export const update_phone = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const user_id = req.user?.id;
+    const { phone } = req.body;
+
+    if (!phone) {
+      res.status(400).json({ msg: "Phone number is required." });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      user_id,
+      { phone },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ msg: "User not found." });
+      return;
+    }
+
+    res.status(200).json({ msg: "Phone number updated successfully.", user });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }

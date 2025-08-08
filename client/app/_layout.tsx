@@ -7,6 +7,9 @@ import { useFonts } from "expo-font";
 
 import SplashScreen from "./splash_screen";
 
+import AuthProvider from "../context/AuthContext";
+import { NotificationProvider } from "../context/NotificationContext";
+
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
   SystemUI.setBackgroundColorAsync(theme === "dark" ? "#121212" : "#fff");
@@ -26,14 +29,15 @@ const RootLayout = () => {
   }
 
   return (
-    // <SafeArea>
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        // animation: "slide_from_right"
-      }}
-    />
-    // </SafeArea>
+    <NotificationProvider>
+      <AuthProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        />
+      </AuthProvider>
+    </NotificationProvider>
   );
 };
 
