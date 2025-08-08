@@ -22,7 +22,7 @@ import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 const RouteModal = () => {
   const [status, setStatus] = useState<
-    "" | "booking" | "searching" | "accepted"
+    "" | "booking" | "searching" | "accepted" | "paying" | "paid"
   >("");
 
   const height = useRef(new Animated.Value(180)).current;
@@ -114,7 +114,6 @@ const RouteModal = () => {
           </TouchableWithoutFeedback>
         </>
       )}
-
       {status === "booking" && (
         <>
           <TouchableWithoutFeedback
@@ -366,7 +365,12 @@ const RouteModal = () => {
               }}
             >
               <Text style={styles.priceText}>1,500 NGN</Text>
-              <TouchableWithoutFeedback>
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  setStatus("paying");
+                  setModalUp(false);
+                }}
+              >
                 <View
                   style={{
                     backgroundColor: "#fff",
@@ -418,6 +422,116 @@ const RouteModal = () => {
           </TouchableWithoutFeedback>
         </>
       )}
+      {status === "paying" && (
+        <>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(!modalUp);
+            }}
+          >
+            <View style={styles.expand_line_conatiner}>
+              <View style={styles.expand_line} />
+            </View>
+          </TouchableWithoutFeedback>
+
+          <Text style={[styles.header_text, { textAlign: "center" }]}>
+            Confirm payment (1,500 NGN)
+          </Text>
+
+          <View style={{ marginTop: 25 }}>
+            <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
+              Wallet balance: 12,500 NGN
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 20,
+                marginTop: 10,
+              }}
+            >
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  setStatus("paid");
+                  setModalUp(false);
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "#fff",
+                    borderRadius: 20,
+                    paddingHorizontal: 30,
+                    paddingVertical: 10,
+                    flex: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#121212",
+                      fontFamily: "raleway-bold",
+                      textAlign: "center",
+                    }}
+                  >
+                    Confirm
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  setStatus("accepted");
+                  setModalUp(true);
+                }}
+              >
+                <View
+                  style={{
+                    borderRadius: 20,
+                    paddingHorizontal: 30,
+                    paddingVertical: 10,
+                    borderStyle: "solid",
+                    borderWidth: 1,
+                    borderColor: "#fff",
+                    flex: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-bold",
+                      textAlign: "center",
+                    }}
+                  >
+                    Cancel
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </View>
+        </>
+      )}
+      {status === "paid" && (
+        <>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(!modalUp);
+            }}
+          >
+            <View style={styles.expand_line_conatiner}>
+              <View style={styles.expand_line} />
+            </View>
+          </TouchableWithoutFeedback>
+
+          <Text
+            style={[
+              styles.header_text,
+              { textAlign: "center", marginTop: 20, fontSize: 16 },
+            ]}
+          >
+            Alright, hang tight, we'll take it from here...
+          </Text>
+        </>
+      )}
     </Animated.View>
   );
 };
@@ -426,7 +540,6 @@ export default RouteModal;
 
 const styles = StyleSheet.create({
   modal: {
-    // height: "85%",
     width: "100%",
     backgroundColor: "#121212",
     position: "absolute",
