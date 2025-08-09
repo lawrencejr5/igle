@@ -190,4 +190,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
+  progress_bar_container: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  progress_bar: {
+    height: 5,
+    width: "20%",
+    backgroundColor: "#565656ff",
+    borderRadius: 5,
+  },
 });

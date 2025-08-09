@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import React from "react";
 import { router } from "expo-router";
+import Header from "../../components/driver_reg/Header";
 
 const ReviewMessage = () => {
   return (
@@ -17,6 +18,8 @@ const ReviewMessage = () => {
         paddingHorizontal: 20,
       }}
     >
+      <Header />
+
       {/* Main content - centered */}
       <View
         style={{
@@ -90,4 +93,18 @@ const ReviewMessage = () => {
 
 export default ReviewMessage;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  progress_bar_container: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  progress_bar: {
+    height: 5,
+    width: "20%",
+    backgroundColor: "#565656ff",
+    borderRadius: 5,
+  },
+});

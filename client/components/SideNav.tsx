@@ -120,11 +120,11 @@ const SideNav: React.FC<{
                 >
                   <View style={styles.switch_btn}>
                     <Text style={styles.switch_btn_text}>Driver mode</Text>
-                    <FontAwesome6
+                    {/* <FontAwesome6
                       name="arrow-right-arrow-left"
                       size={18}
                       color="black"
-                    />
+                    /> */}
                   </View>
                 </TouchableWithoutFeedback>
               </View>
@@ -210,11 +210,11 @@ const SideNav: React.FC<{
                 >
                   <View style={styles.switch_btn}>
                     <Text style={styles.switch_btn_text}>Rider mode</Text>
-                    <FontAwesome6
+                    {/* <FontAwesome6
                       name="arrow-right-arrow-left"
                       size={18}
                       color="black"
-                    />
+                    /> */}
                   </View>
                 </TouchableWithoutFeedback>
               </View>

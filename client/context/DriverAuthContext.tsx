@@ -229,7 +229,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       const { data } = await axios.patch(
         `${API_BASE_URL}/drivers/bank`,
         {
-          bankInfo,
+          ...bankInfo,
         },
         {
           headers: {
@@ -237,10 +237,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           },
         }
       );
-      if (data.msg === "Bank info saved successfully") {
-        await getDriverProfile(token || undefined); // Refresh to get updated bank info
-        showNotification("Bank information saved successfully", "success");
-      }
+      showNotification(data.msg, "success");
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       console.log(errMsg || "Error saving bank info");
@@ -260,16 +257,13 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (data.driver) {
         setDriver(data.driver);
-        setIsDriver(true);
       } else {
-        setIsDriver(false);
-        setDriver(null);
+        throw new Error("An error occured");
       }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       console.log(errMsg || "Error getting driver profile");
-      setIsDriver(false);
-      setDriver(null);
+
       throw new Error(errMsg || "Error getting driver profile");
     }
   };

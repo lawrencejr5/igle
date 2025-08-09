@@ -77,6 +77,12 @@ const PersonalInformation = () => {
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
         <Header />
+        <View style={styles.progress_bar_container}>
+          <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
+          <View style={styles.progress_bar} />
+          <View style={styles.progress_bar} />
+          <View style={styles.progress_bar} />
+        </View>
         <ScrollView
           style={{ flex: 1, backgroundColor: "#121212" }}
           contentContainerStyle={{

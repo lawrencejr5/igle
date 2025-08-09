@@ -80,7 +80,7 @@ const VehicleInformation = () => {
       setSuccess(true);
       showNotification("Updated successfully", "success");
       setTimeout(() => {
-        router.push("/reviewing_message");
+        router.push("/bank_details");
       }, 1500);
     } catch (err: any) {
       showNotification(
@@ -105,7 +105,8 @@ const VehicleInformation = () => {
         <View style={styles.progress_bar_container}>
           <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
           <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
-          <View style={[styles.progress_bar, { backgroundColor: "#999999" }]} />
+          <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
+          <View style={styles.progress_bar} />
         </View>
 
         <ScrollView

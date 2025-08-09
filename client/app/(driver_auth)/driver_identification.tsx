@@ -102,6 +102,7 @@ const DriverIdentification = () => {
           <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
           <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
           <View style={styles.progress_bar} />
+          <View style={styles.progress_bar} />
         </View>
 
         <ScrollView
