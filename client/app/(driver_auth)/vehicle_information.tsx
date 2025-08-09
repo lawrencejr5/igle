@@ -1,9 +1,11 @@
 import {
-  ScrollView,
   Text,
   TextInput,
   TouchableWithoutFeedback,
   View,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -32,6 +34,7 @@ const VehicleInformation = () => {
   const [year, setYear] = useState<string>("");
   const [plateNumber, setPlateNumber] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const pickImage = async (imageType: "exterior" | "interior") => {
     // For now, just set placeholder images
@@ -74,6 +77,7 @@ const VehicleInformation = () => {
       };
 
       await updateVehicleInfo(vehicle);
+      setSuccess(true);
       showNotification("Updated successfully", "success");
       setTimeout(() => {
         router.push("/reviewing_message");
@@ -89,9 +93,13 @@ const VehicleInformation = () => {
   };
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: "#121212" }}>
       <Notification notification={notification} />
-      <View style={{ flex: 1, backgroundColor: "#121212" }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: "#121212" }}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
         <Header />
 
         <View style={styles.progress_bar_container}>
@@ -100,7 +108,16 @@ const VehicleInformation = () => {
           <View style={[styles.progress_bar, { backgroundColor: "#999999" }]} />
         </View>
 
-        <ScrollView style={{ paddingHorizontal: 20 }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: "#121212" }}
+          contentContainerStyle={{
+            backgroundColor: "#121212",
+            flexGrow: 1,
+            paddingHorizontal: 20,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Header */}
           <View style={{ marginTop: 20 }}>
             <Text style={styles.form_header_text}>Vehicle Information</Text>
@@ -227,17 +244,25 @@ const VehicleInformation = () => {
               </View>
             </View>
 
-            <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
-              <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
+            <TouchableWithoutFeedback
+              onPress={handleNext}
+              disabled={loading || success}
+            >
+              <View
+                style={[
+                  styles.sign_btn,
+                  (loading || success) && { opacity: 0.6 },
+                ]}
+              >
                 <Text style={styles.sign_btn_text}>
-                  {loading ? "Updating..." : "Next"}
+                  {loading ? "Updating..." : success ? "Updated!" : "Next"}
                 </Text>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </ScrollView>
-      </View>
-    </>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 

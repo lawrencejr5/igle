@@ -17,6 +17,7 @@ const ChooseCarType = () => {
   const { showNotification, notification } = useNotificationContext()!;
   const [carType, setCarType] = useState<"keke" | "cab" | "suv" | "">("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleContinue = async (): Promise<void> => {
     if (!carType) {
@@ -27,6 +28,7 @@ const ChooseCarType = () => {
     setLoading(true);
     try {
       await createDriver(carType);
+      setSuccess(true);
       showNotification("Driver profile created successfully", "success");
       setTimeout(() => {
         router.push("/personal_information");
@@ -116,10 +118,18 @@ const ChooseCarType = () => {
             </TouchableWithoutFeedback>
           </View>
 
-          <TouchableWithoutFeedback onPress={handleContinue} disabled={loading}>
-            <View style={[styles.continue_btn, loading && { opacity: 0.6 }]}>
+          <TouchableWithoutFeedback
+            onPress={handleContinue}
+            disabled={loading || success}
+          >
+            <View
+              style={[
+                styles.continue_btn,
+                (loading || success) && { opacity: 0.6 },
+              ]}
+            >
               <Text style={styles.continue_btn_text}>
-                {loading ? "Creating..." : "Continue"}
+                {loading ? "Creating..." : success ? "Created!" : "Continue"}
               </Text>
             </View>
           </TouchableWithoutFeedback>

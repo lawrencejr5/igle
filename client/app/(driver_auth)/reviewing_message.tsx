@@ -14,21 +14,20 @@ const ReviewMessage = () => {
       style={{
         flex: 1,
         backgroundColor: "#121212",
-        justifyContent: "center",
-        alignItems: "center",
+        paddingHorizontal: 20,
       }}
     >
+      {/* Main content - centered */}
       <View
         style={{
-          width: 300,
-          height: 300,
+          flex: 1,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
         <Image
           source={require("../../assets/images/illustrations/confirmed.png")}
-          style={{ height: 200, width: 200 }}
+          style={{ height: 300, width: 300, borderRadius: 15 }}
         />
 
         <View>
@@ -36,7 +35,7 @@ const ReviewMessage = () => {
             style={{
               color: "#fff",
               fontFamily: "raleway-bold",
-              fontSize: 20,
+              fontSize: 22,
               textAlign: "center",
               marginVertical: 10,
             }}
@@ -47,7 +46,7 @@ const ReviewMessage = () => {
             style={{
               color: "#fff",
               fontFamily: "raleway-regular",
-              fontSize: 12,
+              fontSize: 14,
               textAlign: "center",
             }}
           >
@@ -55,54 +54,35 @@ const ReviewMessage = () => {
             working days
           </Text>
         </View>
+      </View>
 
-        <View style={{ marginTop: 10 }}>
-          <TouchableWithoutFeedback
-            onPress={() => router.push("choose_car_type")}
+      {/* Button at the bottom */}
+      <View
+        style={{
+          paddingBottom: 40,
+        }}
+      >
+        <TouchableWithoutFeedback onPress={() => router.push("/(tabs)/home")}>
+          <View
+            style={{
+              backgroundColor: "#fff",
+              paddingVertical: 15,
+              borderRadius: 30,
+              width: "100%",
+            }}
           >
-            <View
+            <Text
               style={{
-                backgroundColor: "#fff",
-                padding: 10,
-                width: 200,
-                borderRadius: 20,
-                marginVertical: 20,
+                color: "#121212",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+                fontSize: 16,
               }}
             >
-              <Text
-                style={{
-                  color: "#121212",
-                  fontFamily: "raleway-bold",
-                  textAlign: "center",
-                }}
-              >
-                Make changes
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback
-            onPress={() => router.push("../(tabs)/home")}
-          >
-            <View
-              style={{
-                backgroundColor: "#999999",
-                padding: 10,
-                width: 200,
-                borderRadius: 20,
-              }}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  textAlign: "center",
-                }}
-              >
-                Back to home
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
+              Go back home
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
       </View>
     </View>
   );

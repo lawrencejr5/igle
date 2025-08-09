@@ -1,9 +1,11 @@
 import {
-  ScrollView,
   Text,
   TextInput,
   TouchableWithoutFeedback,
   View,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -30,6 +32,7 @@ const DriverIdentification = () => {
   const [backImage, setBackImage] = useState<string>("");
   const [selfieImage, setSelfieImage] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const pickImage = async (imageType: "front" | "back" | "selfie") => {
     // For now, just set placeholder images
@@ -70,6 +73,7 @@ const DriverIdentification = () => {
       };
 
       await updateDriverLicense(driverLicence);
+      setSuccess(true);
       setTimeout(() => {
         router.push("/vehicle_information");
       }, 1500);
@@ -84,15 +88,13 @@ const DriverIdentification = () => {
   };
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: "#121212", paddingBottom: 20 }}>
       <Notification notification={notification} />
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#121212",
-        }}
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: "#121212" }}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
-        {/* Header component obviously */}
         <Header />
 
         {/* Registration progress bar */}
@@ -102,7 +104,16 @@ const DriverIdentification = () => {
           <View style={styles.progress_bar} />
         </View>
 
-        <ScrollView style={{ paddingHorizontal: 20 }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: "#121212" }}
+          contentContainerStyle={{
+            backgroundColor: "#121212",
+            flexGrow: 1,
+            paddingHorizontal: 20,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Form Header */}
           <View style={{ marginTop: 20 }}>
             <Text style={styles.form_header_text}>Driver Identification</Text>
@@ -196,17 +207,25 @@ const DriverIdentification = () => {
                 </View>
               </TouchableWithoutFeedback>
             </View>
-            <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
-              <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
+            <TouchableWithoutFeedback
+              onPress={handleNext}
+              disabled={loading || success}
+            >
+              <View
+                style={[
+                  styles.sign_btn,
+                  (loading || success) && { opacity: 0.6 },
+                ]}
+              >
                 <Text style={styles.sign_btn_text}>
-                  {loading ? "Updating..." : "Next"}
+                  {loading ? "Updating..." : success ? "Updated!" : "Next"}
                 </Text>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </ScrollView>
-      </View>
-    </>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
