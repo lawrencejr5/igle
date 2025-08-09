@@ -8,90 +8,124 @@ import {
 import React, { useState } from "react";
 import Header from "../../components/driver_reg/Header";
 import { router } from "expo-router";
+import { useDriverAuthContext } from "../../context/DriverAuthContext";
+import { useNotificationContext } from "../../context/NotificationContext";
+import Notification from "../../components/Notification";
 
 const ChooseCarType = () => {
+  const { createDriver } = useDriverAuthContext();
+  const { showNotification, notification } = useNotificationContext()!;
   const [carType, setCarType] = useState<"keke" | "cab" | "suv" | "">("");
+  const [loading, setLoading] = useState(false);
+
+  const handleContinue = async (): Promise<void> => {
+    if (!carType) {
+      showNotification("Please select a vehicle type", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await createDriver(carType);
+      showNotification("Driver profile created successfully", "success");
+      setTimeout(() => {
+        router.push("/personal_information");
+      }, 1500);
+    } catch (err: any) {
+      showNotification(
+        err.message || "Failed to create driver profile",
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#121212" }}>
-      <Header />
+    <>
+      <Notification notification={notification} />
+      <View style={{ flex: 1, backgroundColor: "#121212" }}>
+        <Header />
 
-      <View style={{ paddingHorizontal: 20 }}>
-        <View style={{ marginTop: 25 }}>
-          <Text style={styles.question_header}>
-            What type of driver are you?
-          </Text>
-        </View>
-
-        <View style={styles.role_container}>
-          <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
-            <View
-              style={[
-                styles.role_card,
-                carType === "keke" && styles.role_card_active,
-              ]}
-            >
-              <Image
-                source={require("../../assets/images/icons/keke-icon.png")}
-                style={{ width: 70, height: 70 }}
-              />
-              <View>
-                <Text style={styles.role_text}>Keke Driver</Text>
-                <Text style={styles.role_description}>
-                  I just drive a normal keke na pep
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback onPress={() => setCarType("cab")}>
-            <View
-              style={[
-                styles.role_card,
-                carType === "cab" && styles.role_card_active,
-              ]}
-            >
-              <Image
-                source={require("../../assets/images/icons/sedan-icon.png")}
-                style={{ width: 70, height: 70 }}
-              />
-              <View>
-                <Text style={styles.role_text}>Cab Driver</Text>
-                <Text style={styles.role_description}>
-                  I just drive a normal keke na pep
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
-            <View
-              style={[
-                styles.role_card,
-                carType === "suv" && styles.role_card_active,
-              ]}
-            >
-              <Image
-                source={require("../../assets/images/icons/suv-icon.png")}
-                style={{ width: 70, height: 70 }}
-              />
-              <View>
-                <Text style={styles.role_text}>SUV Driver</Text>
-                <Text style={styles.role_description}>
-                  I just drive a normal keke na pep
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-
-        <TouchableWithoutFeedback
-          onPress={() => router.push("personal_information")}
-        >
-          <View style={styles.continue_btn}>
-            <Text style={styles.continue_btn_text}>Contine</Text>
+        <View style={{ paddingHorizontal: 20 }}>
+          <View style={{ marginTop: 25 }}>
+            <Text style={styles.question_header}>
+              What type of driver are you?
+            </Text>
           </View>
-        </TouchableWithoutFeedback>
+
+          <View style={styles.role_container}>
+            <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
+              <View
+                style={[
+                  styles.role_card,
+                  carType === "keke" && styles.role_card_active,
+                ]}
+              >
+                <Image
+                  source={require("../../assets/images/icons/keke-icon.png")}
+                  style={{ width: 70, height: 70 }}
+                />
+                <View>
+                  <Text style={styles.role_text}>Keke Driver</Text>
+                  <Text style={styles.role_description}>
+                    I just drive a normal keke na pep
+                  </Text>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+
+            <TouchableWithoutFeedback onPress={() => setCarType("cab")}>
+              <View
+                style={[
+                  styles.role_card,
+                  carType === "cab" && styles.role_card_active,
+                ]}
+              >
+                <Image
+                  source={require("../../assets/images/icons/sedan-icon.png")}
+                  style={{ width: 70, height: 70 }}
+                />
+                <View>
+                  <Text style={styles.role_text}>Cab Driver</Text>
+                  <Text style={styles.role_description}>
+                    I just drive a normal keke na pep
+                  </Text>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+
+            <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
+              <View
+                style={[
+                  styles.role_card,
+                  carType === "suv" && styles.role_card_active,
+                ]}
+              >
+                <Image
+                  source={require("../../assets/images/icons/suv-icon.png")}
+                  style={{ width: 70, height: 70 }}
+                />
+                <View>
+                  <Text style={styles.role_text}>SUV Driver</Text>
+                  <Text style={styles.role_description}>
+                    I just drive a normal keke na pep
+                  </Text>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+
+          <TouchableWithoutFeedback onPress={handleContinue} disabled={loading}>
+            <View style={[styles.continue_btn, loading && { opacity: 0.6 }]}>
+              <Text style={styles.continue_btn_text}>
+                {loading ? "Creating..." : "Continue"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
       </View>
-    </View>
+    </>
   );
 };
 

@@ -11,6 +11,7 @@ import {
   set_driver_online_status,
   get_driver_by_user,
   update_driver_rating,
+  update_driver_info,
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
@@ -29,5 +30,6 @@ DriverRouter.patch("/vehicle", update_vehicle_info);
 DriverRouter.patch("/license", update_driver_license);
 DriverRouter.patch("/online", set_driver_online_status);
 DriverRouter.patch("/rating", update_driver_rating);
+DriverRouter.patch("/info", update_driver_info);
 
 export default DriverRouter;

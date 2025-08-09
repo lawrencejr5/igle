@@ -16,7 +16,7 @@ export const create_driver = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { vehicle, driver_licence, date_of_birth, coordinates } = req.body;
+    const { vehicle_type } = req.body;
     const user = req.user?.id;
 
     const existing_driver = await Driver.findOne({ user });
@@ -27,12 +27,10 @@ export const create_driver = async (
 
     const driver = await Driver.create({
       user,
-      vehicle,
-      driver_licence,
-      date_of_birth,
+      vehicle_type,
       current_location: {
         type: "Point",
-        coordinates: coordinates,
+        coordinates: [0, 0], // Default coordinates, will be updated later
       },
     });
 
@@ -301,6 +299,45 @@ export const update_driver_rating = async (
     res.status(200).json({
       msg: "Driver rating updated successfully",
       rating: driver.rating,
+    });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Update driver info - flexible function to update any driver field
+export const update_driver_info = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const updateData = req.body;
+
+    // Remove any undefined or null values
+    const cleanUpdateData = Object.fromEntries(
+      Object.entries(updateData).filter(
+        ([_, value]) => value !== undefined && value !== null
+      )
+    );
+
+    if (Object.keys(cleanUpdateData).length === 0) {
+      res.status(400).json({ msg: "No valid data provided for update." });
+      return;
+    }
+
+    const driver = await Driver.findByIdAndUpdate(driver_id, cleanUpdateData, {
+      new: true,
+    });
+
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    res.status(200).json({
+      msg: "Driver information updated successfully",
+      driver,
     });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });

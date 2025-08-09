@@ -9,6 +9,7 @@ import SplashScreen from "./splash_screen";
 
 import AuthProvider from "../context/AuthContext";
 import { NotificationProvider } from "../context/NotificationContext";
+import DriverAuthProvider from "../context/DriverAuthContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -31,11 +32,13 @@ const RootLayout = () => {
   return (
     <NotificationProvider>
       <AuthProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
+        <DriverAuthProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          />
+        </DriverAuthProvider>
       </AuthProvider>
     </NotificationProvider>
   );

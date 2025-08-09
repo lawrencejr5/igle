@@ -74,13 +74,17 @@ const StartScreen = () => {
           marginBottom: 40,
         }}
       >
-        <View style={styles.sign_btn}>
-          <Image
-            source={require("../assets/images/icons/apple-logo.png")}
-            style={styles.sign_image}
-          />
-          <Text style={styles.sign_text}>Continue with Apple</Text>
-        </View>
+        <TouchableWithoutFeedback
+          onPress={() => router.push("/(driver_auth)/choose_car_type")}
+        >
+          <View style={styles.sign_btn}>
+            <Image
+              source={require("../assets/images/icons/apple-logo.png")}
+              style={styles.sign_image}
+            />
+            <Text style={styles.sign_text}>Continue with Apple</Text>
+          </View>
+        </TouchableWithoutFeedback>
         <TouchableWithoutFeedback onPress={() => router.push("/(tabs)/home")}>
           <View style={styles.sign_btn}>
             <Image

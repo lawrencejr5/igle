@@ -13,8 +13,11 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import WalletScreen from "../../../components/screens/Wallet";
 
+import { useAuthContext } from "../../../context/AuthContext";
+
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
+  const { logout } = useAuthContext()!;
 
   return (
     <>
@@ -128,12 +131,14 @@ const Account = () => {
             <FontAwesome name="star" size={20} color="#c6c6c6" />
             <Text style={styles.setting_text}>Rate us</Text>
           </View>
-          <View style={styles.setting_box}>
-            <Feather name="log-out" size={20} color="#ca1d1d" />
-            <Text style={[styles.setting_text, { color: "#ca1d1d" }]}>
-              Logout
-            </Text>
-          </View>
+          <TouchableWithoutFeedback onPress={logout}>
+            <View style={styles.setting_box}>
+              <Feather name="log-out" size={20} color="#ca1d1d" />
+              <Text style={[styles.setting_text, { color: "#ca1d1d" }]}>
+                Logout
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
       </ScrollView>
 
