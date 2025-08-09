@@ -254,3 +254,38 @@ export const update_phone = async (
     res.status(500).json({ msg: "Server error." });
   }
 };
+
+// Update user driver application status
+export const update_driver_application = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const user_id = req.user?.id;
+    const { driver_application } = req.body;
+
+    if (driver_application === undefined) {
+      res.status(400).json({ msg: "Driver application status is required." });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      user_id,
+      { driver_application },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      res.status(404).json({ msg: "User not found." });
+      return;
+    }
+
+    res.status(200).json({
+      msg: "Driver application status updated successfully.",
+      status: user.driver_application,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ msg: "Server error." });
+  }
+};

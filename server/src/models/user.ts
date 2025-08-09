@@ -15,6 +15,7 @@ export interface UserType extends Document {
     type: string;
     coordinates: [number, number];
   };
+  driver_application: "none" | "rejected" | "submitted" | "approved";
   is_driver: boolean;
   is_verified: boolean;
   createdAt: Date;
@@ -46,6 +47,11 @@ const UserSchema = new Schema<UserType>(
         type: [Number],
         default: [0, 0],
       },
+    },
+    driver_application: {
+      type: String,
+      enum: ["none", "submitted", "rejected", "approved"],
+      default: "none",
     },
     is_driver: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },

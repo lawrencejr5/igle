@@ -17,12 +17,14 @@ import { driver_reg_styles } from "../../styles/driver_reg_styles";
 import Header from "../../components/driver_reg/Header";
 
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
+import { useAuthContext } from "../../context/AuthContext";
 import { useNotificationContext } from "../../context/NotificationContext";
 import Notification from "../../components/Notification";
 
 const BankDetails = () => {
   const styles = driver_reg_styles();
-  const { saveBankInfo } = useDriverAuthContext();
+  const { saveBankInfo, updateDriverApplication } = useDriverAuthContext();
+  const { getUserData } = useAuthContext()!;
   const { showNotification, notification } = useNotificationContext()!;
 
   const [bankName, setBankName] = useState<string>("");
@@ -53,6 +55,8 @@ const BankDetails = () => {
       };
 
       await saveBankInfo(bankInfo);
+      await updateDriverApplication("submitted");
+      await getUserData();
       setSuccess(true);
       setTimeout(() => {
         router.push("/reviewing_message");

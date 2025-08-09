@@ -16,7 +16,7 @@ export const create_driver = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { vehicle_type } = req.body;
+    const { vehicle_type, profile_img } = req.body;
     const user = req.user?.id;
 
     const existing_driver = await Driver.findOne({ user });
@@ -28,6 +28,7 @@ export const create_driver = async (
     const driver = await Driver.create({
       user,
       vehicle_type,
+      profile_img,
       current_location: {
         type: "Point",
         coordinates: [0, 0], // Default coordinates, will be updated later

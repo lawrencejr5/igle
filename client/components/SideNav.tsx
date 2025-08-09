@@ -14,11 +14,29 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
 
+import { useAuthContext } from "../context/AuthContext";
+
 const SideNav: React.FC<{
   mode: "driver" | "rider";
   open: boolean;
   setSideNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }> = ({ open, setSideNavOpen, mode }) => {
+  const { signedIn } = useAuthContext()!;
+
+  const go_to_driver = () => {
+    if (signedIn.is_driver) {
+      router.push("../(driver)/home");
+    } else {
+      if (signedIn.driver_application === "none")
+        router.push("../(driver_auth)/choose_car_type");
+      else if (signedIn.driver_application === "rejected")
+        router.push("../(driver_auth)/choose_car_type");
+      else if (signedIn.driver_application === "submitted")
+        router.push("../(driver_auth)/reviewing_message");
+      else router.push("../(tabs)/home");
+    }
+  };
+
   const sideNavTranslate = useRef(new Animated.Value(-320)).current;
   const [visible, setVisible] = useState(open);
 
@@ -113,11 +131,7 @@ const SideNav: React.FC<{
 
               {/* Switch mode */}
               <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
-                <TouchableWithoutFeedback
-                  onPress={() =>
-                    router.push("../(driver_auth)/choose_car_type")
-                  }
-                >
+                <TouchableWithoutFeedback onPress={go_to_driver}>
                   <View style={styles.switch_btn}>
                     <Text style={styles.switch_btn_text}>Driver mode</Text>
                     {/* <FontAwesome6

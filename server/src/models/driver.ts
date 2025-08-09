@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface DriverType extends Document {
   user: mongoose.Types.ObjectId;
+  profile_img: string;
   socket_id: string;
   vehicle_type: string;
   vehicle: {
@@ -46,6 +47,7 @@ const DriverSchema = new Schema<DriverType>({
     required: true,
     unique: true,
   },
+  profile_img: String,
   socket_id: { type: String, default: null },
   vehicle_type: { type: String, required: true },
   vehicle: {

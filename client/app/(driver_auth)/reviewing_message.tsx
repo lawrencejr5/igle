@@ -15,7 +15,6 @@ const ReviewMessage = () => {
       style={{
         flex: 1,
         backgroundColor: "#121212",
-        paddingHorizontal: 20,
       }}
     >
       <Header />
@@ -26,6 +25,7 @@ const ReviewMessage = () => {
           flex: 1,
           alignItems: "center",
           justifyContent: "center",
+          paddingHorizontal: 20,
         }}
       >
         <Image
@@ -63,6 +63,7 @@ const ReviewMessage = () => {
       <View
         style={{
           paddingBottom: 40,
+          paddingHorizontal: 20,
         }}
       >
         <TouchableWithoutFeedback onPress={() => router.push("/(tabs)/home")}>

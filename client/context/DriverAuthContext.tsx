@@ -78,6 +78,9 @@ interface DriverAuthContextType {
   setAvailability: (status: boolean) => Promise<void>; // Updated to Promise<void>
   setOnlineStatus: (status: boolean) => Promise<void>; // Updated to Promise<void>
   updateLocation: (coordinates: [number, number]) => Promise<void>; // Updated to Promise<void>
+  updateDriverApplication: (
+    status: "none" | "approved" | "submitted" | "rejected"
+  ) => Promise<void>;
   updateRating: (rating: number) => Promise<void>; // Updated to Promise<void>
 }
 
@@ -373,6 +376,33 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const updateDriverApplication = async (
+    status: "none" | "submitted" | "rejected" | "approved"
+  ): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.patch(
+        `${API_BASE_URL}/users/driver_application`,
+        { driver_application: status },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (data.status !== undefined) {
+        setDriver((prev) =>
+          prev ? { ...prev, driver_application: data.status } : null
+        );
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      console.log(errMsg || "Error updating driver application status");
+      throw new Error(errMsg || "Error updating driver application status");
+    }
+  };
+
   const updateRating = async (rating: number): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -412,6 +442,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     setAvailability,
     setOnlineStatus,
     updateLocation,
+    updateDriverApplication,
     updateRating,
   };
 

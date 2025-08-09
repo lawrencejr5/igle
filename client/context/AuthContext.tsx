@@ -30,6 +30,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     email: "",
     phone: "",
     name: "",
+    driver_application: "",
+    is_driver: false,
   });
 
   const [tokenLoading, setTokenLoading] = useState<boolean>(true);
@@ -127,12 +129,15 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const { _id, name, email, phone } = data.user;
+      const { _id, name, email, phone, driver_application, is_driver } =
+        data.user;
       setSignedIn({
         user_id: _id,
         name,
         email,
         phone,
+        driver_application,
+        is_driver,
       });
     } catch (err) {
       console.log("Failed to fetch user data:", err);
@@ -170,6 +175,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       name: "",
       phone: "",
       email: "",
+      driver_application: "",
+      is_driver: false,
     });
 
     router.push("/");
@@ -203,6 +210,8 @@ type UserType = {
   name: string;
   email: string;
   phone: string;
+  driver_application: string;
+  is_driver: boolean;
 };
 
 export interface AuthContextType {
