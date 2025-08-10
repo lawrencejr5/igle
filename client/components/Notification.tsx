@@ -60,7 +60,9 @@ const create_styles = () =>
     },
     notification: {
       width: 300,
-      backgroundColor: "#fff",
+      backgroundColor: "#121212",
+      borderWidth: 1,
+      borderColor: "#575757",
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",

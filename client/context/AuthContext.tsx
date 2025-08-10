@@ -108,6 +108,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem("user_id", data.user.id);
+      await AsyncStorage.setItem(
+        "is_driver",
+        JSON.stringify(data.user.is_driver)
+      );
 
       await getUserData();
 
@@ -167,6 +171,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const logout = async (): Promise<void> => {
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
+    await AsyncStorage.removeItem("is_driver");
+
+    setIsAuthenticated(false);
 
     showNotification("User logged out", "error");
 
@@ -179,7 +186,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       is_driver: false,
     });
 
-    router.push("/");
+    setTimeout(() => {
+      router.push("/");
+    }, 500);
   };
 
   return (

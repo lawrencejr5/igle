@@ -16,6 +16,8 @@ import { Link, router } from "expo-router";
 
 import { auth_styles } from "../../styles/auth.styles";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useAuthContext } from "../../context/AuthContext";
 import Notification from "../../components/Notification";
@@ -24,7 +26,7 @@ const Signin = () => {
   const styles = auth_styles();
 
   const { showNotification, notification } = useNotificationContext()!;
-  const { login } = useAuthContext()!;
+  const { login, signedIn } = useAuthContext()!;
 
   const [checked, setChecked] = useState<boolean>(true);
   const [passwordShow, setPasswordShow] = useState<boolean>(true);
@@ -43,8 +45,13 @@ const Signin = () => {
     setLoading(true);
     try {
       await login(email, password);
+      const is_driver = await AsyncStorage.getItem("is_driver");
       setTimeout(() => {
-        router.push("/(tabs)/home");
+        if (is_driver === "true") {
+          router.push("/(driver)/home");
+        } else {
+          router.push("/(tabs)/home");
+        }
       }, 1500);
     } catch (err: any) {
       showNotification(err.message, "error");

@@ -84,6 +84,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         username: user.name,
         email: user.email,
         phone: user.phone,
+        is_driver: user.is_driver,
       },
     });
   } catch (err) {

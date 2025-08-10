@@ -13,7 +13,7 @@ import { router } from "expo-router";
 import { useAuthContext } from "../context/AuthContext";
 
 const StartScreen = () => {
-  const { isAuthenticated } = useAuthContext()!;
+  const { isAuthenticated, signedIn } = useAuthContext()!;
 
   const [loading, setLoading] = useState(true);
 
@@ -21,12 +21,16 @@ const StartScreen = () => {
     const loadTimeout = setTimeout(() => {
       setLoading(false);
       if (isAuthenticated) {
-        router.replace("/(tabs)/home");
+        if (signedIn.is_driver) {
+          router.replace("/(driver)/home");
+        } else {
+          router.replace("/(tabs)/home");
+        }
       }
     }, 2000);
 
     return () => clearTimeout(loadTimeout);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, signedIn]);
 
   if (loading) {
     return <SplashScreen />;
