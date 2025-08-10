@@ -23,12 +23,20 @@ import LocationUpdateModal from "../../components/LocationUpdateModal";
 import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 
+import { useDriverAuthContext } from "../../context/DriverAuthContext";
+
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import RideRoute from "../../components/RideRoute";
 
 const HomePage = () => {
   const { notification } = useNotificationContext()!;
+  const { getDriverProfile, driver } = useDriverAuthContext();
+
+  useEffect(() => {
+    getDriverProfile();
+    console.log(driver);
+  }, []);
 
   // Side nav state
   const [sideNavOpen, setSideNavOpen] = useState<boolean>(false);

@@ -10,6 +10,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useNotificationContext } from "./NotificationContext";
 
+import { initDriverSocket } from "../sockets/socketService";
+
 // Types for driver data
 interface Vehicle {
   exterior_image: string;
@@ -43,10 +45,16 @@ interface CurrentLocation {
 }
 
 interface Driver {
-  _id: string;
-  user: string;
+  driver_id: string;
+  user?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  vehicle_brand: string;
+  vehicle_model: string;
+  vehicle_color: string;
   socket_id?: string;
-  vehicle_type?: string; // Added vehicle_type field
+  vehicle_type?: string;
   vehicle?: Vehicle;
   driver_licence?: DriverLicence;
   date_of_birth?: string;
@@ -100,7 +108,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
   // Check if user is a driver on mount
   useEffect(() => {
-    checkDriverStatus();
+    getDriverProfile();
   }, []);
 
   const checkDriverStatus = async () => {
@@ -113,6 +121,50 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       const errMsg = error.response?.data?.msg;
       console.log(errMsg || "Error checking driver status");
       throw new Error(errMsg || "Error checking driver status");
+    }
+  };
+
+  // Profile retrieval functions
+  const getDriverProfile = async (token?: string): Promise<void> => {
+    try {
+      const authToken = token || (await AsyncStorage.getItem("token"));
+      const { data } = await axios.get(`${API_BASE_URL}/drivers/data`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (data.driver) {
+        const {
+          _id,
+          vehicle_type,
+          socket_id,
+          user: { name, email, phone },
+          vehicle: { brand, model, color },
+        } = data.driver;
+
+        // Initialize socket
+        initDriverSocket(_id);
+
+        setDriver({
+          driver_id: _id,
+          socket_id,
+          vehicle_type,
+          name,
+          email,
+          phone,
+          vehicle_brand: brand,
+          vehicle_model: model,
+          vehicle_color: color,
+        });
+      } else {
+        throw new Error("An error occured");
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      console.log(errMsg || "Error getting driver profile");
+
+      throw new Error(errMsg || "Error getting driver profile");
     }
   };
 
@@ -245,29 +297,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       const errMsg = error.response?.data?.msg;
       console.log(errMsg || "Error saving bank info");
       throw new Error(errMsg || "Error saving bank info");
-    }
-  };
-
-  // Profile retrieval functions
-  const getDriverProfile = async (token?: string): Promise<void> => {
-    try {
-      const authToken = token || (await AsyncStorage.getItem("token"));
-      const { data } = await axios.get(`${API_BASE_URL}/drivers/data`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (data.driver) {
-        setDriver(data.driver);
-      } else {
-        throw new Error("An error occured");
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error getting driver profile");
-
-      throw new Error(errMsg || "Error getting driver profile");
     }
   };
 

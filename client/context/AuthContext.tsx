@@ -13,6 +13,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { jwtDecode } from "jwt-decode";
 
+import { initUserSocket } from "../sockets/socketService";
+
 import {
   NotificationContextType,
   useNotificationContext,
@@ -135,6 +137,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       const { _id, name, email, phone, driver_application, is_driver } =
         data.user;
+
+      initUserSocket(_id);
+
       setSignedIn({
         user_id: _id,
         name,
