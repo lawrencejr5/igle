@@ -252,7 +252,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const getDriverProfile = async (token?: string): Promise<void> => {
     try {
       const authToken = token || (await AsyncStorage.getItem("token"));
-      const { data } = await axios.get(`${API_BASE_URL}/drivers/user`, {
+      const { data } = await axios.get(`${API_BASE_URL}/drivers/data`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },

@@ -20,7 +20,7 @@ const DriverRouter = Router();
 
 DriverRouter.use(auth);
 
-DriverRouter.get("/:id", get_driver);
+DriverRouter.get("/data", get_driver);
 DriverRouter.get("/profile/me", get_driver_by_user);
 DriverRouter.post("/create", create_driver);
 DriverRouter.patch("/location", update_location);

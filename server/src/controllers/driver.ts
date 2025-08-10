@@ -125,7 +125,7 @@ export const get_driver = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = await get_driver_id(req.user?.id!);
     const driver = await Driver.findById(id).populate("user");
 
     if (!driver) {
