@@ -5,6 +5,8 @@ import React, {
   useContext,
   createContext,
   ReactNode,
+  Dispatch,
+  SetStateAction,
 } from "react";
 
 import axios from "axios";
@@ -39,8 +41,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   });
 
   const [tokenLoading, setTokenLoading] = useState<boolean>(true);
+
   const [region, setRegion] = useState<any>(null);
   const [userAddress, setUserAddress] = useState<string>("");
+  const [mapSuggestions, setMapSuggestions] = useState<any>(null);
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
@@ -219,9 +224,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     await getPlaceName(location.coords.latitude, location.coords.longitude);
   };
 
-  const getPlaceName = async (lat: number, lon: number) => {
+  const getPlaceName = async (lat: number, lng: number) => {
     const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
 
     try {
       const { data } = await axios.get(url);
@@ -230,6 +235,47 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       }
     } catch (error) {
       console.error("Error fetching place name", error);
+    }
+  };
+
+  const getSuggestions = async (text: string) => {
+    const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
+    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+      text
+    )}&key=${apiKey}&components=country:ng`;
+
+    try {
+      const { data } = await axios.get(url);
+      if (data) {
+        setMapSuggestions(data.predictions || []);
+      }
+    } catch (err: any) {
+      console.log(
+        err.response.data.message ||
+          "An error occured when fetching suggestions"
+      );
+      throw new Error(
+        err.response.data.message ||
+          "An error occured when fetching suggestions"
+      );
+    }
+  };
+
+  const getPlaceCoords = async (
+    place_id: string
+  ): Promise<{ lat: number; lng: number } | undefined> => {
+    try {
+      const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${apiKey}`;
+      const { data } = await axios.get(url);
+      const location = data.result.geometry.location;
+
+      return {
+        lat: location.lat,
+        lng: location.lng,
+      };
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -247,6 +293,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         region,
         set_user_location,
         userAddress,
+        getSuggestions,
+        mapSuggestions,
+        setMapSuggestions,
+        getPlaceCoords,
       }}
     >
       {children}
@@ -292,4 +342,11 @@ export interface AuthContextType {
   region: any;
   set_user_location: () => Promise<void>;
   userAddress: string;
+  getSuggestions: (text: string) => Promise<void>;
+  mapSuggestions: any;
+  setMapSuggestions: Dispatch<SetStateAction<any>>;
+
+  getPlaceCoords: (
+    place_id: string
+  ) => Promise<{ lat: number; lng: number } | undefined>;
 }

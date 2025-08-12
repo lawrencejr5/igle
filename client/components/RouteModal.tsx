@@ -6,15 +6,10 @@ import {
   TouchableWithoutFeedback,
   Image,
   TextInput,
+  FlatList,
+  Dimensions,
 } from "react-native";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  Dispatch,
-  SetStateAction,
-  FC,
-} from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import RideRoute from "./RideRoute";
 
@@ -23,15 +18,49 @@ import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useAuthContext } from "../context/AuthContext";
 
 const RouteModal = () => {
-  const { signedIn, userAddress } = useAuthContext();
+  const {
+    signedIn,
+    region,
+    userAddress,
+    mapSuggestions,
+    setMapSuggestions,
+    getSuggestions,
+    getPlaceCoords,
+  } = useAuthContext();
 
   const [pickup, setPickup] = useState<string>(userAddress);
+  const [pickupCoords, setPickupCoords] = useState<{
+    lat: number;
+    lng: number;
+  }>({ lat: region.latitude, lng: region.longitude });
+
   const [destination, setDestination] = useState<string>("");
+  const [destinationCoords, setDestinationCoords] = useState<{
+    lat: number;
+    lng: number;
+  }>({ lat: 0, lng: 0 });
+
+  const set_destination_func = async (place_id: string, place_name: string) => {
+    setDestination(place_name);
+
+    const coords = await getPlaceCoords(place_id);
+    if (coords) {
+      setDestinationCoords(coords);
+      setTimeout(() => {
+        setMapSuggestions([]);
+      }, 0);
+    }
+  };
+
+  useEffect(() => {
+    getSuggestions(destination);
+  }, [destination]);
 
   const [status, setStatus] = useState<
     "" | "booking" | "searching" | "accepted" | "paying" | "paid"
   >("");
 
+  const window_height = Dimensions.get("window").height - 70;
   const height = useRef(new Animated.Value(180)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -43,7 +72,7 @@ const RouteModal = () => {
     if (modalUp) {
       Animated.parallel([
         Animated.timing(height, {
-          toValue: 600,
+          toValue: window_height,
           duration: 500,
           useNativeDriver: false,
         }),
@@ -144,7 +173,7 @@ const RouteModal = () => {
           <Animated.View style={[styles.form, { opacity }]}>
             <View style={{ flex: 1, marginTop: 10 }}>
               {/* Pick car type */}
-              <View style={styles.select_ride_container}>
+              {/* <View style={styles.select_ride_container}>
                 <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
                   <View
                     style={[
@@ -210,7 +239,7 @@ const RouteModal = () => {
                     </Text>
                   </View>
                 </TouchableWithoutFeedback>
-              </View>
+              </View> */}
 
               {/* Select pickup and drop off */}
               <View style={styles.route_inp_container}>
@@ -221,6 +250,8 @@ const RouteModal = () => {
                   value={pickup}
                   onChangeText={setPickup}
                   placeholderTextColor={"#b7b7b7"}
+                  selection={{ start: 0, end: 0 }}
+                  editable={false}
                 />
               </View>
               <View style={styles.route_inp_container}>
@@ -237,21 +268,37 @@ const RouteModal = () => {
           </Animated.View>
 
           {/* Suggestions */}
-          <Animated.ScrollView
-            style={[styles.suggestions_container, { opacity }]}
-          >
-            <View style={styles.suggestion_box}>
-              <Ionicons name="location" size={24} color="#b7b7b7" />
-              <View>
-                <Text style={styles.suggestion_header_text}>
-                  Anglican girls grammar school
-                </Text>
-                <Text style={styles.suggestion_sub_text}>
-                  6P38+VWR, Unnamed Road, Umuagu, Asaba 320242, Delta
-                </Text>
-              </View>
-            </View>
-          </Animated.ScrollView>
+          <View style={[styles.suggestions_container]}>
+            <FlatList
+              data={mapSuggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <TouchableWithoutFeedback
+                  onPress={() =>
+                    set_destination_func(
+                      item.place_id,
+                      item.structured_formatting.main_text
+                    )
+                  }
+                >
+                  <View style={styles.suggestion_box}>
+                    <Ionicons name="location" size={24} color="#b7b7b7" />
+                    <View>
+                      <Text
+                        style={styles.suggestion_header_text}
+                        numberOfLines={1}
+                      >
+                        {item.structured_formatting.main_text}
+                      </Text>
+                      <Text style={styles.suggestion_sub_text}>
+                        {item.structured_formatting.secondary_text}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              )}
+            />
+          </View>
 
           <TouchableWithoutFeedback
             onPress={() => {
@@ -561,6 +608,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingTop: 12,
+    zIndex: 3,
   },
   expand_line_conatiner: {
     width: "100%",
