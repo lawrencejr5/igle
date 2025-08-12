@@ -216,7 +216,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 export default AuthProvider;
 
 export const useAuthContext = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context)
+    throw new Error("Auth context must be used inside the Auth Provider");
+  return context;
 };
 
 type UserType = {

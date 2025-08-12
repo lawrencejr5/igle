@@ -15,13 +15,15 @@ import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
 
 import { useAuthContext } from "../context/AuthContext";
+import { useDriverAuthContext } from "../context/DriverAuthContext";
 
 const SideNav: React.FC<{
   mode: "driver" | "rider";
   open: boolean;
   setSideNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }> = ({ open, setSideNavOpen, mode }) => {
-  const { signedIn } = useAuthContext()!;
+  const { signedIn } = useAuthContext();
+  const { driver } = useDriverAuthContext();
 
   const go_to_driver = () => {
     if (signedIn.is_driver) {
@@ -93,7 +95,7 @@ const SideNav: React.FC<{
                   />
 
                   <View>
-                    <Text style={styles.user_name}>Oputa Lawrence</Text>
+                    <Text style={styles.user_name}>{signedIn?.name}</Text>
                     <Text style={styles.user_type}>Rider</Text>
                   </View>
                 </View>
@@ -181,9 +183,9 @@ const SideNav: React.FC<{
                   />
 
                   <View>
-                    <Text style={styles.user_name}>Oputa Lawrence</Text>
+                    <Text style={styles.user_name}>{driver?.name}</Text>
                     <Text style={styles.user_type}>
-                      Driver . 36 rides completed
+                      {driver?.vehicle_brand} {driver?.vehicle_model}
                     </Text>
                   </View>
                 </View>

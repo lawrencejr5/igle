@@ -17,7 +17,7 @@ import { useAuthContext } from "../../../context/AuthContext";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
-  const { logout } = useAuthContext()!;
+  const { logout, signedIn } = useAuthContext();
 
   return (
     <>
@@ -26,6 +26,7 @@ const Account = () => {
           backgroundColor: "#121212",
           flex: 1,
           paddingTop: 50,
+          paddingBottom: 30,
           paddingHorizontal: 20,
         }}
       >
@@ -35,12 +36,16 @@ const Account = () => {
             flexDirection: "row",
             justifyContent: "flex-start",
             alignItems: "center",
-            gap: 10,
+            gap: 15,
+            marginTop: 20,
+            padding: 10,
+            borderRadius: 10,
+            backgroundColor: "#2c2c2c",
           }}
         >
           <Image
             source={require("../../../assets/images/black-profile.jpeg")}
-            style={{ height: 100, width: 100, borderRadius: 50 }}
+            style={{ height: 70, width: 70, borderRadius: 50 }}
           />
           <Text
             numberOfLines={2}
@@ -51,7 +56,7 @@ const Account = () => {
               flexShrink: 1,
             }}
           >
-            Oputa Lawrence
+            {signedIn?.name}
           </Text>
         </View>
 
@@ -97,7 +102,13 @@ const Account = () => {
         </TouchableWithoutFeedback>
 
         {/* Other settings */}
-        <View style={{ marginTop: 30, paddingHorizontal: 10 }}>
+        <View
+          style={{
+            marginVertical: 30,
+            marginBottom: 60,
+            paddingHorizontal: 10,
+          }}
+        >
           <Text
             style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 20 }}
           >
