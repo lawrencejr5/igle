@@ -8,23 +8,38 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "plugins": ["expo-dev-client"],
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#121212"
     },
     "ios": {
+      "config": {
+        "googleMapsApiKey": "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss"
+      },
       "supportsTablet": true
     },
     "android": {
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss"
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.lawrencejr.igle"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "19685ce9-a6ad-485b-bc81-e4654431869e"
+      }
     }
   }
 }

@@ -57,7 +57,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     try {
       const { data } = await axios.post(
-        "http://192.168.36.123:5000/api/v1/users/register",
+        "http://192.168.10.123:5000/api/v1/users/register",
         {
           name,
           email,
@@ -83,7 +83,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.patch(
-        "http://192.168.36.123:5000/api/v1/users/phone",
+        "http://192.168.10.123:5000/api/v1/users/phone",
         { phone },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -104,7 +104,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const { data } = await axios.post(
-        "http://192.168.36.123:5000/api/v1/users/login",
+        "http://192.168.10.123:5000/api/v1/users/login",
         { email, password }
       );
 
@@ -131,7 +131,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       if (!token) return;
 
       const { data } = await axios.get(
-        `http://192.168.36.123:5000/api/v1/users/data`,
+        `http://192.168.10.123:5000/api/v1/users/data`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

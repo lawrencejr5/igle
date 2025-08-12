@@ -35,7 +35,6 @@ const HomePage = () => {
 
   useEffect(() => {
     getDriverProfile();
-    console.log(driver);
   }, []);
 
   // Side nav state
@@ -114,6 +113,15 @@ const HomePage = () => {
     return () => clearInterval(timer);
   }, [status]);
 
+  useEffect(() => {
+    fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=Lagos&key=AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss`
+    )
+      .then((res) => res.json())
+      .then((data) => console.log("Google API response:", data))
+      .catch((err) => console.log("Error calling Google API:", err));
+  }, []);
+
   return (
     <>
       <Notification notification={notification} />
@@ -121,6 +129,9 @@ const HomePage = () => {
         {/* Map */}
         <MapView
           style={styles.map}
+          onMapReady={() => {
+            console.log("yeehhhh");
+          }}
           provider={PROVIDER_GOOGLE}
           initialRegion={region}
           customMapStyle={darkMapStyle}

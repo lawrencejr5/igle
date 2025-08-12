@@ -78,9 +78,7 @@ const StartScreen = () => {
           marginBottom: 40,
         }}
       >
-        <TouchableWithoutFeedback
-          onPress={() => router.push("/(driver_auth)/choose_car_type")}
-        >
+        <TouchableWithoutFeedback onPress={() => router.push("/(driver)/maps")}>
           <View style={styles.sign_btn}>
             <Image
               source={require("../assets/images/icons/apple-logo.png")}

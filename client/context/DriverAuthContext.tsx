@@ -104,7 +104,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const { showNotification } = useNotificationContext()!;
 
   // API base URL
-  const API_BASE_URL = "http://192.168.36.123:5000/api/v1";
+  const API_BASE_URL = "http://192.168.10.123:5000/api/v1";
 
   // Check if user is a driver on mount
   useEffect(() => {

@@ -5,7 +5,7 @@ let driverSocket: any;
 
 export const initDriverSocket = (driver_id: string) => {
   if (!driverSocket) {
-    driverSocket = io("http://192.168.36.123:5000", {
+    driverSocket = io("http://192.168.10.123:5000", {
       transports: ["websocket"],
     });
 
@@ -22,7 +22,7 @@ export const initDriverSocket = (driver_id: string) => {
 
 export const initUserSocket = (user_id: string) => {
   if (!userSocket) {
-    userSocket = io("http://192.168.36.123:5000", {
+    userSocket = io("http://192.168.10.123:5000", {
       transports: ["websocket"],
     });
 
