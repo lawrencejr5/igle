@@ -52,6 +52,11 @@ const RouteModal = () => {
     }
   };
 
+  const book_ride = async () => {
+    setModalUp(false);
+    setStatus("searching");
+  };
+
   useEffect(() => {
     getSuggestions(destination);
   }, [destination]);
@@ -300,12 +305,7 @@ const RouteModal = () => {
             />
           </View>
 
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(false);
-              setStatus("searching");
-            }}
-          >
+          <TouchableWithoutFeedback onPress={book_ride}>
             <View
               style={{
                 marginVertical: 20,

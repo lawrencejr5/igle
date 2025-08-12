@@ -10,6 +10,7 @@ import SplashScreen from "./splash_screen";
 import AuthProvider from "../context/AuthContext";
 import { NotificationProvider } from "../context/NotificationContext";
 import DriverAuthProvider from "../context/DriverAuthContext";
+import { RideContextProvider } from "../context/RideContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -33,11 +34,13 @@ const RootLayout = () => {
     <NotificationProvider>
       <AuthProvider>
         <DriverAuthProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          />
+          <RideContextProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            />
+          </RideContextProvider>
         </DriverAuthProvider>
       </AuthProvider>
     </NotificationProvider>
