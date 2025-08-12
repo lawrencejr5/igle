@@ -20,18 +20,22 @@ import NotificationScreen from "../../components/screens/NotificationScreen";
 import RouteModal from "../../components/RouteModal";
 import LocationUpdateModal from "../../components/LocationUpdateModal";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
+import { useAuthContext } from "../../context/AuthContext";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import RideRoute from "../../components/RideRoute";
 
 const HomePage = () => {
-  const { notification } = useNotificationContext()!;
+  const { notification } = useNotificationContext();
   const { getDriverProfile, driver } = useDriverAuthContext();
+  const { region } = useAuthContext();
 
   useEffect(() => {
     getDriverProfile();
@@ -45,27 +49,6 @@ const HomePage = () => {
 
   // Location update modal state
   const [locationModalOpen, setLocationModalOpen] = useState<boolean>(false);
-
-  const [region, setRegion] = useState<any>(null);
-  useEffect(() => {
-    // Getting current location
-    const get_and_set_location = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.log("Permission denied");
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
-      });
-    };
-    get_and_set_location();
-  }, []);
 
   const [available, setAvailable] = useState<boolean>(false);
   const [status, setStatus] = useState<

@@ -162,8 +162,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error getting driver profile");
-
       throw new Error(errMsg || "Error getting driver profile");
     }
   };

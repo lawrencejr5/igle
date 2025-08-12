@@ -11,6 +11,8 @@ import axios from "axios";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import * as Location from "expo-location";
+
 import { jwtDecode } from "jwt-decode";
 
 import { initUserSocket } from "../sockets/socketService";
@@ -37,11 +39,14 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   });
 
   const [tokenLoading, setTokenLoading] = useState<boolean>(true);
+  const [region, setRegion] = useState<any>(null);
+  const [userAddress, setUserAddress] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
     getUserData();
     checkTokenValidity();
+    set_user_location();
   }, []);
 
   // Registration function
@@ -196,6 +201,38 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }, 500);
   };
 
+  const set_user_location = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      console.log("Permission denied");
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    setRegion({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: 0.02,
+      longitudeDelta: 0.02,
+    });
+    await AsyncStorage.setItem("region", JSON.stringify(region));
+    await getPlaceName(location.coords.latitude, location.coords.longitude);
+  };
+
+  const getPlaceName = async (lat: number, lon: number) => {
+    const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`;
+
+    try {
+      const { data } = await axios.get(url);
+      if (data.results.length > 0) {
+        setUserAddress(data.results[0].formatted_address);
+      }
+    } catch (error) {
+      console.error("Error fetching place name", error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -206,6 +243,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         signedIn,
         isAuthenticated,
         logout,
+
+        region,
+        set_user_location,
+        userAddress,
       }}
     >
       {children}
@@ -247,4 +288,8 @@ export interface AuthContextType {
   signedIn: UserType;
   isAuthenticated: boolean;
   logout: () => void;
+
+  region: any;
+  set_user_location: () => Promise<void>;
+  userAddress: string;
 }

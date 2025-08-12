@@ -23,7 +23,10 @@ import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useAuthContext } from "../context/AuthContext";
 
 const RouteModal = () => {
-  const { signedIn } = useAuthContext()!;
+  const { signedIn, userAddress } = useAuthContext();
+
+  const [pickup, setPickup] = useState<string>(userAddress);
+  const [destination, setDestination] = useState<string>("");
 
   const [status, setStatus] = useState<
     "" | "booking" | "searching" | "accepted" | "paying" | "paid"
@@ -213,9 +216,11 @@ const RouteModal = () => {
               <View style={styles.route_inp_container}>
                 <View style={styles.from_circle} />
                 <TextInput
-                  style={styles.route_input}
-                  placeholder="24 Lucia avenue, Okwe"
-                  placeholderTextColor={"#ffffff"}
+                  style={[styles.route_input]}
+                  placeholder="Pickup"
+                  value={pickup}
+                  onChangeText={setPickup}
+                  placeholderTextColor={"#b7b7b7"}
                 />
               </View>
               <View style={styles.route_inp_container}>
@@ -223,6 +228,8 @@ const RouteModal = () => {
                 <TextInput
                   style={styles.route_input}
                   placeholder="Destination"
+                  value={destination}
+                  onChangeText={setDestination}
                   placeholderTextColor={"#b7b7b7"}
                 />
               </View>
