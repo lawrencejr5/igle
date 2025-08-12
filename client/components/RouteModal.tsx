@@ -16,29 +16,35 @@ import RideRoute from "./RideRoute";
 import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 import { useAuthContext } from "../context/AuthContext";
+import { useRideContext } from "../context/RideContext";
+import { useNotificationContext } from "../context/NotificationContext";
 
 const RouteModal = () => {
   const {
     signedIn,
     region,
     userAddress,
+    setUserAddress,
     mapSuggestions,
     setMapSuggestions,
     getSuggestions,
     getPlaceCoords,
+    locationLoading,
   } = useAuthContext();
 
-  const [pickup, setPickup] = useState<string>(userAddress);
-  const [pickupCoords, setPickupCoords] = useState<{
-    lat: number;
-    lng: number;
-  }>({ lat: region.latitude, lng: region.longitude });
+  const { rideRequest } = useRideContext();
+  const { showNotification } = useNotificationContext();
+
+  const [pickup, setPickup] = useState<string>("");
+  // const [pickupCoords, setPickupCoords] = useState<[number, number]>([
+  //   region.latitude,
+  //   region.longitude,
+  // ]);
 
   const [destination, setDestination] = useState<string>("");
-  const [destinationCoords, setDestinationCoords] = useState<{
-    lat: number;
-    lng: number;
-  }>({ lat: 0, lng: 0 });
+  const [destinationCoords, setDestinationCoords] = useState<[number, number]>([
+    0, 0,
+  ]);
 
   const set_destination_func = async (place_id: string, place_name: string) => {
     setDestination(place_name);
@@ -52,9 +58,31 @@ const RouteModal = () => {
     }
   };
 
+  const [booking, setBooking] = useState<boolean>(false);
   const book_ride = async () => {
+    setBooking(true);
     setModalUp(false);
     setStatus("searching");
+
+    const pickupCoords: [number, number] = [region.latitude, region.longitude];
+
+    if (!destination || !destinationCoords)
+      showNotification("Destination not set", "error");
+
+    if (!userAddress || !pickupCoords)
+      showNotification("Pickup location not set", "error");
+
+    try {
+      await rideRequest(
+        { address: userAddress, coordinates: pickupCoords },
+        { address: destination, coordinates: destinationCoords }
+      );
+      setBooking(false);
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    } finally {
+      setBooking(false);
+    }
   };
 
   useEffect(() => {
@@ -178,6 +206,7 @@ const RouteModal = () => {
           <Animated.View style={[styles.form, { opacity }]}>
             <View style={{ flex: 1, marginTop: 10 }}>
               {/* Pick car type */}
+
               {/* <View style={styles.select_ride_container}>
                 <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
                   <View
@@ -252,8 +281,8 @@ const RouteModal = () => {
                 <TextInput
                   style={[styles.route_input]}
                   placeholder="Pickup"
-                  value={pickup}
-                  onChangeText={setPickup}
+                  value={userAddress}
+                  // onChangeText={setUserAddress}
                   placeholderTextColor={"#b7b7b7"}
                   selection={{ start: 0, end: 0 }}
                   editable={false}
@@ -321,7 +350,7 @@ const RouteModal = () => {
                   color: "#121212",
                 }}
               >
-                Book now
+                {booking ? "Booking..." : "Book now"}
               </Text>
             </View>
           </TouchableWithoutFeedback>

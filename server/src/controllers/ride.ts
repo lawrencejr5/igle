@@ -69,11 +69,11 @@ export const request_ride = async (
     });
 
     res.status(201).json({
-      message: "Ride request created",
+      msg: "Ride request created",
       ride: new_ride,
     });
 
-    // ⏳ Start timeout — e.g. 30 seconds
+    // ⏳ Start timeout
     setTimeout(async () => {
       const ride = await Ride.findById(new_ride._id);
 
@@ -98,11 +98,11 @@ export const request_ride = async (
           msg: "This ride has expired",
         });
       }
-    }, 30000);
+    }, 90000);
   } catch (err: any) {
     res
       .status(500)
-      .json({ message: "Failed to create ride request", err: err.message });
+      .json({ msg: "Failed to create ride request", err: err.message });
   }
 };
 
