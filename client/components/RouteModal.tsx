@@ -32,24 +32,19 @@ const RouteModal = () => {
     getSuggestions,
     getPlaceCoords,
     locationLoading,
+
+    destination,
+    setDestination,
+    destinationCoords,
+    setDestinationCoords,
   } = useMapContext();
 
   const { rideRequest } = useRideContext();
   const { showNotification } = useNotificationContext();
 
-  const [pickup, setPickup] = useState<string>("");
-  // const [pickupCoords, setPickupCoords] = useState<[number, number]>([
-  //   region.latitude,
-  //   region.longitude,
-  // ]);
-
-  const [destination, setDestination] = useState<string>("");
-  const [destinationCoords, setDestinationCoords] = useState<[number, number]>([
-    0, 0,
-  ]);
-
   const set_destination_func = async (place_id: string, place_name: string) => {
     setDestination(place_name);
+    setModalUp(false);
 
     const coords = await getPlaceCoords(place_id);
     if (coords) {

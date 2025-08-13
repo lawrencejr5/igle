@@ -7,11 +7,15 @@ import React, {
   useContext,
   Dispatch,
   SetStateAction,
+  useRef,
 } from "react";
 
 import axios from "axios";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import Polyline from "@mapbox/polyline";
+import MapView from "react-native-maps";
 
 import * as Location from "expo-location";
 
@@ -25,6 +29,36 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
 
   const [userAddress, setUserAddress] = useState<string>("");
+
+  const [destination, setDestination] = useState<string>("");
+  const [destinationCoords, setDestinationCoords] = useState<[number, number]>([
+    0, 0,
+  ]);
+
+  const [routeCoords, setRouteCoords] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
+
+  const mapRef = useRef<MapView>(null);
+  useEffect(() => {
+    const fetchRoute = async () => {
+      const coords = await getRoute(
+        [region.latitude, region.longitude],
+        destinationCoords
+      );
+      if (coords) {
+        setRouteCoords(coords);
+        // 👇 Zoom map to fit route
+        mapRef.current?.fitToCoordinates(coords, {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
+      }
+    };
+
+    fetchRoute();
+  }, [destinationCoords]);
+
   const [mapSuggestions, setMapSuggestions] = useState<any>(null);
   const [region, setRegion] = useState<any>(null);
 
@@ -111,6 +145,30 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const decodePolyline = (encoded: any) => {
+    let coords = Polyline.decode(encoded);
+    return coords.map(([lat, lng]) => ({
+      latitude: lat,
+      longitude: lng,
+    }));
+  };
+
+  const getRoute = async (
+    pickup: [number, number],
+    destination: [number, number]
+  ) => {
+    const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickup[0]},${pickup[1]}&destination=${destination[0]},${destination[1]}&key=${apiKey}`;
+
+    try {
+      const response = await axios.get(url);
+      const points = response.data.routes[0].overview_polyline.points;
+      return decodePolyline(points);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <MapContext.Provider
       value={{
@@ -124,7 +182,14 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         set_user_location,
         getPlaceCoords,
 
+        destination,
+        setDestination,
+        destinationCoords,
+        setDestinationCoords,
+
         locationLoading,
+        routeCoords,
+        mapRef,
       }}
     >
       {children}
@@ -141,10 +206,18 @@ export interface MapContextType {
   mapSuggestions: any;
   setMapSuggestions: Dispatch<SetStateAction<any>>;
 
+  destination: string;
+  setDestination: Dispatch<SetStateAction<string>>;
+  destinationCoords: [number, number];
+  setDestinationCoords: Dispatch<SetStateAction<[number, number]>>;
+
   getPlaceCoords: (place_id: string) => Promise<[number, number] | undefined>;
   getPlaceName: (lat: number, lng: number) => Promise<void>;
 
   locationLoading: boolean;
+
+  routeCoords: { latitude: number; longitude: number }[];
+  mapRef: any;
 }
 
 export const useMapContext = () => {

@@ -1,7 +1,7 @@
 import { StyleSheet, View, TouchableWithoutFeedback } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Feather from "@expo/vector-icons/Feather";
 
@@ -26,7 +26,8 @@ const Home = () => {
   const [openNotification, setOpenNotification] = useState<boolean>(false);
 
   const { notification } = useNotificationContext();
-  const { region, getPlaceName } = useMapContext();
+  const { region, getPlaceName, destinationCoords, routeCoords, mapRef } =
+    useMapContext();
 
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);
@@ -38,6 +39,7 @@ const Home = () => {
       <View style={{ backgroundColor: "#121212", flex: 1 }}>
         {/* Map */}
         <MapView
+          ref={mapRef}
           style={{ height: "85%" }}
           provider={PROVIDER_GOOGLE}
           initialRegion={region}
@@ -50,6 +52,23 @@ const Home = () => {
                 longitude: region.longitude,
               }}
               title="Your location"
+            />
+          )}
+          {destinationCoords && (
+            <Marker
+              coordinate={{
+                latitude: destinationCoords[0],
+                longitude: destinationCoords[1],
+              }}
+              title="Destination"
+            />
+          )}
+
+          {routeCoords.length > 0 && (
+            <Polyline
+              coordinates={routeCoords}
+              strokeColor="#1E90FF"
+              strokeWidth={7}
             />
           )}
         </MapView>
