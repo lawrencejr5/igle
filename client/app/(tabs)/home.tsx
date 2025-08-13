@@ -16,7 +16,7 @@ import RouteModal from "../../components/RouteModal";
 import Notification from "../../components/Notification";
 
 import { useNotificationContext } from "../../context/NotificationContext";
-import { useAuthContext } from "../../context/AuthContext";
+import { useMapContext } from "../../context/MapContext";
 
 const Home = () => {
   // Side nav state
@@ -26,7 +26,7 @@ const Home = () => {
   const [openNotification, setOpenNotification] = useState<boolean>(false);
 
   const { notification } = useNotificationContext();
-  const { region, getPlaceName } = useAuthContext();
+  const { region, getPlaceName } = useMapContext();
 
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);

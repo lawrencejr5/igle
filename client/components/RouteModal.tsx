@@ -16,12 +16,14 @@ import RideRoute from "./RideRoute";
 import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 import { useAuthContext } from "../context/AuthContext";
+import { useMapContext } from "../context/MapContext";
 import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
 
 const RouteModal = () => {
+  const { signedIn } = useAuthContext();
+
   const {
-    signedIn,
     region,
     userAddress,
     setUserAddress,
@@ -30,7 +32,7 @@ const RouteModal = () => {
     getSuggestions,
     getPlaceCoords,
     locationLoading,
-  } = useAuthContext();
+  } = useMapContext();
 
   const { rideRequest } = useRideContext();
   const { showNotification } = useNotificationContext();
@@ -61,8 +63,6 @@ const RouteModal = () => {
   const [booking, setBooking] = useState<boolean>(false);
   const book_ride = async () => {
     setBooking(true);
-    setModalUp(false);
-    setStatus("searching");
 
     const pickupCoords: [number, number] = [region.latitude, region.longitude];
 
@@ -78,6 +78,9 @@ const RouteModal = () => {
         { address: destination, coordinates: destinationCoords }
       );
       setBooking(false);
+      setModalUp(false);
+      setStatus("searching");
+      setDestination("");
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {
@@ -131,16 +134,16 @@ const RouteModal = () => {
     }
   }, [modalUp]);
 
-  useEffect(() => {
-    if (status === "searching") {
-      const searchTimeout = setTimeout(() => {
-        setStatus("accepted");
-        setModalUp(true);
-      }, 3000);
+  // useEffect(() => {
+  //   if (status === "searching") {
+  //     const searchTimeout = setTimeout(() => {
+  //       setStatus("accepted");
+  //       setModalUp(true);
+  //     }, 3000);
 
-      () => clearTimeout(searchTimeout);
-    }
-  }, [status]);
+  //     () => clearTimeout(searchTimeout);
+  //   }
+  // }, [status]);
 
   return (
     <Animated.View style={[styles.modal, { height: height }]}>

@@ -43,7 +43,9 @@ export const request_ride = async (
       });
     }
 
-    const fare = calculate_fare(Number(km), Number(min));
+    const distance_km = Number(km);
+    const duration_mins = Number(min);
+    const fare = calculate_fare(distance_km, duration_mins);
     const commission = calculate_commission(fare);
     const driver_earnings = fare - commission;
 
@@ -52,6 +54,8 @@ export const request_ride = async (
       pickup,
       destination,
       fare,
+      distance_km,
+      duration_mins,
       driver_earnings,
       commission,
       status: "pending",
@@ -98,7 +102,7 @@ export const request_ride = async (
           msg: "This ride has expired",
         });
       }
-    }, 90000);
+    }, 300000);
   } catch (err: any) {
     res
       .status(500)

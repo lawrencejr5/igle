@@ -26,16 +26,16 @@ import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
-import { useAuthContext } from "../../context/AuthContext";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import RideRoute from "../../components/RideRoute";
+import { useMapContext } from "../../context/MapContext";
 
 const HomePage = () => {
   const { notification } = useNotificationContext();
   const { getDriverProfile, driver } = useDriverAuthContext();
-  const { region } = useAuthContext();
+  const { region } = useMapContext();
 
   useEffect(() => {
     getDriverProfile();

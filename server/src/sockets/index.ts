@@ -20,7 +20,7 @@ export const handle_socket_events = (io: Server, socket: Socket) => {
       );
       await Driver.findOneAndUpdate(
         { socket_id: socket.id },
-        { socket_id: null, is_online: false }
+        { socket_id: null, is_online: false, is_available: false }
       );
     });
   });

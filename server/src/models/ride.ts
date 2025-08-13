@@ -21,6 +21,8 @@ export interface RideType extends Document {
     | "cancelled"
     | "expired";
   fare: number;
+  distance_km: number;
+  duration_mins: number;
   timestamps: {
     accepted_at?: Date;
     arrived_at?: Date;
@@ -66,6 +68,8 @@ const RideSchema = new Schema<RideType>(
       default: "pending",
     },
     fare: { type: Number, required: true },
+    distance_km: { type: Number, required: true },
+    duration_mins: { type: Number, required: true },
     timestamps: {
       accepted_at: Date,
       arrived_at: Date,

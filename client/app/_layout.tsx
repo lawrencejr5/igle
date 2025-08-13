@@ -11,6 +11,7 @@ import AuthProvider from "../context/AuthContext";
 import { NotificationProvider } from "../context/NotificationContext";
 import DriverAuthProvider from "../context/DriverAuthContext";
 import { RideContextProvider } from "../context/RideContext";
+import MapContextProvider from "../context/MapContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -32,17 +33,19 @@ const RootLayout = () => {
 
   return (
     <NotificationProvider>
-      <AuthProvider>
-        <DriverAuthProvider>
-          <RideContextProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            />
-          </RideContextProvider>
-        </DriverAuthProvider>
-      </AuthProvider>
+      <MapContextProvider>
+        <AuthProvider>
+          <DriverAuthProvider>
+            <RideContextProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              />
+            </RideContextProvider>
+          </DriverAuthProvider>
+        </AuthProvider>
+      </MapContextProvider>
     </NotificationProvider>
   );
 };
