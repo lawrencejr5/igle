@@ -16,14 +16,14 @@
     },
     "ios": {
       "config": {
-        "googleMapsApiKey": "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss"
+        "googleMapsApiKey": "${process.env.EXPO_PUBLIC_GOOGLE_MAPS_API}"
       },
       "supportsTablet": true
     },
     "android": {
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss"
+          "apiKey": "${process.env.EXPO_PUBLIC_GOOGLE_MAPS_API}"
         }
       },
       "adaptiveIcon": {

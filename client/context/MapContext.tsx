@@ -62,6 +62,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [mapSuggestions, setMapSuggestions] = useState<any>(null);
   const [region, setRegion] = useState<any>(null);
 
+  const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API;
+
   const set_user_location = async () => {
     setLocationLoading(true);
     try {
@@ -89,9 +91,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const getPlaceName = async (lat: number, lng: number): Promise<void> => {
     setLocationLoading(true);
-    const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
 
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`;
 
     try {
       const { data } = await axios.get(url);
@@ -108,10 +109,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const getSuggestions = async (text: string) => {
-    const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
       text
-    )}&key=${apiKey}&components=country:ng`;
+    )}&key=${API_KEY}&components=country:ng`;
 
     try {
       const { data } = await axios.get(url);
@@ -134,8 +134,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     place_id: string
   ): Promise<[number, number] | undefined> => {
     try {
-      const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${apiKey}`;
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${API_KEY}`;
       const { data } = await axios.get(url);
       const location = data.result.geometry.location;
 
@@ -157,8 +156,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     pickup: [number, number],
     destination: [number, number]
   ) => {
-    const apiKey = "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss";
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickup[0]},${pickup[1]}&destination=${destination[0]},${destination[1]}&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickup[0]},${pickup[1]}&destination=${destination[0]},${destination[1]}&key=${API_KEY}`;
 
     try {
       const response = await axios.get(url);
