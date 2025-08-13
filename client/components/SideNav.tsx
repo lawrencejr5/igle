@@ -245,7 +245,7 @@ const SideNav: React.FC<{
 const styles = StyleSheet.create({
   overlay: {
     position: "absolute",
-    zIndex: 1,
+    zIndex: 5,
     height: "100%",
     width: "100%",
     backgroundColor: "#12121290",

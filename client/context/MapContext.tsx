@@ -26,14 +26,35 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     set_user_location();
   }, []);
 
-  const [locationLoading, setLocationLoading] = useState<boolean>(false);
-
-  const [userAddress, setUserAddress] = useState<string>("");
-
   const [destination, setDestination] = useState<string>("");
   const [destinationCoords, setDestinationCoords] = useState<[number, number]>([
     0, 0,
   ]);
+  useEffect(() => {
+    if (destinationCoords[0] || destinationCoords[1]) {
+      calculateRide(
+        [region.latitude, region.longitude],
+        [...destinationCoords]
+      );
+    }
+  }, [destinationCoords]);
+
+  const [region, setRegion] = useState<any>(null);
+  useEffect(() => {
+    const get_place_name_func = async () =>
+      await getPlaceName(region.latitude, region.longitude);
+    if (region) get_place_name_func();
+  }, [region]);
+
+  const [locationLoading, setLocationLoading] = useState<boolean>(false);
+
+  const [userAddress, setUserAddress] = useState<string>("");
+
+  const [rideDetails, setRideDetails] = useState<{
+    distanceKm: number;
+    durationMins: number;
+    amount: number;
+  }>({ distanceKm: 0, durationMins: 0, amount: 0 });
 
   const [routeCoords, setRouteCoords] = useState<
     { latitude: number; longitude: number }[]
@@ -55,12 +76,10 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         });
       }
     };
-
-    fetchRoute();
+    if (destinationCoords[0] || destinationCoords[1]) fetchRoute();
   }, [destinationCoords]);
 
   const [mapSuggestions, setMapSuggestions] = useState<any>(null);
-  const [region, setRegion] = useState<any>(null);
 
   const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API;
 
@@ -81,7 +100,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         longitudeDelta: 0.02,
       });
       await AsyncStorage.setItem("region", JSON.stringify(region));
-      await getPlaceName(location.coords.latitude, location.coords.longitude);
     } catch (error: any) {
       throw new Error(error.message);
     } finally {
@@ -111,7 +129,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const getSuggestions = async (text: string) => {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
       text
-    )}&key=${API_KEY}&components=country:ng`;
+    )}&key=${API_KEY}&location=${region.latitude},${
+      region.longitude
+    }&radius=5000&components=country:ng`;
 
     try {
       const { data } = await axios.get(url);
@@ -167,6 +187,45 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const calculateRide = async (
+    pickup: [number, number],
+    destination: [number, number]
+  ): Promise<{ distanceKm: number; durationMins: number } | undefined> => {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickup[0]},${pickup[1]}&destinations=${destination[0]},${destination[1]}&key=${API_KEY}`;
+
+      const { data } = await axios.get(url);
+
+      if (data.rows[0].elements[0].status === "OK") {
+        const distanceMeters = data.rows[0].elements[0].distance.value; // in meters
+        const durationSeconds = data.rows[0].elements[0].duration.value; // in seconds
+
+        const distanceKm = Math.round(distanceMeters / 1000);
+        const durationMins = Math.round(durationSeconds / 60);
+
+        const BASE_FARE = Number(process.env.EXPO_PUBLIC_BASE_FARE);
+        const PRICE_PER_KM = Number(process.env.EXPO_PUBLIC_PRICE_PER_KM);
+        const PRICE_PER_MIN = Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN);
+
+        const fare =
+          BASE_FARE + distanceKm * PRICE_PER_KM + durationMins * PRICE_PER_MIN;
+        const amount = Math.ceil(fare / 10) * 10;
+
+        setRideDetails({
+          distanceKm,
+          durationMins,
+          amount,
+        });
+        return {
+          distanceKm: distanceMeters / 1000,
+          durationMins: durationSeconds / 60,
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching ride info:", error);
+    }
+  };
+
   return (
     <MapContext.Provider
       value={{
@@ -184,6 +243,10 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setDestination,
         destinationCoords,
         setDestinationCoords,
+
+        calculateRide,
+        rideDetails,
+        setRideDetails,
 
         locationLoading,
         routeCoords,
@@ -211,6 +274,15 @@ export interface MapContextType {
 
   getPlaceCoords: (place_id: string) => Promise<[number, number] | undefined>;
   getPlaceName: (lat: number, lng: number) => Promise<void>;
+  calculateRide: (
+    pickup: [number, number],
+    destination: [number, number]
+  ) => Promise<{ distanceKm: number; durationMins: number } | undefined>;
+
+  rideDetails: { distanceKm: number; durationMins: number; amount: number };
+  setRideDetails: Dispatch<
+    SetStateAction<{ distanceKm: number; durationMins: number; amount: number }>
+  >;
 
   locationLoading: boolean;
 

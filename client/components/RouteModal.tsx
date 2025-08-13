@@ -32,7 +32,8 @@ const RouteModal = () => {
     getSuggestions,
     getPlaceCoords,
     locationLoading,
-
+    rideDetails,
+    calculateRide,
     destination,
     setDestination,
     destinationCoords,
@@ -45,13 +46,13 @@ const RouteModal = () => {
   const set_destination_func = async (place_id: string, place_name: string) => {
     setDestination(place_name);
     setModalUp(false);
+    setStatus("choosing_car");
 
     const coords = await getPlaceCoords(place_id);
     if (coords) {
       setDestinationCoords(coords);
-      setTimeout(() => {
-        setMapSuggestions([]);
-      }, 0);
+
+      await calculateRide([region.latitude, region.longitude], [...coords]);
     }
   };
 
@@ -84,15 +85,23 @@ const RouteModal = () => {
   };
 
   useEffect(() => {
-    getSuggestions(destination);
+    if (destination) {
+      getSuggestions(destination);
+    }
   }, [destination]);
 
   const [status, setStatus] = useState<
-    "" | "booking" | "searching" | "accepted" | "paying" | "paid"
+    | ""
+    | "booking"
+    | "choosing_car"
+    | "searching"
+    | "accepted"
+    | "paying"
+    | "paid"
   >("");
 
   const window_height = Dimensions.get("window").height - 70;
-  const height = useRef(new Animated.Value(180)).current;
+  const height = useRef(new Animated.Value(220)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   const [modalUp, setModalUp] = useState(false);
@@ -116,7 +125,7 @@ const RouteModal = () => {
     } else {
       Animated.parallel([
         Animated.timing(height, {
-          toValue: 180,
+          toValue: 220,
           duration: 300,
           useNativeDriver: false,
         }),
@@ -174,6 +183,8 @@ const RouteModal = () => {
                 />
                 <TextInput
                   placeholder="Where we dey go?"
+                  value={destinationCoords ? destination : ""}
+                  selection={{ start: 0, end: 0 }}
                   placeholderTextColor={"#8d8d8d"}
                   editable={false}
                   style={styles.text_input}
@@ -280,7 +291,7 @@ const RouteModal = () => {
                   style={[styles.route_input]}
                   placeholder="Pickup"
                   value={userAddress}
-                  // onChangeText={setUserAddress}
+                  onChangeText={setUserAddress}
                   placeholderTextColor={"#b7b7b7"}
                   selection={{ start: 0, end: 0 }}
                   editable={false}
@@ -331,7 +342,77 @@ const RouteModal = () => {
               )}
             />
           </View>
+        </>
+      )}
+      {status === "choosing_car" && (
+        <>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(!modalUp);
+            }}
+          >
+            <View style={styles.expand_line_conatiner}>
+              <View style={styles.expand_line} />
+            </View>
+          </TouchableWithoutFeedback>
 
+          <Text style={[styles.header_text, { textAlign: "center" }]}>
+            Select Igle ride...
+          </Text>
+
+          <View
+            style={{
+              borderColor: "#fff",
+              borderWidth: 3,
+              borderRadius: 10,
+              width: "100%",
+              paddingHorizontal: 20,
+              paddingVertical: 5,
+              marginTop: 20,
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 15 }}
+            >
+              <Image
+                source={require("../assets/images/icons/keke-icon.png")}
+                style={{ height: 50, width: 50 }}
+              />
+              <View>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontFamily: "raleway-semibold",
+                  }}
+                >
+                  Keke na Pepe
+                </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontFamily: "poppins-regular",
+                    fontSize: 12,
+                  }}
+                >
+                  {rideDetails.distanceKm}km . {rideDetails.durationMins}mins
+                </Text>
+              </View>
+            </View>
+            <View>
+              <Text
+                style={{
+                  color: "#fff",
+                  alignSelf: "flex-end",
+                  fontFamily: "poppins-bold",
+                  fontSize: 16,
+                }}
+              >
+                NGN {rideDetails.amount.toLocaleString()}
+              </Text>
+            </View>
+          </View>
           <TouchableWithoutFeedback onPress={book_ride}>
             <View
               style={{
@@ -708,6 +789,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: "raleway-bold",
     fontSize: 18,
+    color: "#fff",
   },
   route_inp_container: {
     flexDirection: "row",

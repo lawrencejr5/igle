@@ -42,7 +42,7 @@ const NotificationScreen: React.FC<{
         width: "100%",
         position: "absolute",
         bottom: -100,
-        zIndex: 2,
+        zIndex: 5,
         paddingTop: 50,
         paddingHorizontal: 20,
         transform: [{ translateY: notiTranslate }],
@@ -106,7 +106,7 @@ const NotificationScreen: React.FC<{
                 fontSize: 12,
               }}
             >
-              2 hrs ago
+              1 month ago
             </Text>
           </View>
         </View>

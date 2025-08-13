@@ -19,5 +19,5 @@ export const calculate_fare = (
   }
   const fare =
     BASE_FARE + distance_km * PRICE_PER_KM + duration_min * PRICE_PER_MIN;
-  return Math.round(fare); // rounded to nearest Naira
+  return Math.ceil(fare / 100) * 10;
 };

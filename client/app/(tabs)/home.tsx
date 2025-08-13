@@ -26,8 +26,14 @@ const Home = () => {
   const [openNotification, setOpenNotification] = useState<boolean>(false);
 
   const { notification } = useNotificationContext();
-  const { region, getPlaceName, destinationCoords, routeCoords, mapRef } =
-    useMapContext();
+  const {
+    region,
+    getPlaceName,
+    destination,
+    destinationCoords,
+    routeCoords,
+    mapRef,
+  } = useMapContext();
 
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);
@@ -52,23 +58,55 @@ const Home = () => {
                 longitude: region.longitude,
               }}
               title="Your location"
-            />
+            >
+              <View
+                style={{
+                  backgroundColor: "white",
+                  padding: 5,
+                  borderRadius: 50,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "black",
+                    padding: 5,
+                    borderRadius: 50,
+                  }}
+                />
+              </View>
+            </Marker>
           )}
-          {destinationCoords && (
+          {destinationCoords && destination && (
             <Marker
               coordinate={{
                 latitude: destinationCoords[0],
                 longitude: destinationCoords[1],
               }}
               title="Destination"
-            />
+            >
+              <View
+                style={{
+                  backgroundColor: "white",
+                  padding: 4,
+                  borderRadius: 2,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "black",
+                    padding: 4,
+                    borderRadius: 2,
+                  }}
+                />
+              </View>
+            </Marker>
           )}
 
-          {routeCoords.length > 0 && (
+          {routeCoords.length > 0 && destination && (
             <Polyline
               coordinates={routeCoords}
-              strokeColor="#1E90FF"
-              strokeWidth={7}
+              strokeColor="#fff"
+              strokeWidth={4}
             />
           )}
         </MapView>
