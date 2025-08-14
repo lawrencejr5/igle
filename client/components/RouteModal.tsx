@@ -129,17 +129,6 @@ const RouteModal = () => {
     }
   }, [modalUp]);
 
-  // useEffect(() => {
-  //   if (status === "searching") {
-  //     const searchTimeout = setTimeout(() => {
-  //       setRideStatus("accepted");
-  //       setModalUp(true);
-  //     }, 3000);
-
-  //     () => clearTimeout(searchTimeout);
-  //   }
-  // }, [status]);
-
   return (
     <Animated.View style={[styles.modal, { height: height }]}>
       {/* Form */}
@@ -205,76 +194,6 @@ const RouteModal = () => {
           {/* Route slection form */}
           <Animated.View style={[styles.form, { opacity }]}>
             <View style={{ flex: 1, marginTop: 10 }}>
-              {/* Pick car type */}
-
-              {/* <View style={styles.select_ride_container}>
-                <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
-                  <View
-                    style={[
-                      styles.select_ride_box,
-                      carType === "keke" && styles.select_ride_box_active,
-                    ]}
-                  >
-                    <Image
-                      source={require("../assets/images/icons/keke-icon.png")}
-                      style={{ width: 25, height: 25 }}
-                    />
-                    <Text
-                      style={[
-                        { color: "#fff", fontFamily: "raleway-bold" },
-                        carType === "keke" && styles.select_ride_text_active,
-                      ]}
-                    >
-                      Keke
-                    </Text>
-                  </View>
-                </TouchableWithoutFeedback>
-
-                <TouchableWithoutFeedback onPress={() => setCarType("sedan")}>
-                  <View
-                    style={[
-                      styles.select_ride_box,
-                      carType === "sedan" && styles.select_ride_box_active,
-                    ]}
-                  >
-                    <Image
-                      source={require("../assets/images/icons/sedan-icon.png")}
-                      style={{ width: 25, height: 25 }}
-                    />
-                    <Text
-                      style={[
-                        { color: "#fff", fontFamily: "raleway-bold" },
-                        carType === "sedan" && styles.select_ride_text_active,
-                      ]}
-                    >
-                      Cab
-                    </Text>
-                  </View>
-                </TouchableWithoutFeedback>
-
-                <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
-                  <View
-                    style={[
-                      styles.select_ride_box,
-                      carType === "suv" && styles.select_ride_box_active,
-                    ]}
-                  >
-                    <Image
-                      source={require("../assets/images/icons/suv-icon.png")}
-                      style={{ width: 25, height: 25 }}
-                    />
-                    <Text
-                      style={[
-                        { color: "#fff", fontFamily: "raleway-bold" },
-                        carType === "suv" && styles.select_ride_text_active,
-                      ]}
-                    >
-                      SUV
-                    </Text>
-                  </View>
-                </TouchableWithoutFeedback>
-              </View> */}
-
               {/* Select pickup and drop off */}
               <View style={styles.route_inp_container}>
                 <View style={styles.from_circle} />
@@ -528,7 +447,9 @@ const RouteModal = () => {
                 alignItems: "center",
               }}
             >
-              <Text style={styles.priceText}>{rideDetails.amount} NGN</Text>
+              <Text style={styles.priceText}>
+                {rideDetails.amount.toLocaleString()} NGN
+              </Text>
               <TouchableWithoutFeedback
                 onPress={() => {
                   setRideStatus("paying");

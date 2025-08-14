@@ -107,7 +107,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const { showNotification } = useNotificationContext()!;
 
   // API base URL
-  const API_BASE_URL = "http://192.168.10.123:5000/api/v1";
+  const API_URL = "http://192.168.26.123:5000/api/v1/drivers";
 
   // Check if user is a driver on mount
   useEffect(() => {
@@ -131,7 +131,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const getDriverProfile = async (token?: string): Promise<void> => {
     try {
       const authToken = token || (await AsyncStorage.getItem("token"));
-      const { data } = await axios.get(`${API_BASE_URL}/drivers/data`, {
+      const { data } = await axios.get(`${API_URL}/data`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -173,7 +173,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const authToken = await AsyncStorage.getItem("token");
       const { data } = await axios.get(
-        `${API_BASE_URL}/drivers/data?driver_id=${driver_id}`,
+        `${API_URL}/data?driver_id=${driver_id}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -218,7 +218,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.post(
-        `${API_BASE_URL}/drivers/create`,
+        `${API_URL}/create`,
         {
           vehicle_type,
         },
@@ -246,15 +246,11 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/info`,
-        updateData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const { data } = await axios.patch(`${API_URL}/info`, updateData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (data.driver) {
         setDriver(data.driver);
@@ -271,7 +267,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/vehicle`,
+        `${API_URL}/vehicle`,
         {
           vehicle,
         },
@@ -298,7 +294,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/license`,
+        `${API_URL}/license`,
         {
           driver_licence,
         },
@@ -327,7 +323,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/bank`,
+        `${API_URL}/bank`,
         {
           ...bankInfo,
         },
@@ -354,7 +350,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/availability`,
+        `${API_URL}/availability`,
         {
           status,
         },
@@ -385,7 +381,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/online`,
+        `${API_URL}/online`,
         {
           is_online: status,
         },
@@ -418,7 +414,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/location`,
+        `${API_URL}/location`,
         {
           coordinates,
         },
@@ -456,7 +452,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/users/driver_application`,
+        `http://192.168.26.123:5000/api/v1/driver_application`,
         { driver_application: status },
         {
           headers: {
@@ -481,7 +477,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `${API_BASE_URL}/drivers/rating`,
+        `${API_URL}/rating`,
         {
           rating,
         },

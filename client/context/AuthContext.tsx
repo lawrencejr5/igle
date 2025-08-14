@@ -42,16 +42,14 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const [tokenLoading, setTokenLoading] = useState<boolean>(true);
 
-  const [region, setRegion] = useState<any>(null);
-  const [userAddress, setUserAddress] = useState<string>("");
-  const [mapSuggestions, setMapSuggestions] = useState<any>(null);
-
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
     getUserData();
     checkTokenValidity();
   }, []);
+
+  const API_URL = "http://192.168.26.123:5000/api/v1/users";
 
   // Registration function
   const register = async (
@@ -65,14 +63,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       throw new Error("Passwords do not match");
     }
     try {
-      const { data } = await axios.post(
-        "http://192.168.10.123:5000/api/v1/users/register",
-        {
-          name,
-          email,
-          password,
-        }
-      );
+      const { data } = await axios.post(`${API_URL}/register`, {
+        name,
+        email,
+        password,
+      });
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem("user_id", data.user.id);
 
@@ -92,7 +87,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.patch(
-        "http://192.168.10.123:5000/api/v1/users/phone",
+        `${API_URL}/phone`,
         { phone },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -112,10 +107,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Login function (email or phone)
   const login = async (email: string, password: string): Promise<void> => {
     try {
-      const { data } = await axios.post(
-        "http://192.168.10.123:5000/api/v1/users/login",
-        { email, password }
-      );
+      const { data } = await axios.post(`${API_URL}/login`, {
+        email,
+        password,
+      });
 
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem("user_id", data.user.id);
@@ -140,10 +135,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       if (!token) return;
 
-      const { data } = await axios.get(
-        `http://192.168.10.123:5000/api/v1/users/data`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data } = await axios.get(`${API_URL}/data`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const { _id, name, email, phone, driver_application, is_driver } =
         data.user;

@@ -3,9 +3,11 @@ import { io } from "socket.io-client";
 let userSocket: any;
 let driverSocket: any;
 
+const SOCKET_URL = "http://192.168.26.123:5000";
+
 export const initDriverSocket = (driver_id: string) => {
   if (!driverSocket) {
-    driverSocket = io("http://192.168.10.123:5000", {
+    driverSocket = io(SOCKET_URL, {
       transports: ["websocket"],
       forceNew: true,
     });
@@ -23,7 +25,7 @@ export const initDriverSocket = (driver_id: string) => {
 
 export const initUserSocket = (user_id: string) => {
   if (!userSocket) {
-    userSocket = io("http://192.168.10.123:5000", {
+    userSocket = io(SOCKET_URL, {
       transports: ["websocket"],
       forceNew: true,
     });
