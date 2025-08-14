@@ -28,11 +28,31 @@ type RideStatusType =
   | "paying"
   | "paid";
 
+// interface RideType {
+//   _id: string;
+//   pickup: {
+//     address: string;
+//     coordinates: [number, number];
+//   };
+//   destination: {
+//     address: string;
+//     coordinates: [number, number];
+//   };
+//   driver_id: string;
+//   status: any;
+//   fare: number;
+//   createdAt: string;
+//   updatedAt: string;
+// }
+
 export const RideContextProvider: FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const { showNotification } = useNotificationContext();
   const { calculateRide } = useMapContext();
+
+  const [ongoingRideId, setOngoingRideId] = useState<string | null>(null);
+  const [rideData, setRideData] = useState<any>(null);
 
   const [rideStatus, setRideStatus] = useState<RideStatusType>("");
   const [modalUp, setModalUp] = useState<boolean>(false);
@@ -45,7 +65,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     if (!userSocket) return;
 
     const onRideAccepted = async (data: any) => {
-      const { driver_id } = data;
+      const { driver_id, ride_id } = data;
+      setOngoingRideId(ride_id);
+      await AsyncStorage.setItem("ongoingRideId", ride_id);
       await getDriverData(driver_id);
       setModalUp(true);
       setRideStatus("accepted");
@@ -78,16 +100,52 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         { pickup, destination },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+      setOngoingRideId(data.ride._id);
+      setRideData(data.ride);
+      await AsyncStorage.setItem("ongoingRideId", data.ride._id);
       showNotification(data.msg, "success");
     } catch (error: any) {
       throw new Error(error.response.data.message);
     }
   };
 
+  const cancelRideRequest = async (
+    ride_id: string,
+    by: "rider" | "driver",
+    reason: string
+  ): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      await axios.patch(
+        `${API_URL}/cancel?ride_id=${ride_id}`,
+        { reason, by },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setOngoingRideId(null);
+      await AsyncStorage.removeItem("ongoingRideId");
+      setRideData(null);
+      showNotification("Ride request cancelled", "error");
+      setRideStatus("");
+      setModalUp(false);
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    }
+  };
+
   return (
     <RideContext.Provider
-      value={{ rideRequest, rideStatus, setRideStatus, modalUp, setModalUp }}
+      value={{
+        rideData,
+        rideRequest,
+        rideStatus,
+        setRideStatus,
+        modalUp,
+        setModalUp,
+        cancelRideRequest,
+        ongoingRideId,
+        setOngoingRideId,
+      }}
     >
       {children}
     </RideContext.Provider>
@@ -100,10 +158,20 @@ export interface RideContextType {
     destination: { address: string; coordinates: [number, number] }
   ) => Promise<void>;
 
+  cancelRideRequest: (
+    ride_id: string,
+    by: "rider" | "driver",
+    reason: string
+  ) => Promise<void>;
+
   rideStatus: RideStatusType;
   setRideStatus: Dispatch<SetStateAction<RideStatusType>>;
   modalUp: boolean;
   setModalUp: Dispatch<SetStateAction<boolean>>;
+
+  rideData: any;
+  ongoingRideId: string | null;
+  setOngoingRideId: Dispatch<SetStateAction<string | null>>;
 }
 
 export const useRideContext = () => {

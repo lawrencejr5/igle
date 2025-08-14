@@ -256,6 +256,7 @@ export const cancel_ride = async (
     res.status(200).json({ msg: "Ride cancelled successfully.", ride });
   } catch (err) {
     res.status(500).json({ msg: "Server error.", error: err });
+    console.error(err);
   }
 };
 

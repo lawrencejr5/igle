@@ -8,6 +8,8 @@ import {
   TextInput,
   FlatList,
   Dimensions,
+  Linking,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -41,8 +43,16 @@ const RouteModal = () => {
     setDestinationCoords,
   } = useMapContext();
 
-  const { rideRequest, rideStatus, setRideStatus, modalUp, setModalUp } =
-    useRideContext();
+  const {
+    rideRequest,
+    cancelRideRequest,
+    rideStatus,
+    setRideStatus,
+    modalUp,
+    setModalUp,
+    rideData,
+    ongoingRideId,
+  } = useRideContext();
 
   const { driverData } = useDriverAuthContext();
   const { showNotification } = useNotificationContext();
@@ -87,6 +97,21 @@ const RouteModal = () => {
     }
   };
 
+  const cancel_ride = async () => {
+    const reason = "No reason";
+    const by = "rider";
+    const ride_id = rideData?._id || ongoingRideId;
+
+    try {
+      await cancelRideRequest(ride_id, by, reason);
+      setModalUp(false);
+      setRideStatus("");
+      setDestination("");
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
+
   useEffect(() => {
     if (destination) {
       getSuggestions(destination);
@@ -128,6 +153,17 @@ const RouteModal = () => {
       ]).start();
     }
   }, [modalUp]);
+
+  const makeCall = async () => {
+    const url = `tel:${driverData?.phone}`;
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert("Error", "Your device cannot make phone calls.");
+    }
+  };
 
   return (
     <Animated.View style={[styles.modal, { height: height }]}>
@@ -343,6 +379,25 @@ const RouteModal = () => {
               </Text>
             </View>
           </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback
+            style={{ marginVertical: 20 }}
+            onPress={() => {
+              setModalUp(false);
+              setRideStatus("");
+              setDestination("");
+            }}
+          >
+            <Text
+              style={{
+                color: "#ff0000",
+                fontFamily: "raleway-bold",
+                fontSize: 16,
+                textAlign: "center",
+              }}
+            >
+              Cancel
+            </Text>
+          </TouchableWithoutFeedback>
         </>
       )}
       {rideStatus === "searching" && (
@@ -374,6 +429,20 @@ const RouteModal = () => {
               We're trying to locate drivers around you...
             </Text>
           </View>
+
+          <TouchableWithoutFeedback onPress={cancel_ride}>
+            <Text
+              style={{
+                color: "#ff0000",
+                fontFamily: "raleway-bold",
+                fontSize: 16,
+                textAlign: "center",
+                marginTop: 50,
+              }}
+            >
+              Cancel ride
+            </Text>
+          </TouchableWithoutFeedback>
         </>
       )}
       {rideStatus === "accepted" && (
@@ -413,9 +482,11 @@ const RouteModal = () => {
               </View>
 
               {/* Call btn */}
-              <View style={styles.callBtn}>
-                <FontAwesome name="phone" color={"#121212"} size={20} />
-              </View>
+              <TouchableWithoutFeedback onPress={makeCall}>
+                <View style={styles.callBtn}>
+                  <FontAwesome name="phone" color={"#121212"} size={20} />
+                </View>
+              </TouchableWithoutFeedback>
             </View>
 
             {/* Estimated time and duration */}
@@ -489,11 +560,7 @@ const RouteModal = () => {
             </Text>
           </View>
 
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setRideStatus(""), setModalUp(false);
-            }}
-          >
+          <TouchableWithoutFeedback onPress={cancel_ride}>
             <Text
               style={{
                 marginTop: 50,
@@ -519,8 +586,13 @@ const RouteModal = () => {
             </View>
           </TouchableWithoutFeedback>
 
-          <Text style={[styles.header_text, { textAlign: "center" }]}>
-            Confirm payment (1,500 NGN)
+          <Text
+            style={[
+              styles.header_text,
+              { textAlign: "center", fontFamily: "poppins-bold" },
+            ]}
+          >
+            Confirm payment ({rideDetails?.amount.toLocaleString()} NGN)
           </Text>
 
           <View style={{ marginTop: 25 }}>
