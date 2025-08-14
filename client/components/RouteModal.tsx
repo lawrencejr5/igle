@@ -22,6 +22,7 @@ import { useMapContext } from "../context/MapContext";
 import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
+import { router } from "expo-router";
 
 const RouteModal = () => {
   const { signedIn } = useAuthContext();
@@ -687,6 +688,33 @@ const RouteModal = () => {
           >
             Alright, hang tight, we'll take it from here...
           </Text>
+
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setModalUp(false);
+              setRideStatus("");
+              router.push("../(tabs)/rides");
+            }}
+          >
+            <View
+              style={{
+                marginVertical: 50,
+                padding: 10,
+                borderRadius: 30,
+                backgroundColor: "#fff",
+              }}
+            >
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontFamily: "raleway-bold",
+                  color: "#121212",
+                }}
+              >
+                Track ride
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
         </>
       )}
     </Animated.View>
