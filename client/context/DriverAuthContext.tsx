@@ -44,7 +44,7 @@ interface CurrentLocation {
   coordinates: [number, number];
 }
 
-interface Driver {
+interface DriverType {
   driver_id: string;
   user?: string;
   name?: string;
@@ -68,18 +68,20 @@ interface Driver {
 }
 
 interface DriverAuthContextType {
-  driver: Driver | null;
+  driver: DriverType | null;
+  driverData: DriverType | null;
   isDriver: boolean; // Changed from isAuthenticated
 
   // Core driver profile functions
   createDriver: (vehicle_type: string) => Promise<void>; // Updated to Promise<void>
-  updateDriverInfo: (updateData: Partial<Driver>) => Promise<void>; // Updated to Promise<void>
+  updateDriverInfo: (updateData: Partial<DriverType>) => Promise<void>; // Updated to Promise<void>
   updateVehicleInfo: (vehicle: Vehicle) => Promise<void>; // Updated to Promise<void>
   updateDriverLicense: (driver_licence: DriverLicence) => Promise<void>; // Updated to Promise<void>
   saveBankInfo: (bankInfo: Omit<BankInfo, "recipient_code">) => Promise<void>; // Updated to Promise<void>
 
   // Profile retrieval functions
   getDriverProfile: () => Promise<void>;
+  getDriverData: (driver_id: string) => Promise<void>;
   refreshDriverData: () => Promise<void>;
 
   // Driver status functions
@@ -99,7 +101,7 @@ export const DriverAuthContext = createContext<DriverAuthContextType | null>(
 const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [driver, setDriver] = useState<Driver | null>(null);
+  const [driver, setDriver] = useState<DriverType | null>(null);
   const [isDriver, setIsDriver] = useState(false);
   const { showNotification } = useNotificationContext()!;
 
@@ -166,6 +168,48 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const [driverData, setDriverData] = useState<DriverType | null>(null);
+  const getDriverData = async (driver_id: string): Promise<void> => {
+    try {
+      const authToken = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(
+        `${API_BASE_URL}/driver/data?driver_id=${driver_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      if (data.driver) {
+        const {
+          _id,
+          vehicle_type,
+          socket_id,
+          user: { name, email, phone },
+          vehicle: { brand, model, color },
+        } = data.driver;
+
+        setDriverData({
+          driver_id: _id,
+          socket_id,
+          vehicle_type,
+          name,
+          email,
+          phone,
+          vehicle_brand: brand,
+          vehicle_model: model,
+          vehicle_color: color,
+        });
+      } else {
+        throw new Error("An error occured");
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      throw new Error(errMsg || "Error getting driver profile");
+    }
+  };
+
   // Core driver profile functions
   const createDriver = async (vehicle_type: string): Promise<void> => {
     try {
@@ -195,7 +239,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const updateDriverInfo = async (
-    updateData: Partial<Driver>
+    updateData: Partial<DriverType>
   ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -458,6 +502,8 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const contextValue: DriverAuthContextType = {
     driver,
+    driverData,
+    getDriverData,
     isDriver,
     createDriver,
     updateDriverInfo,

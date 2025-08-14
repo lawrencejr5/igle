@@ -70,6 +70,8 @@ export const request_ride = async (
       pickup,
       destination,
       fare,
+      distance_km,
+      duration_mins,
     });
 
     res.status(201).json({
@@ -134,7 +136,14 @@ export const get_ride_data = async (
   try {
     const { ride_id } = req.query;
 
-    const ride = await Ride.findById(ride_id);
+    const ride = await Ride.findById(ride_id).populate({
+      path: "driver",
+      select: "user vehicle_type vehicle current_location",
+      populate: {
+        path: "user",
+        select: "name email", // Optional: To select specific fields from the nested document
+      },
+    });
     res.status(200).json({ msg: "success", ride });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
@@ -171,11 +180,18 @@ export const accept_ride = async (
     );
 
     const rider_socket_id = await get_user_socket_id(ride?.rider!);
-    io.to(rider_socket_id!).emit("ride_accepted", {
-      ride_id,
-      driver_id,
-      rider_socket_id,
-    });
+    const rider_socket = io.sockets.sockets.get(rider_socket_id!);
+
+    if (rider_socket) {
+      io.to(rider_socket_id!).emit("ride_accepted", {
+        ride_id,
+        driver_id,
+        rider_socket_id,
+      });
+      console.log("socket found");
+    } else {
+      console.log("socket not found");
+    }
 
     if (!ride) {
       res.status(404).json({ msg: "Ride is invalid or not available." });

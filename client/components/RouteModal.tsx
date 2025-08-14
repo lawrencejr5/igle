@@ -40,13 +40,13 @@ const RouteModal = () => {
     setDestinationCoords,
   } = useMapContext();
 
-  const { rideRequest } = useRideContext();
+  const { rideRequest, rideStatus, setRideStatus } = useRideContext();
   const { showNotification } = useNotificationContext();
 
   const set_destination_func = async (place_id: string, place_name: string) => {
     setDestination(place_name);
     setModalUp(false);
-    setStatus("choosing_car");
+    setRideStatus("choosing_car");
 
     const coords = await getPlaceCoords(place_id);
     if (coords) {
@@ -75,7 +75,7 @@ const RouteModal = () => {
       );
       setBooking(false);
       setModalUp(false);
-      setStatus("searching");
+      setRideStatus("searching");
       setDestination("");
     } catch (error: any) {
       showNotification(error.message, "error");
@@ -89,16 +89,6 @@ const RouteModal = () => {
       getSuggestions(destination);
     }
   }, [destination]);
-
-  const [status, setStatus] = useState<
-    | ""
-    | "booking"
-    | "choosing_car"
-    | "searching"
-    | "accepted"
-    | "paying"
-    | "paid"
-  >("");
 
   const window_height = Dimensions.get("window").height - 70;
   const height = useRef(new Animated.Value(220)).current;
@@ -141,7 +131,7 @@ const RouteModal = () => {
   // useEffect(() => {
   //   if (status === "searching") {
   //     const searchTimeout = setTimeout(() => {
-  //       setStatus("accepted");
+  //       setRideStatus("accepted");
   //       setModalUp(true);
   //     }, 3000);
 
@@ -152,12 +142,12 @@ const RouteModal = () => {
   return (
     <Animated.View style={[styles.modal, { height: height }]}>
       {/* Form */}
-      {status === "" && (
+      {rideStatus === "" && (
         <>
           <TouchableWithoutFeedback
             onPress={() => {
               setModalUp(true);
-              setStatus("booking");
+              setRideStatus("booking");
             }}
           >
             <View style={styles.expand_line_conatiner}>
@@ -172,7 +162,7 @@ const RouteModal = () => {
           <TouchableWithoutFeedback
             onPress={() => {
               setModalUp(true);
-              setStatus("booking");
+              setRideStatus("booking");
             }}
           >
             <View style={styles.form}>
@@ -187,19 +177,19 @@ const RouteModal = () => {
                   selection={{ start: 0, end: 0 }}
                   placeholderTextColor={"#8d8d8d"}
                   editable={false}
-                  style={styles.text_input}
+                  style={[styles.text_input, { color: "#8d8d8d" }]}
                 />
               </View>
             </View>
           </TouchableWithoutFeedback>
         </>
       )}
-      {status === "booking" && (
+      {rideStatus === "booking" && (
         <>
           <TouchableWithoutFeedback
             onPress={() => {
               setModalUp(false);
-              setStatus("");
+              setRideStatus("");
             }}
           >
             <View style={styles.expand_line_conatiner}>
@@ -344,7 +334,7 @@ const RouteModal = () => {
           </View>
         </>
       )}
-      {status === "choosing_car" && (
+      {rideStatus === "choosing_car" && (
         <>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -435,7 +425,7 @@ const RouteModal = () => {
           </TouchableWithoutFeedback>
         </>
       )}
-      {status === "searching" && (
+      {rideStatus === "searching" && (
         <>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -466,7 +456,7 @@ const RouteModal = () => {
           </View>
         </>
       )}
-      {status === "accepted" && (
+      {rideStatus === "accepted" && (
         <>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -498,7 +488,7 @@ const RouteModal = () => {
                 />
                 <View>
                   <Text style={styles.userName}>Oputa Lawrence</Text>
-                  <Text style={styles.userRides}>34 ride completed</Text>
+                  <Text style={styles.userRides}>No ride completed</Text>
                 </View>
               </View>
 
@@ -535,7 +525,7 @@ const RouteModal = () => {
               <Text style={styles.priceText}>1,500 NGN</Text>
               <TouchableWithoutFeedback
                 onPress={() => {
-                  setStatus("paying");
+                  setRideStatus("paying");
                   setModalUp(false);
                 }}
               >
@@ -574,7 +564,7 @@ const RouteModal = () => {
 
           <TouchableWithoutFeedback
             onPress={() => {
-              setStatus(""), setModalUp(false);
+              setRideStatus(""), setModalUp(false);
             }}
           >
             <Text
@@ -590,7 +580,7 @@ const RouteModal = () => {
           </TouchableWithoutFeedback>
         </>
       )}
-      {status === "paying" && (
+      {rideStatus === "paying" && (
         <>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -622,7 +612,7 @@ const RouteModal = () => {
             >
               <TouchableWithoutFeedback
                 onPress={() => {
-                  setStatus("paid");
+                  setRideStatus("paid");
                   setModalUp(false);
                 }}
               >
@@ -648,7 +638,7 @@ const RouteModal = () => {
               </TouchableWithoutFeedback>
               <TouchableWithoutFeedback
                 onPress={() => {
-                  setStatus("accepted");
+                  setRideStatus("accepted");
                   setModalUp(true);
                 }}
               >
@@ -678,7 +668,7 @@ const RouteModal = () => {
           </View>
         </>
       )}
-      {status === "paid" && (
+      {rideStatus === "paid" && (
         <>
           <TouchableWithoutFeedback
             onPress={() => {

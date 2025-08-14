@@ -12,16 +12,32 @@ import React, {
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { io } from "socket.io-client";
+
 import { useNotificationContext } from "./NotificationContext";
 import { useMapContext } from "./MapContext";
+import { useDriverAuthContext } from "./DriverAuthContext";
 
 const RideContext = createContext<RideContextType | null>(null);
+
+type RideStatusType =
+  | ""
+  | "booking"
+  | "choosing_car"
+  | "searching"
+  | "accepted"
+  | "paying"
+  | "paid";
 
 export const RideContextProvider: FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const { showNotification } = useNotificationContext();
   const { calculateRide } = useMapContext();
+
+  const [rideStatus, setRideStatus] = useState<RideStatusType>("");
+
+  const { driverData, getDriverData } = useDriverAuthContext();
 
   const API_URL = "http://192.168.10.123:5000/api/v1/rides";
 
@@ -51,7 +67,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   };
 
   return (
-    <RideContext.Provider value={{ rideRequest }}>
+    <RideContext.Provider value={{ rideRequest, rideStatus, setRideStatus }}>
       {children}
     </RideContext.Provider>
   );
@@ -62,6 +78,9 @@ export interface RideContextType {
     pickup: { address: string; coordinates: [number, number] },
     destination: { address: string; coordinates: [number, number] }
   ) => Promise<void>;
+
+  rideStatus: RideStatusType;
+  setRideStatus: Dispatch<SetStateAction<RideStatusType>>;
 }
 
 export const useRideContext = () => {

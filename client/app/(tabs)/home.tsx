@@ -1,6 +1,8 @@
 import { StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
+import { io } from "socket.io-client";
+
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Feather from "@expo/vector-icons/Feather";
@@ -34,6 +36,11 @@ const Home = () => {
     routeCoords,
     mapRef,
   } = useMapContext();
+
+  const socket = io("http://192.168.10.123:5000", {
+    transports: ["websocket"],
+    forceNew: true,
+  });
 
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);

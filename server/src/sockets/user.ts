@@ -6,7 +6,7 @@ import Driver from "../models/driver";
 export const user_socket_events = (io: Server, socket: Socket) => {
   socket.on("register_user", async (data) => {
     await User.findByIdAndUpdate(data.user_id, {
-      socket_id: data.socket_id,
+      socket_id: socket.id,
       is_online: true,
     });
   });
@@ -14,7 +14,7 @@ export const user_socket_events = (io: Server, socket: Socket) => {
     const { driver_id, socket_id } = data;
 
     await Driver.findByIdAndUpdate(driver_id, {
-      socket_id,
+      socket_id: socket.id,
       is_online: true,
     });
   });

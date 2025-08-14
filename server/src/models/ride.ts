@@ -44,7 +44,7 @@ export interface RideType extends Document {
 const RideSchema = new Schema<RideType>(
   {
     rider: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    driver: { type: Schema.Types.ObjectId, ref: "User" },
+    driver: { type: Schema.Types.ObjectId, ref: "Driver" },
     pickup: {
       address: String,
       coordinates: [Number],

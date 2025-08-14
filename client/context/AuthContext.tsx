@@ -191,17 +191,16 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     showNotification("User logged out", "error");
 
-    setSignedIn({
-      user_id: "",
-      name: "",
-      phone: "",
-      email: "",
-      driver_application: "",
-      is_driver: false,
-    });
-
     setTimeout(() => {
       router.push("/");
+      setSignedIn({
+        user_id: "",
+        name: "",
+        phone: "",
+        email: "",
+        driver_application: "",
+        is_driver: false,
+      });
     }, 500);
   };
 
