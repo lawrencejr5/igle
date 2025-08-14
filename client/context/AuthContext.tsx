@@ -40,9 +40,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     is_driver: false,
   });
 
-  const [tokenLoading, setTokenLoading] = useState<boolean>(true);
-
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  const [appLoading, setAppLoading] = useState<boolean>(true);
 
   useEffect(() => {
     getUserData();
@@ -130,6 +130,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const [userSocket, setUserSocket] = useState(null);
   const getUserData = async (): Promise<void> => {
+    setAppLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
 
@@ -155,13 +156,15 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       });
     } catch (err) {
       console.log("Failed to fetch user data:", err);
+    } finally {
+      setAppLoading(false);
     }
   };
 
   // Check for user token
   const checkTokenValidity = async () => {
     const storedToken = await AsyncStorage.getItem("token");
-    setTokenLoading(false);
+    setAppLoading(true);
     if (storedToken) {
       try {
         const decoded: any = jwtDecode(storedToken);
@@ -174,6 +177,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       } catch (err) {
         console.log("Invalid token");
         await AsyncStorage.removeItem("token");
+      } finally {
+        setAppLoading(false);
       }
     }
   };
@@ -203,6 +208,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{
+        appLoading,
+        setAppLoading,
         register,
         login,
         updatePhone,
@@ -238,6 +245,8 @@ type UserType = {
 };
 
 export interface AuthContextType {
+  appLoading: boolean;
+  setAppLoading: Dispatch<SetStateAction<boolean>>;
   register: (
     name: string,
     email: string,
