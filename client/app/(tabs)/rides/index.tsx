@@ -14,10 +14,14 @@ import DriverCard from "../../../components/DriverCard";
 
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
+import { useRideContext } from "../../../context/RideContext";
+
 const Rides = () => {
   const [category, setCategory] = useState<
     "ongoing" | "completed" | "cancelled"
   >("ongoing");
+
+  const { rideData } = useRideContext();
 
   return (
     <View style={styles.container}>
@@ -81,77 +85,95 @@ const Rides = () => {
       </View>
 
       {/* Ongoing data */}
-      {category === "ongoing" && (
-        <View style={styles.ride_card}>
-          <View style={styles.ride_header}>
-            <Text style={styles.ride_header_text}>Today, 22 Feb, 2025</Text>
-            <Text style={styles.ride_header_text}>5:00AM - 6:30Am</Text>
-          </View>
-          {/* Driver details */}
-          <DriverCard />
+      {category === "ongoing" &&
+        (rideData ? (
+          <View style={styles.ride_card}>
+            <View style={styles.ride_header}>
+              <Text style={styles.ride_header_text}>Today, 22 Feb, 2025</Text>
+            </View>
+            {/* Driver details */}
+            <DriverCard name={"Oputa Ifeanyi"} />
 
-          <View
-            style={{
-              marginTop: 10,
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <Image
-              source={require("../../../assets/images/icons/keke-icon.png")}
-              style={{ height: 50, width: 50 }}
-            />
-            <View>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 12,
-                }}
-              >
-                Keke ride
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "flex-start",
-                  alignItems: "flex-start",
-                  gap: 5,
-                  // marginTop: 7,
-                }}
-              >
-                <FontAwesome5
-                  name="user-alt"
-                  size={12}
-                  color="#c6c6c6"
-                  style={{ marginTop: 3 }}
-                />
+            <View
+              style={{
+                marginTop: 10,
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <Image
+                source={require("../../../assets/images/icons/keke-icon.png")}
+                style={{ height: 50, width: 50 }}
+              />
+              <View>
                 <Text
                   style={{
-                    color: "#c6c6c6",
-                    fontFamily: "poppins-semibold",
+                    color: "#fff",
+                    fontFamily: "raleway-bold",
                     fontSize: 12,
                   }}
                 >
-                  1x
+                  Keke ride
                 </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-start",
+                    alignItems: "flex-start",
+                    gap: 5,
+                  }}
+                >
+                  <FontAwesome5
+                    name="user-alt"
+                    size={12}
+                    color="#c6c6c6"
+                    style={{ marginTop: 3 }}
+                  />
+                  <Text
+                    style={{
+                      color: "#c6c6c6",
+                      fontFamily: "poppins-semibold",
+                      fontSize: 12,
+                    }}
+                  >
+                    1x
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          {/* Ride route */}
-          <View style={{ marginTop: 10 }}>
-            <RideRoute from="Anglican girls grammar school" to="Konwea Plaza" />
-          </View>
+            {/* Ride route */}
+            <View style={{ marginTop: 10 }}>
+              <RideRoute
+                from={rideData.pickup.address}
+                to={rideData.destination.address}
+              />
+            </View>
 
-          {/* Pay */}
-          <View style={styles.pay_btn}>
-            <Text style={styles.pay_btn_text}>Pay 5,000 NGN</Text>
+            {/* Pay */}
+            <View style={styles.pay_btn}>
+              <Text style={styles.pay_btn_text}>Track</Text>
+            </View>
           </View>
-        </View>
-      )}
+        ) : (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 18,
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+                width: "80%",
+              }}
+            >
+              You don't have any ongoing ride yet
+            </Text>
+          </View>
+        ))}
 
       {/* Completed data */}
       {category === "completed" && (

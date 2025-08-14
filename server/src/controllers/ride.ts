@@ -141,7 +141,7 @@ export const get_ride_data = async (
       select: "user vehicle_type vehicle current_location",
       populate: {
         path: "user",
-        select: "name email", // Optional: To select specific fields from the nested document
+        select: "name email phone", // Optional: To select specific fields from the nested document
       },
     });
     res.status(200).json({ msg: "success", ride });

@@ -38,13 +38,13 @@ const Signup = () => {
 
   // Handle registration
   const handleRegister = async () => {
-    if (!fullname || !email || !password || !confirmPassword) {
+    if (!fullname.trim() || !email.trim() || !password || !confirmPassword) {
       showNotification("All fields are required.", "error");
       return;
     }
     setLoading(true);
     try {
-      await register(fullname, email, password, confirmPassword);
+      await register(fullname.trim(), email.trim(), password, confirmPassword);
       setTimeout(() => {
         router.push("/(auth)/phone");
       }, 1500);

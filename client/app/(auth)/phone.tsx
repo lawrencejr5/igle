@@ -31,13 +31,13 @@ const AddPhone = () => {
   const [loading, setLoading] = useState(false);
 
   const save_phone = async () => {
-    if (!phone) {
+    if (!phone.trim()) {
       showNotification("Phone field is required.", "error");
       return;
     }
     setLoading(true);
     try {
-      await updatePhone(phone);
+      await updatePhone(phone.trim());
       setTimeout(() => {
         router.push("/(tabs)/home");
       }, 1500);

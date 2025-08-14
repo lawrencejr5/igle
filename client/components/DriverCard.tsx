@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Image } from "react-native";
-import React from "react";
+import React, { FC } from "react";
 
-const DriverCard = () => {
+const DriverCard: FC<{ name: string }> = ({ name }) => {
   return (
     <View
       style={{
@@ -43,7 +43,7 @@ const DriverCard = () => {
             }}
           >
             <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
-              Oputa Chidubem
+              {name}
             </Text>
             <Image
               source={require("../assets/images/icons/verify-icon.png")}
@@ -60,7 +60,7 @@ const DriverCard = () => {
               marginTop: 5,
             }}
           >
-            Keke na Pep
+            Driver
           </Text>
         </View>
 
@@ -89,7 +89,7 @@ const DriverCard = () => {
               fontSize: 12,
             }}
           >
-            18 reviews
+            No reviews
           </Text>
         </View>
       </View>

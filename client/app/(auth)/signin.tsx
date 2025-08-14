@@ -37,14 +37,14 @@ const Signin = () => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (): Promise<void> => {
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       showNotification("All fields are required", "error");
       return;
     }
 
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       const is_driver = await AsyncStorage.getItem("is_driver");
       setTimeout(() => {
         if (is_driver === "true") {
