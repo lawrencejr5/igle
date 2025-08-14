@@ -72,10 +72,8 @@ const RouteModal = () => {
   };
 
   const [booking, setBooking] = useState<boolean>(false);
-  const [disabled, setDisabled] = useState<boolean>(false);
   const book_ride = async () => {
     setBooking(true);
-    setDisabled(true);
 
     const pickupCoords: [number, number] = [region.latitude, region.longitude];
 
@@ -97,7 +95,6 @@ const RouteModal = () => {
       showNotification(error.message, "error");
     } finally {
       setBooking(false);
-      setDisabled(false);
     }
   };
 
@@ -363,14 +360,13 @@ const RouteModal = () => {
               </Text>
             </View>
           </View>
-          <TouchableWithoutFeedback onPress={book_ride} disabled={disabled}>
+          <TouchableWithoutFeedback onPress={book_ride}>
             <View
               style={{
                 marginVertical: 20,
                 padding: 10,
                 borderRadius: 30,
                 backgroundColor: "#fff",
-                opacity: disabled ? 0.5 : 1,
               }}
             >
               <Text

@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TouchableWithoutFeedback } from "react-native";
+import { StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
 import { io } from "socket.io-client";
@@ -19,7 +19,10 @@ import Notification from "../../components/Notification";
 
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
+import { useRideContext } from "../../context/RideContext";
+import { useDriverAuthContext } from "../../context/DriverAuthContext";
 
+import { getUserSocket } from "../../sockets/socketService";
 import { useAuthContext } from "../../context/AuthContext";
 
 const Home = () => {
@@ -39,34 +42,9 @@ const Home = () => {
     mapRef,
   } = useMapContext();
 
-  const { appLoading } = useAuthContext();
-
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);
   }, [region]);
-
-  if (appLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#121212",
-        }}
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 14,
-            fontFamily: "raleway-regular",
-          }}
-        >
-          App data is loading, please wait...
-        </Text>
-      </View>
-    );
-  }
 
   return (
     <>
@@ -75,7 +53,7 @@ const Home = () => {
         {/* Map */}
         <MapView
           ref={mapRef}
-          style={{ height: "75%" }}
+          style={{ height: "85%" }}
           provider={PROVIDER_GOOGLE}
           initialRegion={region}
           customMapStyle={darkMapStyle}

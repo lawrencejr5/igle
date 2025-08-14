@@ -101,6 +101,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setOngoingRideId(data.ride._id);
+      setRideData(data.ride);
       await AsyncStorage.setItem("ongoingRideId", data.ride._id);
       showNotification(data.msg, "success");
     } catch (error: any) {
