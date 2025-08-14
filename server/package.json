@@ -4,9 +4,9 @@
   "main": "server.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server",
+    "start": "node dist/server",
     "dev": "nodemon src/server",
-    "build": "tsc src/server"
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
