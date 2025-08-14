@@ -12,11 +12,10 @@ import React, {
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { io } from "socket.io-client";
-
 import { useNotificationContext } from "./NotificationContext";
 import { useMapContext } from "./MapContext";
 import { useDriverAuthContext } from "./DriverAuthContext";
+import { useAuthContext } from "./AuthContext";
 
 const RideContext = createContext<RideContextType | null>(null);
 
@@ -36,8 +35,28 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { calculateRide } = useMapContext();
 
   const [rideStatus, setRideStatus] = useState<RideStatusType>("");
+  const [modalUp, setModalUp] = useState<boolean>(false);
 
-  const { driverData, getDriverData } = useDriverAuthContext();
+  const { getDriverData } = useDriverAuthContext();
+
+  const { userSocket } = useAuthContext();
+
+  useEffect(() => {
+    if (!userSocket) return;
+
+    const onRideAccepted = async (data: any) => {
+      const { driver_id } = data;
+      await getDriverData(driver_id);
+      setModalUp(true);
+      setRideStatus("accepted");
+      console.log("accepted", data);
+    };
+
+    userSocket.on("ride_accepted", onRideAccepted);
+    return () => {
+      userSocket.off("ride_accepted", onRideAccepted);
+    };
+  }, [userSocket]);
 
   const API_URL = "http://192.168.10.123:5000/api/v1/rides";
 
@@ -67,7 +86,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   };
 
   return (
-    <RideContext.Provider value={{ rideRequest, rideStatus, setRideStatus }}>
+    <RideContext.Provider
+      value={{ rideRequest, rideStatus, setRideStatus, modalUp, setModalUp }}
+    >
       {children}
     </RideContext.Provider>
   );
@@ -81,6 +102,8 @@ export interface RideContextType {
 
   rideStatus: RideStatusType;
   setRideStatus: Dispatch<SetStateAction<RideStatusType>>;
+  modalUp: boolean;
+  setModalUp: Dispatch<SetStateAction<boolean>>;
 }
 
 export const useRideContext = () => {

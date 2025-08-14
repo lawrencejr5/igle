@@ -19,6 +19,7 @@ import { useAuthContext } from "../context/AuthContext";
 import { useMapContext } from "../context/MapContext";
 import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
+import { useDriverAuthContext } from "../context/DriverAuthContext";
 
 const RouteModal = () => {
   const { signedIn } = useAuthContext();
@@ -40,7 +41,10 @@ const RouteModal = () => {
     setDestinationCoords,
   } = useMapContext();
 
-  const { rideRequest, rideStatus, setRideStatus } = useRideContext();
+  const { rideRequest, rideStatus, setRideStatus, modalUp, setModalUp } =
+    useRideContext();
+
+  const { driverData } = useDriverAuthContext();
   const { showNotification } = useNotificationContext();
 
   const set_destination_func = async (place_id: string, place_name: string) => {
@@ -76,7 +80,6 @@ const RouteModal = () => {
       setBooking(false);
       setModalUp(false);
       setRideStatus("searching");
-      setDestination("");
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {
@@ -93,8 +96,6 @@ const RouteModal = () => {
   const window_height = Dimensions.get("window").height - 70;
   const height = useRef(new Animated.Value(220)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-
-  const [modalUp, setModalUp] = useState(false);
 
   const [carType, setCarType] = useState<"sedan" | "keke" | "suv">("keke");
 
@@ -487,7 +488,7 @@ const RouteModal = () => {
                   style={styles.userImage}
                 />
                 <View>
-                  <Text style={styles.userName}>Oputa Lawrence</Text>
+                  <Text style={styles.userName}>{driverData?.name}</Text>
                   <Text style={styles.userRides}>No ride completed</Text>
                 </View>
               </View>
@@ -502,17 +503,22 @@ const RouteModal = () => {
             <View style={{ marginVertical: 20 }}>
               <View style={styles.timeRow}>
                 <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
-                <Text style={styles.timeText}>24 mins (3.45 km)</Text>
+                <Text style={styles.timeText}>
+                  {rideDetails.durationMins} mins ({rideDetails.distanceKm} km)
+                </Text>
               </View>
 
               <View style={styles.timeRow}>
                 <Ionicons name="car" color={"#d7d7d7"} size={16} />
-                <Text style={styles.timeText}>Yellow Keke</Text>
+                <Text style={styles.timeText}>
+                  {driverData?.vehicle_color} {driverData?.vehicle_brand}{" "}
+                  {driverData?.vehicle_model}
+                </Text>
               </View>
             </View>
 
             {/* Ride route card */}
-            <RideRoute from="Konwea plaza" to="Slot, Nnebisi road" />
+            <RideRoute from={userAddress} to={destination} />
 
             {/* Price */}
             <View
@@ -522,7 +528,7 @@ const RouteModal = () => {
                 alignItems: "center",
               }}
             >
-              <Text style={styles.priceText}>1,500 NGN</Text>
+              <Text style={styles.priceText}>{rideDetails.amount} NGN</Text>
               <TouchableWithoutFeedback
                 onPress={() => {
                   setRideStatus("paying");

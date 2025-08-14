@@ -19,6 +19,11 @@ import Notification from "../../components/Notification";
 
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
+import { useRideContext } from "../../context/RideContext";
+import { useDriverAuthContext } from "../../context/DriverAuthContext";
+
+import { getUserSocket } from "../../sockets/socketService";
+import { useAuthContext } from "../../context/AuthContext";
 
 const Home = () => {
   // Side nav state
@@ -36,11 +41,6 @@ const Home = () => {
     routeCoords,
     mapRef,
   } = useMapContext();
-
-  const socket = io("http://192.168.10.123:5000", {
-    transports: ["websocket"],
-    forceNew: true,
-  });
 
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);

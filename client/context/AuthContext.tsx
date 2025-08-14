@@ -133,6 +133,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [userSocket, setUserSocket] = useState(null);
   const getUserData = async (): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -147,7 +148,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { _id, name, email, phone, driver_application, is_driver } =
         data.user;
 
-      initUserSocket(_id);
+      const socket = initUserSocket(_id);
+      setUserSocket(socket);
 
       setSignedIn({
         user_id: _id,
@@ -214,6 +216,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         signedIn,
         isAuthenticated,
         logout,
+
+        userSocket,
       }}
     >
       {children}
@@ -255,4 +259,6 @@ export interface AuthContextType {
   signedIn: UserType;
   isAuthenticated: boolean;
   logout: () => void;
+
+  userSocket: any;
 }

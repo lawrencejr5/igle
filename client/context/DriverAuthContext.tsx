@@ -102,6 +102,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [driver, setDriver] = useState<DriverType | null>(null);
+  const [driverData, setDriverData] = useState<DriverType | null>(null);
   const [isDriver, setIsDriver] = useState(false);
   const { showNotification } = useNotificationContext()!;
 
@@ -168,12 +169,11 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const [driverData, setDriverData] = useState<DriverType | null>(null);
   const getDriverData = async (driver_id: string): Promise<void> => {
     try {
       const authToken = await AsyncStorage.getItem("token");
       const { data } = await axios.get(
-        `${API_BASE_URL}/driver/data?driver_id=${driver_id}`,
+        `${API_BASE_URL}/drivers/data?driver_id=${driver_id}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -201,11 +201,14 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           vehicle_model: model,
           vehicle_color: color,
         });
+        console.log(driverData);
       } else {
+        console.log("something's wrong");
         throw new Error("An error occured");
       }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
+      console.log(errMsg);
       throw new Error(errMsg || "Error getting driver profile");
     }
   };

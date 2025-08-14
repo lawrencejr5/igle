@@ -188,7 +188,6 @@ export const accept_ride = async (
         driver_id,
         rider_socket_id,
       });
-      console.log("socket found");
     } else {
       console.log("socket not found");
     }

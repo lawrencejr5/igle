@@ -11,8 +11,7 @@ export const user_socket_events = (io: Server, socket: Socket) => {
     });
   });
   socket.on("register_driver", async (data) => {
-    const { driver_id, socket_id } = data;
-
+    const { driver_id } = data;
     await Driver.findByIdAndUpdate(driver_id, {
       socket_id: socket.id,
       is_online: true,

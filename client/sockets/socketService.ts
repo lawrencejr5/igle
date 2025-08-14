@@ -35,14 +35,6 @@ export const initUserSocket = (user_id: string) => {
         user_id: user_id,
       });
     });
-
-    const onRideAccepted = async (data: any) => {
-      // The listener should be responsible for updating the state
-      console.log("Ride accepted by driver:", data);
-    };
-
-    // Register the listener once when the component mounts
-    userSocket.on("ride_accepted", onRideAccepted);
   }
   return userSocket;
 };
