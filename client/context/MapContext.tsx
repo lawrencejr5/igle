@@ -39,10 +39,16 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [destinationCoords]);
 
-  const [region, setRegion] = useState<any>(null);
+  const [region, setRegion] = useState<any>({
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 0.02,
+    longitudeDelta: 0.02,
+  });
   useEffect(() => {
-    const get_place_name_func = async () =>
+    const get_place_name_func = async () => {
       await getPlaceName(region.latitude, region.longitude);
+    };
     if (region) get_place_name_func();
   }, [region]);
 

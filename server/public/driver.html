@@ -12,13 +12,13 @@
     <button onclick="stop_sharing_location()">Stop</button>
 
     <script>
-      const socket = io("http://localhost:5000");
+      const socket = io("https://igleapi.onrender.com");
 
       socket.on("connect", () => {
         console.log("Connected as Driver:", socket.id);
         const data = {
           socket_id: socket.id,
-          driver_id: "68979f0b5755ade128f0aafd",
+          driver_id: "689e6ebb4436641d9e20ab64",
         };
         socket.emit("register_driver", data);
       });

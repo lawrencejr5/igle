@@ -80,7 +80,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     };
   }, [userSocket]);
 
-  const API_URL = "http://192.168.26.123:5000/api/v1/rides";
+  // const API_URL = "http://192.168.26.123:5000/api/v1/rides";
+  const API_URL = "https://igleapi.onrender.com/api/v1/rides";
 
   const rideRequest = async (
     pickup: { address: string; coordinates: [number, number] },

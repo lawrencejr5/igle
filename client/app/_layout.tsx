@@ -33,9 +33,9 @@ const RootLayout = () => {
 
   return (
     <NotificationProvider>
-      <MapContextProvider>
-        <AuthProvider>
-          <DriverAuthProvider>
+      <AuthProvider>
+        <DriverAuthProvider>
+          <MapContextProvider>
             <RideContextProvider>
               <Stack
                 screenOptions={{
@@ -43,9 +43,9 @@ const RootLayout = () => {
                 }}
               />
             </RideContextProvider>
-          </DriverAuthProvider>
-        </AuthProvider>
-      </MapContextProvider>
+          </MapContextProvider>
+        </DriverAuthProvider>
+      </AuthProvider>
     </NotificationProvider>
   );
 };
