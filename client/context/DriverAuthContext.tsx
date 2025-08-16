@@ -106,8 +106,8 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const { showNotification } = useNotificationContext()!;
 
   // API base URL
-  // const API_URL = "http://192.168.26.123:5000/api/v1/drivers";
-  const API_URL = "https://igleapi.onrender.com/api/v1/drivers";
+  const API_URL = "http://192.168.250.123:5000/api/v1/drivers";
+  // const API_URL = "https://igleapi.onrender.com/api/v1/drivers";
 
   // Check if user is a driver on mount
   useEffect(() => {
@@ -452,8 +452,8 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        // `http://192.168.26.123:5000/api/v1/driver_application`,
-        `https://igleapi.onrender.com/api/v1/driver_application`,
+        `http://192.168.250.123:5000/api/v1/driver_application`,
+        // `https://igleapi.onrender.com/api/v1/driver_application`,
         { driver_application: status },
         {
           headers: {

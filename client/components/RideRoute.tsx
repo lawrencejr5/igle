@@ -58,5 +58,6 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontFamily: "raleway-bold",
     fontSize: 14,
+    paddingRight: 10,
   },
 });

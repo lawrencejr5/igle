@@ -52,6 +52,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { calculateRide } = useMapContext();
 
   const [ongoingRideId, setOngoingRideId] = useState<string | null>(null);
+  const [ongoingRideData, setOngoingRideData] = useState<any>(null);
   const [rideData, setRideData] = useState<any>(null);
 
   const [rideStatus, setRideStatus] = useState<RideStatusType>("");
@@ -80,8 +81,25 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     };
   }, [userSocket]);
 
-  // const API_URL = "http://192.168.26.123:5000/api/v1/rides";
-  const API_URL = "https://igleapi.onrender.com/api/v1/rides";
+  useEffect(() => {
+    const loadOngoingRide = async () => {
+      try {
+        const id = await AsyncStorage.getItem("ongoingRideId");
+        setOngoingRideId(id ?? null);
+
+        if (id) {
+          await fetchOngoingRideData(id);
+        }
+      } catch (error) {
+        console.log("Error loading ongoing ride:", error);
+      }
+    };
+
+    loadOngoingRide();
+  }, []);
+
+  const API_URL = "http://192.168.250.123:5000/api/v1/rides";
+  // const API_URL = "https://igleapi.onrender.com/api/v1/rides";
 
   const rideRequest = async (
     pickup: { address: string; coordinates: [number, number] },
@@ -103,6 +121,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       );
       setOngoingRideId(data.ride._id);
       await AsyncStorage.setItem("ongoingRideId", data.ride._id);
+      await fetchOngoingRideData(data.ride._id);
       showNotification(data.msg, "success");
     } catch (error: any) {
       throw new Error(error.response.data.message);
@@ -133,6 +152,20 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const fetchOngoingRideData = async (ride_id: string): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.get(`${API_URL}/data?ride_id=${ride_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOngoingRideData(data.ride);
+      // console.log(ongoingRideData);
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    }
+  };
+
   return (
     <RideContext.Provider
       value={{
@@ -145,6 +178,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         cancelRideRequest,
         ongoingRideId,
         setOngoingRideId,
+        ongoingRideData,
       }}
     >
       {children}
@@ -172,6 +206,7 @@ export interface RideContextType {
   rideData: any;
   ongoingRideId: string | null;
   setOngoingRideId: Dispatch<SetStateAction<string | null>>;
+  ongoingRideData: any;
 }
 
 export const useRideContext = () => {

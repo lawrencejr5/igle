@@ -69,28 +69,28 @@ const Home = () => {
     );
   }
 
-  if (locationLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#121212",
-        }}
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 14,
-            fontFamily: "raleway-regular",
-          }}
-        >
-          Updating location, please wait...
-        </Text>
-      </View>
-    );
-  }
+  // if (locationLoading) {
+  //   return (
+  //     <View
+  //       style={{
+  //         flex: 1,
+  //         justifyContent: "center",
+  //         alignItems: "center",
+  //         backgroundColor: "#121212",
+  //       }}
+  //     >
+  //       <Text
+  //         style={{
+  //           color: "#fff",
+  //           fontSize: 14,
+  //           fontFamily: "raleway-regular",
+  //         }}
+  //       >
+  //         Updating location, please wait...
+  //       </Text>
+  //     </View>
+  //   );
+  // }
 
   return (
     <>

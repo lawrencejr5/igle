@@ -3,8 +3,8 @@ import { io } from "socket.io-client";
 let userSocket: any;
 let driverSocket: any;
 
-// const SOCKET_URL = "http://192.168.26.123:5000";
-const SOCKET_URL = "https://igleapi.onrender.com";
+const SOCKET_URL = "http://192.168.250.123:5000";
+// const SOCKET_URL = "https://igleapi.onrender.com";
 
 export const initDriverSocket = (driver_id: string) => {
   if (!driverSocket) {

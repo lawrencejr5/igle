@@ -49,8 +49,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     checkTokenValidity();
   }, []);
 
-  // const API_URL = "http://192.168.26.123:5000/api/v1/users";
-  const API_URL = "https://igleapi.onrender.com/api/v1/users";
+  const API_URL = "http://192.168.250.123:5000/api/v1/users";
+  // const API_URL = "https://igleapi.onrender.com/api/v1/users";
 
   // Registration function
   const register = async (
@@ -119,6 +119,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "is_driver",
         JSON.stringify(data.user.is_driver)
       );
+
+      const socket = initUserSocket(data.user._id);
+      setUserSocket(socket);
 
       await getUserData();
 

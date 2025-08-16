@@ -165,7 +165,7 @@ const RouteModal = () => {
     if (supported) {
       await Linking.openURL(url);
     } else {
-      Alert.alert("Error", "Your device cannot make phone calls.");
+      showNotification("Could not place call", "error");
     }
   };
 
@@ -327,7 +327,7 @@ const RouteModal = () => {
               style={{ flexDirection: "row", alignItems: "center", gap: 15 }}
             >
               <Image
-                source={require("../assets/images/icons/keke-icon.png")}
+                source={require("../assets/images/icons/sedan-icon.png")}
                 style={{ height: 50, width: 50 }}
               />
               <View>
@@ -337,7 +337,7 @@ const RouteModal = () => {
                     fontFamily: "raleway-semibold",
                   }}
                 >
-                  Keke na Pepe
+                  Cab ride
                 </Text>
                 <Text
                   style={{

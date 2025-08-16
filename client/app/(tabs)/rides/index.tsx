@@ -4,6 +4,7 @@ import {
   View,
   Image,
   TouchableWithoutFeedback,
+  Linking,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -15,13 +16,33 @@ import DriverCard from "../../../components/DriverCard";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 import { useRideContext } from "../../../context/RideContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
 
 const Rides = () => {
+  const { showNotification } = useNotificationContext();
+
   const [category, setCategory] = useState<
     "ongoing" | "completed" | "cancelled"
   >("ongoing");
 
-  const { rideData } = useRideContext();
+  const vehicleIcons: Record<string, any> = {
+    cab: require("../../../assets/images/icons/sedan-icon.png"),
+    keke: require("../../../assets/images/icons/keke-icon.png"),
+    suv: require("../../../assets/images/icons/suv-icon.png"),
+  };
+
+  const { rideData, ongoingRideData, ongoingRideId } = useRideContext();
+
+  const makeCall = async (phone: string) => {
+    const url = `tel:${phone}`;
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      showNotification("Could not place call", "error");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -86,13 +107,25 @@ const Rides = () => {
 
       {/* Ongoing data */}
       {category === "ongoing" &&
-        (rideData ? (
+        (ongoingRideId ? (
           <View style={styles.ride_card}>
             <View style={styles.ride_header}>
-              <Text style={styles.ride_header_text}>Today, 22 Feb, 2025</Text>
+              <Text style={styles.ride_header_text}>
+                {new Date(ongoingRideData.createdAt).toLocaleDateString(
+                  "en-US",
+                  {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  }
+                )}
+              </Text>
             </View>
             {/* Driver details */}
-            <DriverCard name={"Oputa Ifeanyi"} />
+            {ongoingRideData.driver && (
+              <DriverCard name={ongoingRideData.driver.user.name} />
+            )}
 
             <View
               style={{
@@ -104,7 +137,7 @@ const Rides = () => {
               }}
             >
               <Image
-                source={require("../../../assets/images/icons/keke-icon.png")}
+                source={vehicleIcons[ongoingRideData.driver.vehicle_type]}
                 style={{ height: 50, width: 50 }}
               />
               <View>
@@ -113,9 +146,11 @@ const Rides = () => {
                     color: "#fff",
                     fontFamily: "raleway-bold",
                     fontSize: 12,
+                    textTransform: "capitalize",
+                    width: "100%",
                   }}
                 >
-                  Keke ride
+                  {ongoingRideData.driver.vehicle_type} ride
                 </Text>
                 <View
                   style={{
@@ -126,19 +161,21 @@ const Rides = () => {
                   }}
                 >
                   <FontAwesome5
-                    name="user-alt"
-                    size={12}
+                    name="car"
+                    size={14}
                     color="#c6c6c6"
                     style={{ marginTop: 3 }}
                   />
                   <Text
                     style={{
                       color: "#c6c6c6",
-                      fontFamily: "poppins-semibold",
+                      fontFamily: "raleway-semibold",
                       fontSize: 12,
                     }}
                   >
-                    1x
+                    {ongoingRideData.driver.vehicle.color}{" "}
+                    {ongoingRideData.driver.vehicle.brand}{" "}
+                    {ongoingRideData.driver.vehicle.model}
                   </Text>
                 </View>
               </View>
@@ -147,12 +184,31 @@ const Rides = () => {
             {/* Ride route */}
             <View style={{ marginTop: 10 }}>
               <RideRoute
-                from={rideData.pickup.address}
-                to={rideData.destination.address}
+                from={ongoingRideData.pickup.address}
+                to={ongoingRideData.destination.address}
               />
             </View>
 
             {/* Pay */}
+            <TouchableWithoutFeedback
+              onPress={() => makeCall(ongoingRideData.driver.user.phone)}
+            >
+              <View
+                style={[
+                  styles.pay_btn,
+                  {
+                    backgroundColor: "transparent",
+                    borderColor: "white",
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
+                  Call Driver &nbsp;&nbsp;
+                  <FontAwesome5 name="phone-alt" color="#fff" size={14} />
+                </Text>
+              </View>
+            </TouchableWithoutFeedback>
             <View style={styles.pay_btn}>
               <Text style={styles.pay_btn_text}>Track</Text>
             </View>
@@ -180,16 +236,8 @@ const Rides = () => {
         <TouchableWithoutFeedback
           onPress={() => router.push("./rides/ride_detail")}
         >
-          <View style={{ marginTop: 10 }}>
-            <View
-              style={{
-                backgroundColor: "#2c2c2c",
-                paddingTop: 15,
-                paddingHorizontal: 15,
-                borderRadius: 10,
-                marginTop: 15,
-              }}
-            >
+          <View>
+            <View style={styles.ride_card}>
               <View
                 style={{
                   flexDirection: "row",
@@ -257,16 +305,8 @@ const Rides = () => {
 
       {/* Cancelled data */}
       {category === "cancelled" && (
-        <View style={{ marginTop: 10 }}>
-          <View
-            style={{
-              backgroundColor: "#2c2c2cff",
-              paddingTop: 15,
-              paddingHorizontal: 15,
-              borderRadius: 10,
-              marginTop: 15,
-            }}
-          >
+        <View>
+          <View style={styles.ride_card}>
             <View
               style={{
                 flexDirection: "row",
@@ -413,14 +453,13 @@ const styles = StyleSheet.create({
   },
   pay_btn: {
     backgroundColor: "#fff",
-    flexDirection: "row",
-    justifyContent: "center",
     borderRadius: 30,
     padding: 10,
-    marginTop: 10,
+    marginTop: 15,
   },
   pay_btn_text: {
     color: "#121212",
     fontFamily: "poppins-bold",
+    textAlign: "center",
   },
 });
