@@ -17,11 +17,16 @@ import React, {
 } from "react";
 
 import { FontAwesome5 } from "@expo/vector-icons";
+import { useWalletContext } from "../../context/WalletContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const WalletScreen: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const { userWalletBal, fundWallet } = useWalletContext();
+  const { showNotification } = useNotificationContext();
+
   const window_height = Dimensions.get("window").height;
   const walletTranslate = useRef(new Animated.Value(window_height)).current;
 
@@ -41,6 +46,23 @@ const WalletScreen: FC<{
       toValue: window_height,
       useNativeDriver: true,
     }).start();
+  };
+
+  const [amount, setAmount] = useState<string>("");
+  const [btnLoading, setBtnLoading] = useState<boolean>(false);
+  const [btnDisabled, setBtnDisabled] = useState<boolean>(false);
+  const fundWalletFunc = async () => {
+    setBtnLoading(true);
+    setBtnDisabled(true);
+
+    try {
+      await fundWallet("wallet", Number(amount));
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    } finally {
+      setBtnLoading(false);
+      setBtnDisabled(false);
+    }
   };
 
   return (
@@ -100,7 +122,7 @@ const WalletScreen: FC<{
           <Text
             style={{ color: "#fff", fontFamily: "poppins-black", fontSize: 30 }}
           >
-            12,000 NGN
+            {userWalletBal.toLocaleString()} NGN
           </Text>
         </View>
       </View>
@@ -138,10 +160,13 @@ const WalletScreen: FC<{
                 color: "#fff",
                 fontSize: 30,
                 fontWeight: 600,
-                maxWidth: 180,
+                maxWidth: 230,
+                width: "100%",
                 height: "100%",
               }}
               placeholder="0.00"
+              value={amount}
+              onChangeText={setAmount}
               placeholderTextColor={"#b3afaf"}
               inputMode="numeric"
             />
@@ -174,33 +199,39 @@ const WalletScreen: FC<{
               gap: 10,
             }}
           >
-            <Suggestion value="1,500" />
-            <Suggestion value="3,000" />
-            <Suggestion value="5,000" />
-            <Suggestion value="10,000" />
-            <Suggestion value="25,000" />
-            <Suggestion value="50,000" />
+            <Suggestion value={1500} />
+            <Suggestion value={3000} />
+            <Suggestion value={5000} />
+            <Suggestion value={10000} />
+            <Suggestion value={25000} />
+            <Suggestion value={50000} />
           </View>
         </View>
         <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
-          <View
-            style={{
-              backgroundColor: "#fff",
-              width: "100%",
-              padding: 15,
-              borderRadius: 30,
-            }}
+          <TouchableWithoutFeedback
+            onPress={fundWalletFunc}
+            disabled={btnDisabled}
           >
-            <Text
+            <View
               style={{
-                textAlign: "center",
-                fontFamily: "raleway-bold",
-                color: "#121212",
+                backgroundColor: "#fff",
+                width: "100%",
+                padding: 15,
+                borderRadius: 30,
+                opacity: btnDisabled ? 0.5 : 1,
               }}
             >
-              Continue
-            </Text>
-          </View>
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontFamily: "raleway-bold",
+                  color: "#121212",
+                }}
+              >
+                {btnLoading ? "Loading..." : "Continue"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
       </View>
     </Animated.View>
@@ -209,7 +240,7 @@ const WalletScreen: FC<{
 
 export default WalletScreen;
 
-const Suggestion: FC<{ value: string }> = ({ value }) => {
+const Suggestion: FC<{ value: number }> = ({ value }) => {
   return (
     <View
       style={{
@@ -230,7 +261,7 @@ const Suggestion: FC<{ value: string }> = ({ value }) => {
           fontSize: 12,
         }}
       >
-        {value} NGN
+        {value.toLocaleString()} NGN
       </Text>
     </View>
   );

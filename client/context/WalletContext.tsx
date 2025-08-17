@@ -7,6 +7,8 @@ import React, {
   useState,
 } from "react";
 
+import { Linking } from "react-native";
+
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -46,19 +48,57 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const fundWallet = async (
+    channel: ChannelType,
+    amount: number
+  ): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+
+    try {
+      const { data } = await axios.post(
+        `${API_URL}/fund`,
+        { channel, amount },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const url = data.authorization_url;
+      if (url) {
+        showNotification("Redirecting...", "success");
+
+        // Check if the URL can be opened
+        const supported = await Linking.canOpenURL(url);
+
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          showNotification("Redirect failed", "error");
+        }
+      } else {
+        throw new Error("An error occured");
+      }
+    } catch (error: any) {
+      const errMsg = error.response.data.msg;
+      showNotification(errMsg, "error");
+    }
+  };
+
   return (
     <WalletContext.Provider
-      value={{ userWalletBal, getWalletBalance, driverWalletBal }}
+      value={{ userWalletBal, getWalletBalance, driverWalletBal, fundWallet }}
     >
       {children}
     </WalletContext.Provider>
   );
 };
 
+type ChannelType = "wallet" | "cash" | "transfer" | "card";
+
 interface WalletContextType {
   userWalletBal: number;
   driverWalletBal: number;
   getWalletBalance: (owner_type: "Driver" | "User") => Promise<void>;
+  fundWallet: (channel: ChannelType, amount: number) => Promise<void>;
 }
 
 export const useWalletContext = () => {

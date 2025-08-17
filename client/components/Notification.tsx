@@ -52,7 +52,7 @@ const create_styles = () =>
     container: {
       position: "absolute",
       top: 40,
-      zIndex: 2,
+      zIndex: 5,
       width: "100%",
       flexDirection: "row",
       justifyContent: "center",

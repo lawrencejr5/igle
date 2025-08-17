@@ -13,17 +13,22 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import WalletScreen from "../../../components/screens/Wallet";
 
+import Notification from "../../../components/Notification";
+
 import { useAuthContext } from "../../../context/AuthContext";
 import { useWalletContext } from "../../../context/WalletContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
 
   const { logout, signedIn } = useAuthContext();
   const { userWalletBal } = useWalletContext();
+  const { notification } = useNotificationContext();
 
   return (
     <>
+      <Notification notification={notification} />
       <ScrollView
         style={{
           backgroundColor: "#121212",
