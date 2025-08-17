@@ -23,6 +23,8 @@ import {
   NotificationContextType,
   useNotificationContext,
 } from "./NotificationContext";
+import { useWalletContext } from "./WalletContext";
+
 import { router } from "expo-router";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -30,6 +32,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } =
     useNotificationContext() as NotificationContextType;
+  const { getWalletBalance } = useWalletContext();
 
   const [signedIn, setSignedIn] = useState<UserType>({
     user_id: "",
@@ -47,9 +50,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     getUserData();
     checkTokenValidity();
+    getWalletBalance("User");
   }, []);
 
-  const API_URL = "http://192.168.250.123:5000/api/v1/users";
+  const API_URL = "http://192.168.235.123:5000/api/v1/users";
   // const API_URL = "https://igleapi.onrender.com/api/v1/users";
 
   // Registration function

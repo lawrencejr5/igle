@@ -10,6 +10,7 @@ import axios from "axios";
 import { useNotificationContext } from "./NotificationContext";
 
 import { initDriverSocket } from "../sockets/socketService";
+import { useWalletContext } from "./WalletContext";
 
 // Types for driver data
 interface Vehicle {
@@ -103,15 +104,17 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const [driver, setDriver] = useState<DriverType | null>(null);
   const [driverData, setDriverData] = useState<DriverType | null>(null);
   const [isDriver, setIsDriver] = useState(false);
-  const { showNotification } = useNotificationContext()!;
+  const { showNotification } = useNotificationContext();
+  const { getWalletBalance } = useWalletContext();
 
   // API base URL
-  const API_URL = "http://192.168.250.123:5000/api/v1/drivers";
+  const API_URL = "http://192.168.235.123:5000/api/v1/drivers";
   // const API_URL = "https://igleapi.onrender.com/api/v1/drivers";
 
   // Check if user is a driver on mount
   useEffect(() => {
     getDriverProfile();
+    getWalletBalance("Driver");
   }, []);
 
   const checkDriverStatus = async () => {
@@ -452,7 +455,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
-        `http://192.168.250.123:5000/api/v1/driver_application`,
+        `http://192.168.235.123:5000/api/v1/driver_application`,
         // `https://igleapi.onrender.com/api/v1/driver_application`,
         { driver_application: status },
         {

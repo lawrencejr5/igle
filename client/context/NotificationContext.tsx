@@ -123,3 +123,5 @@ export const useNotificationContext = () => {
     );
   return context;
 };
+
+export default NotificationProvider;

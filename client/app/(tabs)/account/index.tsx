@@ -14,10 +14,13 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import WalletScreen from "../../../components/screens/Wallet";
 
 import { useAuthContext } from "../../../context/AuthContext";
+import { useWalletContext } from "../../../context/WalletContext";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
+
   const { logout, signedIn } = useAuthContext();
+  const { userWalletBal } = useWalletContext();
 
   return (
     <>
@@ -95,7 +98,7 @@ const Account = () => {
             </View>
             <View>
               <Text style={{ fontFamily: "poppins-bold", color: "#fff" }}>
-                12,000 NGN
+                {userWalletBal.toLocaleString()} NGN
               </Text>
             </View>
           </View>

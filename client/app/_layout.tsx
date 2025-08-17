@@ -8,10 +8,11 @@ import { useFonts } from "expo-font";
 import SplashScreen from "./splash_screen";
 
 import AuthProvider from "../context/AuthContext";
-import { NotificationProvider } from "../context/NotificationContext";
+import NotificationProvider from "../context/NotificationContext";
 import DriverAuthProvider from "../context/DriverAuthContext";
-import { RideContextProvider } from "../context/RideContext";
+import RideContextProvider from "../context/RideContext";
 import MapContextProvider from "../context/MapContext";
+import WalletProvider from "../context/WalletContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -33,19 +34,21 @@ const RootLayout = () => {
 
   return (
     <NotificationProvider>
-      <AuthProvider>
-        <DriverAuthProvider>
-          <MapContextProvider>
-            <RideContextProvider>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                }}
-              />
-            </RideContextProvider>
-          </MapContextProvider>
-        </DriverAuthProvider>
-      </AuthProvider>
+      <WalletProvider>
+        <AuthProvider>
+          <DriverAuthProvider>
+            <MapContextProvider>
+              <RideContextProvider>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                  }}
+                />
+              </RideContextProvider>
+            </MapContextProvider>
+          </DriverAuthProvider>
+        </AuthProvider>
+      </WalletProvider>
     </NotificationProvider>
   );
 };

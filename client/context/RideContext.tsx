@@ -98,7 +98,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     loadOngoingRide();
   }, []);
 
-  const API_URL = "http://192.168.250.123:5000/api/v1/rides";
+  const API_URL = "http://192.168.235.123:5000/api/v1/rides";
   // const API_URL = "https://igleapi.onrender.com/api/v1/rides";
 
   const rideRequest = async (
@@ -215,3 +215,5 @@ export const useRideContext = () => {
     throw new Error("Ride context must be used within ride provider");
   return context;
 };
+
+export default RideContextProvider;
