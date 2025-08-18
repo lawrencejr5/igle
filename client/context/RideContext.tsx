@@ -16,6 +16,7 @@ import { useNotificationContext } from "./NotificationContext";
 import { useMapContext } from "./MapContext";
 import { useDriverAuthContext } from "./DriverAuthContext";
 import { useAuthContext } from "./AuthContext";
+import { useWalletContext } from "./WalletContext";
 
 const RideContext = createContext<RideContextType | null>(null);
 
@@ -28,28 +29,12 @@ type RideStatusType =
   | "paying"
   | "paid";
 
-// interface RideType {
-//   _id: string;
-//   pickup: {
-//     address: string;
-//     coordinates: [number, number];
-//   };
-//   destination: {
-//     address: string;
-//     coordinates: [number, number];
-//   };
-//   driver_id: string;
-//   status: any;
-//   fare: number;
-//   createdAt: string;
-//   updatedAt: string;
-// }
-
 export const RideContextProvider: FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const { showNotification } = useNotificationContext();
   const { calculateRide } = useMapContext();
+  const { getWalletBalance } = useWalletContext();
 
   const [ongoingRideId, setOngoingRideId] = useState<string | null>(null);
   const [ongoingRideData, setOngoingRideData] = useState<any>(null);
@@ -67,7 +52,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
     const onRideAccepted = async (data: any) => {
       const { driver_id, ride_id } = data;
-      setOngoingRideId(ride_id);
+      fetchOngoingRideData(ride_id);
       await AsyncStorage.setItem("ongoingRideId", ride_id);
       await getDriverData(driver_id);
       setModalUp(true);
@@ -166,11 +151,33 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const payForRide = async (): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      await axios.post(
+        `${API_URL}/pay?ride_id=${ongoingRideId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      await getWalletBalance("User");
+      await fetchOngoingRideData(ongoingRideId!);
+      setModalUp(false);
+      setRideStatus("paid");
+      showNotification("Payment successfull", "success");
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    }
+  };
+
   return (
     <RideContext.Provider
       value={{
         rideData,
         rideRequest,
+        payForRide,
         rideStatus,
         setRideStatus,
         modalUp,
@@ -197,6 +204,8 @@ export interface RideContextType {
     by: "rider" | "driver",
     reason: string
   ) => Promise<void>;
+
+  payForRide: () => Promise<void>;
 
   rideStatus: RideStatusType;
   setRideStatus: Dispatch<SetStateAction<RideStatusType>>;

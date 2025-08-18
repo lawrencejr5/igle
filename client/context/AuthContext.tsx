@@ -195,6 +195,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
     await AsyncStorage.removeItem("is_driver");
+    await AsyncStorage.removeItem("ongoingRideId");
 
     setIsAuthenticated(false);
 
@@ -225,7 +226,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         signedIn,
         isAuthenticated,
         logout,
-
         userSocket,
       }}
     >

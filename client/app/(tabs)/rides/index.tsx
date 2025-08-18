@@ -17,9 +17,13 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 import { useRideContext } from "../../../context/RideContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
+import { useWalletContext } from "../../../context/WalletContext";
+
+import Notification from "../../../components/Notification";
 
 const Rides = () => {
-  const { showNotification } = useNotificationContext();
+  const { showNotification, notification } = useNotificationContext();
+  const { userWalletBal } = useWalletContext();
 
   const [category, setCategory] = useState<
     "ongoing" | "completed" | "cancelled"
@@ -31,7 +35,13 @@ const Rides = () => {
     suv: require("../../../assets/images/icons/suv-icon.png"),
   };
 
-  const { rideData, ongoingRideData, ongoingRideId } = useRideContext();
+  const {
+    rideData,
+    ongoingRideData,
+    ongoingRideId,
+    payForRide,
+    cancelRideRequest,
+  } = useRideContext();
 
   const makeCall = async (phone: string) => {
     const url = `tel:${phone}`;
@@ -44,360 +54,452 @@ const Rides = () => {
     }
   };
 
+  const [btnLoading, setBtnLoading] = useState<boolean>(false);
+  const [btnDisabled, setBtnDisabled] = useState<boolean>(false);
+  const pay_func = async () => {
+    setBtnLoading(true);
+    setBtnDisabled(true);
+    try {
+      await payForRide();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setBtnLoading(false);
+      setBtnDisabled(false);
+    }
+  };
+
+  const cancel_ride = async () => {
+    try {
+      if (!ongoingRideId) showNotification("An error occured", "error");
+      await cancelRideRequest(ongoingRideId!, "rider", "no reason");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.header_text}>Rides</Text>
+    <>
+      <Notification notification={notification} />
+      <View style={styles.container}>
+        <Text style={styles.header_text}>Rides</Text>
 
-      {/* Categories nav... */}
-      <View style={styles.nav_container}>
-        <TouchableWithoutFeedback onPress={() => setCategory("ongoing")}>
-          <View
-            style={[
-              styles.nav_box,
-              category === "ongoing" && styles.nav_box_active,
-            ]}
-          >
-            <Text
-              style={[
-                styles.nav_text,
-                category === "ongoing" && styles.nav_text_active,
-              ]}
-            >
-              Ongoing
-            </Text>
-          </View>
-        </TouchableWithoutFeedback>
-
-        <TouchableWithoutFeedback onPress={() => setCategory("completed")}>
-          <View
-            style={[
-              styles.nav_box,
-              category === "completed" && styles.nav_box_active,
-            ]}
-          >
-            <Text
-              style={[
-                styles.nav_text,
-                category === "completed" && styles.nav_text_active,
-              ]}
-            >
-              Completed
-            </Text>
-          </View>
-        </TouchableWithoutFeedback>
-
-        <TouchableWithoutFeedback onPress={() => setCategory("cancelled")}>
-          <View
-            style={[
-              styles.nav_box,
-              category === "cancelled" && styles.nav_box_active,
-            ]}
-          >
-            <Text
-              style={[
-                styles.nav_text,
-                category === "cancelled" && styles.nav_text_active,
-              ]}
-            >
-              Cancelled
-            </Text>
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-
-      {/* Ongoing data */}
-      {category === "ongoing" &&
-        (ongoingRideId ? (
-          <View style={styles.ride_card}>
-            <View style={styles.ride_header}>
-              <Text style={styles.ride_header_text}>
-                {new Date(ongoingRideData.createdAt).toLocaleDateString(
-                  "en-US",
-                  {
-                    weekday: "short",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  }
-                )}
-              </Text>
-            </View>
-            {/* Driver details */}
-            {ongoingRideData.driver && (
-              <>
-                <DriverCard name={ongoingRideData.driver.user.name} />
-
-                <View
-                  style={{
-                    marginTop: 10,
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    alignItems: "center",
-                    gap: 10,
-                  }}
-                >
-                  <Image
-                    source={vehicleIcons[ongoingRideData.driver.vehicle_type]}
-                    style={{ height: 50, width: 50 }}
-                  />
-                  <View>
-                    <Text
-                      style={{
-                        color: "#fff",
-                        fontFamily: "raleway-bold",
-                        fontSize: 12,
-                        textTransform: "capitalize",
-                        width: "100%",
-                      }}
-                    >
-                      {ongoingRideData.driver.vehicle_type} ride
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "flex-start",
-                        alignItems: "flex-start",
-                        gap: 5,
-                      }}
-                    >
-                      <FontAwesome5
-                        name="car"
-                        size={14}
-                        color="#c6c6c6"
-                        style={{ marginTop: 3 }}
-                      />
-                      <Text
-                        style={{
-                          color: "#c6c6c6",
-                          fontFamily: "raleway-semibold",
-                          fontSize: 12,
-                        }}
-                      >
-                        {ongoingRideData.driver.vehicle.color}{" "}
-                        {ongoingRideData.driver.vehicle.brand}{" "}
-                        {ongoingRideData.driver.vehicle.model}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </>
-            )}
-            {/* Ride route */}
-
-            <View style={{ marginTop: 10 }}>
-              <RideRoute
-                from={ongoingRideData.pickup.address}
-                to={ongoingRideData.destination.address}
-              />
-            </View>
-
-            {/* Pay */}
-            {ongoingRideData.paid ? (
-              <>
-                <TouchableWithoutFeedback
-                  onPress={() => makeCall(ongoingRideData.driver.user.phone)}
-                >
-                  <View
-                    style={[
-                      styles.pay_btn,
-                      {
-                        backgroundColor: "transparent",
-                        borderColor: "white",
-                        borderWidth: 1,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
-                      Call Driver &nbsp;&nbsp;
-                      <FontAwesome5 name="phone-alt" color="#fff" size={14} />
-                    </Text>
-                  </View>
-                </TouchableWithoutFeedback>
-                <View style={styles.pay_btn}>
-                  <Text style={styles.pay_btn_text}>Track</Text>
-                </View>
-              </>
-            ) : (
-              <View style={styles.pay_btn}>
-                <Text style={styles.pay_btn_text}>
-                  Pay {ongoingRideData.fare.toLocaleString()} NGN
-                </Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          >
-            <Text
-              style={{
-                color: "#fff",
-                fontSize: 18,
-                fontFamily: "raleway-bold",
-                textAlign: "center",
-                width: "80%",
-              }}
-            >
-              You don't have any ongoing ride yet
-            </Text>
-          </View>
-        ))}
-
-      {/* Completed data */}
-      {category === "completed" && (
-        <View>
-          <View style={styles.ride_card}>
+        {/* Categories nav... */}
+        <View style={styles.nav_container}>
+          <TouchableWithoutFeedback onPress={() => setCategory("ongoing")}>
             <View
-              style={{
-                backgroundColor: "#4cd90635",
-                marginBottom: 15,
-                alignSelf: "flex-start",
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 15,
-              }}
+              style={[
+                styles.nav_box,
+                category === "ongoing" && styles.nav_box_active,
+              ]}
             >
               <Text
-                style={{
-                  color: "#4cd906ff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 10,
-                }}
+                style={[
+                  styles.nav_text,
+                  category === "ongoing" && styles.nav_text_active,
+                ]}
+              >
+                Ongoing
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+
+          <TouchableWithoutFeedback onPress={() => setCategory("completed")}>
+            <View
+              style={[
+                styles.nav_box,
+                category === "completed" && styles.nav_box_active,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.nav_text,
+                  category === "completed" && styles.nav_text_active,
+                ]}
               >
                 Completed
               </Text>
             </View>
+          </TouchableWithoutFeedback>
+
+          <TouchableWithoutFeedback onPress={() => setCategory("cancelled")}>
             <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-start",
-                gap: 12,
-              }}
+              style={[
+                styles.nav_box,
+                category === "cancelled" && styles.nav_box_active,
+              ]}
             >
-              <Image
-                source={require("../../../assets/images/icons/keke-icon.png")}
-                style={{ width: 30, height: 30 }}
-              />
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  flex: 1,
-                  paddingBottom: 10,
-                }}
+              <Text
+                style={[
+                  styles.nav_text,
+                  category === "cancelled" && styles.nav_text_active,
+                ]}
               >
-                <View>
-                  <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
-                    Konwea plaza
-                  </Text>
-                  <Text
+                Cancelled
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+
+        {/* Ongoing data */}
+        {category === "ongoing" &&
+          (ongoingRideId && ongoingRideData ? (
+            <View style={styles.ride_card}>
+              <View style={styles.ride_header}>
+                <Text style={styles.ride_header_text}>
+                  {new Date(ongoingRideData.createdAt).toLocaleDateString(
+                    "en-US",
+                    {
+                      weekday: "short",
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }
+                  )}
+                </Text>
+              </View>
+              {/* Driver details */}
+              {ongoingRideData.driver && (
+                <>
+                  <DriverCard name={ongoingRideData.driver.user.name} />
+
+                  <View
                     style={{
-                      fontFamily: "raleway-semibold",
-                      color: "grey",
-                      fontSize: 11,
+                      marginTop: 10,
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                      alignItems: "center",
+                      gap: 10,
                     }}
                   >
-                    20 Dec, 2025 . 5:00am
-                  </Text>
-                </View>
-                <View>
+                    <Image
+                      source={vehicleIcons[ongoingRideData.driver.vehicle_type]}
+                      style={{ height: 50, width: 50 }}
+                    />
+                    <View>
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontFamily: "raleway-bold",
+                          fontSize: 12,
+                          textTransform: "capitalize",
+                          width: "100%",
+                        }}
+                      >
+                        {ongoingRideData.driver.vehicle_type} ride
+                      </Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "flex-start",
+                          alignItems: "flex-start",
+                          gap: 5,
+                        }}
+                      >
+                        <FontAwesome5
+                          name="car"
+                          size={14}
+                          color="#c6c6c6"
+                          style={{ marginTop: 3 }}
+                        />
+                        <Text
+                          style={{
+                            color: "#c6c6c6",
+                            fontFamily: "raleway-semibold",
+                            fontSize: 12,
+                          }}
+                        >
+                          {ongoingRideData.driver.vehicle.color}{" "}
+                          {ongoingRideData.driver.vehicle.brand}{" "}
+                          {ongoingRideData.driver.vehicle.model}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </>
+              )}
+              {/* Ride route */}
+
+              <View style={{ marginTop: 10 }}>
+                <RideRoute
+                  from={ongoingRideData.pickup.address}
+                  to={ongoingRideData.destination.address}
+                />
+              </View>
+
+              {/* Pay */}
+              {ongoingRideData.driver ? (
+                ongoingRideData.payment_status === "paid" ? (
+                  <>
+                    <TouchableWithoutFeedback
+                      onPress={() =>
+                        makeCall(ongoingRideData.driver.user.phone)
+                      }
+                    >
+                      <View
+                        style={[
+                          styles.pay_btn,
+                          {
+                            backgroundColor: "transparent",
+                            borderColor: "white",
+                            borderWidth: 1,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
+                          Call Driver &nbsp;&nbsp;
+                          <FontAwesome5
+                            name="phone-alt"
+                            color="#fff"
+                            size={14}
+                          />
+                        </Text>
+                      </View>
+                    </TouchableWithoutFeedback>
+                    <View style={styles.pay_btn}>
+                      <Text style={styles.pay_btn_text}>Track</Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <TouchableWithoutFeedback
+                      onPress={pay_func}
+                      disabled={btnLoading}
+                    >
+                      <View style={styles.pay_btn}>
+                        <Text style={styles.pay_btn_text}>
+                          {btnLoading
+                            ? "Paying..."
+                            : `Pay ${ongoingRideData.fare.toLocaleString()} NGN`}
+                        </Text>
+                      </View>
+                    </TouchableWithoutFeedback>
+                    <TouchableWithoutFeedback onPress={cancel_ride}>
+                      <View
+                        style={[
+                          styles.pay_btn,
+                          {
+                            backgroundColor: "transparent",
+                            borderColor: "white",
+                            borderWidth: 1,
+                            opacity: btnLoading ? 0.5 : 1,
+                          },
+                        ]}
+                      >
+                        <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
+                          Cancel ride
+                        </Text>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </>
+                )
+              ) : (
+                <>
                   <Text
                     style={{
                       color: "#fff",
-                      fontFamily: "poppins-bold",
-                      fontSize: 12,
+                      fontFamily: "raleway-regular",
+                      textAlign: "center",
                     }}
                   >
-                    500 NGN
+                    Still searching for driver...
                   </Text>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-semibold",
-                      color: "grey",
-                      fontSize: 11,
-                    }}
-                  >
-                    Wallet
-                  </Text>
-                </View>
-              </View>
+                  <TouchableWithoutFeedback onPress={cancel_ride}>
+                    <Text
+                      style={{
+                        color: "#ff0000",
+                        fontFamily: "raleway-bold",
+                        textAlign: "center",
+                        marginTop: 15,
+                      }}
+                    >
+                      Cancel ride
+                    </Text>
+                  </TouchableWithoutFeedback>
+                </>
+              )}
             </View>
-            {/* Ride route */}
-            <RideRoute from="Anglican girls grammar school" to="Konwea Plaza" />
-            <TouchableWithoutFeedback
-              onPress={() => router.push("./rides/ride_detail")}
-            >
-              <View style={styles.pay_btn}>
-                <Text style={styles.pay_btn_text}>View ride details</Text>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </View>
-      )}
-
-      {/* Cancelled data */}
-      {category === "cancelled" && (
-        <View>
-          <View style={styles.ride_card}>
+          ) : (
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "flex-start",
-                gap: 12,
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
-              <Image
-                source={require("../../../assets/images/icons/sedan-icon.png")}
-                style={{ width: 30, height: 30 }}
-              />
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 18,
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                  width: "80%",
+                }}
+              >
+                You don't have any ongoing ride yet
+              </Text>
+            </View>
+          ))}
+
+        {/* Completed data */}
+        {category === "completed" && (
+          <View>
+            <View style={styles.ride_card}>
+              <View
+                style={{
+                  backgroundColor: "#4cd90635",
+                  marginBottom: 15,
+                  alignSelf: "flex-start",
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 15,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#4cd906ff",
+                    fontFamily: "raleway-bold",
+                    fontSize: 10,
+                  }}
+                >
+                  Completed
+                </Text>
+              </View>
               <View
                 style={{
                   flexDirection: "row",
-                  justifyContent: "space-between",
-                  flex: 1,
+                  justifyContent: "flex-start",
+                  gap: 12,
                 }}
               >
-                <View>
-                  <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
-                    Asaba shoprite
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-semibold",
-                      color: "grey",
-                      fontSize: 11,
-                    }}
-                  >
-                    20 Dec, 2025 . 5:00am
-                  </Text>
+                <Image
+                  source={require("../../../assets/images/icons/keke-icon.png")}
+                  style={{ width: 30, height: 30 }}
+                />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    flex: 1,
+                    paddingBottom: 10,
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
+                      Konwea plaza
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-semibold",
+                        color: "grey",
+                        fontSize: 11,
+                      }}
+                    >
+                      20 Dec, 2025 . 5:00am
+                    </Text>
+                  </View>
+                  <View>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "poppins-bold",
+                        fontSize: 12,
+                      }}
+                    >
+                      500 NGN
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-semibold",
+                        color: "grey",
+                        fontSize: 11,
+                      }}
+                    >
+                      Wallet
+                    </Text>
+                  </View>
                 </View>
-                <View>
-                  <Text
-                    style={{
-                      color: "#e30f0fff",
-                      fontFamily: "raleway-bold",
-                      fontSize: 12,
-                    }}
-                  >
-                    Cancelled
-                  </Text>
-                  <Text
-                    style={{
-                      color: "#848484ff",
-                      fontFamily: "raleway-semibold",
-                      fontSize: 11,
-                      alignSelf: "flex-end",
-                    }}
-                  >
-                    - By you
-                  </Text>
+              </View>
+              {/* Ride route */}
+              <RideRoute
+                from="Anglican girls grammar school"
+                to="Konwea Plaza"
+              />
+              <TouchableWithoutFeedback
+                onPress={() => router.push("./rides/ride_detail")}
+              >
+                <View style={styles.pay_btn}>
+                  <Text style={styles.pay_btn_text}>View ride details</Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </View>
+        )}
+
+        {/* Cancelled data */}
+        {category === "cancelled" && (
+          <View>
+            <View style={styles.ride_card}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  gap: 12,
+                }}
+              >
+                <Image
+                  source={require("../../../assets/images/icons/sedan-icon.png")}
+                  style={{ width: 30, height: 30 }}
+                />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    flex: 1,
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontFamily: "raleway-bold", color: "#fff" }}>
+                      Asaba shoprite
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-semibold",
+                        color: "grey",
+                        fontSize: 11,
+                      }}
+                    >
+                      20 Dec, 2025 . 5:00am
+                    </Text>
+                  </View>
+                  <View>
+                    <Text
+                      style={{
+                        color: "#e30f0fff",
+                        fontFamily: "raleway-bold",
+                        fontSize: 12,
+                      }}
+                    >
+                      Cancelled
+                    </Text>
+                    <Text
+                      style={{
+                        color: "#848484ff",
+                        fontFamily: "raleway-semibold",
+                        fontSize: 11,
+                        alignSelf: "flex-end",
+                      }}
+                    >
+                      - By you
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
           </View>
-        </View>
-      )}
-    </View>
+        )}
+      </View>
+    </>
   );
 };
 
