@@ -4,12 +4,17 @@ import React, {
   useContext,
   createContext,
   ReactNode,
+  Dispatch,
+  SetStateAction,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useNotificationContext } from "./NotificationContext";
 
-import { initDriverSocket } from "../sockets/socketService";
+import {
+  initDriverSocket,
+  disconnectDriverSocket,
+} from "../sockets/socketService";
 import { useWalletContext } from "./WalletContext";
 
 // Types for driver data
@@ -69,7 +74,10 @@ interface DriverType {
 
 interface DriverAuthContextType {
   driver: DriverType | null;
+  setDriver: Dispatch<SetStateAction<DriverType | null>>;
   driverData: DriverType | null;
+  driverSocket: any;
+  setDriverSocket: Dispatch<SetStateAction<any>>;
   isDriver: boolean; // Changed from isAuthenticated
 
   // Core driver profile functions
@@ -117,6 +125,18 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     getWalletBalance("Driver");
   }, []);
 
+  useEffect(() => {
+    if (driver) {
+      const socket = initDriverSocket(driver.driver_id);
+      setDriverSocket(socket);
+
+      return () => {
+        setDriverSocket(null);
+        disconnectDriverSocket();
+      };
+    }
+  }, [driver]);
+
   const checkDriverStatus = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -131,6 +151,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   // Profile retrieval functions
+  const [driverSocket, setDriverSocket] = useState<any>(null);
   const getDriverProfile = async (token?: string): Promise<void> => {
     try {
       const authToken = token || (await AsyncStorage.getItem("token"));
@@ -148,9 +169,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           user: { name, email, phone },
           vehicle: { brand, model, color },
         } = data.driver;
-
-        // Initialize socket
-        initDriverSocket(_id);
 
         setDriver({
           driver_id: _id,
@@ -505,7 +523,10 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const contextValue: DriverAuthContextType = {
     driver,
+    setDriver,
     driverData,
+    driverSocket,
+    setDriverSocket,
     getDriverData,
     isDriver,
     createDriver,

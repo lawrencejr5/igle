@@ -35,8 +35,8 @@ const RootLayout = () => {
   return (
     <NotificationProvider>
       <WalletProvider>
-        <AuthProvider>
-          <DriverAuthProvider>
+        <DriverAuthProvider>
+          <AuthProvider>
             <MapContextProvider>
               <RideContextProvider>
                 <Stack
@@ -46,8 +46,8 @@ const RootLayout = () => {
                 />
               </RideContextProvider>
             </MapContextProvider>
-          </DriverAuthProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </DriverAuthProvider>
       </WalletProvider>
     </NotificationProvider>
   );

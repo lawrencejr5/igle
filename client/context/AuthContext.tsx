@@ -17,7 +17,11 @@ import * as Location from "expo-location";
 
 import { jwtDecode } from "jwt-decode";
 
-import { initUserSocket } from "../sockets/socketService";
+import {
+  getUserSocket,
+  initUserSocket,
+  disconnectUserSocket,
+} from "../sockets/socketService";
 
 import {
   NotificationContextType,
@@ -26,6 +30,7 @@ import {
 import { useWalletContext } from "./WalletContext";
 
 import { router } from "expo-router";
+import { useDriverAuthContext } from "./DriverAuthContext";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -43,6 +48,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     is_driver: false,
   });
 
+  const { setDriver } = useDriverAuthContext();
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const [appLoading, setAppLoading] = useState<boolean>(true);
@@ -52,6 +59,18 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     checkTokenValidity();
     getWalletBalance("User");
   }, []);
+
+  useEffect(() => {
+    if (signedIn.user_id) {
+      const socket = initUserSocket(signedIn.user_id);
+      setUserSocket(socket);
+
+      return () => {
+        setUserSocket(null);
+        disconnectUserSocket();
+      };
+    }
+  }, [signedIn]);
 
   const API_URL = "http://192.168.235.123:5000/api/v1/users";
   // const API_URL = "https://igleapi.onrender.com/api/v1/users";
@@ -123,10 +142,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "is_driver",
         JSON.stringify(data.user.is_driver)
       );
-
-      const socket = initUserSocket(data.user._id);
-      setUserSocket(socket);
-
       await getUserData();
 
       showNotification("Login successful.", "success");
@@ -136,7 +151,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const [userSocket, setUserSocket] = useState(null);
+  const [userSocket, setUserSocket] = useState<any>(null);
   const getUserData = async (): Promise<void> => {
     setAppLoading(true);
     try {
@@ -150,9 +165,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       const { _id, name, email, phone, driver_application, is_driver } =
         data.user;
-
-      const socket = initUserSocket(_id);
-      setUserSocket(socket);
 
       setSignedIn({
         user_id: _id,
@@ -211,6 +223,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         driver_application: "",
         is_driver: false,
       });
+      setDriver(null);
     }, 500);
   };
 

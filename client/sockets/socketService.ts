@@ -20,8 +20,18 @@ export const initDriverSocket = (driver_id: string) => {
         driver_id: driver_id,
       });
     });
+    driverSocket.on("disconnect", () => {
+      console.log("Driver disconnected: ");
+    });
   }
   return driverSocket;
+};
+
+export const disconnectDriverSocket = () => {
+  if (driverSocket) {
+    driverSocket.disconnect();
+    driverSocket = null; // This is the crucial step
+  }
 };
 
 export const initUserSocket = (user_id: string) => {
@@ -38,8 +48,19 @@ export const initUserSocket = (user_id: string) => {
         user_id: user_id,
       });
     });
+
+    userSocket.on("disconnect", () => {
+      console.log("User disconnected: ");
+    });
   }
   return userSocket;
+};
+
+export const disconnectUserSocket = () => {
+  if (userSocket) {
+    userSocket.disconnect();
+    userSocket = null; // This is the crucial step
+  }
 };
 
 export const getUserSocket = () => userSocket;
