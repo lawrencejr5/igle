@@ -54,18 +54,15 @@ const Rides = () => {
     }
   };
 
-  const [btnLoading, setBtnLoading] = useState<boolean>(false);
-  const [btnDisabled, setBtnDisabled] = useState<boolean>(false);
+  const [paying, setPaying] = useState<boolean>(false);
   const pay_func = async () => {
-    setBtnLoading(true);
-    setBtnDisabled(true);
+    setPaying(true);
     try {
       await payForRide();
     } catch (error) {
       console.log(error);
     } finally {
-      setBtnLoading(false);
-      setBtnDisabled(false);
+      setPaying(false);
     }
   };
 
@@ -259,16 +256,28 @@ const Rides = () => {
                     <View style={styles.pay_btn}>
                       <Text style={styles.pay_btn_text}>Track</Text>
                     </View>
+                    <TouchableWithoutFeedback onPress={cancel_ride}>
+                      <Text
+                        style={{
+                          color: "#ff0000",
+                          fontFamily: "raleway-bold",
+                          textAlign: "center",
+                          marginTop: 15,
+                        }}
+                      >
+                        Cancel ride
+                      </Text>
+                    </TouchableWithoutFeedback>
                   </>
                 ) : (
                   <>
                     <TouchableWithoutFeedback
                       onPress={pay_func}
-                      disabled={btnLoading}
+                      disabled={paying}
                     >
                       <View style={styles.pay_btn}>
                         <Text style={styles.pay_btn_text}>
-                          {btnLoading
+                          {paying
                             ? "Paying..."
                             : `Pay ${ongoingRideData.fare.toLocaleString()} NGN`}
                         </Text>
@@ -282,7 +291,7 @@ const Rides = () => {
                             backgroundColor: "transparent",
                             borderColor: "white",
                             borderWidth: 1,
-                            opacity: btnLoading ? 0.5 : 1,
+                            opacity: paying ? 0.5 : 1,
                           },
                         ]}
                       >

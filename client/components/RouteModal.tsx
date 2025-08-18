@@ -23,6 +23,7 @@ import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
 import { router } from "expo-router";
+import { useWalletContext } from "../context/WalletContext";
 
 const RouteModal = () => {
   const { signedIn } = useAuthContext();
@@ -53,7 +54,10 @@ const RouteModal = () => {
     setModalUp,
     rideData,
     ongoingRideId,
+    payForRide,
   } = useRideContext();
+
+  const { userWalletBal } = useWalletContext();
 
   const { driverData } = useDriverAuthContext();
   const { showNotification } = useNotificationContext();
@@ -126,8 +130,6 @@ const RouteModal = () => {
   const height = useRef(new Animated.Value(220)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
-  const [carType, setCarType] = useState<"sedan" | "keke" | "suv">("keke");
-
   useEffect(() => {
     if (modalUp) {
       Animated.parallel([
@@ -166,6 +168,18 @@ const RouteModal = () => {
       await Linking.openURL(url);
     } else {
       showNotification("Could not place call", "error");
+    }
+  };
+
+  const [paying, setPaying] = useState<boolean>(false);
+  const pay_func = async () => {
+    setPaying(true);
+    try {
+      await payForRide();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -602,7 +616,7 @@ const RouteModal = () => {
 
           <View style={{ marginTop: 25 }}>
             <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
-              Wallet balance: 12,500 NGN
+              Wallet balance: {userWalletBal.toLocaleString()} NGN
             </Text>
 
             <View
@@ -614,12 +628,7 @@ const RouteModal = () => {
                 marginTop: 10,
               }}
             >
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  setRideStatus("paid");
-                  setModalUp(false);
-                }}
-              >
+              <TouchableWithoutFeedback onPress={pay_func} disabled={paying}>
                 <View
                   style={{
                     backgroundColor: "#fff",
@@ -627,6 +636,7 @@ const RouteModal = () => {
                     paddingHorizontal: 30,
                     paddingVertical: 10,
                     flex: 1,
+                    opacity: paying ? 0.5 : 1,
                   }}
                 >
                   <Text
@@ -636,7 +646,7 @@ const RouteModal = () => {
                       textAlign: "center",
                     }}
                   >
-                    Confirm
+                    {paying ? "Confirming..." : "Confirm"}
                   </Text>
                 </View>
               </TouchableWithoutFeedback>
