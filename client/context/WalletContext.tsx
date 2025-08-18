@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 
-import { Linking } from "react-native";
+import * as Linking from "expo-linking";
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -23,6 +23,25 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [userWalletBal, setUserWalletBal] = useState<number>(0);
   const [driverWalletBal, setDriverWalletBal] = useState<number>(0);
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener("url", (event) => {
+      const url = event.url;
+      const { path, queryParams } = Linking.parse(url); // Destructure 'path' as well
+
+      // Check if the URL's path is 'payment-status'
+      if (path === "paystack-redirect") {
+        // queryParams.reference comes from Paystack redirect
+        if (queryParams?.reference) {
+          console.log("Payment reference:", queryParams.reference);
+          // Call your backend to verify
+          verify_payment(queryParams.reference as string);
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   const getWalletBalance = async (
     owner_type: "Driver" | "User"
@@ -57,7 +76,11 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     try {
       const { data } = await axios.post(
         `${API_URL}/fund`,
-        { channel, amount },
+        {
+          channel,
+          amount,
+          callback_url: Linking.createURL("paystack-redirect"),
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -65,20 +88,29 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const url = data.authorization_url;
       if (url) {
         showNotification("Redirecting...", "success");
-
-        // Check if the URL can be opened
-        const supported = await Linking.canOpenURL(url);
-
-        if (supported) {
-          await Linking.openURL(url);
-        } else {
-          showNotification("Redirect failed", "error");
-        }
+        setTimeout(() => {
+          Linking.openURL(url);
+        }, 1500);
       } else {
         throw new Error("An error occured");
       }
     } catch (error: any) {
       const errMsg = error.response.data.msg;
+      showNotification(errMsg, "error");
+    }
+  };
+
+  const verify_payment = async (reference: string): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.post(
+        `${API_URL}/verify?reference=${reference}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showNotification(data.msg, "success");
+    } catch (error: any) {
+      const errMsg = error.response.data.message;
       showNotification(errMsg, "error");
     }
   };

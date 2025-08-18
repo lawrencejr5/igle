@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { Types } from "mongoose";
 
 import Wallet from "../models/wallet";
 import User from "../models/user";
@@ -19,7 +18,7 @@ import {
 
 export const fund_wallet = async (req: Request, res: Response) => {
   try {
-    const { amount, channel } = req.body;
+    const { amount, channel, callback_url } = req.body;
     if (!amount || amount <= 0) {
       return res.status(400).json({ msg: "Invalid amount" });
     }
@@ -33,11 +32,11 @@ export const fund_wallet = async (req: Request, res: Response) => {
     if (!wallet) return res.status(404).json({ msg: "Wallet not found" });
 
     const reference = generate_unique_reference();
-
     const init = await initialize_paystack_transaction({
       email: user.email,
       amount,
       reference,
+      callback_url: "igle://paystack-redirect",
     });
 
     await Transaction.create({
