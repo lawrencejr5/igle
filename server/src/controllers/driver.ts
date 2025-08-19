@@ -145,10 +145,6 @@ export const set_driver_availability = async (
 ): Promise<void> => {
   try {
     const { status } = req.body;
-    if (!status) {
-      res.status(404).json({ msg: "Input status" });
-      return;
-    }
 
     const driver_id = await get_driver_id(req.user?.id!);
 

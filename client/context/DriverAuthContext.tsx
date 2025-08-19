@@ -108,7 +108,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const { getWalletBalance } = useWalletContext();
 
   // API base URL
-  const API_URL = "http://192.168.235.123:5000/api/v1/drivers";
+  const API_URL = "http://192.168.103.123:5000/api/v1/drivers";
   // const API_URL = "https://igleapi.onrender.com/api/v1/drivers";
 
   // Check if user is a driver on mount
@@ -118,7 +118,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (driver) {
+    if (driver?.driver_id) {
       const socket = initDriverSocket(driver.driver_id);
       setDriverSocket(socket);
 
@@ -127,7 +127,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
         disconnectDriverSocket();
       };
     }
-  }, [driver]);
+  }, [driver?.driver_id]);
 
   // Profile retrieval functions
   const [driverSocket, setDriverSocket] = useState<any>(null);
@@ -153,6 +153,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           driver_id: _id,
           socket_id,
           vehicle_type,
+          is_available: false,
           name,
           email,
           phone,
@@ -201,7 +202,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           vehicle_model: model,
           vehicle_color: color,
         });
-        console.log(driverData);
       } else {
         console.log("something's wrong");
         throw new Error("An error occured");

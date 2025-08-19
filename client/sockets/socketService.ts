@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 let userSocket: any;
 let driverSocket: any;
 
-const SOCKET_URL = "http://192.168.235.123:5000";
+const SOCKET_URL = "http://192.168.103.123:5000";
 // const SOCKET_URL = "https://igleapi.onrender.com";
 
 export const initDriverSocket = (driver_id: string) => {
@@ -21,7 +21,7 @@ export const initDriverSocket = (driver_id: string) => {
       });
     });
     driverSocket.on("disconnect", () => {
-      console.log("Driver disconnected: ");
+      console.log("Driver disconnected");
     });
   }
   return driverSocket;
@@ -50,7 +50,7 @@ export const initUserSocket = (user_id: string) => {
     });
 
     userSocket.on("disconnect", () => {
-      console.log("User disconnected: ");
+      console.log("User disconnected");
     });
   }
   return userSocket;

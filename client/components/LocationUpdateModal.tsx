@@ -13,6 +13,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
+import { useDriverContext } from "../context/DriverContext";
 import { darkMapStyle } from "../data/map.dark";
 
 import { useNotificationContext } from "../context/NotificationContext";
@@ -26,7 +27,7 @@ const LocationUpdateModal: React.FC<LocationUpdateModalProps> = ({
   visible,
   onClose,
 }) => {
-  const { updateLocation } = useDriverAuthContext();
+  const { updateLocation } = useDriverContext();
   const [region, setRegion] = useState<any>(null);
   const [selectedLocation, setSelectedLocation] = useState<
     [number, number] | null

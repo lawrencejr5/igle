@@ -72,7 +72,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [signedIn]);
 
-  const API_URL = "http://192.168.235.123:5000/api/v1/users";
+  const API_URL = "http://192.168.103.123:5000/api/v1/users";
   // const API_URL = "https://igleapi.onrender.com/api/v1/users";
 
   // Registration function

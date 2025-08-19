@@ -31,15 +31,21 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import RideRoute from "../../components/RideRoute";
 import { useMapContext } from "../../context/MapContext";
+import { useDriverContext } from "../../context/DriverContext";
 
 const HomePage = () => {
   const { notification } = useNotificationContext();
   const { getDriverProfile, driver } = useDriverAuthContext();
+  const { setAvailability } = useDriverContext();
   const { region } = useMapContext();
 
   useEffect(() => {
     getDriverProfile();
   }, []);
+
+  useEffect(() => {
+    console.log(driver?.is_available);
+  }, [driver?.is_available]);
 
   // Side nav state
   const [sideNavOpen, setSideNavOpen] = useState<boolean>(false);
@@ -50,7 +56,6 @@ const HomePage = () => {
   // Location update modal state
   const [locationModalOpen, setLocationModalOpen] = useState<boolean>(false);
 
-  const [available, setAvailable] = useState<boolean>(false);
   const [status, setStatus] = useState<
     | "searching"
     | "incoming"
@@ -63,17 +68,17 @@ const HomePage = () => {
   >("");
 
   useEffect(() => {
-    if (available && status === "searching") {
+    if (driver?.is_available && status === "searching") {
       setStatus("searching");
       const findOffer = setTimeout(() => {
         setStatus("incoming");
       }, 3000);
       return () => clearTimeout(findOffer);
     }
-    if (!available) {
+    if (!driver?.is_available) {
       setStatus("searching");
     }
-  }, [available, status]);
+  }, [driver?.is_available, status]);
 
   const [countDown, setCountDown] = useState<number>(90);
 
@@ -95,6 +100,15 @@ const HomePage = () => {
 
     return () => clearInterval(timer);
   }, [status]);
+
+  const setAvailableFunc = async () => {
+    try {
+      console.log(driver?.is_available);
+      await setAvailability(!driver?.is_available);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <>
@@ -179,7 +193,7 @@ const HomePage = () => {
             </TouchableWithoutFeedback>
           </View>
           <View style={styles.main_modal_container}>
-            {available && (
+            {driver?.is_available && (
               <View style={styles.availableContainer}>
                 {status === "searching" && (
                   <View>
@@ -417,10 +431,8 @@ const HomePage = () => {
                 source={require("../../assets/images/black-profile.jpeg")}
                 style={styles.profileImage}
               />
-              <TouchableWithoutFeedback
-                onPress={() => setAvailable(!available)}
-              >
-                {available ? (
+              <TouchableWithoutFeedback onPress={setAvailableFunc}>
+                {driver?.is_available ? (
                   <View
                     style={[styles.status, { backgroundColor: "#40863a4f" }]}
                   >

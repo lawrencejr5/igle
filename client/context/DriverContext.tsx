@@ -1,4 +1,10 @@
-import React, { createContext, FC, ReactNode, useContext } from "react";
+import React, {
+  createContext,
+  FC,
+  ReactNode,
+  useContext,
+  useState,
+} from "react";
 
 import { useDriverAuthContext } from "./DriverAuthContext";
 import { useNotificationContext } from "./NotificationContext";
@@ -7,7 +13,10 @@ import { useWalletContext } from "./WalletContext";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-interface DriverConextType {}
+interface DriverConextType {
+  setAvailability: (status: boolean) => Promise<void>;
+  updateLocation: (coordinates: [number, number]) => Promise<void>;
+}
 
 const DriverContext = createContext<DriverConextType | null>(null);
 
@@ -15,16 +24,15 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { driverSocket, driver, setDriver } = useDriverAuthContext();
 
   const { showNotification } = useNotificationContext();
-  const { getWalletBalance } = useWalletContext();
 
-  const API_URL = "http://192.168.235.123:5000/api/v1/drivers";
+  const API_URL = "http://192.168.103.123:5000/api/v1/drivers";
 
   // Driver status functions
   const setAvailability = async (status: boolean): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/availability`,
+      await axios.patch(
+        `${API_URL}/available`,
         {
           status,
         },
@@ -35,50 +43,17 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         }
       );
 
-      if (data.is_available !== undefined) {
-        setDriver((prev) =>
-          prev ? { ...prev, is_available: data.is_available } : null
-        );
-        showNotification(
-          `Availability ${status ? "enabled" : "disabled"} successfully`,
-          "success"
-        );
-      }
+      setDriver((prev: any) => {
+        return { ...prev, is_available: status };
+      });
+      showNotification(
+        `Availability toggled ${status ? "on" : "off"}`,
+        `${status ? "success" : "error"}`
+      );
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       console.log(errMsg || "Error setting availability");
       throw new Error(errMsg || "Error setting availability");
-    }
-  };
-
-  const setOnlineStatus = async (status: boolean): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/online`,
-        {
-          is_online: status,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (data.is_online !== undefined) {
-        setDriver((prev) =>
-          prev ? { ...prev, is_online: data.is_online } : null
-        );
-        showNotification(
-          `Online status ${status ? "enabled" : "disabled"} successfully`,
-          "success"
-        );
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error setting online status");
-      throw new Error(errMsg || "Error setting online status");
     }
   };
 
@@ -147,7 +122,9 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   return (
-    <DriverContext.Provider value={null}>{children}</DriverContext.Provider>
+    <DriverContext.Provider value={{ setAvailability, updateLocation }}>
+      {children}
+    </DriverContext.Provider>
   );
 };
 

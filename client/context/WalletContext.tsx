@@ -17,7 +17,7 @@ import { useNotificationContext } from "./NotificationContext";
 const WalletContext = createContext<WalletContextType | null>(null);
 
 const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const API_URL = "http://192.168.235.123:5000/api/v1/wallet";
+  const API_URL = "http://192.168.103.123:5000/api/v1/wallet";
 
   const { showNotification } = useNotificationContext();
 
