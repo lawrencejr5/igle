@@ -16,6 +16,7 @@ import {
   disconnectDriverSocket,
 } from "../sockets/socketService";
 import { useWalletContext } from "./WalletContext";
+import { API_URLS } from "../data/constants";
 
 // Types for driver data
 interface Vehicle {
@@ -108,8 +109,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const { getWalletBalance } = useWalletContext();
 
   // API base URL
-  const API_URL = "http://192.168.103.123:5000/api/v1/drivers";
-  // const API_URL = "https://igleapi.onrender.com/api/v1/drivers";
+  const API_URL = API_URLS.drivers;
 
   // Check if user is a driver on mount
   useEffect(() => {

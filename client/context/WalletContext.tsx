@@ -14,10 +14,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useNotificationContext } from "./NotificationContext";
 
+import { API_URLS } from "../data/constants";
+
 const WalletContext = createContext<WalletContextType | null>(null);
 
 const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const API_URL = "http://192.168.103.123:5000/api/v1/wallet";
+  const API_URL = API_URLS.wallet;
 
   const { showNotification } = useNotificationContext();
 

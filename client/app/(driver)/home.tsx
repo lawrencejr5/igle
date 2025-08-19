@@ -43,10 +43,6 @@ const HomePage = () => {
     getDriverProfile();
   }, []);
 
-  useEffect(() => {
-    console.log(driver?.is_available);
-  }, [driver?.is_available]);
-
   // Side nav state
   const [sideNavOpen, setSideNavOpen] = useState<boolean>(false);
 

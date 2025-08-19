@@ -12,6 +12,7 @@ import { useWalletContext } from "./WalletContext";
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_URLS } from "../data/constants";
 
 interface DriverConextType {
   setAvailability: (status: boolean) => Promise<void>;
@@ -25,7 +26,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const { showNotification } = useNotificationContext();
 
-  const API_URL = "http://192.168.103.123:5000/api/v1/drivers";
+  const API_URL = API_URLS.drivers;
 
   // Driver status functions
   const setAvailability = async (status: boolean): Promise<void> => {

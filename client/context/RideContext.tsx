@@ -17,6 +17,7 @@ import { useMapContext } from "./MapContext";
 import { useDriverAuthContext } from "./DriverAuthContext";
 import { useAuthContext } from "./AuthContext";
 import { useWalletContext } from "./WalletContext";
+import { API_URLS } from "../data/constants";
 
 const RideContext = createContext<RideContextType | null>(null);
 
@@ -83,8 +84,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     loadOngoingRide();
   }, []);
 
-  const API_URL = "http://192.168.103.123:5000/api/v1/rides";
-  // const API_URL = "https://igleapi.onrender.com/api/v1/rides";
+  const API_URL = API_URLS.rides;
 
   const rideRequest = async (
     pickup: { address: string; coordinates: [number, number] },

@@ -31,6 +31,7 @@ import { useWalletContext } from "./WalletContext";
 
 import { router } from "expo-router";
 import { useDriverAuthContext } from "./DriverAuthContext";
+import { API_URLS } from "../data/constants";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -72,8 +73,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [signedIn]);
 
-  const API_URL = "http://192.168.103.123:5000/api/v1/users";
-  // const API_URL = "https://igleapi.onrender.com/api/v1/users";
+  const API_URL = API_URLS.users;
 
   // Registration function
   const register = async (
