@@ -142,7 +142,7 @@ export const get_ride_data = async (
         select: "user vehicle_type vehicle current_location",
         populate: {
           path: "user",
-          select: "name email phone", // Optional: To select specific fields from the nested document
+          select: "name email phone",
         },
       })
       .populate("rider", "name phone");
@@ -195,7 +195,7 @@ export const accept_ride = async (
     }
 
     if (!ride) {
-      res.status(404).json({ msg: "Ride is invalid or not available." });
+      res.status(404).json({ msg: "Ride is no longer available." });
       return;
     }
 

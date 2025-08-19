@@ -150,6 +150,21 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const acceptRideRequest = async () => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.patch(
+        `${API_URLS.rides}/accept?ride_id=${incomingRideData._id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showNotification(data.msg, "success");
+    } catch (error: any) {
+      const errMsg = error.response.data.msg;
+      showNotification(errMsg, "error");
+    }
+  };
+
   return (
     <DriverContext.Provider
       value={{
@@ -160,6 +175,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         fetchIncomingRideData,
         incomingRideData,
         setIncomingRideData,
+
+        acceptRideRequest,
       }}
     >
       {children}
@@ -184,6 +201,8 @@ interface DriverConextType {
   incomingRideData: any;
   setIncomingRideData: Dispatch<SetStateAction<any>>;
   fetchIncomingRideData: (ride_id: string) => Promise<void>;
+
+  acceptRideRequest: () => Promise<void>;
 }
 
 export default DriverContextPrvider;

@@ -44,6 +44,7 @@ const HomePage = () => {
     fetchIncomingRideData,
     incomingRideData,
     setIncomingRideData,
+    acceptRideRequest,
   } = useDriverContext();
   const { region } = useMapContext();
 
@@ -109,6 +110,24 @@ const HomePage = () => {
     }
   };
 
+  const [accepting, setAccepting] = useState<boolean>(false);
+  const accept_incoming_ride = async () => {
+    setAccepting(true);
+    try {
+      await acceptRideRequest();
+      setDriveStatus("accepted");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setAccepting(false);
+    }
+  };
+
+  const reject_incoming_ride = () => {
+    setDriveStatus("searching");
+    setIncomingRideData(null);
+  };
+
   return (
     <>
       <Notification notification={notification} />
@@ -117,7 +136,11 @@ const HomePage = () => {
         <MapView
           style={styles.map}
           provider={PROVIDER_GOOGLE}
-          initialRegion={region}
+          initialRegion={{
+            ...region,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          }}
           customMapStyle={darkMapStyle}
         >
           {region && (
@@ -258,18 +281,26 @@ const HomePage = () => {
                       {/* Action btns */}
                       <View style={styles.actionBtnsRow}>
                         <TouchableWithoutFeedback
-                          onPress={() => setDriveStatus("accepted")}
+                          onPress={accept_incoming_ride}
+                          disabled={accepting}
                         >
-                          <View style={styles.acceptBtn}>
-                            <Text style={styles.acceptBtnText}>Accept</Text>
+                          <View
+                            style={[
+                              styles.acceptBtn,
+                              { opacity: accepting ? 0.5 : 1 },
+                            ]}
+                          >
+                            <Text style={styles.acceptBtnText}>
+                              {accepting ? "Accepting" : "Accept"}
+                            </Text>
                           </View>
                         </TouchableWithoutFeedback>
 
                         <TouchableWithoutFeedback
-                          onPress={() => setDriveStatus("searching")}
+                          onPress={reject_incoming_ride}
                         >
                           <View style={styles.cancelBtn}>
-                            <Text style={styles.cancelBtnText}>Cancel</Text>
+                            <Text style={styles.cancelBtnText}>Reject</Text>
                           </View>
                         </TouchableWithoutFeedback>
                       </View>
@@ -278,7 +309,7 @@ const HomePage = () => {
                 )}
                 {driveStatus === "accepted" && (
                   <>
-                    <Text style={styles.rideStatusText}>IOngoing ride</Text>
+                    <Text style={styles.rideStatusText}>Ongoing ride</Text>
 
                     {/* Ride request card */}
                     <View style={styles.rideRequestCard}>
