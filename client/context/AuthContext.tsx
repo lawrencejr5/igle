@@ -203,6 +203,34 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const updateDriverApplication = async (
+    status: "none" | "submitted" | "rejected" | "approved"
+  ): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.patch(
+        `${API_URL}/driver_application`,
+        // `${API_URL}/driver_application`,
+        { driver_application: status },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (data.status !== undefined) {
+        setDriver((prev) =>
+          prev ? { ...prev, driver_application: data.status } : null
+        );
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      console.log(errMsg || "Error updating driver application status");
+      throw new Error(errMsg || "Error updating driver application status");
+    }
+  };
+
   const logout = async (): Promise<void> => {
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
@@ -240,6 +268,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         isAuthenticated,
         logout,
         userSocket,
+        updateDriverApplication,
       }}
     >
       {children}
@@ -283,6 +312,10 @@ export interface AuthContextType {
   signedIn: UserType;
   isAuthenticated: boolean;
   logout: () => void;
+
+  updateDriverApplication: (
+    status: "none" | "approved" | "submitted" | "rejected"
+  ) => Promise<void>;
 
   userSocket: any;
 }

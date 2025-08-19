@@ -90,16 +90,8 @@ interface DriverAuthContextType {
   // Profile retrieval functions
   getDriverProfile: () => Promise<void>;
   getDriverData: (driver_id: string) => Promise<void>;
-  refreshDriverData: () => Promise<void>;
 
   // Driver status functions
-  setAvailability: (status: boolean) => Promise<void>; // Updated to Promise<void>
-  setOnlineStatus: (status: boolean) => Promise<void>; // Updated to Promise<void>
-  updateLocation: (coordinates: [number, number]) => Promise<void>; // Updated to Promise<void>
-  updateDriverApplication: (
-    status: "none" | "approved" | "submitted" | "rejected"
-  ) => Promise<void>;
-  updateRating: (rating: number) => Promise<void>; // Updated to Promise<void>
 }
 
 export const DriverAuthContext = createContext<DriverAuthContextType | null>(
@@ -136,19 +128,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       };
     }
   }, [driver]);
-
-  const checkDriverStatus = async () => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      if (token) {
-        await getDriverProfile(token);
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error checking driver status");
-      throw new Error(errMsg || "Error checking driver status");
-    }
-  };
 
   // Profile retrieval functions
   const [driverSocket, setDriverSocket] = useState<any>(null);
@@ -362,165 +341,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const refreshDriverData = async (): Promise<void> => {
-    await getDriverProfile();
-  };
-
-  // Driver status functions
-  const setAvailability = async (status: boolean): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/availability`,
-        {
-          status,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (data.is_available !== undefined) {
-        setDriver((prev) =>
-          prev ? { ...prev, is_available: data.is_available } : null
-        );
-        showNotification(
-          `Availability ${status ? "enabled" : "disabled"} successfully`,
-          "success"
-        );
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error setting availability");
-      throw new Error(errMsg || "Error setting availability");
-    }
-  };
-
-  const setOnlineStatus = async (status: boolean): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/online`,
-        {
-          is_online: status,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (data.is_online !== undefined) {
-        setDriver((prev) =>
-          prev ? { ...prev, is_online: data.is_online } : null
-        );
-        showNotification(
-          `Online status ${status ? "enabled" : "disabled"} successfully`,
-          "success"
-        );
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error setting online status");
-      throw new Error(errMsg || "Error setting online status");
-    }
-  };
-
-  const updateLocation = async (
-    coordinates: [number, number]
-  ): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/location`,
-        {
-          coordinates,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (data.new_coordinates) {
-        setDriver((prev) =>
-          prev
-            ? {
-                ...prev,
-                current_location: {
-                  type: "Point", // Explicitly set type
-                  coordinates: data.new_coordinates,
-                },
-              }
-            : null
-        );
-        showNotification("Location updated successfully", "success");
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error updating location");
-      throw new Error(errMsg || "Error updating location");
-    }
-  };
-
-  const updateDriverApplication = async (
-    status: "none" | "submitted" | "rejected" | "approved"
-  ): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `http://192.168.235.123:5000/api/v1/driver_application`,
-        // `https://igleapi.onrender.com/api/v1/driver_application`,
-        { driver_application: status },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (data.status !== undefined) {
-        setDriver((prev) =>
-          prev ? { ...prev, driver_application: data.status } : null
-        );
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error updating driver application status");
-      throw new Error(errMsg || "Error updating driver application status");
-    }
-  };
-
-  const updateRating = async (rating: number): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/rating`,
-        {
-          rating,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (data.rating !== undefined) {
-        setDriver((prev) => (prev ? { ...prev, rating: data.rating } : null));
-        showNotification("Rating updated successfully", "success");
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      console.log(errMsg || "Error updating rating");
-      throw new Error(errMsg || "Error updating rating");
-    }
-  };
-
   const contextValue: DriverAuthContextType = {
     driver,
     setDriver,
@@ -535,12 +355,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     updateDriverLicense,
     saveBankInfo,
     getDriverProfile,
-    refreshDriverData,
-    setAvailability,
-    setOnlineStatus,
-    updateLocation,
-    updateDriverApplication,
-    updateRating,
   };
 
   return (

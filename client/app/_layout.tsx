@@ -13,6 +13,7 @@ import DriverAuthProvider from "../context/DriverAuthContext";
 import RideContextProvider from "../context/RideContext";
 import MapContextProvider from "../context/MapContext";
 import WalletProvider from "../context/WalletContext";
+import DriverContextPrvider from "../context/DriverContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -38,13 +39,15 @@ const RootLayout = () => {
         <DriverAuthProvider>
           <AuthProvider>
             <MapContextProvider>
-              <RideContextProvider>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                  }}
-                />
-              </RideContextProvider>
+              <DriverContextPrvider>
+                <RideContextProvider>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                    }}
+                  />
+                </RideContextProvider>
+              </DriverContextPrvider>
             </MapContextProvider>
           </AuthProvider>
         </DriverAuthProvider>
