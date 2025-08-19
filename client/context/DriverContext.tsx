@@ -150,15 +150,23 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [ongoingRideId, setOngoingRideId] = useState<string | null>(null);
   const acceptRideRequest = async () => {
     const token = await AsyncStorage.getItem("token");
+    const ride_id = incomingRideData._id;
+
+    if (!ride_id) {
+      showNotification("Incoming ride not found", "error");
+      return;
+    }
     try {
       const { data } = await axios.patch(
-        `${API_URLS.rides}/accept?ride_id=${incomingRideData._id}`,
+        `${API_URLS.rides}/accept?ride_id=${ride_id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showNotification(data.msg, "success");
+      setOngoingRideId(ride_id);
     } catch (error: any) {
       const errMsg = error.response.data.msg;
       showNotification(errMsg, "error");

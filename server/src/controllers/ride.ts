@@ -194,6 +194,12 @@ export const accept_ride = async (
       console.log("socket not found");
     }
 
+    io.emit("ride_taken", {
+      ride_id,
+      msg: "This ride has been taken by another driver",
+      driver_id,
+    });
+
     if (!ride) {
       res.status(404).json({ msg: "Ride is no longer available." });
       return;

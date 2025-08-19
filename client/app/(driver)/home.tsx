@@ -67,9 +67,23 @@ const HomePage = () => {
         setDriveStatus("incoming");
         await fetchIncomingRideData(data.ride_id);
       };
-      driverSocket.on("new_ride_request", new_ride_func);
 
-      return () => driverSocket.off("new_ride_request", new_ride_func);
+      const ride_taken_func = (data: any) => {
+        setIncomingRideData((prev: any) => {
+          if (prev?._id === data.ride_id) {
+            return null;
+          }
+          return prev;
+        });
+      };
+
+      driverSocket.on("new_ride_request", new_ride_func);
+      driverSocket.on("ride_taken", ride_taken_func);
+
+      return () => {
+        driverSocket.off("new_ride_request", new_ride_func);
+        driverSocket.off("ride_taken", ride_taken_func);
+      };
     }
   }, [driver?.is_available, driveStatus, driverSocket]);
 
