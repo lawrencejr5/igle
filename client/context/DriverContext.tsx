@@ -1,7 +1,9 @@
 import React, {
   createContext,
+  Dispatch,
   FC,
   ReactNode,
+  SetStateAction,
   useContext,
   useState,
 } from "react";
@@ -14,15 +16,22 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URLS } from "../data/constants";
 
-interface DriverConextType {
-  setAvailability: (status: boolean) => Promise<void>;
-  updateLocation: (coordinates: [number, number]) => Promise<void>;
-}
+type StatusType =
+  | "searching"
+  | "incoming"
+  | "accepted"
+  | "arriving"
+  | "arrived"
+  | "ongoing"
+  | "completed"
+  | "";
 
 const DriverContext = createContext<DriverConextType | null>(null);
 
 const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { driverSocket, driver, setDriver } = useDriverAuthContext();
+
+  const [driveStatus, setDriveStatus] = useState<StatusType>("");
 
   const { showNotification } = useNotificationContext();
 
@@ -122,8 +131,37 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [incomingRideData, setIncomingRideData] = useState<any>(null);
+  const fetchIncomingRideData = async (ride_id: string): Promise<void> => {
+    try {
+      const url = API_URLS.rides;
+      const token = await AsyncStorage.getItem("token");
+
+      const { data } = await axios.get(`${url}/data?ride_id=${ride_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIncomingRideData((prev: any) => {
+        if (prev !== null) return prev;
+        return data.ride;
+      });
+    } catch (error: any) {
+      const errMsg = error.response.data.message;
+      console.log(errMsg);
+    }
+  };
+
   return (
-    <DriverContext.Provider value={{ setAvailability, updateLocation }}>
+    <DriverContext.Provider
+      value={{
+        setAvailability,
+        updateLocation,
+        driveStatus,
+        setDriveStatus,
+        fetchIncomingRideData,
+        incomingRideData,
+        setIncomingRideData,
+      }}
+    >
       {children}
     </DriverContext.Provider>
   );
@@ -137,5 +175,15 @@ export const useDriverContext = () => {
     );
   return context;
 };
+
+interface DriverConextType {
+  setAvailability: (status: boolean) => Promise<void>;
+  updateLocation: (coordinates: [number, number]) => Promise<void>;
+  driveStatus: StatusType;
+  setDriveStatus: Dispatch<SetStateAction<StatusType>>;
+  incomingRideData: any;
+  setIncomingRideData: Dispatch<SetStateAction<any>>;
+  fetchIncomingRideData: (ride_id: string) => Promise<void>;
+}
 
 export default DriverContextPrvider;

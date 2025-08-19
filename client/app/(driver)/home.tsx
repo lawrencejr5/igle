@@ -4,6 +4,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Image,
+  TextInput,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 
@@ -35,8 +36,15 @@ import { useDriverContext } from "../../context/DriverContext";
 
 const HomePage = () => {
   const { notification } = useNotificationContext();
-  const { getDriverProfile, driver } = useDriverAuthContext();
-  const { setAvailability } = useDriverContext();
+  const { getDriverProfile, driver, driverSocket } = useDriverAuthContext();
+  const {
+    setAvailability,
+    setDriveStatus,
+    driveStatus,
+    fetchIncomingRideData,
+    incomingRideData,
+    setIncomingRideData,
+  } = useDriverContext();
   const { region } = useMapContext();
 
   useEffect(() => {
@@ -52,34 +60,29 @@ const HomePage = () => {
   // Location update modal state
   const [locationModalOpen, setLocationModalOpen] = useState<boolean>(false);
 
-  const [status, setStatus] = useState<
-    | "searching"
-    | "incoming"
-    | "accepted"
-    | "arriving"
-    | "arrived"
-    | "ongoing"
-    | "completed"
-    | ""
-  >("");
+  useEffect(() => {
+    if (driver?.is_available && driveStatus === "searching") {
+      const new_ride_func = async (data: any) => {
+        setDriveStatus("incoming");
+        await fetchIncomingRideData(data.ride_id);
+      };
+      driverSocket.on("new_ride_request", new_ride_func);
+
+      return () => driverSocket.off("new_ride_request", new_ride_func);
+    }
+  }, [driver?.is_available, driveStatus, driverSocket]);
 
   useEffect(() => {
-    if (driver?.is_available && status === "searching") {
-      setStatus("searching");
-      const findOffer = setTimeout(() => {
-        setStatus("incoming");
-      }, 3000);
-      return () => clearTimeout(findOffer);
-    }
     if (!driver?.is_available) {
-      setStatus("searching");
+      setDriveStatus("searching");
+      setIncomingRideData(null);
     }
-  }, [driver?.is_available, status]);
+  }, [driver?.is_available]);
 
   const [countDown, setCountDown] = useState<number>(90);
 
   useEffect(() => {
-    if (status !== "incoming") {
+    if (driveStatus !== "incoming") {
       setCountDown(90);
       return;
     }
@@ -87,7 +90,8 @@ const HomePage = () => {
     const timer = setInterval(() => {
       setCountDown((prev) => {
         if (prev === 1) {
-          setStatus("searching");
+          setDriveStatus("searching");
+          setIncomingRideData(null);
           return 90;
         }
         return prev - 1;
@@ -95,11 +99,10 @@ const HomePage = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [status]);
+  }, [driveStatus]);
 
   const setAvailableFunc = async () => {
     try {
-      console.log(driver?.is_available);
       await setAvailability(!driver?.is_available);
     } catch (error) {
       console.log(error);
@@ -191,14 +194,14 @@ const HomePage = () => {
           <View style={styles.main_modal_container}>
             {driver?.is_available && (
               <View style={styles.availableContainer}>
-                {status === "searching" && (
+                {driveStatus === "searching" && (
                   <View>
                     <Text style={styles.searchingText}>
                       Searching for new ride offers...
                     </Text>
                   </View>
                 )}
-                {status === "incoming" && (
+                {driveStatus === "incoming" && incomingRideData && (
                   <>
                     <Text style={styles.rideStatusText}>
                       Incoming ride request
@@ -215,9 +218,11 @@ const HomePage = () => {
                             style={styles.userImage}
                           />
                           <View>
-                            <Text style={styles.userName}>Oputa Lawrence</Text>
+                            <Text style={styles.userName}>
+                              {incomingRideData.rider.name}
+                            </Text>
                             <Text style={styles.userRides}>
-                              34 ride completed
+                              No rides completed
                             </Text>
                           </View>
                         </View>
@@ -233,19 +238,27 @@ const HomePage = () => {
                           color={"#d7d7d7"}
                           size={16}
                         />
-                        <Text style={styles.timeText}>24 mins (3.45 km)</Text>
+                        <Text style={styles.timeText}>
+                          {incomingRideData.duration_mins} mins (
+                          {incomingRideData.distance_km} km)
+                        </Text>
                       </View>
 
                       {/* Ride route card */}
-                      <RideRoute from="Konwea plaza" to="Slot, Nnebisi road" />
+                      <RideRoute
+                        from={incomingRideData.pickup.address}
+                        to={incomingRideData.destination.address}
+                      />
 
                       {/* Price */}
-                      <Text style={styles.priceText}>1,500 NGN</Text>
+                      <Text style={styles.priceText}>
+                        NGN {incomingRideData.fare.toLocaleString()}
+                      </Text>
 
                       {/* Action btns */}
                       <View style={styles.actionBtnsRow}>
                         <TouchableWithoutFeedback
-                          onPress={() => setStatus("accepted")}
+                          onPress={() => setDriveStatus("accepted")}
                         >
                           <View style={styles.acceptBtn}>
                             <Text style={styles.acceptBtnText}>Accept</Text>
@@ -253,7 +266,7 @@ const HomePage = () => {
                         </TouchableWithoutFeedback>
 
                         <TouchableWithoutFeedback
-                          onPress={() => setStatus("searching")}
+                          onPress={() => setDriveStatus("searching")}
                         >
                           <View style={styles.cancelBtn}>
                             <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -263,7 +276,7 @@ const HomePage = () => {
                     </View>
                   </>
                 )}
-                {status === "accepted" && (
+                {driveStatus === "accepted" && (
                   <>
                     <Text style={styles.rideStatusText}>IOngoing ride</Text>
 
@@ -315,7 +328,7 @@ const HomePage = () => {
 
                       <View style={styles.navigateBtnRow}>
                         <TouchableWithoutFeedback
-                          onPress={() => setStatus("arriving")}
+                          onPress={() => setDriveStatus("arriving")}
                         >
                           <View style={styles.navigateBtn}>
                             <Text style={styles.navigateBtnText}>
@@ -327,7 +340,7 @@ const HomePage = () => {
                     </View>
                   </>
                 )}
-                {status === "arriving" && (
+                {driveStatus === "arriving" && (
                   <View style={styles.navigationContainer}>
                     <View style={styles.directionsRow}>
                       <FontAwesome5
@@ -341,7 +354,7 @@ const HomePage = () => {
                     </View>
                     <View style={styles.arrivedBtnRow}>
                       <TouchableWithoutFeedback
-                        onPress={() => setStatus("arrived")}
+                        onPress={() => setDriveStatus("arrived")}
                       >
                         <View style={styles.arrivedBtn}>
                           <Text style={styles.arrivedBtnText}>
@@ -352,7 +365,7 @@ const HomePage = () => {
                     </View>
                   </View>
                 )}
-                {status === "arrived" && (
+                {driveStatus === "arrived" && (
                   <View style={styles.navigationContainer}>
                     <View style={styles.directionsRow}>
                       <Text style={styles.directionsText}>
@@ -361,7 +374,7 @@ const HomePage = () => {
                     </View>
                     <View style={styles.arrivedBtnRow}>
                       <TouchableWithoutFeedback
-                        onPress={() => setStatus("ongoing")}
+                        onPress={() => setDriveStatus("ongoing")}
                       >
                         <View style={styles.arrivedBtn}>
                           <Text style={styles.arrivedBtnText}>Start trip</Text>
@@ -370,7 +383,7 @@ const HomePage = () => {
                     </View>
                   </View>
                 )}
-                {status === "ongoing" && (
+                {driveStatus === "ongoing" && (
                   <View style={styles.navigationContainer}>
                     <View style={styles.directionsRow}>
                       <FontAwesome5
@@ -384,7 +397,7 @@ const HomePage = () => {
                     </View>
                     <View style={styles.arrivedBtnRow}>
                       <TouchableWithoutFeedback
-                        onPress={() => setStatus("completed")}
+                        onPress={() => setDriveStatus("completed")}
                       >
                         <View style={styles.arrivedBtn}>
                           <Text style={styles.arrivedBtnText}>Finish ride</Text>
@@ -393,7 +406,7 @@ const HomePage = () => {
                     </View>
                   </View>
                 )}
-                {status === "completed" && (
+                {driveStatus === "completed" && (
                   <View style={styles.navigationContainer}>
                     <View style={styles.directionsRow}>
                       <MaterialIcons
@@ -407,7 +420,7 @@ const HomePage = () => {
                     </View>
                     <View style={styles.arrivedBtnRow}>
                       <TouchableWithoutFeedback
-                        onPress={() => setStatus("searching")}
+                        onPress={() => setDriveStatus("searching")}
                       >
                         <View style={styles.arrivedBtn}>
                           <Text style={styles.arrivedBtnText}>

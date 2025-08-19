@@ -136,14 +136,16 @@ export const get_ride_data = async (
   try {
     const { ride_id } = req.query;
 
-    const ride = await Ride.findById(ride_id).populate({
-      path: "driver",
-      select: "user vehicle_type vehicle current_location",
-      populate: {
-        path: "user",
-        select: "name email phone", // Optional: To select specific fields from the nested document
-      },
-    });
+    const ride = await Ride.findById(ride_id)
+      .populate({
+        path: "driver",
+        select: "user vehicle_type vehicle current_location",
+        populate: {
+          path: "user",
+          select: "name email phone", // Optional: To select specific fields from the nested document
+        },
+      })
+      .populate("rider", "name phone");
     res.status(200).json({ msg: "success", ride });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
