@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import React, { useState, useEffect } from "react";
 
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Feather from "@expo/vector-icons/Feather";
 
@@ -35,7 +35,7 @@ import { useMapContext } from "../../context/MapContext";
 import { useDriverContext } from "../../context/DriverContext";
 
 const HomePage = () => {
-  const { notification } = useNotificationContext();
+  const { notification, showNotification } = useNotificationContext();
   const { getDriverProfile, driver, driverSocket } = useDriverAuthContext();
   const {
     setAvailability,
@@ -46,6 +46,13 @@ const HomePage = () => {
     setIncomingRideData,
     acceptRideRequest,
     ongoingRideData,
+    setOngoingRideData,
+    toPickupRouteCoords,
+    setToPickupRouteCoords,
+    toDestinationRouteCoords,
+    setToDestinationRouteCoords,
+    mapRef,
+    updateRideStatus,
   } = useDriverContext();
   const { region } = useMapContext();
 
@@ -138,6 +145,56 @@ const HomePage = () => {
     }
   };
 
+  const [arriving, setArriving] = useState<boolean>(false);
+  const set_arrived = async () => {
+    setArriving(true);
+    try {
+      await updateRideStatus("arrived");
+      setDriveStatus("arrived");
+      setToPickupRouteCoords([]);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setAccepting(false);
+    }
+  };
+
+  const [starting, setStarting] = useState<boolean>(false);
+  const start_ride = async () => {
+    setStarting(true);
+    try {
+      await updateRideStatus("ongoing");
+      showNotification("This ride has started", "success");
+      setDriveStatus("ongoing");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const [completing, setCompleting] = useState<boolean>(false);
+  const complete_ride = async () => {
+    setCompleting(true);
+    try {
+      await updateRideStatus("completed");
+      showNotification("This ride has been completed", "success");
+      setDriveStatus("completed");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const start_searching = () => {
+    setToDestinationRouteCoords([]);
+    setToPickupRouteCoords([]);
+    setDriveStatus("searching");
+    setOngoingRideData(null);
+    setIncomingRideData(null);
+  };
+
   const reject_incoming_ride = () => {
     setDriveStatus("searching");
     setIncomingRideData(null);
@@ -148,33 +205,103 @@ const HomePage = () => {
       <Notification notification={notification} />
       <View style={styles.container}>
         {/* Map */}
-        <MapView
-          style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          initialRegion={{
-            ...region,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02,
-          }}
-          customMapStyle={darkMapStyle}
-        >
-          {region && (
-            <Marker
-              coordinate={{
-                latitude: region.latitude,
-                longitude: region.longitude,
-              }}
-              title="Your location"
-            >
-              <View style={styles.markerIcon}>
-                <Image
-                  source={require("../../assets/images/icons/keke-icon.png")}
-                  style={styles.markerImage}
-                />
-              </View>
-            </Marker>
-          )}
-        </MapView>
+        {region && (
+          <MapView
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            ref={mapRef}
+            initialRegion={{
+              ...region,
+              latitudeDelta: 0.02,
+              longitudeDelta: 0.02,
+            }}
+            customMapStyle={darkMapStyle}
+          >
+            {region && (
+              <Marker
+                coordinate={{
+                  latitude: region.latitude,
+                  longitude: region.longitude,
+                }}
+                title="Your location"
+              >
+                <View style={styles.markerIcon}>
+                  <Image
+                    source={require("../../assets/images/icons/keke-icon.png")}
+                    style={styles.markerImage}
+                  />
+                </View>
+              </Marker>
+            )}
+
+            {ongoingRideData && toPickupRouteCoords && (
+              <Marker
+                coordinate={{
+                  latitude: ongoingRideData.pickup.coordinates[0],
+                  longitude: ongoingRideData.pickup.coordinates[1],
+                }}
+                title="Pickup"
+              >
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    padding: 4,
+                    borderRadius: 2,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "black",
+                      padding: 4,
+                      borderRadius: 2,
+                    }}
+                  />
+                </View>
+              </Marker>
+            )}
+            {ongoingRideData && toDestinationRouteCoords && (
+              <Marker
+                coordinate={{
+                  latitude: ongoingRideData.destination.coordinates[0],
+                  longitude: ongoingRideData.destination.coordinates[1],
+                }}
+                title="Destination"
+              >
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    padding: 4,
+                    borderRadius: 2,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "black",
+                      padding: 4,
+                      borderRadius: 2,
+                    }}
+                  />
+                </View>
+              </Marker>
+            )}
+
+            {region && toPickupRouteCoords && (
+              <Polyline
+                coordinates={toPickupRouteCoords}
+                strokeColor="#fff"
+                strokeWidth={4}
+              />
+            )}
+
+            {region && toDestinationRouteCoords && (
+              <Polyline
+                coordinates={toDestinationRouteCoords}
+                strokeColor="#fff"
+                strokeWidth={4}
+              />
+            )}
+          </MapView>
+        )}
 
         {/* Nav */}
         <View style={styles.nav_container}>
@@ -410,17 +537,23 @@ const HomePage = () => {
                       <FontAwesome5
                         name="directions"
                         color={"#fff"}
-                        size={24}
+                        size={30}
                       />
                       <Text style={styles.directionsText}>
-                        Go 3km and then turn right
+                        {`Alright quickly head to ${ongoingRideData.pickup.address}, it should take about ${ongoingRideData.duration_mins} mins`}
                       </Text>
                     </View>
                     <View style={styles.arrivedBtnRow}>
                       <TouchableWithoutFeedback
-                        onPress={() => setDriveStatus("arrived")}
+                        onPress={set_arrived}
+                        disabled={arriving}
                       >
-                        <View style={styles.arrivedBtn}>
+                        <View
+                          style={[
+                            styles.arrivedBtn,
+                            { opacity: arriving ? 0.5 : 1 },
+                          ]}
+                        >
                           <Text style={styles.arrivedBtnText}>
                             I have arrived at pickup
                           </Text>
@@ -433,14 +566,20 @@ const HomePage = () => {
                   <View style={styles.navigationContainer}>
                     <View style={styles.directionsRow}>
                       <Text style={styles.directionsText}>
-                        When payment is confirmed, start the trip
+                        When payment is confirmed, you can start the trip
                       </Text>
                     </View>
                     <View style={styles.arrivedBtnRow}>
                       <TouchableWithoutFeedback
-                        onPress={() => setDriveStatus("ongoing")}
+                        onPress={start_ride}
+                        disabled={starting}
                       >
-                        <View style={styles.arrivedBtn}>
+                        <View
+                          style={[
+                            styles.arrivedBtn,
+                            { opacity: starting ? 0.5 : 1 },
+                          ]}
+                        >
                           <Text style={styles.arrivedBtnText}>Start trip</Text>
                         </View>
                       </TouchableWithoutFeedback>
@@ -453,17 +592,23 @@ const HomePage = () => {
                       <FontAwesome5
                         name="directions"
                         color={"#fff"}
-                        size={24}
+                        size={30}
                       />
                       <Text style={styles.directionsText}>
-                        Go 3km and then turn right
+                        {`Aright, let's head to ${ongoingRideData.destination.address}`}
                       </Text>
                     </View>
                     <View style={styles.arrivedBtnRow}>
                       <TouchableWithoutFeedback
-                        onPress={() => setDriveStatus("completed")}
+                        onPress={complete_ride}
+                        disabled={completing}
                       >
-                        <View style={styles.arrivedBtn}>
+                        <View
+                          style={[
+                            styles.arrivedBtn,
+                            { opacity: completing ? 0.5 : 1 },
+                          ]}
+                        >
                           <Text style={styles.arrivedBtnText}>Finish ride</Text>
                         </View>
                       </TouchableWithoutFeedback>
@@ -483,9 +628,7 @@ const HomePage = () => {
                       </Text>
                     </View>
                     <View style={styles.arrivedBtnRow}>
-                      <TouchableWithoutFeedback
-                        onPress={() => setDriveStatus("searching")}
-                      >
+                      <TouchableWithoutFeedback onPress={start_searching}>
                         <View style={styles.arrivedBtn}>
                           <Text style={styles.arrivedBtnText}>
                             Search for another ride
@@ -698,12 +841,14 @@ const styles = StyleSheet.create({
   },
   navigationContainer: {
     backgroundColor: "#121212",
+    width: "100%",
   },
   directionsRow: {
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
+    width: "100%",
   },
   directionsText: {
     textAlign: "center",

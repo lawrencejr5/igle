@@ -170,8 +170,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const decodePolyline = (encoded: any) => {
-    let coords = Polyline.decode(encoded);
+  const decodePolyline = (points: any) => {
+    let coords = Polyline.decode(points);
     return coords.map(([lat, lng]) => ({
       latitude: lat,
       longitude: lng,
@@ -245,6 +245,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         set_user_location,
         getPlaceCoords,
 
+        getRoute,
+
         destination,
         setDestination,
         destinationCoords,
@@ -272,6 +274,8 @@ export interface MapContextType {
   getSuggestions: (text: string) => Promise<void>;
   mapSuggestions: any;
   setMapSuggestions: Dispatch<SetStateAction<any>>;
+
+  getRoute: (pickup: [number, number], destination: [number, number]) => any;
 
   destination: string;
   setDestination: Dispatch<SetStateAction<string>>;

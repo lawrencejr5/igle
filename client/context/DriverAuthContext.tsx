@@ -153,7 +153,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           driver_id: _id,
           socket_id,
           vehicle_type,
-          is_available: false,
+          is_available: true,
           name,
           email,
           phone,
