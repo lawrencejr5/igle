@@ -4,7 +4,6 @@ import {
   Text,
   TouchableWithoutFeedback,
   Image,
-  TextInput,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 
@@ -15,6 +14,7 @@ import Feather from "@expo/vector-icons/Feather";
 import { darkMapStyle } from "../../data/map.dark";
 
 import * as Location from "expo-location";
+import * as Linking from "expo-linking";
 
 import SideNav from "../../components/SideNav";
 import NotificationScreen from "../../components/screens/NotificationScreen";
@@ -45,6 +45,7 @@ const HomePage = () => {
     incomingRideData,
     setIncomingRideData,
     acceptRideRequest,
+    ongoingRideData,
   } = useDriverContext();
   const { region } = useMapContext();
 
@@ -321,7 +322,7 @@ const HomePage = () => {
                     </View>
                   </>
                 )}
-                {driveStatus === "accepted" && (
+                {driveStatus === "accepted" && ongoingRideData && (
                   <>
                     <Text style={styles.rideStatusText}>Ongoing ride</Text>
 
@@ -336,21 +337,31 @@ const HomePage = () => {
                             style={styles.userImage}
                           />
                           <View>
-                            <Text style={styles.userName}>Oputa Lawrence</Text>
+                            <Text style={styles.userName}>
+                              {ongoingRideData.rider.name}
+                            </Text>
                             <Text style={styles.userRides}>
-                              34 ride completed
+                              No rides completed
                             </Text>
                           </View>
                         </View>
 
                         {/* Call btn */}
-                        <View style={styles.callBtn}>
-                          <FontAwesome
-                            name="phone"
-                            color={"#121212"}
-                            size={20}
-                          />
-                        </View>
+                        <TouchableWithoutFeedback
+                          onPress={() =>
+                            Linking.openURL(
+                              `tel:${ongoingRideData.rider.phone}`
+                            )
+                          }
+                        >
+                          <View style={styles.callBtn}>
+                            <FontAwesome
+                              name="phone"
+                              color={"#121212"}
+                              size={20}
+                            />
+                          </View>
+                        </TouchableWithoutFeedback>
                       </View>
 
                       {/* Estimated time and duration */}
@@ -360,14 +371,22 @@ const HomePage = () => {
                           color={"#d7d7d7"}
                           size={16}
                         />
-                        <Text style={styles.timeText}>24 mins (3.45 km)</Text>
+                        <Text style={styles.timeText}>
+                          {ongoingRideData.duration_mins} mins (
+                          {ongoingRideData.distance_km} km)
+                        </Text>
                       </View>
 
                       {/* Ride route card */}
-                      <RideRoute from="Konwea plaza" to="Slot, Nnebisi road" />
+                      <RideRoute
+                        from={ongoingRideData.pickup.address}
+                        to={ongoingRideData.destination.address}
+                      />
 
                       {/* Price */}
-                      <Text style={styles.priceText}>1,500 NGN</Text>
+                      <Text style={styles.priceText}>
+                        {ongoingRideData.fare.toLocaleString()} NGN
+                      </Text>
 
                       {/* Action btns */}
 

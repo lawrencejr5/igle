@@ -62,16 +62,8 @@ export const request_ride = async (
     });
 
     // Find drivers nearby and emit via Socket.IO
-    const rider_socket_id = await get_user_socket_id(user_id!);
     io.emit("new_ride_request", {
       ride_id: new_ride._id,
-      rider_id: user_id,
-      rider_socket_id,
-      pickup,
-      destination,
-      fare,
-      distance_km,
-      duration_mins,
     });
 
     res.status(201).json({

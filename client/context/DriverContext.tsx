@@ -131,8 +131,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const [incomingRideData, setIncomingRideData] = useState<any>(null);
-  const fetchIncomingRideData = async (ride_id: string): Promise<void> => {
+  const fetchRideData = async (ride_id: string) => {
     try {
       const url = API_URLS.rides;
       const token = await AsyncStorage.getItem("token");
@@ -140,17 +139,27 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.get(`${url}/data?ride_id=${ride_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setIncomingRideData((prev: any) => {
-        if (prev !== null) return prev;
-        return data.ride;
-      });
+      if (data.ride) return data.ride;
     } catch (error: any) {
       const errMsg = error.response.data.message;
-      console.log(errMsg);
+      throw new Error(errMsg || "An error occured while fetching rides");
     }
   };
 
-  const [ongoingRideId, setOngoingRideId] = useState<string | null>(null);
+  const [incomingRideData, setIncomingRideData] = useState<any>(null);
+  const fetchIncomingRideData = async (ride_id: string): Promise<void> => {
+    try {
+      const ride = await fetchRideData(ride_id);
+      setIncomingRideData((prev: any) => {
+        if (prev !== null) return prev;
+        return ride;
+      });
+    } catch (error: any) {
+      console.log(error.message);
+    }
+  };
+
+  const [ongoingRideData, setOngoingRideData] = useState<any>(null);
   const acceptRideRequest = async () => {
     const token = await AsyncStorage.getItem("token");
     const ride_id = incomingRideData._id;
@@ -165,10 +174,14 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      const ride = await fetchRideData(ride_id);
+      setOngoingRideData(ride);
+
       showNotification(data.msg, "success");
-      setOngoingRideId(ride_id);
     } catch (error: any) {
       const errMsg = error.response.data.msg;
+      console.log(error.message);
+      console.log(errMsg);
       showNotification(errMsg, "error");
     }
   };
@@ -185,6 +198,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         setIncomingRideData,
 
         acceptRideRequest,
+        ongoingRideData,
+        setOngoingRideData,
       }}
     >
       {children}
@@ -211,6 +226,8 @@ interface DriverConextType {
   fetchIncomingRideData: (ride_id: string) => Promise<void>;
 
   acceptRideRequest: () => Promise<void>;
+  ongoingRideData: any;
+  setOngoingRideData: Dispatch<SetStateAction<any>>;
 }
 
 export default DriverContextPrvider;
