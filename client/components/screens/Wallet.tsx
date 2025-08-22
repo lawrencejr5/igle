@@ -2,6 +2,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Keyboard,
   TouchableWithoutFeedback,
   TextInput,
   Animated,
@@ -37,10 +38,15 @@ const WalletScreen: FC<{
         toValue: 0,
         useNativeDriver: true,
       }).start();
+    if (!open)
+      Animated.timing(walletTranslate, {
+        duration: 300,
+        toValue: window_height,
+        useNativeDriver: true,
+      }).start();
   }, [open]);
 
   const closeWallet = () => {
-    setOpen(false);
     Animated.timing(walletTranslate, {
       duration: 300,
       toValue: window_height,
@@ -50,18 +56,17 @@ const WalletScreen: FC<{
 
   const [amount, setAmount] = useState<string>("");
   const [btnLoading, setBtnLoading] = useState<boolean>(false);
-  const [btnDisabled, setBtnDisabled] = useState<boolean>(false);
   const fundWalletFunc = async () => {
     setBtnLoading(true);
-    setBtnDisabled(true);
-
     try {
       await fundWallet("wallet", Number(amount));
+      setBtnLoading(false);
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {
+      setAmount("");
+      Keyboard.dismiss();
       setBtnLoading(false);
-      setBtnDisabled(false);
     }
   };
 
@@ -210,7 +215,7 @@ const WalletScreen: FC<{
         <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
           <TouchableWithoutFeedback
             onPress={fundWalletFunc}
-            disabled={btnDisabled}
+            disabled={btnLoading}
           >
             <View
               style={{
@@ -218,7 +223,7 @@ const WalletScreen: FC<{
                 width: "100%",
                 padding: 15,
                 borderRadius: 30,
-                opacity: btnDisabled ? 0.5 : 1,
+                opacity: btnLoading ? 0.5 : 1,
               }}
             >
               <Text

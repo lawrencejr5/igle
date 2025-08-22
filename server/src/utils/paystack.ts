@@ -14,7 +14,7 @@ export interface PaystackInputType {
   email: string;
   amount: number;
   reference: string;
-  callback_url: string;
+  callback_url?: string;
 }
 
 export const initialize_paystack_transaction = async ({

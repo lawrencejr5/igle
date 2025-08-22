@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import Entypo from "@expo/vector-icons/Entypo";
 import Feather from "@expo/vector-icons/Feather";
@@ -15,15 +15,40 @@ import WalletScreen from "../../../components/screens/Wallet";
 
 import Notification from "../../../components/Notification";
 
+import * as Linking from "expo-linking";
+
 import { useAuthContext } from "../../../context/AuthContext";
 import { useWalletContext } from "../../../context/WalletContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
+  const { showNotification } = useNotificationContext();
+
+  useEffect(() => {
+    const sub = Linking.addEventListener("url", async (event) => {
+      setWalletOpen(false);
+      const url = new URL(event.url);
+      const ref = url.searchParams.get("reference");
+
+      if (ref) {
+        console.log(ref);
+        showNotification("Verifying payment...", "success");
+        try {
+          await verify_payment(ref.split(",")[0]);
+          await getWalletBalance("User");
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    });
+
+    return () => sub.remove();
+  }, []);
 
   const { logout, signedIn } = useAuthContext();
-  const { userWalletBal } = useWalletContext();
+  const { userWalletBal, verify_payment, getWalletBalance, walletLoading } =
+    useWalletContext();
   const { notification } = useNotificationContext();
 
   return (
@@ -69,7 +94,12 @@ const Account = () => {
         </View>
 
         {/* Wallet */}
-        <TouchableWithoutFeedback onPress={() => setWalletOpen(true)}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            setWalletOpen(true);
+            console.log("clicked");
+          }}
+        >
           <View
             style={{
               backgroundColor: "#2c2c2c",
@@ -103,7 +133,9 @@ const Account = () => {
             </View>
             <View>
               <Text style={{ fontFamily: "poppins-bold", color: "#fff" }}>
-                {userWalletBal.toLocaleString()} NGN
+                {walletLoading
+                  ? "----"
+                  : `${userWalletBal.toLocaleString()} NGN`}
               </Text>
             </View>
           </View>

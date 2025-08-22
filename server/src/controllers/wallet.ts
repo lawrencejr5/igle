@@ -36,7 +36,7 @@ export const fund_wallet = async (req: Request, res: Response) => {
       email: user.email,
       amount,
       reference,
-      callback_url: "igle://paystack-redirect",
+      callback_url: `http://192.168.230.123:5000/api/v1/wallet/redirect?reference=${reference}&callback_url=${callback_url}`,
     });
 
     await Transaction.create({
@@ -58,6 +58,28 @@ export const fund_wallet = async (req: Request, res: Response) => {
     console.error(err);
     res.status(500).json({ msg: "Failed to initialize transaction" });
   }
+};
+
+export const paystack_redirect = (req: Request, res: Response) => {
+  const { reference, callback_url } = req.query;
+
+  // Return a tiny HTML page that deep-links back into your app
+  res.send(`
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Redirecting...</title>
+      </head>
+      <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+        <h2>Redirecting to app...</h2>
+        <script>
+          // Automatically redirect into the app
+          window.location.href = "${callback_url}?reference=${reference}";
+        </script>
+        <p>If you are not redirected, <a href="igle://paystack-redirect?reference=${reference}">click here</a>.</p>
+      </body>
+    </html>
+  `);
 };
 
 export const verify_payment = async (req: any, res: any) => {

@@ -31,7 +31,7 @@ app.use("/api/v1/wallet", WalletRouter);
 
 app.use(not_found);
 
-const port = process.env.PORT || "5001";
+const port = process.env.PORT || "5000";
 const mongo_url = process.env.MONGO_URI as string;
 
 const http_server = http.createServer(app);

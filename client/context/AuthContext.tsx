@@ -143,6 +143,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         JSON.stringify(data.user.is_driver)
       );
       await getUserData();
+      await getWalletBalance("User");
 
       showNotification("Login successful.", "success");
     } catch (err: any) {
@@ -174,6 +175,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         driver_application,
         is_driver,
       });
+      await getWalletBalance("User");
     } catch (err) {
       console.log("Failed to fetch user data:", err);
     } finally {

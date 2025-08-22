@@ -1,13 +1,16 @@
 import React, {
   createContext,
+  Dispatch,
   FC,
   ReactNode,
+  SetStateAction,
   useContext,
   useEffect,
   useState,
 } from "react";
 
 import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNotificationContext } from "./NotificationContext";
 
 import { API_URLS } from "../data/constants";
+import { router } from "expo-router";
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
@@ -25,30 +29,13 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [userWalletBal, setUserWalletBal] = useState<number>(0);
   const [driverWalletBal, setDriverWalletBal] = useState<number>(0);
-
-  useEffect(() => {
-    const subscription = Linking.addEventListener("url", (event) => {
-      const url = event.url;
-      const { path, queryParams } = Linking.parse(url); // Destructure 'path' as well
-
-      // Check if the URL's path is 'payment-status'
-      if (path === "paystack-redirect") {
-        // queryParams.reference comes from Paystack redirect
-        if (queryParams?.reference) {
-          console.log("Payment reference:", queryParams.reference);
-          // Call your backend to verify
-          verify_payment(queryParams.reference as string);
-        }
-      }
-    });
-
-    return () => subscription.remove();
-  }, []);
+  const [walletLoading, setWalletLoading] = useState<boolean>(false);
 
   const getWalletBalance = async (
     owner_type: "Driver" | "User"
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    setWalletLoading(true);
     try {
       const { data } = await axios.get(
         `${API_URL}/balance?owner_type=${owner_type}`,
@@ -65,7 +52,9 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
     } catch (error: any) {
       const errMsg = error.response.data.msg;
-      showNotification(errMsg, "error");
+      throw new Error(errMsg);
+    } finally {
+      setWalletLoading(false);
     }
   };
 
@@ -81,21 +70,18 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
         {
           channel,
           amount,
-          callback_url: Linking.createURL("paystack-redirect"),
+          callback_url: Linking.createURL("(tabs)/account"),
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       const url = data.authorization_url;
-      if (url) {
-        showNotification("Redirecting...", "success");
-        setTimeout(() => {
-          Linking.openURL(url);
-        }, 1500);
-      } else {
-        throw new Error("An error occured");
-      }
+
+      showNotification("Redirecting...", "success");
+
+      const redirectUrl = Linking.createURL("(tabs)/account");
+      await WebBrowser.openAuthSessionAsync(`${url}`, redirectUrl);
     } catch (error: any) {
       const errMsg = error.response.data.msg;
       showNotification(errMsg, "error");
@@ -104,22 +90,35 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const verify_payment = async (reference: string): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    setWalletLoading(true);
     try {
       const { data } = await axios.post(
         `${API_URL}/verify?reference=${reference}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (!data) throw new Error("An error occured");
       showNotification(data.msg, "success");
     } catch (error: any) {
-      const errMsg = error.response.data.message;
+      const errMsg = error.response.data.msg;
+      console.log(errMsg);
       showNotification(errMsg, "error");
+    } finally {
+      setWalletLoading(false);
     }
   };
 
   return (
     <WalletContext.Provider
-      value={{ userWalletBal, getWalletBalance, driverWalletBal, fundWallet }}
+      value={{
+        userWalletBal,
+        getWalletBalance,
+        driverWalletBal,
+        fundWallet,
+        verify_payment,
+        walletLoading,
+        setWalletLoading,
+      }}
     >
       {children}
     </WalletContext.Provider>
@@ -133,6 +132,9 @@ interface WalletContextType {
   driverWalletBal: number;
   getWalletBalance: (owner_type: "Driver" | "User") => Promise<void>;
   fundWallet: (channel: ChannelType, amount: number) => Promise<void>;
+  verify_payment: (reference: string) => Promise<void>;
+  walletLoading: boolean;
+  setWalletLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 export const useWalletContext = () => {

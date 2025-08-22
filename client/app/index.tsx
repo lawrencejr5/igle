@@ -7,6 +7,11 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 
+import * as Linking from "expo-linking";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { API_URLS } from "../data/constants";
+
 import SplashScreen from "./splash_screen";
 import { router } from "expo-router";
 
@@ -16,6 +21,44 @@ const StartScreen = () => {
   const { isAuthenticated, signedIn } = useAuthContext()!;
 
   const [loading, setLoading] = useState(true);
+
+  // useEffect(() => {
+  //   console.log("use effect is working");
+
+  //   const subscription = Linking.addEventListener("url", async (event) => {
+  //     const url = event.url;
+  //     const { path, queryParams } = Linking.parse(url); // Destructure 'path' as well
+
+  //     // Check if the URL's path is 'payment-status'
+  //     if (path === "paystack-redirect") {
+  //       console.log("reached paystack redirect");
+
+  //       // queryParams.reference comes from Paystack redirect
+  //       if (queryParams?.reference) {
+  //         console.log("Payment reference:", queryParams.reference);
+  //         // Call your backend to verify
+  //         const verify_payment = async (): Promise<void> => {
+  //           const token = await AsyncStorage.getItem("token");
+  //           try {
+  //             const { data } = await axios.post(
+  //               `${API_URLS.wallet}/verify?reference=${queryParams.reference}`,
+  //               {},
+  //               { headers: { Authorization: `Bearer ${token}` } }
+  //             );
+  //             console.log(data.msg, "success");
+  //             router.push("/tabs/account");
+  //           } catch (error: any) {
+  //             const errMsg = error.response.data.message;
+  //             console.log(errMsg, "error");
+  //           }
+  //         };
+  //         verify_payment();
+  //       }
+  //     }
+  //   });
+
+  //   return () => subscription.remove();
+  // }, []);
 
   useEffect(() => {
     const loadTimeout = setTimeout(() => {

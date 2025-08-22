@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
 import SafeArea from "../components/SafeArea";
 
+import axios from "axios";
+
 import * as SystemUI from "expo-system-ui";
 import { useFonts } from "expo-font";
+
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
+import { router } from "expo-router";
 
 import SplashScreen from "./splash_screen";
 
@@ -12,8 +18,12 @@ import NotificationProvider from "../context/NotificationContext";
 import DriverAuthProvider from "../context/DriverAuthContext";
 import RideContextProvider from "../context/RideContext";
 import MapContextProvider from "../context/MapContext";
-import WalletProvider from "../context/WalletContext";
+import WalletProvider, { useWalletContext } from "../context/WalletContext";
 import DriverContextPrvider from "../context/DriverContext";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { API_URLS } from "../data/constants";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
