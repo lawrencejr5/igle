@@ -52,6 +52,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   >([]);
   useEffect(() => {
     const fetchPickupRoute = async () => {
+      console.log("fetching...");
       const coords = await getRoute(
         [region.latitude, region.longitude],
         ongoingRideData.pickup.coordinates
@@ -66,6 +67,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     };
 
     const fetchDestinationRoute = async () => {
+      console.log("fetching...");
+
       const coords = await getRoute(
         ongoingRideData.pickup.coordinates,
         ongoingRideData.destination.coordinates

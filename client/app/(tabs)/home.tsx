@@ -46,6 +46,19 @@ const Home = () => {
     getPlaceName(region.latitude, region.longitude);
   }, [region]);
 
+  useEffect(() => {
+    if (region && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          ...region,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        1000 // duration in ms
+      );
+    }
+  }, [region]);
+
   if (appLoading) {
     return (
       <View

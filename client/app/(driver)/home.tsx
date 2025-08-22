@@ -70,7 +70,7 @@ const HomePage = () => {
   const [locationModalOpen, setLocationModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (driver?.is_available && driveStatus === "searching") {
+    if (driver?.is_available && driveStatus === "searching" && driverSocket) {
       const new_ride_func = async (data: any) => {
         setDriveStatus("incoming");
         await fetchIncomingRideData(data.ride_id);
@@ -199,6 +199,19 @@ const HomePage = () => {
     setDriveStatus("searching");
     setIncomingRideData(null);
   };
+
+  useEffect(() => {
+    if (region && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          ...region,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        1000 // duration in ms
+      );
+    }
+  }, [region]);
 
   return (
     <>
