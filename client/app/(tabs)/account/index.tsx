@@ -25,48 +25,48 @@ const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
   const { showNotification } = useNotificationContext();
 
-  const verifyingRef = useRef<string | null>(null);
-  useEffect(() => {
-    const handleDeepLink = async (event: any) => {
-      setWalletOpen(false);
+  // const verifyingRef = useRef<string | null>(null);
+  // useEffect(() => {
+  //   const handleDeepLink = async (event: any) => {
+  //     setWalletOpen(false);
 
-      const url = new URL(event.url);
-      const ref = url.searchParams.get("reference");
+  //     const url = new URL(event.url);
+  //     const ref = url.searchParams.get("reference");
 
-      if (ref) {
-        console.log("Reference from deep link:", ref);
+  //     if (ref) {
+  //       console.log("Reference from deep link:", ref);
 
-        if (verifyingRef.current === ref) {
-          // prevent duplicate verification for same ref
-          return;
-        }
-        verifyingRef.current = ref;
+  //       if (verifyingRef.current === ref) {
+  //         // prevent duplicate verification for same ref
+  //         return;
+  //       }
+  //       verifyingRef.current = ref;
 
-        showNotification("Verifying payment...", "success");
-        try {
-          await verify_payment(ref.split(",")[0]);
-        } catch (e) {
-          console.log("First verify failed, retrying...");
-          setTimeout(async () => {
-            try {
-              await verify_payment(ref.split(",")[0]);
-              await getWalletBalance("User");
-            } catch (err) {
-              console.log("Retry also failed:", err);
-            }
-          }, 5000);
-        } finally {
-          verifyingRef.current = null;
-        }
-      }
-    };
+  //       showNotification("Verifying payment...", "success");
+  //       try {
+  //         await verify_payment(ref.split(",")[0]);
+  //       } catch (e) {
+  //         console.log("First verify failed, retrying...");
+  //         setTimeout(async () => {
+  //           try {
+  //             await verify_payment(ref.split(",")[0]);
+  //             await getWalletBalance("User");
+  //           } catch (err) {
+  //             console.log("Retry also failed:", err);
+  //           }
+  //         }, 5000);
+  //       } finally {
+  //         verifyingRef.current = null;
+  //       }
+  //     }
+  //   };
 
-    const sub = Linking.addEventListener("url", handleDeepLink);
+  //   const sub = Linking.addEventListener("url", handleDeepLink);
 
-    return () => {
-      sub.remove?.();
-    };
-  }, []);
+  //   return () => {
+  //     sub.remove?.();
+  //   };
+  // }, []);
 
   const { logout, signedIn } = useAuthContext();
   const { userWalletBal, verify_payment, getWalletBalance, walletLoading } =

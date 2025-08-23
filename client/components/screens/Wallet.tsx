@@ -25,7 +25,7 @@ const WalletScreen: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
-  const { userWalletBal, fundWallet } = useWalletContext();
+  const { userWalletBal, fundWallet, verify_payment } = useWalletContext();
   const { showNotification } = useNotificationContext();
 
   const window_height = Dimensions.get("window").height;
@@ -48,6 +48,8 @@ const WalletScreen: FC<{
 
   const closeWallet = () => {
     setOpen(false);
+    setBtnLoading(false);
+    setAmount("");
     Animated.timing(walletTranslate, {
       duration: 300,
       toValue: window_height,
@@ -60,6 +62,7 @@ const WalletScreen: FC<{
   const fundWalletFunc = async () => {
     setBtnLoading(true);
     try {
+      closeWallet();
       await fundWallet("wallet", Number(amount));
       setBtnLoading(false);
     } catch (error: any) {
@@ -69,6 +72,7 @@ const WalletScreen: FC<{
       Keyboard.dismiss();
       setBtnLoading(false);
     }
+    // await verify_payment("txn_1755950856875_571854");
   };
 
   return (

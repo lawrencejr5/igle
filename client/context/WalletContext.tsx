@@ -62,6 +62,7 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     channel: ChannelType,
     amount: number
   ): Promise<void> => {
+    showNotification("Redirecting...", "success");
     const token = await AsyncStorage.getItem("token");
 
     try {
@@ -78,12 +79,40 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       );
       const url = data.authorization_url;
 
-      showNotification("Redirecting...", "success");
-
       const redirectUrl = Linking.createURL("(tabs)/account");
-      await WebBrowser.openAuthSessionAsync(`${url}`, redirectUrl);
+      const result = await WebBrowser.openAuthSessionAsync(
+        `${url}`,
+        redirectUrl
+      );
+
+      if (result.type === "success" && result.url) {
+        console.log("Payment success:", result.url);
+
+        // Extract the reference from the redirect URL
+        const redirect = new URL(result.url);
+        let ref = redirect.searchParams.get("reference");
+
+        if (ref) {
+          // Paystack sometimes repeats the ref (e.g. "abc123,abc123")
+          ref = ref.split(",")[0];
+          console.log(ref);
+          // Call verify payment
+          try {
+            await verify_payment(ref);
+          } catch (error) {
+            console.log(error);
+          }
+
+          // Optionally refresh wallet balance
+          await getWalletBalance("User");
+        } else {
+          console.log("No reference found in redirect URL");
+        }
+      } else {
+        console.log("User cancelled or closed browser:", result.type);
+      }
     } catch (error: any) {
-      const errMsg = error.response.data.msg;
+      const errMsg = error.response?.data?.msg || "Something went wrong";
       showNotification(errMsg, "error");
     }
   };
@@ -91,18 +120,21 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const verify_payment = async (reference: string): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     setWalletLoading(true);
+    showNotification("Verifying...", "success");
     try {
       const { data } = await axios.post(
         `${API_URL}/verify?reference=${reference}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!data) throw new Error("An error occured");
+      if (!data) throw new Error("An error occurred");
       showNotification(data.msg, "success");
+      console.log("funded");
     } catch (error: any) {
-      const errMsg = error.response.data.msg;
+      const errMsg = error.response?.data?.msg || "Verification failed";
       console.log(errMsg);
       showNotification(errMsg, "error");
+      throw new error(errMsg);
     } finally {
       setWalletLoading(false);
     }
