@@ -41,7 +41,7 @@ const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             email: user.email,
             amount,
             reference,
-            callback_url: `http://192.168.230.123:5000/api/v1/wallet/redirect?reference=${reference}&callback_url=${callback_url}`,
+            callback_url: `https://igleapi.onrender.com/api/v1/wallet/redirect?reference=${reference}&callback_url=${callback_url}`,
         });
         yield transaction_1.default.create({
             wallet_id: wallet._id,
