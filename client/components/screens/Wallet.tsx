@@ -17,6 +17,8 @@ import React, {
   SetStateAction,
 } from "react";
 
+import { usePaystack } from "react-native-paystack-webview";
+
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useWalletContext } from "../../context/WalletContext";
 import { useNotificationContext } from "../../context/NotificationContext";
@@ -57,6 +59,8 @@ const WalletScreen: FC<{
 
   const [amount, setAmount] = useState<string>("");
   const [btnLoading, setBtnLoading] = useState<boolean>(false);
+  const [showPaystack, setShowPaystack] = useState(true);
+  const { popup } = usePaystack();
   const fundWalletFunc = async () => {
     setBtnLoading(true);
     try {
@@ -72,175 +76,184 @@ const WalletScreen: FC<{
   };
 
   return (
-    <Animated.View
-      style={[
-        {
-          backgroundColor: "#121212",
-          height: "100%",
-          width: "100%",
-          position: "absolute",
-          zIndex: 2,
-          paddingTop: 50,
-          paddingHorizontal: 20,
-        },
-        { transform: [{ translateY: walletTranslate }] },
-      ]}
-    >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-        }}
+    <>
+      <Animated.View
+        style={[
+          {
+            backgroundColor: "#121212",
+            height: "100%",
+            width: "100%",
+            position: "absolute",
+            zIndex: 2,
+            paddingTop: 50,
+            paddingHorizontal: 20,
+          },
+          { transform: [{ translateY: walletTranslate }] },
+        ]}
       >
-        <Text
+        <View
           style={{
-            color: "#fff",
-            fontFamily: "raleway-bold",
-            fontSize: 25,
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
           }}
         >
-          Wallet
-        </Text>
-        <TouchableWithoutFeedback style={{ padding: 10 }} onPress={closeWallet}>
-          <FontAwesome5 name="times" size={24} color="#fff" />
-        </TouchableWithoutFeedback>
-      </View>
-
-      {/* Balance */}
-      <View
-        style={{
-          marginTop: 20,
-          flexDirection: "row",
-          justifyContent: "flex-end",
-        }}
-      >
-        <View>
           <Text
             style={{
-              color: "#c7c7c7",
+              color: "#fff",
               fontFamily: "raleway-bold",
-              alignSelf: "flex-end",
+              fontSize: 25,
             }}
           >
-            Balance:
+            Wallet
           </Text>
-          <Text
-            style={{ color: "#fff", fontFamily: "poppins-black", fontSize: 30 }}
-          >
-            {userWalletBal.toLocaleString()} NGN
-          </Text>
-        </View>
-      </View>
-
-      <View
-        style={{
-          height: 0.5,
-          backgroundColor: "#6e6d6dff",
-          width: "100%",
-          marginTop: 20,
-        }}
-      />
-
-      {/* Top up */}
-      <View style={{ marginTop: 30, flex: 1 }}>
-        <Text
-          style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 20 }}
-        >
-          Top up
-        </Text>
-        <View style={{ marginTop: 20 }}>
-          {/* Text input */}
-          <View
-            style={{
-              backgroundColor: "#4a4a4a",
-              borderRadius: 10,
-              paddingHorizontal: 20,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <TextInput
-              style={{
-                color: "#fff",
-                fontSize: 30,
-                fontWeight: 600,
-                maxWidth: 230,
-                width: "100%",
-                height: "100%",
-              }}
-              placeholder="0.00"
-              value={amount}
-              onChangeText={setAmount}
-              placeholderTextColor={"#b3afaf"}
-              inputMode="numeric"
-            />
-            <View
-              style={{
-                borderColor: "#b3afaf",
-                borderStyle: "solid",
-                borderLeftWidth: 1,
-                paddingLeft: 10,
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: "raleway-bold",
-                  fontSize: 20,
-                  color: "#fff",
-                }}
-              >
-                NGN
-              </Text>
-            </View>
-          </View>
-          <View
-            style={{
-              marginTop: 30,
-              marginHorizontal: 5,
-              flexDirection: "row",
-              flexWrap: "wrap",
-              justifyContent: "flex-start",
-              gap: 10,
-            }}
-          >
-            <Suggestion value={1500} />
-            <Suggestion value={3000} />
-            <Suggestion value={5000} />
-            <Suggestion value={10000} />
-            <Suggestion value={25000} />
-            <Suggestion value={50000} />
-          </View>
-        </View>
-        <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
           <TouchableWithoutFeedback
-            onPress={fundWalletFunc}
-            disabled={btnLoading}
+            style={{ padding: 10 }}
+            onPress={closeWallet}
           >
-            <View
-              style={{
-                backgroundColor: "#fff",
-                width: "100%",
-                padding: 15,
-                borderRadius: 30,
-                opacity: btnLoading ? 0.5 : 1,
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: "center",
-                  fontFamily: "raleway-bold",
-                  color: "#121212",
-                }}
-              >
-                {btnLoading ? "Loading..." : "Continue"}
-              </Text>
-            </View>
+            <FontAwesome5 name="times" size={24} color="#fff" />
           </TouchableWithoutFeedback>
         </View>
-      </View>
-    </Animated.View>
+
+        {/* Balance */}
+        <View
+          style={{
+            marginTop: 20,
+            flexDirection: "row",
+            justifyContent: "flex-end",
+          }}
+        >
+          <View>
+            <Text
+              style={{
+                color: "#c7c7c7",
+                fontFamily: "raleway-bold",
+                alignSelf: "flex-end",
+              }}
+            >
+              Balance:
+            </Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "poppins-black",
+                fontSize: 30,
+              }}
+            >
+              {userWalletBal.toLocaleString()} NGN
+            </Text>
+          </View>
+        </View>
+
+        <View
+          style={{
+            height: 0.5,
+            backgroundColor: "#6e6d6dff",
+            width: "100%",
+            marginTop: 20,
+          }}
+        />
+
+        {/* Top up */}
+        <View style={{ marginTop: 30, flex: 1 }}>
+          <Text
+            style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 20 }}
+          >
+            Top up
+          </Text>
+          <View style={{ marginTop: 20 }}>
+            {/* Text input */}
+            <View
+              style={{
+                backgroundColor: "#4a4a4a",
+                borderRadius: 10,
+                paddingHorizontal: 20,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <TextInput
+                style={{
+                  color: "#fff",
+                  fontSize: 30,
+                  fontWeight: 600,
+                  maxWidth: 230,
+                  width: "100%",
+                  height: "100%",
+                }}
+                placeholder="0.00"
+                value={amount}
+                onChangeText={setAmount}
+                placeholderTextColor={"#b3afaf"}
+                inputMode="numeric"
+              />
+              <View
+                style={{
+                  borderColor: "#b3afaf",
+                  borderStyle: "solid",
+                  borderLeftWidth: 1,
+                  paddingLeft: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "raleway-bold",
+                    fontSize: 20,
+                    color: "#fff",
+                  }}
+                >
+                  NGN
+                </Text>
+              </View>
+            </View>
+            <View
+              style={{
+                marginTop: 30,
+                marginHorizontal: 5,
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "flex-start",
+                gap: 10,
+              }}
+            >
+              <Suggestion value={1500} />
+              <Suggestion value={3000} />
+              <Suggestion value={5000} />
+              <Suggestion value={10000} />
+              <Suggestion value={25000} />
+              <Suggestion value={50000} />
+            </View>
+          </View>
+          <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
+            <TouchableWithoutFeedback
+              onPress={fundWalletFunc}
+              disabled={btnLoading}
+            >
+              <View
+                style={{
+                  backgroundColor: "#fff",
+                  width: "100%",
+                  padding: 15,
+                  borderRadius: 30,
+                  opacity: btnLoading ? 0.5 : 1,
+                }}
+              >
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontFamily: "raleway-bold",
+                    color: "#121212",
+                  }}
+                >
+                  {btnLoading ? "Loading..." : "Continue"}
+                </Text>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </View>
+      </Animated.View>
+    </>
   );
 };
 

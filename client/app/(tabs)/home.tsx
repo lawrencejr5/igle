@@ -43,10 +43,6 @@ const Home = () => {
   const { appLoading } = useAuthContext();
 
   useEffect(() => {
-    getPlaceName(region.latitude, region.longitude);
-  }, [region]);
-
-  useEffect(() => {
     if (region && mapRef.current) {
       mapRef.current.animateToRegion(
         {
@@ -57,6 +53,10 @@ const Home = () => {
         1000 // duration in ms
       );
     }
+  }, [region]);
+
+  useEffect(() => {
+    getPlaceName(region.latitude, region.longitude);
   }, [region]);
 
   if (appLoading) {

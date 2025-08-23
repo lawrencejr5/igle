@@ -20,6 +20,8 @@ import { useNotificationContext } from "./NotificationContext";
 import { API_URLS } from "../data/constants";
 import { router } from "expo-router";
 
+import { usePaystack } from "react-native-paystack-webview";
+
 const WalletContext = createContext<WalletContextType | null>(null);
 
 const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
@@ -58,6 +60,7 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const { popup } = usePaystack();
   const fundWallet = async (
     channel: ChannelType,
     amount: number
@@ -76,12 +79,44 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      const url = data.authorization_url;
+      // const url = data.authorization_url;
+      const reference = data.reference;
 
-      showNotification("Redirecting...", "success");
+      popup.checkout({
+        email: "jane.doe@example.com",
+        amount,
+        reference,
+        plan: "PLN_example123",
+        invoice_limit: 3,
+        subaccount: "SUB_abc123",
+        split_code: "SPL_def456",
+        split: {
+          type: "percentage",
+          bearer_type: "account",
+          subaccounts: [
+            { subaccount: "ACCT_abc", share: "60" },
+            { subaccount: "ACCT_xyz", share: "40" },
+          ],
+        },
+        metadata: {
+          custom_fields: [
+            {
+              display_name: "Order ID",
+              variable_name: "order_id",
+              value: "OID1234",
+            },
+          ],
+        },
+        onSuccess: (res) => console.log("Success:", res),
+        onCancel: () => console.log("User cancelled"),
+        onLoad: (res) => console.log("WebView Loaded:", res),
+        onError: (err) => console.log("WebView Error:", err),
+      });
 
-      const redirectUrl = Linking.createURL("(tabs)/account");
-      await WebBrowser.openAuthSessionAsync(`${url}`, redirectUrl);
+      // showNotification("Redirecting...", "success");
+
+      // const redirectUrl = Linking.createURL("(tabs)/account");
+      // await WebBrowser.openAuthSessionAsync(`${url}`, redirectUrl);
     } catch (error: any) {
       const errMsg = error.response.data.msg;
       showNotification(errMsg, "error");

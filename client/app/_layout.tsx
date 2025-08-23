@@ -21,6 +21,8 @@ import MapContextProvider from "../context/MapContext";
 import WalletProvider, { useWalletContext } from "../context/WalletContext";
 import DriverContextPrvider from "../context/DriverContext";
 
+import { PaystackProvider } from "react-native-paystack-webview";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { API_URLS } from "../data/constants";
@@ -45,23 +47,25 @@ const RootLayout = () => {
 
   return (
     <NotificationProvider>
-      <WalletProvider>
-        <DriverAuthProvider>
-          <AuthProvider>
-            <MapContextProvider>
-              <DriverContextPrvider>
-                <RideContextProvider>
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                    }}
-                  />
-                </RideContextProvider>
-              </DriverContextPrvider>
-            </MapContextProvider>
-          </AuthProvider>
-        </DriverAuthProvider>
-      </WalletProvider>
+      <PaystackProvider publicKey="pk_test_6a97adea10b6d4f492454a7194e86208d5063036">
+        <WalletProvider>
+          <DriverAuthProvider>
+            <AuthProvider>
+              <MapContextProvider>
+                <DriverContextPrvider>
+                  <RideContextProvider>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                      }}
+                    />
+                  </RideContextProvider>
+                </DriverContextPrvider>
+              </MapContextProvider>
+            </AuthProvider>
+          </DriverAuthProvider>
+        </WalletProvider>
+      </PaystackProvider>
     </NotificationProvider>
   );
 };
