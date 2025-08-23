@@ -130,10 +130,6 @@ const set_driver_availability = (req, res) => __awaiter(void 0, void 0, void 0, 
     var _a;
     try {
         const { status } = req.body;
-        if (!status) {
-            res.status(404).json({ msg: "Input status" });
-            return;
-        }
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
         const driver = yield driver_1.default.findById(driver_id);
         if (!driver) {

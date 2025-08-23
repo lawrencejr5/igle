@@ -36,7 +36,7 @@ app.use("/api/v1/rides", ride_1.default);
 app.use("/api/v1/transactions", transaction_1.default);
 app.use("/api/v1/wallet", wallet_1.default);
 app.use(not_found_1.not_found);
-const port = process.env.PORT || "5001";
+const port = process.env.PORT || "5000";
 const mongo_url = process.env.MONGO_URI;
 const http_server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(http_server, {

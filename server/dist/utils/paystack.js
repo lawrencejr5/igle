@@ -22,11 +22,12 @@ const paystack_api = axios_1.default.create({
         "Content-Type": "application/json",
     },
 });
-const initialize_paystack_transaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ email, amount, reference, }) {
+const initialize_paystack_transaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ email, amount, reference, callback_url, }) {
     const { data } = yield paystack_api.post("/transaction/initialize", {
         email,
         amount: amount * 100, // Paystack expects amount in kobo
         reference,
+        callback_url,
     });
     return data.data; // contains authorization_url, access_code, reference
 });

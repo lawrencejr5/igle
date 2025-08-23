@@ -19,6 +19,8 @@ const credit_wallet = (reference) => __awaiter(void 0, void 0, void 0, function*
     const transaction = yield transaction_1.default.findOne({ reference });
     if (!transaction)
         throw new Error("Transaction was not found");
+    if (transaction.status !== "pending")
+        throw new Error("This transaction has already been processed");
     const wallet_id = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
     const wallet = yield wallet_1.default.findById(wallet_id);
     if (!wallet)

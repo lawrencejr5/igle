@@ -58,16 +58,8 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             status: "pending",
         });
         // Find drivers nearby and emit via Socket.IO
-        const rider_socket_id = yield (0, get_id_1.get_user_socket_id)(user_id);
         server_1.io.emit("new_ride_request", {
             ride_id: new_ride._id,
-            rider_id: user_id,
-            rider_socket_id,
-            pickup,
-            destination,
-            fare,
-            distance_km,
-            duration_mins,
         });
         res.status(201).json({
             msg: "Ride request created",
@@ -122,14 +114,16 @@ exports.get_available_rides = get_available_rides;
 const get_ride_data = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { ride_id } = req.query;
-        const ride = yield ride_1.default.findById(ride_id).populate({
+        const ride = yield ride_1.default.findById(ride_id)
+            .populate({
             path: "driver",
             select: "user vehicle_type vehicle current_location",
             populate: {
                 path: "user",
-                select: "name email phone", // Optional: To select specific fields from the nested document
+                select: "name email phone",
             },
-        });
+        })
+            .populate("rider", "name phone");
         res.status(200).json({ msg: "success", ride });
     }
     catch (err) {
@@ -168,8 +162,13 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         else {
             console.log("socket not found");
         }
+        server_1.io.emit("ride_taken", {
+            ride_id,
+            msg: "This ride has been taken by another driver",
+            driver_id,
+        });
         if (!ride) {
-            res.status(404).json({ msg: "Ride is invalid or not available." });
+            res.status(404).json({ msg: "Ride is no longer available." });
             return;
         }
         if (!ride.timestamps) {
@@ -334,7 +333,7 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { ride_id } = req.query;
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const ride = yield ride_1.default.findById(ride_id);
-        if (!ride || ride.status !== "arrived") {
+        if (!ride) {
             return res.status(400).json({ msg: "Invalid ride or status" });
         }
         const wallet = yield wallet_1.default.findOne({ owner_id: user_id });
@@ -349,19 +348,6 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             reference: (0, gen_unique_ref_1.generate_unique_reference)(),
             metadata: { for: "ride_payment" },
         });
-        // Emitting ride status
-        const user_socket = yield (0, get_id_1.get_user_socket_id)(ride.rider);
-        const driver_socket = yield (0, get_id_1.get_driver_socket_id)(ride.driver);
-        if (user_socket)
-            server_1.io.to(user_socket).emit("ride_in_progress", {
-                msg: "Payment successfull, ur ride can start",
-            });
-        if (driver_socket)
-            server_1.io.to(driver_socket).emit("ride_in_progress", {
-                msg: "Your ride can start",
-            });
-        // Updating ride status
-        ride.status = "ongoing";
         ride.payment_status = "paid";
         ride.payment_method = "wallet";
         yield ride.save();

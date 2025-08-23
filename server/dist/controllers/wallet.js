@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.create_wallet = exports.get_wallet_balance = exports.request_withdrawal = exports.verify_payment = exports.fund_wallet = void 0;
+exports.create_wallet = exports.get_wallet_balance = exports.request_withdrawal = exports.verify_payment = exports.paystack_redirect = exports.fund_wallet = void 0;
 const wallet_1 = __importDefault(require("../models/wallet"));
 const user_1 = __importDefault(require("../models/user"));
 const transaction_1 = __importDefault(require("../models/transaction"));
@@ -25,7 +25,7 @@ const paystack_1 = require("../utils/paystack");
 const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const { amount, channel } = req.body;
+        const { amount, channel, callback_url } = req.body;
         if (!amount || amount <= 0) {
             return res.status(400).json({ msg: "Invalid amount" });
         }
@@ -41,6 +41,7 @@ const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             email: user.email,
             amount,
             reference,
+            callback_url: `http://192.168.230.123:5000/api/v1/wallet/redirect?reference=${reference}&callback_url=${callback_url}`,
         });
         yield transaction_1.default.create({
             wallet_id: wallet._id,
@@ -63,6 +64,27 @@ const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.fund_wallet = fund_wallet;
+const paystack_redirect = (req, res) => {
+    const { reference, callback_url } = req.query;
+    // Return a tiny HTML page that deep-links back into your app
+    res.send(`
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Redirecting...</title>
+      </head>
+      <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+        <h2>Redirecting to app...</h2>
+        <script>
+          // Automatically redirect into the app
+          window.location.href = "${callback_url}?reference=${reference}";
+        </script>
+        <p>If you are not redirected, <a href="igle://paystack-redirect?reference=${reference}">click here</a>.</p>
+      </body>
+    </html>
+  `);
+};
+exports.paystack_redirect = paystack_redirect;
 const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { reference } = req.query;
@@ -76,7 +98,8 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     catch (err) {
         console.error(err);
-        res.status(500).json({ msg: "Verification failed" });
+        const msg = err.message || "Verification failed";
+        res.status(500).json({ msg });
     }
 });
 exports.verify_payment = verify_payment;
