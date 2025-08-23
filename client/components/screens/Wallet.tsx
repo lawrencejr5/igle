@@ -38,7 +38,7 @@ const WalletScreen: FC<{
         toValue: 0,
         useNativeDriver: true,
       }).start();
-    if (!open)
+    else
       Animated.timing(walletTranslate, {
         duration: 300,
         toValue: window_height,
@@ -47,6 +47,7 @@ const WalletScreen: FC<{
   }, [open]);
 
   const closeWallet = () => {
+    setOpen(false);
     Animated.timing(walletTranslate, {
       duration: 300,
       toValue: window_height,

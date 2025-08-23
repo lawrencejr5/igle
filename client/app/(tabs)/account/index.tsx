@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import Entypo from "@expo/vector-icons/Entypo";
 import Feather from "@expo/vector-icons/Feather";
@@ -25,25 +25,47 @@ const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
   const { showNotification } = useNotificationContext();
 
+  const verifyingRef = useRef<string | null>(null);
   useEffect(() => {
-    const sub = Linking.addEventListener("url", async (event) => {
+    const handleDeepLink = async (event: any) => {
       setWalletOpen(false);
+
       const url = new URL(event.url);
       const ref = url.searchParams.get("reference");
 
       if (ref) {
-        console.log(ref);
+        console.log("Reference from deep link:", ref);
+
+        if (verifyingRef.current === ref) {
+          // prevent duplicate verification for same ref
+          return;
+        }
+        verifyingRef.current = ref;
+
         showNotification("Verifying payment...", "success");
         try {
           await verify_payment(ref.split(",")[0]);
-          await getWalletBalance("User");
-        } catch (error) {
-          console.log(error);
+        } catch (e) {
+          console.log("First verify failed, retrying...");
+          setTimeout(async () => {
+            try {
+              await verify_payment(ref.split(",")[0]);
+              await getWalletBalance("User");
+            } catch (err) {
+              console.log("Retry also failed:", err);
+            }
+          }, 5000);
+        } finally {
+          verifyingRef.current = null;
         }
       }
-    });
+    };
 
-    return () => sub.remove();
+    const sub = Linking.addEventListener("url", handleDeepLink);
+
+    return () => {
+      sub.remove?.();
+    };
   }, []);
 
   const { logout, signedIn } = useAuthContext();
@@ -55,6 +77,7 @@ const Account = () => {
     <>
       <Notification notification={notification} />
       <ScrollView
+        showsVerticalScrollIndicator={false}
         style={{
           backgroundColor: "#121212",
           flex: 1,
@@ -95,10 +118,7 @@ const Account = () => {
 
         {/* Wallet */}
         <TouchableWithoutFeedback
-          onPress={() => {
-            setWalletOpen(true);
-            console.log("clicked");
-          }}
+          onPress={() => setWalletOpen((prev: any) => !prev)}
         >
           <View
             style={{

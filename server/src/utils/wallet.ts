@@ -16,6 +16,8 @@ interface WalletInput {
 export const credit_wallet = async (reference: string) => {
   const transaction = await Transaction.findOne({ reference });
   if (!transaction) throw new Error("Transaction was not found");
+  if (transaction.status !== "pending")
+    throw new Error("This transaction has already been processed");
 
   const wallet_id = transaction?.wallet_id;
   const wallet = await Wallet.findById(wallet_id);

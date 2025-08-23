@@ -96,9 +96,10 @@ export const verify_payment = async (req: any, res: any) => {
     const tx = await credit_wallet(reference);
 
     res.status(200).json({ msg: "Wallet funded", transaction: tx });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ msg: "Verification failed" });
+    const msg = err.message || "Verification failed";
+    res.status(500).json({ msg });
   }
 };
 

@@ -5,7 +5,7 @@ import {
   TouchableWithoutFeedback,
   Image,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
@@ -213,6 +213,15 @@ const HomePage = () => {
     }
   }, [region]);
 
+  const memoizedPickupRouteCoords = useMemo(
+    () => toPickupRouteCoords,
+    [toPickupRouteCoords]
+  );
+  const memoizedDestinationRouteCoords = useMemo(
+    () => toDestinationRouteCoords,
+    [toDestinationRouteCoords]
+  );
+
   return (
     <>
       <Notification notification={notification} />
@@ -223,6 +232,7 @@ const HomePage = () => {
             style={styles.map}
             provider={PROVIDER_GOOGLE}
             ref={mapRef}
+            onMapLoaded={() => console.log("loaded")}
             initialRegion={{
               ...region,
               latitudeDelta: 0.02,
@@ -230,24 +240,22 @@ const HomePage = () => {
             }}
             customMapStyle={darkMapStyle}
           >
-            {region && (
-              <Marker
-                coordinate={{
-                  latitude: region.latitude,
-                  longitude: region.longitude,
-                }}
-                title="Your location"
-              >
-                <View style={styles.markerIcon}>
-                  <Image
-                    source={require("../../assets/images/icons/keke-icon.png")}
-                    style={styles.markerImage}
-                  />
-                </View>
-              </Marker>
-            )}
+            <Marker
+              coordinate={{
+                latitude: region.latitude,
+                longitude: region.longitude,
+              }}
+              title="Your location"
+            >
+              <View style={styles.markerIcon}>
+                <Image
+                  source={require("../../assets/images/icons/keke-icon.png")}
+                  style={styles.markerImage}
+                />
+              </View>
+            </Marker>
 
-            {ongoingRideData && toPickupRouteCoords && (
+            {ongoingRideData && memoizedPickupRouteCoords && (
               <Marker
                 coordinate={{
                   latitude: ongoingRideData.pickup.coordinates[0],
@@ -272,7 +280,7 @@ const HomePage = () => {
                 </View>
               </Marker>
             )}
-            {ongoingRideData && toDestinationRouteCoords && (
+            {ongoingRideData && memoizedDestinationRouteCoords && (
               <Marker
                 coordinate={{
                   latitude: ongoingRideData.destination.coordinates[0],
@@ -298,17 +306,17 @@ const HomePage = () => {
               </Marker>
             )}
 
-            {region && toPickupRouteCoords && (
+            {toPickupRouteCoords && (
               <Polyline
-                coordinates={toPickupRouteCoords}
+                coordinates={memoizedPickupRouteCoords}
                 strokeColor="#fff"
                 strokeWidth={4}
               />
             )}
 
-            {region && toDestinationRouteCoords && (
+            {toDestinationRouteCoords && (
               <Polyline
-                coordinates={toDestinationRouteCoords}
+                coordinates={memoizedDestinationRouteCoords}
                 strokeColor="#fff"
                 strokeWidth={4}
               />
