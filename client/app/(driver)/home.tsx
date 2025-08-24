@@ -203,11 +203,7 @@ const HomePage = () => {
   useEffect(() => {
     if (region && mapRef.current) {
       mapRef.current.animateToRegion(
-        {
-          ...region,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        },
+        region,
         1000 // duration in ms
       );
     }
@@ -232,12 +228,7 @@ const HomePage = () => {
             style={styles.map}
             provider={PROVIDER_GOOGLE}
             ref={mapRef}
-            onMapLoaded={() => console.log("loaded")}
-            initialRegion={{
-              ...region,
-              latitudeDelta: 0.02,
-              longitudeDelta: 0.02,
-            }}
+            initialRegion={region}
             customMapStyle={darkMapStyle}
           >
             <Marker

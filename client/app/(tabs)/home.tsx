@@ -37,7 +37,6 @@ const Home = () => {
     destinationCoords,
     routeCoords,
     mapRef,
-    locationLoading,
   } = useMapContext();
 
   const { appLoading } = useAuthContext();
@@ -49,45 +48,18 @@ const Home = () => {
   useEffect(() => {
     if (region && mapRef.current) {
       mapRef.current.animateToRegion(
-        {
-          ...region,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        },
+        region,
         1000 // duration in ms
       );
     }
   }, [region]);
-
-  if (appLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#121212",
-        }}
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 14,
-            fontFamily: "raleway-regular",
-          }}
-        >
-          App data is loading, please wait...
-        </Text>
-      </View>
-    );
-  }
 
   return (
     <>
       <Notification notification={notification} />
       <View style={{ backgroundColor: "#121212", flex: 1 }}>
         {/* Map */}
-        {!locationLoading && region && (
+        {region && (
           <MapView
             ref={mapRef}
             style={{ height: "75%" }}
