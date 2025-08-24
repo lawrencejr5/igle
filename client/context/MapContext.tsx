@@ -49,12 +49,12 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const get_place_name_func = async () => {
       await getPlaceName(region.latitude, region.longitude);
     };
+    if (region) get_place_name_func();
     if (region && mapRef.current) {
       mapRef.current.animateToRegion(
         region,
         1000 // duration in ms
       );
-      get_place_name_func();
     }
   }, [region]);
 

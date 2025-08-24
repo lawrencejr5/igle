@@ -19,6 +19,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useRideContext } from "../../../context/RideContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import { useWalletContext } from "../../../context/WalletContext";
+import { useMapContext } from "../../../context/MapContext";
 
 import Notification from "../../../components/Notification";
 import { useLoading } from "../../../context/LoadingContext";
@@ -32,18 +33,25 @@ const vehicleIcons: Record<string, any> = {
 };
 
 const Rides = () => {
-  const { notification } = useNotificationContext();
+  const { notification, showNotification } = useNotificationContext();
   const { appLoading, loadingState } = useLoading();
-  const { getUserCancelledRides, getUserCompletedRides } = useRideContext();
+  const { region, mapRef } = useMapContext();
+  const {
+    getUserCancelledRides,
+    getUserCompletedRides,
+    cancelling,
+    cancelRideRequest,
+    rideData,
+  } = useRideContext();
 
   const [category, setCategory] = useState<
     "ongoing" | "completed" | "cancelled"
   >("ongoing");
 
-  useEffect(() => {
-    if (category === "completed") getUserCompletedRides();
-    if (category === "cancelled") getUserCancelledRides();
-  }, [category]);
+  // useEffect(() => {
+  //   if (category === "completed") getUserCompletedRides();
+  //   if (category === "cancelled") getUserCancelledRides();
+  // }, [category]);
 
   const {
     ongoingRideData,
@@ -153,7 +161,9 @@ const EmptyState = ({ message }: { message: string }) => (
 const OngoingRide = ({ data }: { data: any }) => {
   const { showNotification } = useNotificationContext();
 
-  const { ongoingRideId, payForRide, cancelRideRequest } = useRideContext();
+  const { ongoingRideId, payForRide, cancelRideRequest, cancelling, rideData } =
+    useRideContext();
+  const { region, mapRef } = useMapContext();
 
   const makeCall = async (phone: string) => {
     const url = `tel:${phone}`;
@@ -179,11 +189,15 @@ const OngoingRide = ({ data }: { data: any }) => {
   };
 
   const cancel_ride = async () => {
+    const reason = "No reason";
+    const by = "rider";
+    const ride_id = rideData?._id || ongoingRideId;
+
     try {
-      if (!ongoingRideId) showNotification("An error occured", "error");
-      await cancelRideRequest(ongoingRideId!, "rider", "no reason");
-    } catch (error) {
-      console.log(error);
+      await cancelRideRequest(ride_id, by, reason);
+      if (region) mapRef.current.animateToRegion(region, 1000);
+    } catch (error: any) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -290,16 +304,19 @@ const OngoingRide = ({ data }: { data: any }) => {
             <View style={styles.pay_btn}>
               <Text style={styles.pay_btn_text}>Track</Text>
             </View>
-            <TouchableWithoutFeedback onPress={cancel_ride}>
+            <TouchableWithoutFeedback
+              onPress={cancel_ride}
+              disabled={cancelling}
+            >
               <Text
                 style={{
-                  color: "#ff0000",
+                  color: cancelling ? "#ff000080" : "#ff0000",
                   fontFamily: "raleway-bold",
                   textAlign: "center",
                   marginTop: 15,
                 }}
               >
-                Cancel ride
+                {cancelling ? "Cancelling..." : "Cancel ride"}
               </Text>
             </TouchableWithoutFeedback>
           </>
@@ -314,7 +331,10 @@ const OngoingRide = ({ data }: { data: any }) => {
                 </Text>
               </View>
             </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback onPress={cancel_ride}>
+            <TouchableWithoutFeedback
+              onPress={cancel_ride}
+              disabled={cancelling}
+            >
               <View
                 style={[
                   styles.pay_btn,
@@ -327,7 +347,7 @@ const OngoingRide = ({ data }: { data: any }) => {
                 ]}
               >
                 <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
-                  Cancel ride
+                  {cancelling ? "Cancelling..." : "Cancel ride"}
                 </Text>
               </View>
             </TouchableWithoutFeedback>
@@ -344,16 +364,16 @@ const OngoingRide = ({ data }: { data: any }) => {
           >
             Still searching for driver...
           </Text>
-          <TouchableWithoutFeedback onPress={cancel_ride}>
+          <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
             <Text
               style={{
-                color: "#ff0000",
+                color: cancelling ? "#ff000080" : "#ff0000",
                 fontFamily: "raleway-bold",
                 textAlign: "center",
                 marginTop: 15,
               }}
             >
-              Cancel ride
+              {cancelling ? "Cancelling..." : "Cancel ride"}
             </Text>
           </TouchableWithoutFeedback>
         </>
