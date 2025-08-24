@@ -390,7 +390,7 @@ const CompletedRides = ({ data }: { data: any }) => (
               }}
             >
               <Image
-                source={require("../../../assets/images/icons/keke-icon.png")}
+                source={vehicleIcons[ride.driver.vehicle_type]}
                 style={{ width: 30, height: 30 }}
               />
               <View
@@ -468,70 +468,81 @@ const CompletedRides = ({ data }: { data: any }) => (
 );
 
 const CancelledRides = ({ data }: { data: any }) => (
-  <View>
-    <View style={styles.ride_card}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "flex-start",
-          gap: 12,
-        }}
-      >
-        <Image
-          source={require("../../../assets/images/icons/sedan-icon.png")}
-          style={{ width: 30, height: 30 }}
-        />
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            flex: 1,
-          }}
-        >
-          <View>
-            <Text
+  <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+    {data.map((ride: any, i: number) => (
+      <View key={i}>
+        <View style={styles.ride_card}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              gap: 12,
+            }}
+          >
+            <Image
+              source={require("../../../assets/images/icons/sedan-icon.png")}
+              style={{ width: 30, height: 30 }}
+            />
+            <View
               style={{
-                fontFamily: "raleway-bold",
-                color: "#fff",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                gap: 10,
+                flex: 1,
               }}
             >
-              Asaba shoprite
-            </Text>
-            <Text
-              style={{
-                fontFamily: "raleway-semibold",
-                color: "grey",
-                fontSize: 11,
-              }}
-            >
-              20 Dec, 2025 . 5:00am
-            </Text>
-          </View>
-          <View>
-            <Text
-              style={{
-                color: "#e30f0fff",
-                fontFamily: "raleway-bold",
-                fontSize: 12,
-              }}
-            >
-              Cancelled
-            </Text>
-            <Text
-              style={{
-                color: "#848484ff",
-                fontFamily: "raleway-semibold",
-                fontSize: 11,
-                alignSelf: "flex-end",
-              }}
-            >
-              - By you
-            </Text>
+              <View style={{ width: "65%" }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontFamily: "raleway-bold",
+                    color: "#fff",
+                  }}
+                >
+                  {ride.destination.address}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "raleway-semibold",
+                    color: "grey",
+                    fontSize: 11,
+                  }}
+                >
+                  {new Date(ride.createdAt).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </Text>
+              </View>
+              <View>
+                <Text
+                  style={{
+                    color: "#e30f0fff",
+                    fontFamily: "raleway-bold",
+                    fontSize: 12,
+                  }}
+                >
+                  Cancelled
+                </Text>
+                <Text
+                  style={{
+                    color: "#848484ff",
+                    fontFamily: "raleway-semibold",
+                    fontSize: 11,
+                    alignSelf: "flex-end",
+                  }}
+                >
+                  - By {ride.cancelled.by === "rider" ? "you" : "driver"}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       </View>
-    </View>
-  </View>
+    ))}
+  </ScrollView>
 );
 
 export default Rides;
