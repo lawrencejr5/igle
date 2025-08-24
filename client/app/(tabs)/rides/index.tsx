@@ -7,7 +7,7 @@ import {
   Linking,
   ScrollView,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { router } from "expo-router";
 
@@ -34,10 +34,16 @@ const vehicleIcons: Record<string, any> = {
 const Rides = () => {
   const { notification } = useNotificationContext();
   const { appLoading, loadingState } = useLoading();
+  const { getUserCancelledRides, getUserCompletedRides } = useRideContext();
 
   const [category, setCategory] = useState<
     "ongoing" | "completed" | "cancelled"
   >("ongoing");
+
+  useEffect(() => {
+    if (category === "completed") getUserCompletedRides();
+    if (category === "cancelled") getUserCancelledRides();
+  }, [category]);
 
   const {
     ongoingRideData,
