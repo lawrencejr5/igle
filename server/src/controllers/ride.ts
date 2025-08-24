@@ -150,9 +150,13 @@ export const get_user_rides = async (
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
+    const { status } = req.query;
 
-    const ride = await Ride.find({ rider: user_id });
-    res.status(200).json({ msg: "success", rowCount: ride.length, ride });
+    const queryObj: { status?: string } = {};
+    if (status) queryObj.status = status as string;
+
+    const rides = await Ride.find({ rider: user_id, ...queryObj });
+    res.status(200).json({ msg: "success", rowCount: rides.length, rides });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }

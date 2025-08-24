@@ -19,7 +19,7 @@ import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
 import { useLoading } from "../../context/LoadingContext";
-import AppLoading from "../../skeletons/AppLoading";
+import AppLoading from "../../loadings/AppLoading";
 
 const Home = () => {
   // Side nav state

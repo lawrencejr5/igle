@@ -13,8 +13,19 @@ const LoadingContext = createContext<LoadingContextType | null>(null);
 
 const LoadingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [appLoading, setAppLoading] = useState<boolean>(false);
+  const [loadingState, setLoadingState] = useState<{
+    location: boolean;
+    completedRides: boolean;
+    cancelledRides: boolean;
+  }>({
+    location: false,
+    completedRides: false,
+    cancelledRides: false,
+  });
   return (
-    <LoadingContext.Provider value={{ appLoading, setAppLoading }}>
+    <LoadingContext.Provider
+      value={{ appLoading, setAppLoading, loadingState, setLoadingState }}
+    >
       {children}
     </LoadingContext.Provider>
   );
@@ -32,6 +43,19 @@ export const useLoading = () => {
 interface LoadingContextType {
   appLoading: boolean;
   setAppLoading: Dispatch<SetStateAction<boolean>>;
+
+  loadingState: {
+    location: boolean;
+    completedRides: boolean;
+    cancelledRides: boolean;
+  };
+  setLoadingState: Dispatch<
+    SetStateAction<{
+      location: boolean;
+      completedRides: boolean;
+      cancelledRides: boolean;
+    }>
+  >;
 }
 
 export default LoadingProvider;

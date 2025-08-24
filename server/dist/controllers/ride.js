@@ -135,8 +135,12 @@ const get_user_rides = (req, res) => __awaiter(void 0, void 0, void 0, function*
     var _a;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const ride = yield ride_1.default.find({ rider: user_id });
-        res.status(200).json({ msg: "success", rowCount: ride.length, ride });
+        const { status } = req.query;
+        const queryObj = {};
+        if (status)
+            queryObj.status = status;
+        const rides = yield ride_1.default.find(Object.assign({ rider: user_id }, queryObj));
+        res.status(200).json({ msg: "success", rowCount: rides.length, rides });
     }
     catch (err) {
         res.status(500).json({ msg: "Server error." });
@@ -275,7 +279,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     });
                     return;
                 }
-                else if (ride.payment_status !== "paid") {
+                if (ride.payment_status !== "paid") {
                     res.status(400).json({
                         msg: "This ride cannot start unless payment has been made",
                     });
@@ -283,7 +287,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
                 // Emitting ride status
                 if (user_socket)
-                    server_1.io.to(user_socket).emit("ride_in_progree", {
+                    server_1.io.to(user_socket).emit("ride_in_progress", {
                         msg: "Your ride has arrived",
                     });
                 if (driver_socket)

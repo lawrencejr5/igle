@@ -19,7 +19,7 @@ import { useAuthContext } from "../../../context/AuthContext";
 import { useWalletContext } from "../../../context/WalletContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import { useLoading } from "../../../context/LoadingContext";
-import AppLoading from "../../../skeletons/AppLoading";
+import AppLoading from "../../../loadings/AppLoading";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);

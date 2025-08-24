@@ -21,12 +21,13 @@ import { useWalletContext } from "../../../context/WalletContext";
 
 import Notification from "../../../components/Notification";
 import { useLoading } from "../../../context/LoadingContext";
-import AppLoading from "../../../skeletons/AppLoading";
+import AppLoading from "../../../loadings/AppLoading";
+import RideLoading from "../../../loadings/RideLoading";
 
 const Rides = () => {
   const { showNotification, notification } = useNotificationContext();
   const { userWalletBal } = useWalletContext();
-  const { appLoading } = useLoading();
+  const { appLoading, loadingState } = useLoading();
 
   const [category, setCategory] = useState<
     "ongoing" | "completed" | "cancelled"
@@ -44,6 +45,8 @@ const Rides = () => {
     ongoingRideId,
     payForRide,
     cancelRideRequest,
+    userCompletedRides,
+    userCancelledRides,
   } = useRideContext();
 
   const makeCall = async (phone: string) => {
@@ -368,166 +371,220 @@ const Rides = () => {
               ))}
 
             {/* Completed data */}
-            {category === "completed" && (
-              <View>
-                <View style={styles.ride_card}>
-                  <View
+            {category === "completed" &&
+              (loadingState.completedRides ? (
+                <RideLoading />
+              ) : !userCompletedRides ? (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
                     style={{
-                      backgroundColor: "#4cd90635",
-                      marginBottom: 15,
-                      alignSelf: "flex-start",
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 15,
+                      color: "#fff",
+                      fontSize: 18,
+                      fontFamily: "raleway-bold",
+                      textAlign: "center",
+                      width: "80%",
                     }}
                   >
-                    <Text
+                    You don't have any completed rides yet
+                  </Text>
+                </View>
+              ) : (
+                <View>
+                  <View style={styles.ride_card}>
+                    <View
                       style={{
-                        color: "#4cd906ff",
-                        fontFamily: "raleway-bold",
-                        fontSize: 10,
+                        backgroundColor: "#4cd90635",
+                        marginBottom: 15,
+                        alignSelf: "flex-start",
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 15,
                       }}
                     >
-                      Completed
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      gap: 12,
-                    }}
-                  >
-                    <Image
-                      source={require("../../../assets/images/icons/keke-icon.png")}
-                      style={{ width: 30, height: 30 }}
-                    />
+                      <Text
+                        style={{
+                          color: "#4cd906ff",
+                          fontFamily: "raleway-bold",
+                          fontSize: 10,
+                        }}
+                      >
+                        Completed
+                      </Text>
+                    </View>
                     <View
                       style={{
                         flexDirection: "row",
-                        justifyContent: "space-between",
-                        flex: 1,
-                        paddingBottom: 10,
+                        justifyContent: "flex-start",
+                        gap: 12,
                       }}
                     >
-                      <View>
-                        <Text
-                          style={{ fontFamily: "raleway-bold", color: "#fff" }}
-                        >
-                          Konwea plaza
-                        </Text>
-                        <Text
-                          style={{
-                            fontFamily: "raleway-semibold",
-                            color: "grey",
-                            fontSize: 11,
-                          }}
-                        >
-                          20 Dec, 2025 . 5:00am
-                        </Text>
-                      </View>
-                      <View>
-                        <Text
-                          style={{
-                            color: "#fff",
-                            fontFamily: "poppins-bold",
-                            fontSize: 12,
-                          }}
-                        >
-                          500 NGN
-                        </Text>
-                        <Text
-                          style={{
-                            fontFamily: "raleway-semibold",
-                            color: "grey",
-                            fontSize: 11,
-                          }}
-                        >
-                          Wallet
-                        </Text>
+                      <Image
+                        source={require("../../../assets/images/icons/keke-icon.png")}
+                        style={{ width: 30, height: 30 }}
+                      />
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          flex: 1,
+                          paddingBottom: 10,
+                        }}
+                      >
+                        <View>
+                          <Text
+                            style={{
+                              fontFamily: "raleway-bold",
+                              color: "#fff",
+                            }}
+                          >
+                            Konwea plaza
+                          </Text>
+                          <Text
+                            style={{
+                              fontFamily: "raleway-semibold",
+                              color: "grey",
+                              fontSize: 11,
+                            }}
+                          >
+                            20 Dec, 2025 . 5:00am
+                          </Text>
+                        </View>
+                        <View>
+                          <Text
+                            style={{
+                              color: "#fff",
+                              fontFamily: "poppins-bold",
+                              fontSize: 12,
+                            }}
+                          >
+                            500 NGN
+                          </Text>
+                          <Text
+                            style={{
+                              fontFamily: "raleway-semibold",
+                              color: "grey",
+                              fontSize: 11,
+                            }}
+                          >
+                            Wallet
+                          </Text>
+                        </View>
                       </View>
                     </View>
+                    {/* Ride route */}
+                    <RideRoute
+                      from="Anglican girls grammar school"
+                      to="Konwea Plaza"
+                    />
+                    <TouchableWithoutFeedback
+                      onPress={() => router.push("./rides/ride_detail")}
+                    >
+                      <View style={styles.pay_btn}>
+                        <Text style={styles.pay_btn_text}>
+                          View ride details
+                        </Text>
+                      </View>
+                    </TouchableWithoutFeedback>
                   </View>
-                  {/* Ride route */}
-                  <RideRoute
-                    from="Anglican girls grammar school"
-                    to="Konwea Plaza"
-                  />
-                  <TouchableWithoutFeedback
-                    onPress={() => router.push("./rides/ride_detail")}
-                  >
-                    <View style={styles.pay_btn}>
-                      <Text style={styles.pay_btn_text}>View ride details</Text>
-                    </View>
-                  </TouchableWithoutFeedback>
                 </View>
-              </View>
-            )}
+              ))}
 
             {/* Cancelled data */}
-            {category === "cancelled" && (
-              <View>
-                <View style={styles.ride_card}>
-                  <View
+            {category === "cancelled" &&
+              (loadingState.cancelledRides ? (
+                <RideLoading />
+              ) : !userCancelledRides ? (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "flex-start",
-                      gap: 12,
+                      color: "#fff",
+                      fontSize: 18,
+                      fontFamily: "raleway-bold",
+                      textAlign: "center",
+                      width: "80%",
                     }}
                   >
-                    <Image
-                      source={require("../../../assets/images/icons/sedan-icon.png")}
-                      style={{ width: 30, height: 30 }}
-                    />
+                    You don't have any cancelled rides yet
+                  </Text>
+                </View>
+              ) : (
+                <View>
+                  <View style={styles.ride_card}>
                     <View
                       style={{
                         flexDirection: "row",
-                        justifyContent: "space-between",
-                        flex: 1,
+                        justifyContent: "flex-start",
+                        gap: 12,
                       }}
                     >
-                      <View>
-                        <Text
-                          style={{ fontFamily: "raleway-bold", color: "#fff" }}
-                        >
-                          Asaba shoprite
-                        </Text>
-                        <Text
-                          style={{
-                            fontFamily: "raleway-semibold",
-                            color: "grey",
-                            fontSize: 11,
-                          }}
-                        >
-                          20 Dec, 2025 . 5:00am
-                        </Text>
-                      </View>
-                      <View>
-                        <Text
-                          style={{
-                            color: "#e30f0fff",
-                            fontFamily: "raleway-bold",
-                            fontSize: 12,
-                          }}
-                        >
-                          Cancelled
-                        </Text>
-                        <Text
-                          style={{
-                            color: "#848484ff",
-                            fontFamily: "raleway-semibold",
-                            fontSize: 11,
-                            alignSelf: "flex-end",
-                          }}
-                        >
-                          - By you
-                        </Text>
+                      <Image
+                        source={require("../../../assets/images/icons/sedan-icon.png")}
+                        style={{ width: 30, height: 30 }}
+                      />
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          flex: 1,
+                        }}
+                      >
+                        <View>
+                          <Text
+                            style={{
+                              fontFamily: "raleway-bold",
+                              color: "#fff",
+                            }}
+                          >
+                            Asaba shoprite
+                          </Text>
+                          <Text
+                            style={{
+                              fontFamily: "raleway-semibold",
+                              color: "grey",
+                              fontSize: 11,
+                            }}
+                          >
+                            20 Dec, 2025 . 5:00am
+                          </Text>
+                        </View>
+                        <View>
+                          <Text
+                            style={{
+                              color: "#e30f0fff",
+                              fontFamily: "raleway-bold",
+                              fontSize: 12,
+                            }}
+                          >
+                            Cancelled
+                          </Text>
+                          <Text
+                            style={{
+                              color: "#848484ff",
+                              fontFamily: "raleway-semibold",
+                              fontSize: 11,
+                              alignSelf: "flex-end",
+                            }}
+                          >
+                            - By you
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
                 </View>
-              </View>
-            )}
+              ))}
           </View>
         </>
       )}

@@ -18,6 +18,7 @@ import { useDriverAuthContext } from "./DriverAuthContext";
 import { useAuthContext } from "./AuthContext";
 import { useWalletContext } from "./WalletContext";
 import { API_URLS } from "../data/constants";
+import { useLoading } from "./LoadingContext";
 
 const RideContext = createContext<RideContextType | null>(null);
 
@@ -53,6 +54,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const [modalUp, setModalUp] = useState<boolean>(false);
 
   const { getDriverData } = useDriverAuthContext();
+  const { loadingState, setLoadingState } = useLoading();
 
   const { userSocket } = useAuthContext();
 
@@ -110,6 +112,11 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       userSocket.off("ride_completed", onRideCompleted);
     };
   }, [userSocket]);
+
+  useEffect(() => {
+    getUserCancelledRides();
+    getUserCompletedRides();
+  }, []);
 
   useEffect(() => {
     const loadOngoingRide = async () => {
@@ -195,7 +202,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         headers: { Authorization: `Bearer ${token}` },
       });
       setOngoingRideData(data.ride);
-      // console.log(ongoingRideData);
     } catch (error: any) {
       console.log(error);
       showNotification(error.response.data.msg, "error");
@@ -223,6 +229,48 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const fetchUserRides = async (
+    status: "completed" | "cancelled"
+  ): Promise<any> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.get(`${API_URL}/user?status=${status}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.rides) return data.rides;
+      else throw new Error("An error occured");
+    } catch (error: any) {
+      const errMsg = error.response.data.msg || "Couldn't fetch rides";
+      throw new Error(errMsg);
+    }
+  };
+
+  const [userCompletedRides, setUserCompletedRides] = useState<any>(null);
+  const getUserCompletedRides = async (): Promise<void> => {
+    setLoadingState((prev: any) => ({ ...prev, completedRides: true }));
+    try {
+      const rides = await fetchUserRides("completed");
+      setUserCompletedRides(rides);
+    } catch (error: any) {
+      console.log(error.message);
+    } finally {
+      setLoadingState((prev: any) => ({ ...prev, completedRides: true }));
+    }
+  };
+
+  const [userCancelledRides, setUserCancelledRides] = useState<any>(null);
+  const getUserCancelledRides = async (): Promise<void> => {
+    setLoadingState((prev: any) => ({ ...prev, cancelledRides: true }));
+    try {
+      const rides = await fetchUserRides("cancelled");
+      setUserCancelledRides(rides);
+    } catch (error: any) {
+      console.log(error.message);
+    } finally {
+      setLoadingState((prev: any) => ({ ...prev, cancelledRides: false }));
+    }
+  };
+
   return (
     <RideContext.Provider
       value={{
@@ -239,6 +287,12 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         ongoingRideData,
         cancelling,
         setCancelling,
+        userCancelledRides,
+        userCompletedRides,
+        setUserCancelledRides,
+        setUserCompletedRides,
+        getUserCompletedRides,
+        getUserCancelledRides,
       }}
     >
       {children}
@@ -271,6 +325,13 @@ export interface RideContextType {
   ongoingRideId: string | null;
   setOngoingRideId: Dispatch<SetStateAction<string | null>>;
   ongoingRideData: any;
+
+  userCompletedRides: any;
+  setUserCompletedRides: Dispatch<SetStateAction<any>>;
+  getUserCompletedRides: () => Promise<void>;
+  userCancelledRides: any;
+  setUserCancelledRides: Dispatch<SetStateAction<any>>;
+  getUserCancelledRides: () => Promise<void>;
 }
 
 export const useRideContext = () => {
