@@ -323,7 +323,8 @@ export const update_ride_status = async (
             msg: "Failed to start ride",
           });
           return;
-        } else if (ride.payment_status !== "paid") {
+        }
+        if (ride.payment_status !== "paid") {
           res.status(400).json({
             msg: "This ride cannot start unless payment has been made",
           });
@@ -331,7 +332,7 @@ export const update_ride_status = async (
         }
         // Emitting ride status
         if (user_socket)
-          io.to(user_socket).emit("ride_in_progree", {
+          io.to(user_socket).emit("ride_in_progress", {
             msg: "Your ride has arrived",
           });
         if (driver_socket)
