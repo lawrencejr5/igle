@@ -9,8 +9,6 @@ import Feather from "@expo/vector-icons/Feather";
 
 import { darkMapStyle } from "../../data/map.dark";
 
-import * as Location from "expo-location";
-
 import SideNav from "../../components/SideNav";
 import NotificationScreen from "../../components/screens/NotificationScreen";
 
@@ -20,7 +18,8 @@ import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
-import { useAuthContext } from "../../context/AuthContext";
+import { useLoading } from "../../context/LoadingContext";
+import AppLoading from "../../skeletons/AppLoading";
 
 const Home = () => {
   // Side nav state
@@ -39,7 +38,7 @@ const Home = () => {
     mapRef,
   } = useMapContext();
 
-  const { appLoading } = useAuthContext();
+  const { appLoading } = useLoading();
 
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);
@@ -56,106 +55,114 @@ const Home = () => {
 
   return (
     <>
-      <Notification notification={notification} />
-      <View style={{ backgroundColor: "#121212", flex: 1 }}>
-        {/* Map */}
-        {region && (
-          <MapView
-            ref={mapRef}
-            style={{ height: "75%" }}
-            provider={PROVIDER_GOOGLE}
-            initialRegion={region}
-            customMapStyle={darkMapStyle}
-          >
-            <Marker
-              coordinate={{
-                latitude: region.latitude,
-                longitude: region.longitude,
-              }}
-              title="Your location"
-            >
-              <View
-                style={{
-                  backgroundColor: "white",
-                  padding: 5,
-                  borderRadius: 50,
-                }}
+      {appLoading ? (
+        <AppLoading />
+      ) : (
+        <>
+          <Notification notification={notification} />
+          <View style={{ backgroundColor: "#121212", flex: 1 }}>
+            {/* Map */}
+            {region && (
+              <MapView
+                ref={mapRef}
+                style={{ height: "75%" }}
+                provider={PROVIDER_GOOGLE}
+                initialRegion={region}
+                customMapStyle={darkMapStyle}
               >
-                <View
-                  style={{
-                    backgroundColor: "black",
-                    padding: 5,
-                    borderRadius: 50,
+                <Marker
+                  coordinate={{
+                    latitude: region.latitude,
+                    longitude: region.longitude,
                   }}
-                />
-              </View>
-            </Marker>
-            {destinationCoords && destination && (
-              <Marker
-                coordinate={{
-                  latitude: destinationCoords[0],
-                  longitude: destinationCoords[1],
-                }}
-                title="Destination"
-              >
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    padding: 4,
-                    borderRadius: 2,
-                  }}
+                  title="Your location"
                 >
                   <View
                     style={{
-                      backgroundColor: "black",
-                      padding: 4,
-                      borderRadius: 2,
+                      backgroundColor: "white",
+                      padding: 5,
+                      borderRadius: 50,
                     }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 5,
+                        borderRadius: 50,
+                      }}
+                    />
+                  </View>
+                </Marker>
+                {destinationCoords && destination && (
+                  <Marker
+                    coordinate={{
+                      latitude: destinationCoords[0],
+                      longitude: destinationCoords[1],
+                    }}
+                    title="Destination"
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        padding: 4,
+                        borderRadius: 2,
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: "black",
+                          padding: 4,
+                          borderRadius: 2,
+                        }}
+                      />
+                    </View>
+                  </Marker>
+                )}
+
+                {routeCoords.length > 0 && destination && (
+                  <Polyline
+                    coordinates={routeCoords}
+                    strokeColor="#fff"
+                    strokeWidth={4}
                   />
+                )}
+              </MapView>
+            )}
+
+            {/* Nav */}
+            <View style={styles.nav_container}>
+              <TouchableWithoutFeedback onPress={() => setSideNavOpen(true)}>
+                <View style={styles.nav_box}>
+                  <Feather name="menu" size={22} color="white" />
                 </View>
-              </Marker>
-            )}
-
-            {routeCoords.length > 0 && destination && (
-              <Polyline
-                coordinates={routeCoords}
-                strokeColor="#fff"
-                strokeWidth={4}
-              />
-            )}
-          </MapView>
-        )}
-
-        {/* Nav */}
-        <View style={styles.nav_container}>
-          <TouchableWithoutFeedback onPress={() => setSideNavOpen(true)}>
-            <View style={styles.nav_box}>
-              <Feather name="menu" size={22} color="white" />
+              </TouchableWithoutFeedback>
+              <TouchableWithoutFeedback
+                onPress={() => setOpenNotification(true)}
+              >
+                <View style={styles.nav_box}>
+                  <Feather name="bell" size={22} color="white" />
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback onPress={() => setOpenNotification(true)}>
-            <View style={styles.nav_box}>
-              <Feather name="bell" size={22} color="white" />
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
 
-        {/* Side nav */}
-        <SideNav
-          open={sideNavOpen}
-          setSideNavOpen={setSideNavOpen}
-          mode="rider"
-        />
+            {/* Side nav */}
+            <SideNav
+              open={sideNavOpen}
+              setSideNavOpen={setSideNavOpen}
+              mode="rider"
+            />
 
-        {/* Notification screen */}
-        <NotificationScreen
-          open={openNotification}
-          setOpen={setOpenNotification}
-        />
+            {/* Notification screen */}
+            <NotificationScreen
+              open={openNotification}
+              setOpen={setOpenNotification}
+            />
 
-        {/* Choose route Modal */}
-        <RouteModal />
-      </View>
+            {/* Choose route Modal */}
+            <RouteModal />
+          </View>
+        </>
+      )}
     </>
   );
 };
