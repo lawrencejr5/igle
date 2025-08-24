@@ -49,7 +49,13 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const get_place_name_func = async () => {
       await getPlaceName(region.latitude, region.longitude);
     };
-    if (region) get_place_name_func();
+    if (region && mapRef.current) {
+      mapRef.current.animateToRegion(
+        region,
+        1000 // duration in ms
+      );
+      get_place_name_func();
+    }
   }, [region]);
 
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
@@ -106,6 +112,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         longitudeDelta: 0.02,
       });
       await AsyncStorage.setItem("region", JSON.stringify(region));
+      if (region) mapRef.current?.animateToRegion(region, 1000);
     } catch (error: any) {
       throw new Error(error.message);
     } finally {

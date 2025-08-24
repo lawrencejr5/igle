@@ -39,6 +39,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setDestination,
     setDestinationCoords,
     setRideDetails,
+    mapRef,
+    region,
+    set_user_location,
   } = useMapContext();
   const { getWalletBalance } = useWalletContext();
 
@@ -58,17 +61,53 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
     const onRideAccepted = async (data: any) => {
       const { driver_id, ride_id } = data;
-      fetchOngoingRideData(ride_id);
-      await AsyncStorage.setItem("ongoingRideId", ride_id);
-      await getDriverData(driver_id);
-      setModalUp(true);
-      setRideStatus("accepted");
-      console.log("accepted", data);
+      showNotification("Ride has been accepted", "success");
+      try {
+        fetchOngoingRideData(ride_id);
+        await AsyncStorage.setItem("ongoingRideId", ride_id);
+        await getDriverData(driver_id);
+        setModalUp(true);
+        setRideStatus("accepted");
+        console.log("accepted", data);
+      } catch (error: any) {
+        throw new Error("An error occured");
+      }
+    };
+
+    const onRideArrival = async (data: any) => {
+      showNotification("Your ride has arrived", "success");
+      console.log("Your ride has arrived");
+    };
+    const onRideStarted = async (data: any) => {
+      showNotification("Your ride has started", "success");
+      console.log("Your ride has started");
+    };
+    const onRideCompleted = async (data: any) => {
+      await AsyncStorage.removeItem("ongoingRideId");
+
+      setOngoingRideId(null);
+      setRideData(null);
+      setRideStatus("");
+      setRideDetails(null);
+      setDestinationCoords(null);
+      setDestination("");
+      setModalUp(false);
+      showNotification("Your ride has been completed", "success");
+
+      await set_user_location();
+
+      if (region) mapRef.current.animateToRegion(region, 1000);
     };
 
     userSocket.on("ride_accepted", onRideAccepted);
+    userSocket.on("ride_arrival", onRideArrival);
+    userSocket.on("ride_in_progress", onRideStarted);
+    userSocket.on("ride_completed", onRideCompleted);
     return () => {
       userSocket.off("ride_accepted", onRideAccepted);
+      userSocket.off("ride_arrival", onRideArrival);
+      userSocket.off("ride_in_progree", onRideStarted);
+      userSocket.off("ride_completed", onRideCompleted);
     };
   }, [userSocket]);
 
