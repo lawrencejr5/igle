@@ -34,7 +34,12 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const { showNotification } = useNotificationContext();
-  const { calculateRide } = useMapContext();
+  const {
+    calculateRide,
+    setDestination,
+    setDestinationCoords,
+    setRideDetails,
+  } = useMapContext();
   const { getWalletBalance } = useWalletContext();
 
   const [ongoingRideId, setOngoingRideId] = useState<string | null>(null);
@@ -113,11 +118,13 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const [cancelling, setCancelling] = useState<boolean>(false);
   const cancelRideRequest = async (
     ride_id: string,
     by: "rider" | "driver",
     reason: string
   ): Promise<void> => {
+    setCancelling(true);
     const token = await AsyncStorage.getItem("token");
     try {
       await axios.patch(
@@ -130,10 +137,15 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       setRideData(null);
       showNotification("Ride request cancelled", "error");
       setRideStatus("");
+      setRideDetails(null);
+      setDestinationCoords(null);
+      setDestination("");
       setModalUp(false);
     } catch (error: any) {
       console.log(error);
       showNotification(error.response.data.msg, "error");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -186,6 +198,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         ongoingRideId,
         setOngoingRideId,
         ongoingRideData,
+        cancelling,
+        setCancelling,
       }}
     >
       {children}
@@ -204,6 +218,8 @@ export interface RideContextType {
     by: "rider" | "driver",
     reason: string
   ) => Promise<void>;
+  cancelling: boolean;
+  setCancelling: Dispatch<SetStateAction<boolean>>;
 
   payForRide: () => Promise<void>;
 

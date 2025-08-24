@@ -27,11 +27,11 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, []);
 
   const [destination, setDestination] = useState<string>("");
-  const [destinationCoords, setDestinationCoords] = useState<[number, number]>([
-    0, 0,
-  ]);
+  const [destinationCoords, setDestinationCoords] = useState<
+    [number, number] | null
+  >(null);
   useEffect(() => {
-    if (destinationCoords[0] || destinationCoords[1]) {
+    if (destinationCoords) {
       calculateRide(
         [region.latitude, region.longitude],
         [...destinationCoords]
@@ -60,7 +60,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     distanceKm: number;
     durationMins: number;
     amount: number;
-  }>({ distanceKm: 0, durationMins: 0, amount: 0 });
+  } | null>(null);
 
   const [routeCoords, setRouteCoords] = useState<
     { latitude: number; longitude: number }[]
@@ -71,7 +71,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const fetchRoute = async () => {
       const coords = await getRoute(
         [region.latitude, region.longitude],
-        destinationCoords
+        destinationCoords!
       );
       if (coords) {
         setRouteCoords(coords);
@@ -82,7 +82,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         });
       }
     };
-    if (destinationCoords[0] || destinationCoords[1]) fetchRoute();
+    if (destinationCoords) fetchRoute();
   }, [destinationCoords]);
 
   const [mapSuggestions, setMapSuggestions] = useState<any>(null);
@@ -193,11 +193,13 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [calculating, setCalculating] = useState<boolean>(false);
   const calculateRide = async (
     pickup: [number, number],
     destination: [number, number]
   ): Promise<{ distanceKm: number; durationMins: number } | undefined> => {
     try {
+      setCalculating(true);
       const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickup[0]},${pickup[1]}&destinations=${destination[0]},${destination[1]}&key=${API_KEY}`;
 
       const { data } = await axios.get(url);
@@ -229,6 +231,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
     } catch (error) {
       console.error("Error fetching ride info:", error);
+    } finally {
+      setCalculating(false);
     }
   };
 
@@ -253,6 +257,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setDestinationCoords,
 
         calculateRide,
+        calculating,
+        setCalculating,
         rideDetails,
         setRideDetails,
 
@@ -279,8 +285,8 @@ export interface MapContextType {
 
   destination: string;
   setDestination: Dispatch<SetStateAction<string>>;
-  destinationCoords: [number, number];
-  setDestinationCoords: Dispatch<SetStateAction<[number, number]>>;
+  destinationCoords: [number, number] | null;
+  setDestinationCoords: Dispatch<SetStateAction<[number, number] | null>>;
 
   getPlaceCoords: (place_id: string) => Promise<[number, number] | undefined>;
   getPlaceName: (lat: number, lng: number) => Promise<void>;
@@ -288,10 +294,20 @@ export interface MapContextType {
     pickup: [number, number],
     destination: [number, number]
   ) => Promise<{ distanceKm: number; durationMins: number } | undefined>;
+  calculating: boolean;
+  setCalculating: Dispatch<SetStateAction<boolean>>;
 
-  rideDetails: { distanceKm: number; durationMins: number; amount: number };
+  rideDetails: {
+    distanceKm: number;
+    durationMins: number;
+    amount: number;
+  } | null;
   setRideDetails: Dispatch<
-    SetStateAction<{ distanceKm: number; durationMins: number; amount: number }>
+    SetStateAction<{
+      distanceKm: number;
+      durationMins: number;
+      amount: number;
+    } | null>
   >;
 
   locationLoading: boolean;

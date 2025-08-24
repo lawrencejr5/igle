@@ -39,14 +39,17 @@ const RouteModal = () => {
     locationLoading,
     rideDetails,
     calculateRide,
+    calculating,
     destination,
     setDestination,
     destinationCoords,
     setDestinationCoords,
+    mapRef,
   } = useMapContext();
 
   const {
     rideRequest,
+    cancelling,
     cancelRideRequest,
     rideStatus,
     setRideStatus,
@@ -76,10 +79,8 @@ const RouteModal = () => {
   };
 
   const [booking, setBooking] = useState<boolean>(false);
-  const [disabled, setDisabled] = useState<boolean>(false);
   const book_ride = async () => {
     setBooking(true);
-    setDisabled(true);
 
     const pickupCoords: [number, number] = [region.latitude, region.longitude];
 
@@ -92,7 +93,7 @@ const RouteModal = () => {
     try {
       await rideRequest(
         { address: userAddress, coordinates: pickupCoords },
-        { address: destination, coordinates: destinationCoords }
+        { address: destination, coordinates: destinationCoords! }
       );
       setBooking(false);
       setModalUp(false);
@@ -101,7 +102,6 @@ const RouteModal = () => {
       showNotification(error.message, "error");
     } finally {
       setBooking(false);
-      setDisabled(false);
     }
   };
 
@@ -112,9 +112,7 @@ const RouteModal = () => {
 
     try {
       await cancelRideRequest(ride_id, by, reason);
-      setModalUp(false);
-      setRideStatus("");
-      setDestination("");
+      if (region) mapRef.current.animateToRegion(region, 1000);
     } catch (error: any) {
       showNotification(error.message, "error");
     }
@@ -360,7 +358,8 @@ const RouteModal = () => {
                     fontSize: 12,
                   }}
                 >
-                  {rideDetails.distanceKm}km . {rideDetails.durationMins}mins
+                  {rideDetails?.distanceKm ?? "--"}km .{" "}
+                  {rideDetails?.durationMins ?? "--"}mins
                 </Text>
               </View>
             </View>
@@ -373,18 +372,21 @@ const RouteModal = () => {
                   fontSize: 16,
                 }}
               >
-                NGN {rideDetails.amount.toLocaleString()}
+                NGN {rideDetails?.amount.toLocaleString() ?? "----"}
               </Text>
             </View>
           </View>
-          <TouchableWithoutFeedback onPress={book_ride} disabled={disabled}>
+          <TouchableWithoutFeedback
+            onPress={book_ride}
+            disabled={booking || calculating}
+          >
             <View
               style={{
                 marginVertical: 20,
                 padding: 10,
                 borderRadius: 30,
                 backgroundColor: "#fff",
-                opacity: disabled ? 0.5 : 1,
+                opacity: booking || calculating ? 0.5 : 1,
               }}
             >
               <Text
@@ -449,17 +451,17 @@ const RouteModal = () => {
             </Text>
           </View>
 
-          <TouchableWithoutFeedback onPress={cancel_ride}>
+          <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
             <Text
               style={{
-                color: "#ff0000",
+                color: cancelling ? "#ff000080" : "#ff0000",
                 fontFamily: "raleway-bold",
                 fontSize: 16,
                 textAlign: "center",
                 marginTop: 50,
               }}
             >
-              Cancel ride
+              {cancelling ? "Cancelling..." : "Canel ride"}
             </Text>
           </TouchableWithoutFeedback>
         </>
@@ -513,7 +515,8 @@ const RouteModal = () => {
               <View style={styles.timeRow}>
                 <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
                 <Text style={styles.timeText}>
-                  {rideDetails.durationMins} mins ({rideDetails.distanceKm} km)
+                  {rideDetails?.durationMins} mins ({rideDetails?.distanceKm}{" "}
+                  km)
                 </Text>
               </View>
 
@@ -538,7 +541,7 @@ const RouteModal = () => {
               }}
             >
               <Text style={styles.priceText}>
-                {rideDetails.amount.toLocaleString()} NGN
+                {rideDetails?.amount.toLocaleString()} NGN
               </Text>
               <TouchableWithoutFeedback
                 onPress={() => {
@@ -579,16 +582,16 @@ const RouteModal = () => {
             </Text>
           </View>
 
-          <TouchableWithoutFeedback onPress={cancel_ride}>
+          <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
             <Text
               style={{
+                color: cancelling ? "#ff000080" : "#ff0000",
                 marginTop: 50,
-                color: "#ff0000",
                 fontFamily: "raleway-bold",
                 textAlign: "center",
               }}
             >
-              Canel this ride
+              {cancelling ? "Cancelling..." : "Canel this ride"}
             </Text>
           </TouchableWithoutFeedback>
         </>
@@ -625,7 +628,7 @@ const RouteModal = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 gap: 20,
-                marginTop: 10,
+                marginTop: 25,
               }}
             >
               <TouchableWithoutFeedback onPress={pay_func} disabled={paying}>
@@ -705,8 +708,6 @@ const RouteModal = () => {
 
           <TouchableWithoutFeedback
             onPress={() => {
-              setModalUp(false);
-              setRideStatus("");
               router.push("../(tabs)/rides");
             }}
           >
