@@ -139,7 +139,16 @@ const get_user_rides = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const queryObj = {};
         if (status)
             queryObj.status = status;
-        const rides = yield ride_1.default.find(Object.assign({ rider: user_id }, queryObj));
+        const rides = yield ride_1.default.find(Object.assign({ rider: user_id }, queryObj))
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location",
+            populate: {
+                path: "user",
+                select: "name email phone",
+            },
+        })
+            .populate("rider", "name phone");
         res.status(200).json({ msg: "success", rowCount: rides.length, rides });
     }
     catch (err) {

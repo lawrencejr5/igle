@@ -254,7 +254,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     } catch (error: any) {
       console.log(error.message);
     } finally {
-      setLoadingState((prev: any) => ({ ...prev, completedRides: true }));
+      setLoadingState((prev: any) => ({ ...prev, completedRides: false }));
     }
   };
 

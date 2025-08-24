@@ -155,7 +155,16 @@ export const get_user_rides = async (
     const queryObj: { status?: string } = {};
     if (status) queryObj.status = status as string;
 
-    const rides = await Ride.find({ rider: user_id, ...queryObj });
+    const rides = await Ride.find({ rider: user_id, ...queryObj })
+      .populate({
+        path: "driver",
+        select: "user vehicle_type vehicle current_location",
+        populate: {
+          path: "user",
+          select: "name email phone",
+        },
+      })
+      .populate("rider", "name phone");
     res.status(200).json({ msg: "success", rowCount: rides.length, rides });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
