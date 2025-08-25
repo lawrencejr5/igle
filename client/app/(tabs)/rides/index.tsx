@@ -62,7 +62,7 @@ const Rides = () => {
 
             {/* Ongoing data */}
             {category === "ongoing" &&
-              (ongoingRideId && ongoingRideData ? (
+              (ongoingRideData ? (
                 <OngoingRide data={ongoingRideData} />
               ) : (
                 <EmptyState message="You don't have any ongoing rides" />
@@ -148,8 +148,13 @@ const EmptyState = ({ message }: { message: string }) => (
 const OngoingRide = ({ data }: { data: any }) => {
   const { showNotification } = useNotificationContext();
 
-  const { ongoingRideId, payForRide, cancelRideRequest, cancelling, rideData } =
-    useRideContext();
+  const {
+    ongoingRideId,
+    payForRide,
+    cancelRideRequest,
+    cancelling,
+    ongoingRideData,
+  } = useRideContext();
   const { region, mapRef } = useMapContext();
 
   const makeCall = async (phone: string) => {
@@ -178,7 +183,7 @@ const OngoingRide = ({ data }: { data: any }) => {
   const cancel_ride = async () => {
     const reason = "No reason";
     const by = "rider";
-    const ride_id = rideData?._id || ongoingRideId;
+    const ride_id = ongoingRideData?._id;
 
     try {
       await cancelRideRequest(ride_id, by, reason);

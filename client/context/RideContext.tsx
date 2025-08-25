@@ -88,6 +88,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       await AsyncStorage.removeItem("ongoingRideId");
 
       setOngoingRideId(null);
+      setOngoingRideData(null);
       setRideData(null);
       setRideStatus("");
       setRideDetails(null);
@@ -121,14 +122,10 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   useEffect(() => {
     const loadOngoingRide = async () => {
       try {
-        const id = await AsyncStorage.getItem("ongoingRideId");
-        setOngoingRideId(id ?? null);
-
-        if (id) {
-          await fetchOngoingRideData(id);
-        }
-      } catch (error) {
-        console.log("Error loading ongoing ride:", error);
+        await getActiveRide();
+      } catch (error: any) {
+        const errMsg = error.response.data.msg;
+        console.log("Error loading ongoing ride:", errMsg);
       }
     };
 
@@ -199,6 +196,19 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     const token = await AsyncStorage.getItem("token");
     try {
       const { data } = await axios.get(`${API_URL}/data?ride_id=${ride_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOngoingRideData(data.ride);
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    }
+  };
+
+  const getActiveRide = async (): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.get(`${API_URL}/active`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOngoingRideData(data.ride);
