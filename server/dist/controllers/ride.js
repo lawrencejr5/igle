@@ -162,7 +162,7 @@ const get_user_active_ride = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const ride = yield ride_1.default.findOne({
             rider: user_id,
-            status: { $in: ["pending", "accepted", "ongoing", "arrived"] },
+            status: { $in: ["pending", "accepted", "ongoing", "arrived", "expired"] },
         })
             .sort({ createdAt: -1 })
             .populate({

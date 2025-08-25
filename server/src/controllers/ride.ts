@@ -179,7 +179,7 @@ export const get_user_active_ride = async (
     const user_id = req.user?.id;
     const ride = await Ride.findOne({
       rider: user_id,
-      status: { $in: ["pending", "accepted", "ongoing", "arrived"] },
+      status: { $in: ["pending", "accepted", "ongoing", "arrived", "expired"] },
     })
       .sort({ createdAt: -1 })
       .populate({
