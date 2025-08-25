@@ -46,7 +46,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   } = useMapContext();
   const { getWalletBalance } = useWalletContext();
 
-  const [ongoingRideId, setOngoingRideId] = useState<string | null>(null);
   const [ongoingRideData, setOngoingRideData] = useState<any>(null);
   const [rideData, setRideData] = useState<any>(null);
 
@@ -54,7 +53,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const [modalUp, setModalUp] = useState<boolean>(false);
 
   const { getDriverData } = useDriverAuthContext();
-  const { loadingState, setLoadingState } = useLoading();
+  const { setLoadingState } = useLoading();
 
   const { userSocket } = useAuthContext();
 
@@ -65,8 +64,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       const { driver_id, ride_id } = data;
       showNotification("Ride has been accepted", "success");
       try {
-        fetchOngoingRideData(ride_id);
-        await AsyncStorage.setItem("ongoingRideId", ride_id);
+        await fetchOngoingRideData(ride_id);
         await getDriverData(driver_id);
         setModalUp(true);
         setRideStatus("accepted");
@@ -85,16 +83,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       console.log("Your ride has started");
     };
     const onRideCompleted = async (data: any) => {
-      await AsyncStorage.removeItem("ongoingRideId");
-
-      setOngoingRideId(null);
-      setOngoingRideData(null);
-      setRideData(null);
-      setRideStatus("");
-      setRideDetails(null);
-      setDestinationCoords(null);
-      setDestination("");
-      setModalUp(false);
+      resetRide();
       showNotification("Your ride has been completed", "success");
 
       await set_user_location();
@@ -134,6 +123,16 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const API_URL = API_URLS.rides;
 
+  const resetRide = () => {
+    setOngoingRideData(null);
+    setRideData(null);
+    setRideStatus("");
+    setRideDetails(null);
+    setDestinationCoords(null);
+    setDestination("");
+    setModalUp(false);
+  };
+
   const rideRequest = async (
     pickup: { address: string; coordinates: [number, number] },
     destination: { address: string; coordinates: [number, number] }
@@ -152,9 +151,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         { pickup, destination },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setOngoingRideId(data.ride._id);
-      await AsyncStorage.setItem("ongoingRideId", data.ride._id);
-      await fetchOngoingRideData(data.ride._id);
+      setOngoingRideData(data.ride);
       showNotification(data.msg, "success");
     } catch (error: any) {
       throw new Error(error.response.data.message);
@@ -175,15 +172,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         { reason, by },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setOngoingRideId(null);
-      await AsyncStorage.removeItem("ongoingRideId");
-      setRideData(null);
+      resetRide();
+      await getUserCancelledRides();
       showNotification("Ride request cancelled", "error");
-      setRideStatus("");
-      setRideDetails(null);
-      setDestinationCoords(null);
-      setDestination("");
-      setModalUp(false);
     } catch (error: any) {
       console.log(error);
       showNotification(error.response.data.msg, "error");
@@ -222,14 +213,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     const token = await AsyncStorage.getItem("token");
     try {
       await axios.post(
-        `${API_URL}/pay?ride_id=${ongoingRideId}`,
+        `${API_URL}/pay?ride_id=${ongoingRideData._id}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       await getWalletBalance("User");
-      await fetchOngoingRideData(ongoingRideId!);
+      await fetchOngoingRideData(ongoingRideData._id);
       setModalUp(false);
       setRideStatus("paid");
       showNotification("Payment successfull", "success");
@@ -292,8 +283,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         modalUp,
         setModalUp,
         cancelRideRequest,
-        ongoingRideId,
-        setOngoingRideId,
         ongoingRideData,
         cancelling,
         setCancelling,
@@ -332,8 +321,6 @@ export interface RideContextType {
   setModalUp: Dispatch<SetStateAction<boolean>>;
 
   rideData: any;
-  ongoingRideId: string | null;
-  setOngoingRideId: Dispatch<SetStateAction<string | null>>;
   ongoingRideData: any;
 
   userCompletedRides: any;

@@ -40,12 +40,8 @@ const Rides = () => {
     "ongoing" | "completed" | "cancelled"
   >("ongoing");
 
-  const {
-    ongoingRideData,
-    ongoingRideId,
-    userCompletedRides,
-    userCancelledRides,
-  } = useRideContext();
+  const { ongoingRideData, userCompletedRides, userCancelledRides } =
+    useRideContext();
 
   return (
     <>
@@ -148,13 +144,8 @@ const EmptyState = ({ message }: { message: string }) => (
 const OngoingRide = ({ data }: { data: any }) => {
   const { showNotification } = useNotificationContext();
 
-  const {
-    ongoingRideId,
-    payForRide,
-    cancelRideRequest,
-    cancelling,
-    ongoingRideData,
-  } = useRideContext();
+  const { payForRide, cancelRideRequest, cancelling, ongoingRideData } =
+    useRideContext();
   const { region, mapRef } = useMapContext();
 
   const makeCall = async (phone: string) => {

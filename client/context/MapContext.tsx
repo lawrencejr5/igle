@@ -73,22 +73,22 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   >([]);
 
   const mapRef = useRef<MapView>(null);
+  const fetchRoute = async (destinationCoords: [number, number]) => {
+    const coords = await getRoute(
+      [region.latitude, region.longitude],
+      destinationCoords
+    );
+    if (coords) {
+      setRouteCoords(coords);
+      // 👇 Zoom map to fit route
+      mapRef.current?.fitToCoordinates(coords, {
+        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      });
+    }
+  };
   useEffect(() => {
-    const fetchRoute = async () => {
-      const coords = await getRoute(
-        [region.latitude, region.longitude],
-        destinationCoords!
-      );
-      if (coords) {
-        setRouteCoords(coords);
-        // 👇 Zoom map to fit route
-        mapRef.current?.fitToCoordinates(coords, {
-          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-          animated: true,
-        });
-      }
-    };
-    if (destinationCoords) fetchRoute();
+    if (destinationCoords) fetchRoute(destinationCoords);
   }, [destinationCoords]);
 
   const [mapSuggestions, setMapSuggestions] = useState<any>(null);
@@ -263,6 +263,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         destinationCoords,
         setDestinationCoords,
 
+        fetchRoute,
         calculateRide,
         calculating,
         setCalculating,
@@ -297,6 +298,7 @@ export interface MapContextType {
 
   getPlaceCoords: (place_id: string) => Promise<[number, number] | undefined>;
   getPlaceName: (lat: number, lng: number) => Promise<void>;
+  fetchRoute: (destinationCoords: [number, number]) => Promise<void>;
   calculateRide: (
     pickup: [number, number],
     destination: [number, number]

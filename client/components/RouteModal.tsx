@@ -45,6 +45,7 @@ const RouteModal = () => {
     destinationCoords,
     setDestinationCoords,
     mapRef,
+    fetchRoute,
   } = useMapContext();
 
   const {
@@ -56,8 +57,8 @@ const RouteModal = () => {
     modalUp,
     setModalUp,
     rideData,
-    ongoingRideId,
     payForRide,
+    ongoingRideData,
   } = useRideContext();
 
   const { userWalletBal } = useWalletContext();
@@ -108,7 +109,7 @@ const RouteModal = () => {
   const cancel_ride = async () => {
     const reason = "No reason";
     const by = "rider";
-    const ride_id = rideData?._id || ongoingRideId;
+    const ride_id = ongoingRideData._id;
 
     try {
       await cancelRideRequest(ride_id, by, reason);
@@ -159,7 +160,7 @@ const RouteModal = () => {
   }, [modalUp]);
 
   const makeCall = async () => {
-    const url = `tel:${driverData?.phone}`;
+    const url = `tel:${ongoingRideData.driver.user.phone}`;
     const supported = await Linking.canOpenURL(url);
 
     if (supported) {
@@ -180,6 +181,29 @@ const RouteModal = () => {
       setPaying(false);
     }
   };
+
+  useEffect(() => {
+    if (ongoingRideData) {
+      setDestination(ongoingRideData.destination.address);
+      setDestinationCoords(ongoingRideData.destination.coordinates);
+      fetchRoute(ongoingRideData.destination.coordinates);
+      if (ongoingRideData.status === "pending") {
+        setModalUp(false);
+        setRideStatus("searching");
+      }
+      if (
+        ongoingRideData.status === "accepted" ||
+        ongoingRideData.status === "arrived"
+      ) {
+        setModalUp(true);
+        setRideStatus("accepted");
+      }
+      if (ongoingRideData.status === "ongoing") {
+        setModalUp(false);
+        setRideStatus("paid");
+      }
+    }
+  }, [ongoingRideData]);
 
   return (
     <Animated.View style={[styles.modal, { height: height }]}>
@@ -497,7 +521,9 @@ const RouteModal = () => {
                   style={styles.userImage}
                 />
                 <View>
-                  <Text style={styles.userName}>{driverData?.name}</Text>
+                  <Text style={styles.userName}>
+                    {ongoingRideData.driver.user.name}
+                  </Text>
                   <Text style={styles.userRides}>No ride completed</Text>
                 </View>
               </View>
@@ -523,8 +549,9 @@ const RouteModal = () => {
               <View style={styles.timeRow}>
                 <Ionicons name="car" color={"#d7d7d7"} size={16} />
                 <Text style={styles.timeText}>
-                  {driverData?.vehicle_color} {driverData?.vehicle_brand}{" "}
-                  {driverData?.vehicle_model}
+                  {ongoingRideData.driver?.vehicle.color}{" "}
+                  {ongoingRideData.driver?.vehicle.brand}{" "}
+                  {ongoingRideData.driver?.vehicle.model}
                 </Text>
               </View>
             </View>
