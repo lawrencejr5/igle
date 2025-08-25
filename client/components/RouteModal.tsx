@@ -183,7 +183,7 @@ const RouteModal = () => {
   };
 
   useEffect(() => {
-    if (ongoingRideData) {
+    if (ongoingRideData && ongoingRideData.status !== "expired") {
       setDestination(ongoingRideData.destination.address);
       setDestinationCoords(ongoingRideData.destination.coordinates);
       fetchRoute(ongoingRideData.destination.coordinates);
@@ -195,8 +195,13 @@ const RouteModal = () => {
         ongoingRideData.status === "accepted" ||
         ongoingRideData.status === "arrived"
       ) {
-        setModalUp(true);
-        setRideStatus("accepted");
+        if (ongoingRideData.payment_status === "paid") {
+          setModalUp(false);
+          setRideStatus("paid");
+        } else {
+          setModalUp(true);
+          setRideStatus("accepted");
+        }
       }
       if (ongoingRideData.status === "ongoing") {
         setModalUp(false);

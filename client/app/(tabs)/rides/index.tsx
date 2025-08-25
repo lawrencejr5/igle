@@ -25,6 +25,7 @@ import Notification from "../../../components/Notification";
 import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import RideLoading from "../../../loadings/RideLoading";
+import { FontAwesome6 } from "@expo/vector-icons";
 
 const vehicleIcons: Record<string, any> = {
   cab: require("../../../assets/images/icons/sedan-icon.png"),
@@ -195,6 +196,26 @@ const OngoingRide = ({ data }: { data: any }) => {
             day: "numeric",
           })}
         </Text>
+        {data.status === "expired" && (
+          <View
+            style={{
+              backgroundColor: "#ff00003a",
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              borderRadius: 20,
+            }}
+          >
+            <Text
+              style={{
+                color: "#ff0000",
+                fontFamily: "raleway-bold",
+                fontSize: 10,
+              }}
+            >
+              Expired
+            </Text>
+          </View>
+        )}
       </View>
       {/* Driver details */}
       {data.driver && (
@@ -336,6 +357,28 @@ const OngoingRide = ({ data }: { data: any }) => {
             </TouchableWithoutFeedback>
           </>
         )
+      ) : data.status === "expired" ? (
+        <TouchableWithoutFeedback
+          onPress={() => showNotification("I don't want to rebook", "error")}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "#d2d2d2ff", fontFamily: "raleway-bold" }}>
+              Rebook&nbsp;
+            </Text>
+            <FontAwesome6
+              name="rotate-right"
+              color="#fff"
+              size={10}
+              style={{ marginTop: 4 }}
+            />
+          </View>
+        </TouchableWithoutFeedback>
       ) : (
         <>
           <Text
