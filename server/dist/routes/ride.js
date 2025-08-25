@@ -5,6 +5,7 @@ const auth_1 = require("../middleware/auth");
 const ride_1 = require("../controllers/ride");
 const RideRouter = (0, express_1.Router)();
 RideRouter.use(auth_1.auth);
+RideRouter.get("/active", ride_1.get_user_active_ride);
 RideRouter.post("/request", ride_1.request_ride);
 RideRouter.get("/available", ride_1.get_available_rides);
 RideRouter.patch("/accept", ride_1.accept_ride);

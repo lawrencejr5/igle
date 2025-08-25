@@ -11,12 +11,14 @@ import {
   get_user_rides,
   update_ride_status,
   pay_for_ride,
+  get_user_active_ride,
 } from "../controllers/ride";
 
 const RideRouter = Router();
 
 RideRouter.use(auth);
 
+RideRouter.get("/active", get_user_active_ride);
 RideRouter.post("/request", request_ride);
 RideRouter.get("/available", get_available_rides);
 RideRouter.patch("/accept", accept_ride);
