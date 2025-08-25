@@ -85,7 +85,7 @@ export const save_bank_info = async (req: any, res: any) => {
     res.json({ msg: "Bank info saved successfully" });
   } catch (err: any) {
     console.log(err);
-    res.status(500).json({ msg: "Failed to save bank info", err });
+    res.status(500).json({ msg: "Bank info is incorrect", err });
   }
 };
 

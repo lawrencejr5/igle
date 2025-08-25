@@ -24,7 +24,7 @@ const Signup = () => {
   const styles = auth_styles();
 
   const { register } = useAuthContext()!;
-  const { showNotification, notification } = useNotificationContext()!;
+  const { showNotification, notification } = useNotificationContext();
 
   const [checked, setChecked] = useState(false);
   const [passwordShow, setPasswordShow] = useState<boolean>(true);

@@ -35,23 +35,10 @@ const vehicleIcons: Record<string, any> = {
 const Rides = () => {
   const { notification, showNotification } = useNotificationContext();
   const { appLoading, loadingState } = useLoading();
-  const { region, mapRef } = useMapContext();
-  const {
-    getUserCancelledRides,
-    getUserCompletedRides,
-    cancelling,
-    cancelRideRequest,
-    rideData,
-  } = useRideContext();
 
   const [category, setCategory] = useState<
     "ongoing" | "completed" | "cancelled"
   >("ongoing");
-
-  // useEffect(() => {
-  //   if (category === "completed") getUserCompletedRides();
-  //   if (category === "cancelled") getUserCancelledRides();
-  // }, [category]);
 
   const {
     ongoingRideData,

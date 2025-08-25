@@ -23,8 +23,8 @@ import Notification from "../../components/Notification";
 
 const BankDetails = () => {
   const styles = driver_reg_styles();
-  const { saveBankInfo, updateDriverApplication } = useDriverAuthContext();
-  const { getUserData } = useAuthContext()!;
+  const { saveBankInfo } = useDriverAuthContext();
+  const { getUserData, updateDriverApplication } = useAuthContext();
   const { showNotification, notification } = useNotificationContext()!;
 
   const [bankName, setBankName] = useState<string>("");

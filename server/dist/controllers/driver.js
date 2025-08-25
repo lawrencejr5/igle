@@ -83,7 +83,7 @@ const save_bank_info = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     catch (err) {
         console.log(err);
-        res.status(500).json({ msg: "Failed to save bank info", err });
+        res.status(500).json({ msg: "Bank info is incorrect", err });
     }
 });
 exports.save_bank_info = save_bank_info;

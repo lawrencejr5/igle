@@ -325,7 +325,10 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       const { data } = await axios.patch(
         `${API_URL}/bank`,
         {
-          ...bankInfo,
+          bank_name: bankInfo.bank_name,
+          bank_code: bankInfo.bank_code,
+          account_number: bankInfo.account_number,
+          account_name: bankInfo.account_name,
         },
         {
           headers: {
