@@ -144,8 +144,8 @@ const Signin = () => {
           </View>
 
           {/* Submit button */}
-          <TouchableWithoutFeedback onPress={handleLogin}>
-            <View style={styles.sign_btn}>
+          <TouchableWithoutFeedback onPress={handleLogin} disabled={loading}>
+            <View style={[styles.sign_btn, { opacity: loading ? 0.5 : 1 }]}>
               <Text style={styles.sign_btn_text}>
                 {loading ? "Signing in..." : "Sign in"}
               </Text>

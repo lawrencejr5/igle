@@ -175,8 +175,8 @@ const Signup = () => {
           </View>
 
           {/* Submit button */}
-          <TouchableWithoutFeedback onPress={handleRegister}>
-            <View style={styles.sign_btn}>
+          <TouchableWithoutFeedback onPress={handleRegister} disabled={loading}>
+            <View style={[styles.sign_btn, { opacity: loading ? 0.5 : 1 }]}>
               <Text style={styles.sign_btn_text}>
                 {loading ? "Saving..." : "Save"}
               </Text>
