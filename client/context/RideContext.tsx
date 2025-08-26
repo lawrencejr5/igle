@@ -131,6 +131,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setDestinationCoords(null);
     setDestination("");
     setModalUp(false);
+
+    mapRef.current.animateToRegion(region, 100);
   };
 
   const rideRequest = async (
@@ -284,6 +286,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         setModalUp,
         cancelRideRequest,
         ongoingRideData,
+        resetRide,
         cancelling,
         setCancelling,
         userCancelledRides,
@@ -312,6 +315,8 @@ export interface RideContextType {
   ) => Promise<void>;
   cancelling: boolean;
   setCancelling: Dispatch<SetStateAction<boolean>>;
+
+  resetRide: () => void;
 
   payForRide: () => Promise<void>;
 

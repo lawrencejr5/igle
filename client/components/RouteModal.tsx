@@ -59,6 +59,7 @@ const RouteModal = () => {
     rideData,
     payForRide,
     ongoingRideData,
+    resetRide,
   } = useRideContext();
 
   const { userWalletBal } = useWalletContext();
@@ -407,7 +408,7 @@ const RouteModal = () => {
           </View>
           <TouchableWithoutFeedback
             onPress={book_ride}
-            disabled={booking || calculating}
+            disabled={booking || calculating || !rideDetails}
           >
             <View
               style={{
@@ -415,7 +416,7 @@ const RouteModal = () => {
                 padding: 10,
                 borderRadius: 30,
                 backgroundColor: "#fff",
-                opacity: booking || calculating ? 0.5 : 1,
+                opacity: booking || calculating || !rideDetails ? 0.5 : 1,
               }}
             >
               <Text
@@ -431,11 +432,7 @@ const RouteModal = () => {
           </TouchableWithoutFeedback>
           <TouchableWithoutFeedback
             style={{ marginVertical: 20 }}
-            onPress={() => {
-              setModalUp(false);
-              setRideStatus("");
-              setDestination("");
-            }}
+            onPress={resetRide}
           >
             <Text
               style={{
