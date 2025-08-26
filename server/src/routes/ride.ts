@@ -12,6 +12,8 @@ import {
   update_ride_status,
   pay_for_ride,
   get_user_active_ride,
+  rebook_ride,
+  retry_ride,
 } from "../controllers/ride";
 
 const RideRouter = Router();
@@ -20,6 +22,8 @@ RideRouter.use(auth);
 
 RideRouter.get("/active", get_user_active_ride);
 RideRouter.post("/request", request_ride);
+RideRouter.patch("/retry", retry_ride);
+RideRouter.post("/rebook", rebook_ride);
 RideRouter.get("/available", get_available_rides);
 RideRouter.patch("/accept", accept_ride);
 RideRouter.patch("/cancel", cancel_ride);

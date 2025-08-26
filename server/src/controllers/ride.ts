@@ -18,6 +18,32 @@ import { complete_ride } from "../utils/complete_ride";
 
 import { io } from "../server";
 
+// 🔄 Helper: Expire a ride
+const expire_ride = async (ride_id: string, user_id?: string) => {
+  const ride = await Ride.findById(ride_id);
+  if (!ride || ride.status !== "pending") return;
+
+  ride.status = "expired";
+  await ride.save();
+
+  // Notify rider
+  if (user_id) {
+    const user_socket = await get_user_socket_id(user_id);
+    if (user_socket) {
+      io.to(user_socket).emit("ride_timeout", {
+        ride_id,
+        msg: "No drivers accepted your ride in time.",
+      });
+    }
+  }
+
+  // Notify drivers to ignore this ride request
+  io.emit("ride_request_expired", {
+    ride_id,
+    msg: "This ride has expired",
+  });
+};
+
 export const request_ride = async (
   req: Request,
   res: Response
@@ -71,36 +97,117 @@ export const request_ride = async (
       ride: new_ride,
     });
 
-    // ⏳ Start timeout
-    setTimeout(async () => {
-      const ride = await Ride.findById(new_ride._id);
-
-      if (ride && ride.status === "pending") {
-        // No driver accepted in time
-        ride.status = "expired";
-        await ride.save();
-
-        const user_socket = await get_user_socket_id(req.user?.id!);
-
-        // Notify rider
-        if (user_socket) {
-          io.to(user_socket).emit("ride_timeout", {
-            ride_id: new_ride._id,
-            msg: "No drivers accepted your ride in time.",
-          });
-        }
-
-        // Notify drivers to ignore this ride request
-        io.emit("ride_request_expired", {
-          ride_id: new_ride._id,
-          msg: "This ride has expired",
-        });
-      }
-    }, 300000);
+    // Start expiration timeout
+    setTimeout(
+      () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
+      90000
+    );
   } catch (err: any) {
     res
       .status(500)
       .json({ msg: "Failed to create ride request", err: err.message });
+  }
+};
+
+// PATCH /rides/:ride_id/retry
+export const retry_ride = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { ride_id } = req.query;
+    if (!ride_id) {
+      res.status(400).json({ msg: "ride_id is required" });
+      return;
+    }
+
+    const ride = await Ride.findById(ride_id);
+    if (!ride) {
+      res.status(404).json({ msg: "Ride not found" });
+      return;
+    }
+
+    if (ride.status !== "expired") {
+      res.status(400).json({ msg: "Only expired rides can be retried" });
+      return;
+    }
+
+    ride.status = "pending";
+    await ride.save();
+
+    io.emit("new_ride_request", { ride_id: ride._id });
+
+    res.status(200).json({
+      msg: "Ride request retried",
+      ride,
+    });
+
+    // Start expiration timeout
+    setTimeout(
+      () => expire_ride(ride._id as string, ride.rider.toString()),
+      90000
+    );
+  } catch (err: any) {
+    res.status(500).json({ msg: "Failed to retry ride", err: err.message });
+  }
+};
+
+// POST /rides/:ride_id/rebook
+export const rebook_ride = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { ride_id, km, min } = req.query;
+    if (!ride_id) {
+      res.status(400).json({ msg: "ride_id is required" });
+      return;
+    }
+
+    const ride = await Ride.findById(ride_id);
+    if (!ride) {
+      res.status(404).json({ msg: "Ride not found" });
+      return;
+    }
+
+    const distance_km = Number(km);
+    const duration_mins = Number(min);
+
+    if (isNaN(distance_km) || isNaN(duration_mins)) {
+      res.status(400).json({ msg: "Invalid ride metrics" });
+      return;
+    }
+
+    const fare = calculate_fare(distance_km, duration_mins);
+    const commission = calculate_commission(fare);
+    const driver_earnings = fare - commission;
+
+    const new_ride = await Ride.create({
+      rider: ride.rider,
+      pickup: ride.pickup,
+      destination: ride.destination,
+      fare,
+      distance_km,
+      duration_mins,
+      driver_earnings,
+      commission,
+      status: "pending",
+    });
+
+    io.emit("new_ride_request", { ride_id: new_ride._id });
+
+    res.status(201).json({
+      msg: "Ride rebooked",
+      ride: new_ride,
+    });
+
+    // Start expiration timeout
+    setTimeout(
+      () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
+      90000
+    );
+  } catch (err: any) {
+    res.status(500).json({ msg: "Failed to rebook ride", err: err.message });
   }
 };
 
