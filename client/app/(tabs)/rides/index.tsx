@@ -69,8 +69,8 @@ const Rides = () => {
             {category === "completed" &&
               (loadingState.completedRides ? (
                 <RideLoading />
-              ) : !userCompletedRides ? (
-                <EmptyState message="You don't have any completed rides yet" />
+              ) : userCompletedRides.length === 0 ? (
+                <EmptyState message="You haven't completed any rides yet" />
               ) : (
                 <CompletedRides data={userCompletedRides} />
               ))}
@@ -79,7 +79,7 @@ const Rides = () => {
             {category === "cancelled" &&
               (loadingState.cancelledRides ? (
                 <RideLoading />
-              ) : !userCancelledRides ? (
+              ) : userCancelledRides.length === 0 ? (
                 <EmptyState message="You haven't cancelled any rides yet" />
               ) : (
                 <CancelledRides data={userCancelledRides} />
