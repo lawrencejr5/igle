@@ -160,6 +160,39 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const retryRideRequest = async () => {
+    const token = await AsyncStorage.getItem("token");
+    const ride_id = ongoingRideData.ride_id;
+
+    try {
+      const { data } = await axios.patch(
+        `${API_URL}/retry?ride_id=${ride_id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setOngoingRideData(data.ride);
+      showNotification(data.msg, "success");
+    } catch (error: any) {
+      throw new Error(error.response.data.message);
+    }
+  };
+
+  const rebookRideRequest = async (ride_id: string) => {
+    const token = await AsyncStorage.getItem("token");
+
+    try {
+      const { data } = await axios.post(
+        `${API_URL}/rebook?ride_id=${ride_id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setOngoingRideData(data.ride);
+      showNotification(data.msg, "success");
+    } catch (error: any) {
+      throw new Error(error.response.data.message);
+    }
+  };
+
   const [cancelling, setCancelling] = useState<boolean>(false);
   const cancelRideRequest = async (
     ride_id: string,
@@ -279,6 +312,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       value={{
         rideData,
         rideRequest,
+        rebookRideRequest,
+        retryRideRequest,
         payForRide,
         rideStatus,
         setRideStatus,
@@ -307,6 +342,9 @@ export interface RideContextType {
     pickup: { address: string; coordinates: [number, number] },
     destination: { address: string; coordinates: [number, number] }
   ) => Promise<void>;
+
+  retryRideRequest: () => Promise<void>;
+  rebookRideRequest: (ride_id: string) => Promise<void>;
 
   cancelRideRequest: (
     ride_id: string,

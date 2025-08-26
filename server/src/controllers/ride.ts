@@ -109,7 +109,6 @@ export const request_ride = async (
   }
 };
 
-// PATCH /rides/:ride_id/retry
 export const retry_ride = async (
   req: Request,
   res: Response
@@ -138,7 +137,7 @@ export const retry_ride = async (
     io.emit("new_ride_request", { ride_id: ride._id });
 
     res.status(200).json({
-      msg: "Ride request retried",
+      msg: "Retrying ride request...",
       ride,
     });
 
@@ -152,13 +151,12 @@ export const retry_ride = async (
   }
 };
 
-// POST /rides/:ride_id/rebook
 export const rebook_ride = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const { ride_id, km, min } = req.query;
+    const { ride_id } = req.query;
     if (!ride_id) {
       res.status(400).json({ msg: "ride_id is required" });
       return;
@@ -170,8 +168,8 @@ export const rebook_ride = async (
       return;
     }
 
-    const distance_km = Number(km);
-    const duration_mins = Number(min);
+    const distance_km = Number(ride.distance_km);
+    const duration_mins = Number(ride.duration_mins);
 
     if (isNaN(distance_km) || isNaN(duration_mins)) {
       res.status(400).json({ msg: "Invalid ride metrics" });
@@ -197,7 +195,7 @@ export const rebook_ride = async (
     io.emit("new_ride_request", { ride_id: new_ride._id });
 
     res.status(201).json({
-      msg: "Ride rebooked",
+      msg: "Ride has been rebooked",
       ride: new_ride,
     });
 
