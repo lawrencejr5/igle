@@ -382,14 +382,12 @@ const OngoingRide = ({ data }: { data: any }) => {
             }}
           >
             {retrying ? (
-              <Text style={{ color: "#9e9d9dff", fontFamily: "raleway-bold" }}>
+              <Text style={{ color: "#9e9d9d", fontFamily: "raleway-bold" }}>
                 Retrying...
               </Text>
             ) : (
               <>
-                <Text
-                  style={{ color: "#d2d2d2ff", fontFamily: "raleway-bold" }}
-                >
+                <Text style={{ color: "#d2d2d2", fontFamily: "raleway-bold" }}>
                   Retry&nbsp;
                 </Text>
                 <FontAwesome6

@@ -40,9 +40,9 @@ const RootLayout = () => {
     <LoadingProvider>
       <NotificationProvider>
         <WalletProvider>
-          <DriverAuthProvider>
-            <AuthProvider>
-              <MapContextProvider>
+          <MapContextProvider>
+            <DriverAuthProvider>
+              <AuthProvider>
                 <DriverContextPrvider>
                   <RideContextProvider>
                     <Stack
@@ -52,9 +52,9 @@ const RootLayout = () => {
                     />
                   </RideContextProvider>
                 </DriverContextPrvider>
-              </MapContextProvider>
-            </AuthProvider>
-          </DriverAuthProvider>
+              </AuthProvider>
+            </DriverAuthProvider>
+          </MapContextProvider>
         </WalletProvider>
       </NotificationProvider>
     </LoadingProvider>

@@ -39,6 +39,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     calculateRide,
     setDestination,
     setDestinationCoords,
+    setPickupCoords,
     setRideDetails,
     mapRef,
     region,
@@ -155,6 +156,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setDestinationCoords(null);
     setDestination("");
     setModalUp(false);
+    setPickupCoords(null);
 
     mapRef.current.animateToRegion(region, 100);
   };

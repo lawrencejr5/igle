@@ -1,8 +1,6 @@
 import { StyleSheet, View, Text, TouchableWithoutFeedback } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
-import { io } from "socket.io-client";
-
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Feather from "@expo/vector-icons/Feather";
@@ -31,11 +29,14 @@ const Home = () => {
   const { notification } = useNotificationContext();
   const {
     region,
+    pickupCoords,
     getPlaceName,
+    userAddress,
     destination,
     destinationCoords,
     routeCoords,
     mapRef,
+    locationLoading,
   } = useMapContext();
 
   const { appLoading } = useLoading();
@@ -55,7 +56,7 @@ const Home = () => {
 
   return (
     <>
-      {appLoading ? (
+      {appLoading || locationLoading ? (
         <AppLoading />
       ) : (
         <>
@@ -72,10 +73,12 @@ const Home = () => {
               >
                 <Marker
                   coordinate={{
-                    latitude: region.latitude,
-                    longitude: region.longitude,
+                    latitude: pickupCoords ? pickupCoords[0] : region.latitude,
+                    longitude: pickupCoords
+                      ? pickupCoords[1]
+                      : region.longitude,
                   }}
-                  title="Your location"
+                  title={userAddress}
                 >
                   <View
                     style={{
@@ -99,7 +102,7 @@ const Home = () => {
                       latitude: destinationCoords[0],
                       longitude: destinationCoords[1],
                     }}
-                    title="Destination"
+                    title={destination}
                   >
                     <View
                       style={{

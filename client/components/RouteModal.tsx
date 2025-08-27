@@ -34,10 +34,12 @@ const RouteModal = () => {
     userAddress,
     setUserAddress,
     mapSuggestions,
-    setMapSuggestions,
     getSuggestions,
+    getPickupSuggestions,
+    getDestinationSuggestions,
+    pickupSuggestions,
+    destinationSuggestions,
     getPlaceCoords,
-    locationLoading,
     rideDetails,
     calculateRide,
     calculating,
@@ -45,6 +47,8 @@ const RouteModal = () => {
     setDestination,
     destinationCoords,
     setDestinationCoords,
+    pickupCoords,
+    setPickupCoords,
     mapRef,
     fetchRoute,
   } = useMapContext();
@@ -79,7 +83,18 @@ const RouteModal = () => {
     if (coords) {
       setDestinationCoords(coords);
 
-      await calculateRide([region.latitude, region.longitude], [...coords]);
+      await calculateRide(pickupCoords || [region.latitude, region.longitude], [
+        ...coords,
+      ]);
+    }
+  };
+  const set_pickup_func = async (place_id: string, place_name: string) => {
+    setUserAddress(place_name);
+
+    const coords = await getPlaceCoords(place_id);
+    if (coords) {
+      setPickupCoords(coords);
+      setDestination("");
     }
   };
 
@@ -131,9 +146,21 @@ const RouteModal = () => {
     }
   };
 
+  const [activeSuggestion, setActiveSuggestion] = useState<
+    "pickup" | "destination"
+  >("destination");
+
   useEffect(() => {
+    setActiveSuggestion("pickup");
+    if (userAddress) {
+      getPickupSuggestions(userAddress);
+    }
+  }, [userAddress]);
+
+  useEffect(() => {
+    setActiveSuggestion("destination");
     if (destination) {
-      getSuggestions(destination);
+      getDestinationSuggestions(destination);
     }
   }, [destination]);
 
@@ -299,8 +326,7 @@ const RouteModal = () => {
                   value={userAddress}
                   onChangeText={setUserAddress}
                   placeholderTextColor={"#b7b7b7"}
-                  selection={{ start: 0, end: 0 }}
-                  editable={false}
+                  editable={true}
                 />
               </View>
               <View style={styles.route_inp_container}>
@@ -318,35 +344,67 @@ const RouteModal = () => {
 
           {/* Suggestions */}
           <View style={[styles.suggestions_container]}>
-            <FlatList
-              data={mapSuggestions}
-              keyExtractor={(item) => item.place_id}
-              renderItem={({ item }) => (
-                <TouchableWithoutFeedback
-                  onPress={() =>
-                    set_destination_func(
-                      item.place_id,
-                      item.structured_formatting.main_text
-                    )
-                  }
-                >
-                  <View style={styles.suggestion_box}>
-                    <Ionicons name="location" size={24} color="#b7b7b7" />
-                    <View>
-                      <Text
-                        style={styles.suggestion_header_text}
-                        numberOfLines={1}
-                      >
-                        {item.structured_formatting.main_text}
-                      </Text>
-                      <Text style={styles.suggestion_sub_text}>
-                        {item.structured_formatting.secondary_text}
-                      </Text>
+            {activeSuggestion === "pickup" ? (
+              <FlatList
+                data={pickupSuggestions}
+                keyExtractor={(item) => item.place_id}
+                renderItem={({ item }) => (
+                  <TouchableWithoutFeedback
+                    onPress={() =>
+                      set_pickup_func(
+                        item.place_id,
+                        item.structured_formatting.main_text
+                      )
+                    }
+                  >
+                    <View style={styles.suggestion_box}>
+                      <Ionicons name="location" size={24} color="#b7b7b7" />
+                      <View>
+                        <Text
+                          style={styles.suggestion_header_text}
+                          numberOfLines={1}
+                        >
+                          {item.structured_formatting.main_text}
+                        </Text>
+                        <Text style={styles.suggestion_sub_text}>
+                          {item.structured_formatting.secondary_text}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableWithoutFeedback>
-              )}
-            />
+                  </TouchableWithoutFeedback>
+                )}
+              />
+            ) : (
+              <FlatList
+                data={destinationSuggestions}
+                keyExtractor={(item) => item.place_id}
+                renderItem={({ item }) => (
+                  <TouchableWithoutFeedback
+                    onPress={() =>
+                      set_destination_func(
+                        item.place_id,
+                        item.structured_formatting.main_text
+                      )
+                    }
+                  >
+                    <View style={styles.suggestion_box}>
+                      <Ionicons name="location" size={24} color="#b7b7b7" />
+                      <View>
+                        <Text
+                          style={styles.suggestion_header_text}
+                          numberOfLines={1}
+                        >
+                          {item.structured_formatting.main_text}
+                        </Text>
+                        <Text style={styles.suggestion_sub_text}>
+                          {item.structured_formatting.secondary_text}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableWithoutFeedback>
+                )}
+              />
+            )}
           </View>
         </>
       )}

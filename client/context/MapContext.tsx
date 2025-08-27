@@ -26,16 +26,18 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     set_user_location();
   }, []);
 
+  const [userAddress, setUserAddress] = useState<string>("");
+  const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(
+    null
+  );
+
   const [destination, setDestination] = useState<string>("");
   const [destinationCoords, setDestinationCoords] = useState<
     [number, number] | null
   >(null);
   useEffect(() => {
-    if (destinationCoords) {
-      calculateRide(
-        [region.latitude, region.longitude],
-        [...destinationCoords]
-      );
+    if (destinationCoords && pickupCoords) {
+      calculateRide(pickupCoords, destinationCoords);
     }
   }, [destinationCoords]);
 
@@ -60,8 +62,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
 
-  const [userAddress, setUserAddress] = useState<string>("");
-
   const [rideDetails, setRideDetails] = useState<{
     distanceKm: number;
     durationMins: number;
@@ -75,7 +75,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const mapRef = useRef<MapView>(null);
   const fetchRoute = async (destinationCoords: [number, number]) => {
     const coords = await getRoute(
-      [region.latitude, region.longitude],
+      pickupCoords || [region.latitude, region.longitude],
       destinationCoords
     );
     if (coords) {
@@ -130,12 +130,35 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       if (data.results.length > 0) {
         setLocationLoading(false);
-        setUserAddress(data.results[0].formatted_address);
+        const suggestions = await getSuggestions(
+          data.results[0].formatted_address
+        );
+        const address = suggestions[0].description.split(",")[0];
+        setUserAddress(address);
       }
     } catch (error) {
       console.error("Error fetching place name", error);
     } finally {
       setLocationLoading(false);
+    }
+  };
+
+  const [pickupSuggestions, setPickupSuggestions] = useState([]);
+  const getPickupSuggestions = async (text: string) => {
+    try {
+      const suggestions = await getSuggestions(text);
+      setPickupSuggestions(suggestions);
+    } catch (error: any) {
+      console.log(error.message);
+    }
+  };
+  const [destinationSuggestions, setDestinationSuggestions] = useState([]);
+  const getDestinationSuggestions = async (text: string) => {
+    try {
+      const suggestions = await getSuggestions(text);
+      setDestinationSuggestions(suggestions);
+    } catch (error: any) {
+      console.log(error.message);
     }
   };
 
@@ -145,17 +168,12 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     )}&key=${API_KEY}&location=${region.latitude},${
       region.longitude
     }&radius=5000&components=country:ng`;
-
     try {
       const { data } = await axios.get(url);
       if (data) {
-        setMapSuggestions(data.predictions || []);
+        return data.predictions;
       }
     } catch (err: any) {
-      console.log(
-        err.response.data.message ||
-          "An error occured when fetching suggestions"
-      );
       throw new Error(
         err.response.data.message ||
           "An error occured when fetching suggestions"
@@ -249,6 +267,12 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         region,
         userAddress,
         setUserAddress,
+        getDestinationSuggestions,
+        destinationSuggestions,
+        setDestinationSuggestions,
+        pickupSuggestions,
+        setPickupSuggestions,
+        getPickupSuggestions,
         mapSuggestions,
         setMapSuggestions,
         getPlaceName,
@@ -262,6 +286,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setDestination,
         destinationCoords,
         setDestinationCoords,
+        pickupCoords,
+        setPickupCoords,
 
         fetchRoute,
         calculateRide,
@@ -288,6 +314,12 @@ export interface MapContextType {
   getSuggestions: (text: string) => Promise<void>;
   mapSuggestions: any;
   setMapSuggestions: Dispatch<SetStateAction<any>>;
+  getDestinationSuggestions: (text: string) => Promise<void>;
+  destinationSuggestions: any;
+  setDestinationSuggestions: Dispatch<SetStateAction<any>>;
+  getPickupSuggestions: (text: string) => Promise<void>;
+  pickupSuggestions: any;
+  setPickupSuggestions: Dispatch<SetStateAction<any>>;
 
   getRoute: (pickup: [number, number], destination: [number, number]) => any;
 
@@ -295,6 +327,8 @@ export interface MapContextType {
   setDestination: Dispatch<SetStateAction<string>>;
   destinationCoords: [number, number] | null;
   setDestinationCoords: Dispatch<SetStateAction<[number, number] | null>>;
+  pickupCoords: [number, number] | null;
+  setPickupCoords: Dispatch<SetStateAction<[number, number] | null>>;
 
   getPlaceCoords: (place_id: string) => Promise<[number, number] | undefined>;
   getPlaceName: (lat: number, lng: number) => Promise<void>;
