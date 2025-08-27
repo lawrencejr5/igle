@@ -269,7 +269,8 @@ const RouteModal = () => {
           </TouchableWithoutFeedback>
 
           <Text style={styles.header_text}>
-            {signedIn.name.split(" ")[1]}, let's go places...
+            {signedIn.name.split(" ")[1] || signedIn.name.split(" ")[0]}, let's
+            go places...
           </Text>
 
           <TouchableWithoutFeedback

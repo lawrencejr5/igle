@@ -13,15 +13,9 @@ import axios from "axios";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import * as Location from "expo-location";
-
 import { jwtDecode } from "jwt-decode";
 
-import {
-  getUserSocket,
-  initUserSocket,
-  disconnectUserSocket,
-} from "../sockets/socketService";
+import { initUserSocket, disconnectUserSocket } from "../sockets/socketService";
 
 import {
   NotificationContextType,
