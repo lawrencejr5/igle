@@ -12,7 +12,7 @@ import {
   Alert,
   Pressable,
 } from "react-native";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, FC } from "react";
 
 import RideRoute from "./RideRoute";
 
@@ -22,129 +22,22 @@ import { useAuthContext } from "../context/AuthContext";
 import { useMapContext } from "../context/MapContext";
 import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
-import { useDriverAuthContext } from "../context/DriverAuthContext";
 import { router } from "expo-router";
 import { useWalletContext } from "../context/WalletContext";
 
 const RouteModal = () => {
-  const { signedIn } = useAuthContext();
-
   const {
-    region,
     userAddress,
-    setUserAddress,
-    mapSuggestions,
-    getSuggestions,
     getPickupSuggestions,
     getDestinationSuggestions,
-    pickupSuggestions,
-    destinationSuggestions,
-    getPlaceCoords,
-    rideDetails,
-    calculateRide,
-    calculating,
     destination,
     setDestination,
-    destinationCoords,
     setDestinationCoords,
-    pickupCoords,
-    setPickupCoords,
-    mapRef,
     fetchRoute,
   } = useMapContext();
 
-  const {
-    rideRequest,
-    cancelling,
-    cancelRideRequest,
-    rideStatus,
-    setRideStatus,
-    modalUp,
-    setModalUp,
-    rideData,
-    payForRide,
-    ongoingRideData,
-    resetRide,
-    retrying,
-    retryRideRequest,
-  } = useRideContext();
-
-  const { userWalletBal } = useWalletContext();
-
-  const { driverData } = useDriverAuthContext();
-  const { showNotification } = useNotificationContext();
-
-  const set_destination_func = async (place_id: string, place_name: string) => {
-    setDestination(place_name);
-    setModalUp(false);
-    setRideStatus("choosing_car");
-
-    const coords = await getPlaceCoords(place_id);
-    if (coords) {
-      setDestinationCoords(coords);
-
-      await calculateRide(pickupCoords || [region.latitude, region.longitude], [
-        ...coords,
-      ]);
-    }
-  };
-  const set_pickup_func = async (place_id: string, place_name: string) => {
-    setUserAddress(place_name);
-
-    const coords = await getPlaceCoords(place_id);
-    if (coords) {
-      setPickupCoords(coords);
-      setDestination("");
-    }
-  };
-
-  const [booking, setBooking] = useState<boolean>(false);
-  const book_ride = async () => {
-    setBooking(true);
-
-    const pickupCoords: [number, number] = [region.latitude, region.longitude];
-
-    if (!destination || !destinationCoords)
-      showNotification("Destination not set", "error");
-
-    if (!userAddress || !pickupCoords)
-      showNotification("Pickup location not set", "error");
-
-    try {
-      await rideRequest(
-        { address: userAddress, coordinates: pickupCoords },
-        { address: destination, coordinates: destinationCoords! }
-      );
-      setBooking(false);
-      setModalUp(false);
-      setRideStatus("searching");
-    } catch (error: any) {
-      showNotification(error.message, "error");
-    } finally {
-      setBooking(false);
-    }
-  };
-
-  const cancel_ride = async () => {
-    const reason = "No reason";
-    const by = "rider";
-    const ride_id = ongoingRideData._id;
-
-    try {
-      await cancelRideRequest(ride_id, by, reason);
-      if (region) mapRef.current.animateToRegion(region, 1000);
-    } catch (error: any) {
-      showNotification(error.message, "error");
-    }
-  };
-
-  const retry_ride = async () => {
-    try {
-      await retryRideRequest();
-    } catch (error: any) {
-      showNotification(error.message, "success");
-    }
-  };
+  const { rideStatus, setRideStatus, modalUp, setModalUp, ongoingRideData } =
+    useRideContext();
 
   const [activeSuggestion, setActiveSuggestion] = useState<
     "pickup" | "destination"
@@ -198,29 +91,6 @@ const RouteModal = () => {
     }
   }, [modalUp]);
 
-  const makeCall = async () => {
-    const url = `tel:${ongoingRideData.driver.user.phone}`;
-    const supported = await Linking.canOpenURL(url);
-
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      showNotification("Could not place call", "error");
-    }
-  };
-
-  const [paying, setPaying] = useState<boolean>(false);
-  const pay_func = async () => {
-    setPaying(true);
-    try {
-      await payForRide();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setPaying(false);
-    }
-  };
-
   useEffect(() => {
     if (ongoingRideData) {
       setDestination(ongoingRideData.destination.address);
@@ -255,653 +125,861 @@ const RouteModal = () => {
   return (
     <Animated.View style={[styles.modal, { height: height }]}>
       {/* Form */}
-      {rideStatus === "" && (
-        <>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(true);
-              setRideStatus("booking");
-            }}
-          >
-            <View style={styles.expand_line_conatiner}>
-              <View style={styles.expand_line} />
-            </View>
-          </TouchableWithoutFeedback>
-
-          <Text style={styles.header_text}>
-            {signedIn.name.split(" ")[1] || signedIn.name.split(" ")[0]}, let's
-            go places...
-          </Text>
-
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(true);
-              setRideStatus("booking");
-            }}
-          >
-            <View style={styles.form}>
-              <View style={styles.text_inp_container}>
-                <Image
-                  source={require("../assets/images/icons/car-icon.png")}
-                  style={{ height: 30, width: 30 }}
-                />
-                <TextInput
-                  placeholder="Where we dey go?"
-                  value={destinationCoords ? destination : ""}
-                  selection={{ start: 0, end: 0 }}
-                  placeholderTextColor={"#8d8d8d"}
-                  editable={false}
-                  style={[styles.text_input, { color: "#8d8d8d" }]}
-                />
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </>
-      )}
+      {rideStatus === "" && <StartModal />}
+      {/*  */}
       {rideStatus === "booking" && (
-        <>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(false);
-              setRideStatus("");
-            }}
-          >
-            <View style={styles.expand_line_conatiner}>
-              <View style={styles.expand_line} />
-            </View>
-          </TouchableWithoutFeedback>
-
-          <Text style={[styles.header_text, { textAlign: "center" }]}>
-            Choose your route...
-          </Text>
-
-          {/* Route slection form */}
-          <Animated.View style={[styles.form, { opacity }]}>
-            <View style={{ flex: 1, marginTop: 10 }}>
-              {/* Select pickup and drop off */}
-              <View style={styles.route_inp_container}>
-                <View style={styles.from_circle} />
-                <TextInput
-                  style={[styles.route_input]}
-                  placeholder="Pickup"
-                  value={userAddress}
-                  onChangeText={setUserAddress}
-                  placeholderTextColor={"#b7b7b7"}
-                  editable={true}
-                />
-              </View>
-              <View style={styles.route_inp_container}>
-                <View style={styles.to_square} />
-                <TextInput
-                  style={styles.route_input}
-                  placeholder="Destination"
-                  value={destination}
-                  onChangeText={setDestination}
-                  placeholderTextColor={"#b7b7b7"}
-                />
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* Suggestions */}
-          <View style={[styles.suggestions_container]}>
-            {activeSuggestion === "pickup" ? (
-              <FlatList
-                data={pickupSuggestions}
-                keyExtractor={(item) => item.place_id}
-                renderItem={({ item }) => (
-                  <TouchableWithoutFeedback
-                    onPress={() =>
-                      set_pickup_func(
-                        item.place_id,
-                        item.structured_formatting.main_text
-                      )
-                    }
-                  >
-                    <View style={styles.suggestion_box}>
-                      <Ionicons name="location" size={24} color="#b7b7b7" />
-                      <View>
-                        <Text
-                          style={styles.suggestion_header_text}
-                          numberOfLines={1}
-                        >
-                          {item.structured_formatting.main_text}
-                        </Text>
-                        <Text style={styles.suggestion_sub_text}>
-                          {item.structured_formatting.secondary_text}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableWithoutFeedback>
-                )}
-              />
-            ) : (
-              <FlatList
-                data={destinationSuggestions}
-                keyExtractor={(item) => item.place_id}
-                renderItem={({ item }) => (
-                  <TouchableWithoutFeedback
-                    onPress={() =>
-                      set_destination_func(
-                        item.place_id,
-                        item.structured_formatting.main_text
-                      )
-                    }
-                  >
-                    <View style={styles.suggestion_box}>
-                      <Ionicons name="location" size={24} color="#b7b7b7" />
-                      <View>
-                        <Text
-                          style={styles.suggestion_header_text}
-                          numberOfLines={1}
-                        >
-                          {item.structured_formatting.main_text}
-                        </Text>
-                        <Text style={styles.suggestion_sub_text}>
-                          {item.structured_formatting.secondary_text}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableWithoutFeedback>
-                )}
-              />
-            )}
-          </View>
-        </>
+        <BookingModal opacity={opacity} activeSuggestion={activeSuggestion} />
       )}
-      {rideStatus === "choosing_car" && (
-        <>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(!modalUp);
-            }}
-          >
-            <View style={styles.expand_line_conatiner}>
-              <View style={styles.expand_line} />
-            </View>
-          </TouchableWithoutFeedback>
+      {/*  */}
+      {rideStatus === "choosing_car" && <ChooseRideModal />}
+      {/*  */}
+      {rideStatus === "searching" && <SearchingModal />}
+      {/*  */}
+      {rideStatus === "accepted" && <AcceptedModal />}
+      {/*  */}
+      {rideStatus === "paying" && <PayingModal />}
+      {/*  */}
+      {rideStatus === "paid" && <PaidModal />}
+    </Animated.View>
+  );
+};
 
-          <Text style={[styles.header_text, { textAlign: "center" }]}>
-            Select Igle ride...
-          </Text>
+const StartModal = () => {
+  const { signedIn } = useAuthContext();
 
-          <View
-            style={{
-              borderColor: "#fff",
-              borderWidth: 3,
-              borderRadius: 10,
-              width: "100%",
-              paddingHorizontal: 20,
-              paddingVertical: 5,
-              marginTop: 20,
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 15 }}
-            >
-              <Image
-                source={require("../assets/images/icons/sedan-icon.png")}
-                style={{ height: 50, width: 50 }}
-              />
-              <View>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontFamily: "raleway-semibold",
-                  }}
-                >
-                  Cab ride
-                </Text>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontFamily: "poppins-regular",
-                    fontSize: 12,
-                  }}
-                >
-                  {rideDetails?.distanceKm ?? "--"}km .{" "}
-                  {rideDetails?.durationMins ?? "--"}mins
-                </Text>
-              </View>
-            </View>
-            <View>
-              <Text
-                style={{
-                  color: "#fff",
-                  alignSelf: "flex-end",
-                  fontFamily: "poppins-bold",
-                  fontSize: 16,
-                }}
-              >
-                NGN {rideDetails?.amount.toLocaleString() ?? "----"}
-              </Text>
-            </View>
+  const { destination, destinationCoords } = useMapContext();
+
+  const { setRideStatus, setModalUp } = useRideContext();
+  return (
+    <>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(true);
+          setRideStatus("booking");
+        }}
+      >
+        <View style={styles.expand_line_conatiner}>
+          <View style={styles.expand_line} />
+        </View>
+      </TouchableWithoutFeedback>
+
+      <Text style={styles.header_text}>
+        {signedIn.name.split(" ")[1] || signedIn.name.split(" ")[0]}, let's go
+        places...
+      </Text>
+
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(true);
+          setRideStatus("booking");
+        }}
+      >
+        <View style={styles.form}>
+          <View style={styles.text_inp_container}>
+            <Image
+              source={require("../assets/images/icons/car-icon.png")}
+              style={{ height: 30, width: 30 }}
+            />
+            <TextInput
+              placeholder="Where we dey go?"
+              value={destinationCoords ? destination : ""}
+              selection={{ start: 0, end: 0 }}
+              placeholderTextColor={"#8d8d8d"}
+              editable={false}
+              style={[styles.text_input, { color: "#8d8d8d" }]}
+            />
           </View>
-          <TouchableWithoutFeedback
-            onPress={book_ride}
-            disabled={booking || calculating || !rideDetails}
-          >
-            <View
-              style={{
-                marginVertical: 20,
-                padding: 10,
-                borderRadius: 30,
-                backgroundColor: "#fff",
-                opacity: booking || calculating || !rideDetails ? 0.5 : 1,
-              }}
-            >
-              <Text
-                style={{
-                  textAlign: "center",
-                  fontFamily: "raleway-bold",
-                  color: "#121212",
-                }}
-              >
-                {booking ? "Booking..." : "Book now"}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback
-            style={{ marginVertical: 20 }}
-            onPress={resetRide}
-          >
-            <Text
-              style={{
-                color: "#ff0000",
-                fontFamily: "raleway-bold",
-                fontSize: 16,
-                textAlign: "center",
-              }}
-            >
-              Cancel
-            </Text>
-          </TouchableWithoutFeedback>
-        </>
-      )}
-      {rideStatus === "searching" && (
-        <>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(!modalUp);
-            }}
-          >
-            <View style={styles.expand_line_conatiner}>
-              <View style={styles.expand_line} />
-            </View>
-          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </>
+  );
+};
 
-          <Text
-            style={[styles.header_text, { textAlign: "center", marginTop: 10 }]}
-          >
-            {ongoingRideData.status === "expired"
-              ? "Ride timeout"
-              : "Searching for driver"}
-          </Text>
+const BookingModal: FC<{
+  opacity: any;
+  activeSuggestion: "pickup" | "destination";
+}> = ({ opacity, activeSuggestion }) => {
+  const {
+    region,
+    userAddress,
+    setUserAddress,
+    pickupSuggestions,
+    destinationSuggestions,
+    getPlaceCoords,
+    calculateRide,
+    destination,
+    setDestination,
+    setDestinationCoords,
+    pickupCoords,
+    setPickupCoords,
+  } = useMapContext();
 
-          <View style={{ marginTop: 20 }}>
-            <Text
-              style={{
-                fontFamily: "raleway-regular",
-                color: "#fff",
-                textAlign: "center",
-              }}
-            >
-              {ongoingRideData.status === "expired"
-                ? `No Driver was found at this time to go to ${ongoingRideData.destination.address}`
-                : "We're trying to locate drivers around you..."}
-            </Text>
+  const { setRideStatus, setModalUp } = useRideContext();
+
+  const set_destination_func = async (place_id: string, place_name: string) => {
+    setDestination(place_name);
+    setModalUp(false);
+    setRideStatus("choosing_car");
+
+    const coords = await getPlaceCoords(place_id);
+    if (coords) {
+      setDestinationCoords(coords);
+
+      await calculateRide(pickupCoords || [region.latitude, region.longitude], [
+        ...coords,
+      ]);
+    }
+  };
+  const set_pickup_func = async (place_id: string, place_name: string) => {
+    setUserAddress(place_name);
+
+    const coords = await getPlaceCoords(place_id);
+    if (coords) {
+      setPickupCoords(coords);
+      setDestination("");
+    }
+  };
+  return (
+    <>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(false);
+          setRideStatus("");
+        }}
+      >
+        <View style={styles.expand_line_conatiner}>
+          <View style={styles.expand_line} />
+        </View>
+      </TouchableWithoutFeedback>
+
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Choose your route...
+      </Text>
+
+      {/* Route slection form */}
+      <Animated.View style={[styles.form, { opacity }]}>
+        <View style={{ flex: 1, marginTop: 10 }}>
+          {/* Select pickup and drop off */}
+          <View style={styles.route_inp_container}>
+            <View style={styles.from_circle} />
+            <TextInput
+              style={[styles.route_input]}
+              placeholder="Pickup"
+              value={userAddress}
+              onChangeText={setUserAddress}
+              placeholderTextColor={"#b7b7b7"}
+              editable={true}
+            />
           </View>
+          <View style={styles.route_inp_container}>
+            <View style={styles.to_square} />
+            <TextInput
+              style={styles.route_input}
+              placeholder="Destination"
+              value={destination}
+              onChangeText={setDestination}
+              placeholderTextColor={"#b7b7b7"}
+            />
+          </View>
+        </View>
+      </Animated.View>
 
-          {ongoingRideData.status === "expired" ? (
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginTop: 30,
-                gap: 20,
-              }}
-            >
-              <Pressable
-                onPress={retry_ride}
-                disabled={retrying}
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  backgroundColor: "#fff",
-                  opacity: retrying ? 0.5 : 1,
-                  borderRadius: 30,
-                  padding: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#121212",
-                    fontFamily: "raleway-bold",
-                    fontSize: 14,
-                    textAlign: "center",
-                  }}
-                >
-                  {retrying ? "Retrying..." : "Retry"}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={cancel_ride}
-                disabled={cancelling}
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  borderColor: "#fff",
-                  borderWidth: 1,
-                  borderRadius: 30,
-                  padding: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    color: cancelling ? "#d7d7d7" : "#fff",
-                    fontFamily: "raleway-bold",
-                    fontSize: 14,
-                    textAlign: "center",
-                  }}
-                >
-                  {cancelling ? "Cancelling..." : "Cancel"}
-                </Text>
-              </Pressable>
-            </View>
-          ) : (
-            <TouchableWithoutFeedback
-              onPress={cancel_ride}
-              disabled={cancelling}
-            >
-              <Text
-                style={{
-                  color: cancelling ? "#ff000080" : "#ff0000",
-                  fontFamily: "raleway-bold",
-                  fontSize: 16,
-                  textAlign: "center",
-                  marginTop: 50,
-                }}
-              >
-                {cancelling ? "Cancelling..." : "Canel ride"}
-              </Text>
-            </TouchableWithoutFeedback>
-          )}
-        </>
-      )}
-      {rideStatus === "accepted" && (
-        <>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(!modalUp);
-            }}
-          >
-            <View style={styles.expand_line_conatiner}>
-              <View style={styles.expand_line} />
-            </View>
-          </TouchableWithoutFeedback>
-
-          <Text style={[styles.header_text, { textAlign: "center" }]}>
-            Driver found
-          </Text>
-
-          <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
-            This driver is on his way...
-          </Text>
-
-          {/* Ride request card */}
-          <View style={styles.rideRequestCard}>
-            {/* Header */}
-            <View style={styles.rideRequestHeader}>
-              {/* User */}
-              <View style={styles.userInfo}>
-                <Image
-                  source={require("../assets/images/black-profile.jpeg")}
-                  style={styles.userImage}
-                />
-                <View>
-                  <Text style={styles.userName}>
-                    {ongoingRideData.driver.user.name}
-                  </Text>
-                  <Text style={styles.userRides}>No ride completed</Text>
-                </View>
-              </View>
-
-              {/* Call btn */}
-              <TouchableWithoutFeedback onPress={makeCall}>
-                <View style={styles.callBtn}>
-                  <FontAwesome name="phone" color={"#121212"} size={20} />
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-
-            {/* Estimated time and duration */}
-            <View style={{ marginVertical: 20 }}>
-              <View style={styles.timeRow}>
-                <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
-                <Text style={styles.timeText}>
-                  {rideDetails?.durationMins} mins ({rideDetails?.distanceKm}{" "}
-                  km)
-                </Text>
-              </View>
-
-              <View style={styles.timeRow}>
-                <Ionicons name="car" color={"#d7d7d7"} size={16} />
-                <Text style={styles.timeText}>
-                  {ongoingRideData.driver?.vehicle.color}{" "}
-                  {ongoingRideData.driver?.vehicle.brand}{" "}
-                  {ongoingRideData.driver?.vehicle.model}
-                </Text>
-              </View>
-            </View>
-
-            {/* Ride route card */}
-            <RideRoute from={userAddress} to={destination} />
-
-            {/* Price */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Text style={styles.priceText}>
-                {rideDetails?.amount.toLocaleString()} NGN
-              </Text>
+      {/* Suggestions */}
+      <View style={[styles.suggestions_container]}>
+        {activeSuggestion === "pickup" ? (
+          <FlatList
+            data={pickupSuggestions}
+            keyExtractor={(item) => item.place_id}
+            renderItem={({ item }) => (
               <TouchableWithoutFeedback
-                onPress={() => {
-                  setRideStatus("paying");
-                  setModalUp(false);
-                }}
+                onPress={() =>
+                  set_pickup_func(
+                    item.place_id,
+                    item.structured_formatting.main_text
+                  )
+                }
               >
-                <View
-                  style={{
-                    backgroundColor: "#fff",
-                    paddingHorizontal: 20,
-                    paddingVertical: 10,
-                    borderRadius: 20,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#121212",
-                      fontFamily: "raleway-bold",
-                      textAlign: "center",
-                      fontSize: 12,
-                    }}
-                  >
-                    Pay from wallet
-                  </Text>
+                <View style={styles.suggestion_box}>
+                  <Ionicons name="location" size={24} color="#b7b7b7" />
+                  <View>
+                    <Text
+                      style={styles.suggestion_header_text}
+                      numberOfLines={1}
+                    >
+                      {item.structured_formatting.main_text}
+                    </Text>
+                    <Text style={styles.suggestion_sub_text}>
+                      {item.structured_formatting.secondary_text}
+                    </Text>
+                  </View>
                 </View>
               </TouchableWithoutFeedback>
-            </View>
+            )}
+          />
+        ) : (
+          <FlatList
+            data={destinationSuggestions}
+            keyExtractor={(item) => item.place_id}
+            renderItem={({ item }) => (
+              <TouchableWithoutFeedback
+                onPress={() =>
+                  set_destination_func(
+                    item.place_id,
+                    item.structured_formatting.main_text
+                  )
+                }
+              >
+                <View style={styles.suggestion_box}>
+                  <Ionicons name="location" size={24} color="#b7b7b7" />
+                  <View>
+                    <Text
+                      style={styles.suggestion_header_text}
+                      numberOfLines={1}
+                    >
+                      {item.structured_formatting.main_text}
+                    </Text>
+                    <Text style={styles.suggestion_sub_text}>
+                      {item.structured_formatting.secondary_text}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            )}
+          />
+        )}
+      </View>
+    </>
+  );
+};
+
+const ChooseRideModal = () => {
+  const {
+    rideDetails,
+    calculating,
+    region,
+    destination,
+    destinationCoords,
+    userAddress,
+  } = useMapContext();
+
+  const { modalUp, setModalUp, resetRide, rideRequest, setRideStatus } =
+    useRideContext();
+
+  const { showNotification } = useNotificationContext();
+
+  const [booking, setBooking] = useState<boolean>(false);
+  const book_ride = async () => {
+    setBooking(true);
+
+    const pickupCoords: [number, number] = [region.latitude, region.longitude];
+
+    if (!destination || !destinationCoords)
+      showNotification("Destination not set", "error");
+
+    if (!userAddress || !pickupCoords)
+      showNotification("Pickup location not set", "error");
+
+    try {
+      await rideRequest(
+        { address: userAddress, coordinates: pickupCoords },
+        { address: destination, coordinates: destinationCoords! }
+      );
+      setBooking(false);
+      setModalUp(false);
+      setRideStatus("searching");
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    } finally {
+      setBooking(false);
+    }
+  };
+  return (
+    <>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(!modalUp);
+        }}
+      >
+        <View style={styles.expand_line_conatiner}>
+          <View style={styles.expand_line} />
+        </View>
+      </TouchableWithoutFeedback>
+
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Select Igle ride...
+      </Text>
+
+      <View
+        style={{
+          borderColor: "#fff",
+          borderWidth: 3,
+          borderRadius: 10,
+          width: "100%",
+          paddingHorizontal: 20,
+          paddingVertical: 5,
+          marginTop: 20,
+          flexDirection: "row",
+          justifyContent: "space-between",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
+          <Image
+            source={require("../assets/images/icons/sedan-icon.png")}
+            style={{ height: 50, width: 50 }}
+          />
+          <View>
             <Text
               style={{
-                marginVertical: 20,
                 color: "#fff",
-                fontFamily: "raleway-regular",
+                fontFamily: "raleway-semibold",
+              }}
+            >
+              Cab ride
+            </Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "poppins-regular",
                 fontSize: 12,
               }}
             >
-              *Please ensure the driver has arrived before paying for this ride
+              {rideDetails?.distanceKm ?? "--"}km .{" "}
+              {rideDetails?.durationMins ?? "--"}mins
             </Text>
           </View>
+        </View>
+        <View>
+          <Text
+            style={{
+              color: "#fff",
+              alignSelf: "flex-end",
+              fontFamily: "poppins-bold",
+              fontSize: 16,
+            }}
+          >
+            NGN {rideDetails?.amount.toLocaleString() ?? "----"}
+          </Text>
+        </View>
+      </View>
+      <TouchableWithoutFeedback
+        onPress={book_ride}
+        disabled={booking || calculating || !rideDetails}
+      >
+        <View
+          style={{
+            marginVertical: 20,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
+            opacity: booking || calculating || !rideDetails ? 0.5 : 1,
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            {booking ? "Booking..." : "Book now"}
+          </Text>
+        </View>
+      </TouchableWithoutFeedback>
+      <TouchableWithoutFeedback
+        style={{ marginVertical: 20 }}
+        onPress={resetRide}
+      >
+        <Text
+          style={{
+            color: "#ff0000",
+            fontFamily: "raleway-bold",
+            fontSize: 16,
+            textAlign: "center",
+          }}
+        >
+          Cancel
+        </Text>
+      </TouchableWithoutFeedback>
+    </>
+  );
+};
 
-          <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
+const SearchingModal = () => {
+  const { region, mapRef } = useMapContext();
+
+  const {
+    cancelling,
+    cancelRideRequest,
+    modalUp,
+    setModalUp,
+    ongoingRideData,
+    retrying,
+    retryRideRequest,
+  } = useRideContext();
+
+  const { showNotification } = useNotificationContext();
+
+  const cancel_ride = async () => {
+    const reason = "No reason";
+    const by = "rider";
+    const ride_id = ongoingRideData._id;
+
+    try {
+      await cancelRideRequest(ride_id, by, reason);
+      if (region) mapRef.current.animateToRegion(region, 1000);
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
+
+  const retry_ride = async () => {
+    try {
+      await retryRideRequest();
+    } catch (error: any) {
+      showNotification(error.message, "success");
+    }
+  };
+  return (
+    <>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(!modalUp);
+        }}
+      >
+        <View style={styles.expand_line_conatiner}>
+          <View style={styles.expand_line} />
+        </View>
+      </TouchableWithoutFeedback>
+
+      <Text
+        style={[styles.header_text, { textAlign: "center", marginTop: 10 }]}
+      >
+        {ongoingRideData.status === "expired"
+          ? "Ride timeout"
+          : "Searching for driver"}
+      </Text>
+
+      <View style={{ marginTop: 20 }}>
+        <Text
+          style={{
+            fontFamily: "raleway-regular",
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
+          {ongoingRideData.status === "expired"
+            ? `No Driver was found at this time to go to ${ongoingRideData.destination.address}`
+            : "We're trying to locate drivers around you..."}
+        </Text>
+      </View>
+
+      {ongoingRideData.status === "expired" ? (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginTop: 30,
+            gap: 20,
+          }}
+        >
+          <Pressable
+            onPress={retry_ride}
+            disabled={retrying}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              justifyContent: "center",
+              backgroundColor: "#fff",
+              opacity: retrying ? 0.5 : 1,
+              borderRadius: 30,
+              padding: 10,
+            }}
+          >
             <Text
               style={{
-                color: cancelling ? "#ff000080" : "#ff0000",
-                marginTop: 50,
+                color: "#121212",
                 fontFamily: "raleway-bold",
+                fontSize: 14,
                 textAlign: "center",
               }}
             >
-              {cancelling ? "Cancelling..." : "Canel this ride"}
+              {retrying ? "Retrying..." : "Retry"}
             </Text>
-          </TouchableWithoutFeedback>
-        </>
-      )}
-      {rideStatus === "paying" && (
-        <>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(!modalUp);
+          </Pressable>
+          <Pressable
+            onPress={cancel_ride}
+            disabled={cancelling}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              justifyContent: "center",
+              borderColor: "#fff",
+              borderWidth: 1,
+              borderRadius: 30,
+              padding: 10,
             }}
           >
-            <View style={styles.expand_line_conatiner}>
-              <View style={styles.expand_line} />
-            </View>
-          </TouchableWithoutFeedback>
-
-          <Text
-            style={[
-              styles.header_text,
-              { textAlign: "center", fontFamily: "poppins-bold" },
-            ]}
-          >
-            Confirm payment ({rideDetails?.amount.toLocaleString()} NGN)
-          </Text>
-
-          <View style={{ marginTop: 25 }}>
-            <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
-              Wallet balance: {userWalletBal.toLocaleString()} NGN
-            </Text>
-
-            <View
+            <Text
               style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 20,
-                marginTop: 25,
+                color: cancelling ? "#d7d7d7" : "#fff",
+                fontFamily: "raleway-bold",
+                fontSize: 14,
+                textAlign: "center",
               }}
             >
-              <TouchableWithoutFeedback onPress={pay_func} disabled={paying}>
-                <View
-                  style={{
-                    backgroundColor: "#fff",
-                    borderRadius: 20,
-                    paddingHorizontal: 30,
-                    paddingVertical: 10,
-                    flex: 1,
-                    opacity: paying ? 0.5 : 1,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#121212",
-                      fontFamily: "raleway-bold",
-                      textAlign: "center",
-                    }}
-                  >
-                    {paying ? "Confirming..." : "Confirm"}
-                  </Text>
-                </View>
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  setRideStatus("accepted");
-                  setModalUp(true);
-                }}
-              >
-                <View
-                  style={{
-                    borderRadius: 20,
-                    paddingHorizontal: 30,
-                    paddingVertical: 10,
-                    borderStyle: "solid",
-                    borderWidth: 1,
-                    borderColor: "#fff",
-                    flex: 1,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontFamily: "raleway-bold",
-                      textAlign: "center",
-                    }}
-                  >
-                    Cancel
-                  </Text>
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </View>
-        </>
-      )}
-      {rideStatus === "paid" && (
-        <>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setModalUp(!modalUp);
+              {cancelling ? "Cancelling..." : "Cancel"}
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
+          <Text
+            style={{
+              color: cancelling ? "#ff000080" : "#ff0000",
+              fontFamily: "raleway-bold",
+              fontSize: 16,
+              textAlign: "center",
+              marginTop: 50,
             }}
           >
-            <View style={styles.expand_line_conatiner}>
-              <View style={styles.expand_line} />
+            {cancelling ? "Cancelling..." : "Canel ride"}
+          </Text>
+        </TouchableWithoutFeedback>
+      )}
+    </>
+  );
+};
+
+const AcceptedModal = () => {
+  const { region, userAddress, rideDetails, destination, mapRef } =
+    useMapContext();
+
+  const {
+    cancelling,
+    cancelRideRequest,
+    setRideStatus,
+    modalUp,
+    setModalUp,
+    ongoingRideData,
+  } = useRideContext();
+
+  const { showNotification } = useNotificationContext();
+
+  const cancel_ride = async () => {
+    const reason = "No reason";
+    const by = "rider";
+    const ride_id = ongoingRideData._id;
+
+    try {
+      await cancelRideRequest(ride_id, by, reason);
+      if (region) mapRef.current.animateToRegion(region, 1000);
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
+
+  const makeCall = async () => {
+    const url = `tel:${ongoingRideData.driver.user.phone}`;
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      showNotification("Could not place call", "error");
+    }
+  };
+  return (
+    <>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(!modalUp);
+        }}
+      >
+        <View style={styles.expand_line_conatiner}>
+          <View style={styles.expand_line} />
+        </View>
+      </TouchableWithoutFeedback>
+
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Driver found
+      </Text>
+
+      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+        This driver is on his way...
+      </Text>
+
+      {/* Ride request card */}
+      <View style={styles.rideRequestCard}>
+        {/* Header */}
+        <View style={styles.rideRequestHeader}>
+          {/* User */}
+          <View style={styles.userInfo}>
+            <Image
+              source={require("../assets/images/black-profile.jpeg")}
+              style={styles.userImage}
+            />
+            <View>
+              <Text style={styles.userName}>
+                {ongoingRideData.driver.user.name}
+              </Text>
+              <Text style={styles.userRides}>No ride completed</Text>
+            </View>
+          </View>
+
+          {/* Call btn */}
+          <TouchableWithoutFeedback onPress={makeCall}>
+            <View style={styles.callBtn}>
+              <FontAwesome name="phone" color={"#121212"} size={20} />
             </View>
           </TouchableWithoutFeedback>
+        </View>
 
-          <Text
-            style={[
-              styles.header_text,
-              { textAlign: "center", marginTop: 20, fontSize: 16 },
-            ]}
-          >
-            Alright, hang tight, we'll take it from here...
+        {/* Estimated time and duration */}
+        <View style={{ marginVertical: 20 }}>
+          <View style={styles.timeRow}>
+            <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
+            <Text style={styles.timeText}>
+              {rideDetails?.durationMins} mins ({rideDetails?.distanceKm} km)
+            </Text>
+          </View>
+
+          <View style={styles.timeRow}>
+            <Ionicons name="car" color={"#d7d7d7"} size={16} />
+            <Text style={styles.timeText}>
+              {ongoingRideData.driver?.vehicle.color}{" "}
+              {ongoingRideData.driver?.vehicle.brand}{" "}
+              {ongoingRideData.driver?.vehicle.model}
+            </Text>
+          </View>
+        </View>
+
+        {/* Ride route card */}
+        <RideRoute from={userAddress} to={destination} />
+
+        {/* Price */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.priceText}>
+            {rideDetails?.amount.toLocaleString()} NGN
           </Text>
-
           <TouchableWithoutFeedback
             onPress={() => {
-              router.push("../(tabs)/rides");
+              setRideStatus("paying");
+              setModalUp(false);
             }}
           >
             <View
               style={{
-                marginVertical: 50,
-                padding: 10,
-                borderRadius: 30,
                 backgroundColor: "#fff",
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+                borderRadius: 20,
               }}
             >
               <Text
                 style={{
-                  textAlign: "center",
-                  fontFamily: "raleway-bold",
                   color: "#121212",
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                  fontSize: 12,
                 }}
               >
-                Track ride
+                Pay from wallet
               </Text>
             </View>
           </TouchableWithoutFeedback>
-        </>
-      )}
-    </Animated.View>
+        </View>
+        <Text
+          style={{
+            marginVertical: 20,
+            color: "#fff",
+            fontFamily: "raleway-regular",
+            fontSize: 12,
+          }}
+        >
+          *Please ensure the driver has arrived before paying for this ride
+        </Text>
+      </View>
+
+      <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
+        <Text
+          style={{
+            color: cancelling ? "#ff000080" : "#ff0000",
+            marginTop: 50,
+            fontFamily: "raleway-bold",
+            textAlign: "center",
+          }}
+        >
+          {cancelling ? "Cancelling..." : "Canel this ride"}
+        </Text>
+      </TouchableWithoutFeedback>
+    </>
+  );
+};
+
+const PayingModal = () => {
+  const { rideDetails } = useMapContext();
+
+  const { setRideStatus, modalUp, setModalUp, payForRide } = useRideContext();
+
+  const { userWalletBal } = useWalletContext();
+
+  const [paying, setPaying] = useState<boolean>(false);
+  const pay_func = async () => {
+    setPaying(true);
+    try {
+      await payForRide();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  return (
+    <>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(!modalUp);
+        }}
+      >
+        <View style={styles.expand_line_conatiner}>
+          <View style={styles.expand_line} />
+        </View>
+      </TouchableWithoutFeedback>
+
+      <Text
+        style={[
+          styles.header_text,
+          { textAlign: "center", fontFamily: "poppins-bold" },
+        ]}
+      >
+        Confirm payment ({rideDetails?.amount.toLocaleString()} NGN)
+      </Text>
+
+      <View style={{ marginTop: 25 }}>
+        <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
+          Wallet balance: {userWalletBal.toLocaleString()} NGN
+        </Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 20,
+            marginTop: 25,
+          }}
+        >
+          <TouchableWithoutFeedback onPress={pay_func} disabled={paying}>
+            <View
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 20,
+                paddingHorizontal: 30,
+                paddingVertical: 10,
+                flex: 1,
+                opacity: paying ? 0.5 : 1,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#121212",
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                }}
+              >
+                {paying ? "Confirming..." : "Confirm"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setRideStatus("accepted");
+              setModalUp(true);
+            }}
+          >
+            <View
+              style={{
+                borderRadius: 20,
+                paddingHorizontal: 30,
+                paddingVertical: 10,
+                borderStyle: "solid",
+                borderWidth: 1,
+                borderColor: "#fff",
+                flex: 1,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                }}
+              >
+                Cancel
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </View>
+    </>
+  );
+};
+
+const PaidModal = () => {
+  const { modalUp, setModalUp } = useRideContext();
+  return (
+    <>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setModalUp(!modalUp);
+        }}
+      >
+        <View style={styles.expand_line_conatiner}>
+          <View style={styles.expand_line} />
+        </View>
+      </TouchableWithoutFeedback>
+
+      <Text
+        style={[
+          styles.header_text,
+          { textAlign: "center", marginTop: 20, fontSize: 16 },
+        ]}
+      >
+        Alright, hang tight, we'll take it from here...
+      </Text>
+
+      <TouchableWithoutFeedback
+        onPress={() => {
+          router.push("../(tabs)/rides");
+        }}
+      >
+        <View
+          style={{
+            marginVertical: 50,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            Track ride
+          </Text>
+        </View>
+      </TouchableWithoutFeedback>
+    </>
   );
 };
 

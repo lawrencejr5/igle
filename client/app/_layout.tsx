@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
 import SafeArea from "../components/SafeArea";
 
-import axios from "axios";
-
 import * as SystemUI from "expo-system-ui";
 import { useFonts } from "expo-font";
 
@@ -17,6 +15,8 @@ import RideContextProvider from "../context/RideContext";
 import MapContextProvider from "../context/MapContext";
 import WalletProvider from "../context/WalletContext";
 import DriverContextPrvider from "../context/DriverContext";
+
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -37,27 +37,29 @@ const RootLayout = () => {
   }
 
   return (
-    <LoadingProvider>
-      <NotificationProvider>
-        <WalletProvider>
-          <MapContextProvider>
-            <DriverAuthProvider>
-              <AuthProvider>
-                <DriverContextPrvider>
-                  <RideContextProvider>
-                    <Stack
-                      screenOptions={{
-                        headerShown: false,
-                      }}
-                    />
-                  </RideContextProvider>
-                </DriverContextPrvider>
-              </AuthProvider>
-            </DriverAuthProvider>
-          </MapContextProvider>
-        </WalletProvider>
-      </NotificationProvider>
-    </LoadingProvider>
+    <GestureHandlerRootView>
+      <LoadingProvider>
+        <NotificationProvider>
+          <WalletProvider>
+            <MapContextProvider>
+              <DriverAuthProvider>
+                <AuthProvider>
+                  <DriverContextPrvider>
+                    <RideContextProvider>
+                      <Stack
+                        screenOptions={{
+                          headerShown: false,
+                        }}
+                      />
+                    </RideContextProvider>
+                  </DriverContextPrvider>
+                </AuthProvider>
+              </DriverAuthProvider>
+            </MapContextProvider>
+          </WalletProvider>
+        </NotificationProvider>
+      </LoadingProvider>
+    </GestureHandlerRootView>
   );
 };
 
