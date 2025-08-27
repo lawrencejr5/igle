@@ -145,8 +145,14 @@ const EmptyState = ({ message }: { message: string }) => (
 const OngoingRide = ({ data }: { data: any }) => {
   const { showNotification } = useNotificationContext();
 
-  const { payForRide, cancelRideRequest, cancelling, ongoingRideData } =
-    useRideContext();
+  const {
+    payForRide,
+    cancelRideRequest,
+    cancelling,
+    ongoingRideData,
+    retrying,
+    retryRideRequest,
+  } = useRideContext();
   const { region, mapRef } = useMapContext();
 
   const makeCall = async (phone: string) => {
@@ -169,6 +175,15 @@ const OngoingRide = ({ data }: { data: any }) => {
       console.log(error);
     } finally {
       setPaying(false);
+    }
+  };
+
+  const retry_ride = async () => {
+    try {
+      await retryRideRequest();
+      router.push("../home");
+    } catch (error: any) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -358,9 +373,7 @@ const OngoingRide = ({ data }: { data: any }) => {
           </>
         )
       ) : data.status === "expired" ? (
-        <TouchableWithoutFeedback
-          onPress={() => showNotification("I don't want to rebook", "error")}
-        >
+        <TouchableWithoutFeedback onPress={retry_ride}>
           <View
             style={{
               flexDirection: "row",
@@ -368,15 +381,25 @@ const OngoingRide = ({ data }: { data: any }) => {
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "#d2d2d2ff", fontFamily: "raleway-bold" }}>
-              Rebook&nbsp;
-            </Text>
-            <FontAwesome6
-              name="rotate-right"
-              color="#fff"
-              size={10}
-              style={{ marginTop: 4 }}
-            />
+            {retrying ? (
+              <Text style={{ color: "#9e9d9dff", fontFamily: "raleway-bold" }}>
+                Retrying...
+              </Text>
+            ) : (
+              <>
+                <Text
+                  style={{ color: "#d2d2d2ff", fontFamily: "raleway-bold" }}
+                >
+                  Retry&nbsp;
+                </Text>
+                <FontAwesome6
+                  name="rotate-right"
+                  color="#fff"
+                  size={10}
+                  style={{ marginTop: 4 }}
+                />
+              </>
+            )}
           </View>
         </TouchableWithoutFeedback>
       ) : (

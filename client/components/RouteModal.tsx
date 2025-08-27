@@ -10,6 +10,7 @@ import {
   Dimensions,
   Linking,
   Alert,
+  Pressable,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -60,6 +61,8 @@ const RouteModal = () => {
     payForRide,
     ongoingRideData,
     resetRide,
+    retrying,
+    retryRideRequest,
   } = useRideContext();
 
   const { userWalletBal } = useWalletContext();
@@ -117,6 +120,14 @@ const RouteModal = () => {
       if (region) mapRef.current.animateToRegion(region, 1000);
     } catch (error: any) {
       showNotification(error.message, "error");
+    }
+  };
+
+  const retry_ride = async () => {
+    try {
+      await retryRideRequest();
+    } catch (error: any) {
+      showNotification(error.message, "success");
     }
   };
 
@@ -184,11 +195,14 @@ const RouteModal = () => {
   };
 
   useEffect(() => {
-    if (ongoingRideData && ongoingRideData.status !== "expired") {
+    if (ongoingRideData) {
       setDestination(ongoingRideData.destination.address);
       setDestinationCoords(ongoingRideData.destination.coordinates);
       fetchRoute(ongoingRideData.destination.coordinates);
-      if (ongoingRideData.status === "pending") {
+      if (
+        ongoingRideData.status === "pending" ||
+        ongoingRideData.status === "expired"
+      ) {
         setModalUp(false);
         setRideStatus("searching");
       }
@@ -460,9 +474,11 @@ const RouteModal = () => {
           </TouchableWithoutFeedback>
 
           <Text
-            style={[styles.header_text, { textAlign: "center", marginTop: 20 }]}
+            style={[styles.header_text, { textAlign: "center", marginTop: 10 }]}
           >
-            Searching for driver
+            {ongoingRideData.status === "expired"
+              ? "Ride timeout"
+              : "Searching for driver"}
           </Text>
 
           <View style={{ marginTop: 20 }}>
@@ -473,23 +489,88 @@ const RouteModal = () => {
                 textAlign: "center",
               }}
             >
-              We're trying to locate drivers around you...
+              {ongoingRideData.status === "expired"
+                ? `No Driver was found at this time to go to ${ongoingRideData.destination.address}`
+                : "We're trying to locate drivers around you..."}
             </Text>
           </View>
 
-          <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
-            <Text
+          {ongoingRideData.status === "expired" ? (
+            <View
               style={{
-                color: cancelling ? "#ff000080" : "#ff0000",
-                fontFamily: "raleway-bold",
-                fontSize: 16,
-                textAlign: "center",
-                marginTop: 50,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 30,
+                gap: 20,
               }}
             >
-              {cancelling ? "Cancelling..." : "Canel ride"}
-            </Text>
-          </TouchableWithoutFeedback>
+              <Pressable
+                onPress={retry_ride}
+                disabled={retrying}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  backgroundColor: "#fff",
+                  opacity: retrying ? 0.5 : 1,
+                  borderRadius: 30,
+                  padding: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#121212",
+                    fontFamily: "raleway-bold",
+                    fontSize: 14,
+                    textAlign: "center",
+                  }}
+                >
+                  {retrying ? "Retrying..." : "Retry"}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={cancel_ride}
+                disabled={cancelling}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  borderColor: "#fff",
+                  borderWidth: 1,
+                  borderRadius: 30,
+                  padding: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    color: cancelling ? "#d7d7d7" : "#fff",
+                    fontFamily: "raleway-bold",
+                    fontSize: 14,
+                    textAlign: "center",
+                  }}
+                >
+                  {cancelling ? "Cancelling..." : "Cancel"}
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <TouchableWithoutFeedback
+              onPress={cancel_ride}
+              disabled={cancelling}
+            >
+              <Text
+                style={{
+                  color: cancelling ? "#ff000080" : "#ff0000",
+                  fontFamily: "raleway-bold",
+                  fontSize: 16,
+                  textAlign: "center",
+                  marginTop: 50,
+                }}
+              >
+                {cancelling ? "Cancelling..." : "Canel ride"}
+              </Text>
+            </TouchableWithoutFeedback>
+          )}
         </>
       )}
       {rideStatus === "accepted" && (

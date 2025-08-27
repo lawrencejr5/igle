@@ -55,7 +55,12 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { getDriverData } = useDriverAuthContext();
   const { setLoadingState } = useLoading();
 
-  const { userSocket } = useAuthContext();
+  const { userSocket, signedIn } = useAuthContext();
+
+  useEffect(() => {
+    getUserCompletedRides();
+    getUserCancelledRides();
+  }, [signedIn]);
 
   useEffect(() => {
     if (!userSocket) return;
@@ -74,14 +79,31 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       }
     };
 
+    const onRideTimeout = async (data: any) => {
+      const { ride_id } = data;
+      showNotification("Ride timed out", "error");
+      try {
+        setOngoingRideData((prev: any) => {
+          if (prev._id === ride_id) {
+            return { ...prev, status: "expired" };
+          }
+          return;
+        });
+      } catch (error: any) {
+        throw new Error("An error occured");
+      }
+    };
+
     const onRideArrival = async (data: any) => {
       showNotification("Your ride has arrived", "success");
       console.log("Your ride has arrived");
     };
+
     const onRideStarted = async (data: any) => {
       showNotification("Your ride has started", "success");
       console.log("Your ride has started");
     };
+
     const onRideCompleted = async (data: any) => {
       resetRide();
       showNotification("Your ride has been completed", "success");
@@ -92,11 +114,13 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     };
 
     userSocket.on("ride_accepted", onRideAccepted);
+    userSocket.on("ride_timeout", onRideTimeout);
     userSocket.on("ride_arrival", onRideArrival);
     userSocket.on("ride_in_progress", onRideStarted);
     userSocket.on("ride_completed", onRideCompleted);
     return () => {
       userSocket.off("ride_accepted", onRideAccepted);
+      userSocket.off("ride_timeout", onRideTimeout);
       userSocket.off("ride_arrival", onRideArrival);
       userSocket.off("ride_in_progree", onRideStarted);
       userSocket.off("ride_completed", onRideCompleted);
@@ -160,10 +184,12 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const [retrying, setRetrying] = useState(false);
   const retryRideRequest = async () => {
     const token = await AsyncStorage.getItem("token");
-    const ride_id = ongoingRideData.ride_id;
+    const ride_id = ongoingRideData._id;
 
+    setRetrying(true);
     try {
       const { data } = await axios.patch(
         `${API_URL}/retry?ride_id=${ride_id}`,
@@ -173,7 +199,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       setOngoingRideData(data.ride);
       showNotification(data.msg, "success");
     } catch (error: any) {
-      throw new Error(error.response.data.message);
+      throw new Error(error.response.data.msg);
+    } finally {
+      setRetrying(false);
     }
   };
 
@@ -314,6 +342,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         rideRequest,
         rebookRideRequest,
         retryRideRequest,
+        retrying,
         payForRide,
         rideStatus,
         setRideStatus,
@@ -343,6 +372,7 @@ export interface RideContextType {
     destination: { address: string; coordinates: [number, number] }
   ) => Promise<void>;
 
+  retrying: boolean;
   retryRideRequest: () => Promise<void>;
   rebookRideRequest: (ride_id: string) => Promise<void>;
 
