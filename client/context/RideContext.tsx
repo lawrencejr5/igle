@@ -207,9 +207,11 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const [rebooking, setRebooking] = useState(false);
+
   const rebookRideRequest = async (ride_id: string) => {
     const token = await AsyncStorage.getItem("token");
-
+    setRebooking(true);
     try {
       const { data } = await axios.post(
         `${API_URL}/rebook?ride_id=${ride_id}`,
@@ -220,6 +222,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       showNotification(data.msg, "success");
     } catch (error: any) {
       throw new Error(error.response.data.message);
+    } finally {
+      setRebooking(false);
     }
   };
 
@@ -367,6 +371,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         rebookRideRequest,
         retryRideRequest,
         retrying,
+        rebooking,
         payForRide,
         rideStatus,
         setRideStatus,
@@ -397,6 +402,7 @@ export interface RideContextType {
   ) => Promise<void>;
 
   retrying: boolean;
+  rebooking: boolean;
   retryRideRequest: () => Promise<void>;
   rebookRideRequest: (ride_id: string) => Promise<void>;
 

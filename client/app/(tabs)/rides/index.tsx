@@ -541,106 +541,125 @@ const CompletedRides = ({ data }: { data: any }) => (
   </ScrollView>
 );
 
-const CancelledRides = ({ data }: { data: any }) => (
-  <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-    {data.map((ride: any, i: number) => (
-      <Pressable
-        onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
-        key={i}
-      >
-        <View style={styles.ride_card}>
-          <View
-            style={{
-              backgroundColor: "#ff000035",
-              marginBottom: 10,
-              alignSelf: "flex-start",
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 15,
-            }}
-          >
-            <Text
+const CancelledRides = ({ data }: { data: any }) => {
+  const { rebookRideRequest, rebooking } = useRideContext();
+  const [rebookingId, setRebookingId] = React.useState<string | null>(null);
+
+  const rebook_ride = async (ride_id: string) => {
+    setRebookingId(ride_id);
+    try {
+      await rebookRideRequest(ride_id);
+      router.push("../home");
+    } catch (error: any) {
+      console.log(error.message);
+    } finally {
+      setRebookingId(null); // reset after done
+    }
+  };
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+      {data.map((ride: any, i: number) => (
+        <View key={i}>
+          <View style={styles.ride_card}>
+            <View
               style={{
-                color: "#ff0000",
-                fontFamily: "raleway-bold",
-                fontSize: 10,
+                backgroundColor: "#ff000035",
+                marginBottom: 10,
+                alignSelf: "flex-start",
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 15,
               }}
             >
-              Cancelled
-            </Text>
-          </View>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              gap: 12,
-            }}
-          >
-            <Image
-              source={require("../../../assets/images/icons/sedan-icon.png")}
-              style={{ width: 30, height: 30 }}
-            />
+              <Text
+                style={{
+                  color: "#ff0000",
+                  fontFamily: "raleway-bold",
+                  fontSize: 10,
+                }}
+              >
+                Cancelled
+              </Text>
+            </View>
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "space-between",
-                gap: 10,
-                flex: 1,
+                justifyContent: "flex-start",
+                gap: 12,
               }}
             >
-              <View style={{ width: "65%" }}>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    fontFamily: "raleway-bold",
-                    color: "#fff",
-                  }}
-                >
-                  {ride.destination.address}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "raleway-semibold",
-                    color: "grey",
-                    fontSize: 11,
-                  }}
-                >
-                  {new Date(ride.createdAt).toLocaleDateString("en-US", {
-                    weekday: "short",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </Text>
-              </View>
-              <Pressable
+              <Image
+                source={require("../../../assets/images/icons/sedan-icon.png")}
+                style={{ width: 30, height: 30 }}
+              />
+              <View
                 style={{
-                  backgroundColor: "#fff",
-                  paddingHorizontal: 10,
-                  height: 30,
-                  borderRadius: 20,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  flex: 1,
                 }}
               >
-                <Text
+                <Pressable
+                  onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
+                  style={{ width: "65%" }}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontFamily: "raleway-bold",
+                      color: "#fff",
+                    }}
+                  >
+                    {ride.destination.address}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "raleway-semibold",
+                      color: "grey",
+                      fontSize: 11,
+                    }}
+                  >
+                    {new Date(ride.createdAt).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => rebook_ride(ride._id)}
+                  disabled={rebookingId === ride._id}
                   style={{
-                    color: "#121212",
-                    fontFamily: "raleway-semibold",
-                    fontSize: 12,
-                    marginBottom: 3,
+                    backgroundColor: "#fff",
+                    paddingHorizontal: 10,
+                    height: 30,
+                    borderRadius: 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: rebookingId === ride._id ? 0.5 : 1,
                   }}
                 >
-                  Rebook
-                </Text>
-              </Pressable>
+                  <Text
+                    style={{
+                      color: "#121212",
+                      fontFamily: "raleway-semibold",
+                      fontSize: 12,
+                      marginBottom: 3,
+                    }}
+                  >
+                    {rebookingId === ride._id ? "Rebooking..." : "Rebook"}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
-      </Pressable>
-    ))}
-  </ScrollView>
-);
+      ))}
+    </ScrollView>
+  );
+};
 
 export default Rides;
 
