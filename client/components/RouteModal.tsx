@@ -66,7 +66,7 @@ const RouteModal = () => {
       Animated.parallel([
         Animated.timing(height, {
           toValue: window_height,
-          duration: 500,
+          duration: 300,
           useNativeDriver: false,
         }),
         Animated.timing(opacity, {
