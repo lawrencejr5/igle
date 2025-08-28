@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.request_ride = void 0;
+exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = void 0;
 const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
@@ -23,6 +23,29 @@ const calc_fare_1 = require("../utils/calc_fare");
 const calc_commision_1 = require("../utils/calc_commision");
 const complete_ride_1 = require("../utils/complete_ride");
 const server_1 = require("../server");
+// 🔄 Helper: Expire a ride
+const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const ride = yield ride_1.default.findById(ride_id);
+    if (!ride || ride.status !== "pending")
+        return;
+    ride.status = "expired";
+    yield ride.save();
+    // Notify rider
+    if (user_id) {
+        const user_socket = yield (0, get_id_1.get_user_socket_id)(user_id);
+        if (user_socket) {
+            server_1.io.to(user_socket).emit("ride_timeout", {
+                ride_id,
+                msg: "No drivers accepted your ride in time.",
+            });
+        }
+    }
+    // Notify drivers to ignore this ride request
+    server_1.io.emit("ride_request_expired", {
+        ride_id,
+        msg: "This ride has expired",
+    });
+});
 const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -65,29 +88,8 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             msg: "Ride request created",
             ride: new_ride,
         });
-        // ⏳ Start timeout
-        setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
-            var _a;
-            const ride = yield ride_1.default.findById(new_ride._id);
-            if (ride && ride.status === "pending") {
-                // No driver accepted in time
-                ride.status = "expired";
-                yield ride.save();
-                const user_socket = yield (0, get_id_1.get_user_socket_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-                // Notify rider
-                if (user_socket) {
-                    server_1.io.to(user_socket).emit("ride_timeout", {
-                        ride_id: new_ride._id,
-                        msg: "No drivers accepted your ride in time.",
-                    });
-                }
-                // Notify drivers to ignore this ride request
-                server_1.io.emit("ride_request_expired", {
-                    ride_id: new_ride._id,
-                    msg: "This ride has expired",
-                });
-            }
-        }), 300000);
+        // Start expiration timeout
+        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 90000);
     }
     catch (err) {
         res
@@ -96,6 +98,82 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.request_ride = request_ride;
+const retry_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { ride_id } = req.query;
+        if (!ride_id) {
+            res.status(400).json({ msg: "ride_id is required" });
+            return;
+        }
+        const ride = yield ride_1.default.findById(ride_id);
+        if (!ride) {
+            res.status(404).json({ msg: "Ride not found" });
+            return;
+        }
+        if (ride.status !== "expired") {
+            res.status(400).json({ msg: "Only expired rides can be retried" });
+            return;
+        }
+        ride.status = "pending";
+        yield ride.save();
+        server_1.io.emit("new_ride_request", { ride_id: ride._id });
+        res.status(200).json({
+            msg: "Retrying ride request...",
+            ride,
+        });
+        // Start expiration timeout
+        setTimeout(() => expire_ride(ride._id, ride.rider.toString()), 90000);
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Failed to retry ride", err: err.message });
+    }
+});
+exports.retry_ride = retry_ride;
+const rebook_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { ride_id } = req.query;
+        if (!ride_id) {
+            res.status(400).json({ msg: "ride_id is required" });
+            return;
+        }
+        const ride = yield ride_1.default.findById(ride_id);
+        if (!ride) {
+            res.status(404).json({ msg: "Ride not found" });
+            return;
+        }
+        const distance_km = Number(ride.distance_km);
+        const duration_mins = Number(ride.duration_mins);
+        if (isNaN(distance_km) || isNaN(duration_mins)) {
+            res.status(400).json({ msg: "Invalid ride metrics" });
+            return;
+        }
+        const fare = (0, calc_fare_1.calculate_fare)(distance_km, duration_mins);
+        const commission = (0, calc_commision_1.calculate_commission)(fare);
+        const driver_earnings = fare - commission;
+        const new_ride = yield ride_1.default.create({
+            rider: ride.rider,
+            pickup: ride.pickup,
+            destination: ride.destination,
+            fare,
+            distance_km,
+            duration_mins,
+            driver_earnings,
+            commission,
+            status: "pending",
+        });
+        server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+        res.status(201).json({
+            msg: "Ride has been rebooked",
+            ride: new_ride,
+        });
+        // Start expiration timeout
+        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 90000);
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Failed to rebook ride", err: err.message });
+    }
+});
+exports.rebook_ride = rebook_ride;
 // Get available rides (status: pending, no driver assigned)
 const get_available_rides = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -140,6 +218,7 @@ const get_user_rides = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (status)
             queryObj.status = status;
         const rides = yield ride_1.default.find(Object.assign({ rider: user_id }, queryObj))
+            .sort({ createdAt: -1 })
             .populate({
             path: "driver",
             select: "user vehicle_type vehicle current_location",

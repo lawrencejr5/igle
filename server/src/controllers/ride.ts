@@ -261,6 +261,7 @@ export const get_user_rides = async (
     if (status) queryObj.status = status as string;
 
     const rides = await Ride.find({ rider: user_id, ...queryObj })
+      .sort({ createdAt: -1 })
       .populate({
         path: "driver",
         select: "user vehicle_type vehicle current_location",
