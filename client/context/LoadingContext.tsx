@@ -1,4 +1,3 @@
-import { StyleSheet, Text, View } from "react-native";
 import React, {
   createContext,
   Dispatch,
@@ -13,6 +12,7 @@ const LoadingContext = createContext<LoadingContextType | null>(null);
 
 const LoadingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [appLoading, setAppLoading] = useState<boolean>(false);
+  const [rideDetailsLoading, setRideDetailsLoading] = useState<boolean>(false);
   const [loadingState, setLoadingState] = useState<{
     location: boolean;
     completedRides: boolean;
@@ -24,7 +24,14 @@ const LoadingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   });
   return (
     <LoadingContext.Provider
-      value={{ appLoading, setAppLoading, loadingState, setLoadingState }}
+      value={{
+        appLoading,
+        setAppLoading,
+        loadingState,
+        setLoadingState,
+        rideDetailsLoading,
+        setRideDetailsLoading,
+      }}
     >
       {children}
     </LoadingContext.Provider>
@@ -43,6 +50,8 @@ export const useLoading = () => {
 interface LoadingContextType {
   appLoading: boolean;
   setAppLoading: Dispatch<SetStateAction<boolean>>;
+  rideDetailsLoading: boolean;
+  setRideDetailsLoading: Dispatch<SetStateAction<boolean>>;
 
   loadingState: {
     location: boolean;

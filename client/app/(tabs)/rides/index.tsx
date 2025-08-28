@@ -527,7 +527,7 @@ const CompletedRides = ({ data }: { data: any }) => (
               to={ride.destination.address}
             />
             <TouchableWithoutFeedback
-              onPress={() => router.push("./rides/ride_detail")}
+              onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
             >
               <View style={styles.pay_btn}>
                 <Text style={styles.pay_btn_text}>View ride details</Text>

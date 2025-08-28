@@ -54,7 +54,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const [modalUp, setModalUp] = useState<boolean>(false);
 
   const { getDriverData } = useDriverAuthContext();
-  const { setLoadingState } = useLoading();
+  const { setLoadingState, setRideDetailsLoading } = useLoading();
 
   const { userSocket, signedIn } = useAuthContext();
 
@@ -248,16 +248,37 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
-  const fetchOngoingRideData = async (ride_id: string): Promise<void> => {
+  const fetchRideData = async (ride_id: string): Promise<any> => {
     const token = await AsyncStorage.getItem("token");
     try {
       const { data } = await axios.get(`${API_URL}/data?ride_id=${ride_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setOngoingRideData(data.ride);
+      if (data) return data.ride;
     } catch (error: any) {
       console.log(error);
       showNotification(error.response.data.msg, "error");
+    }
+  };
+  const fetchOngoingRideData = async (ride_id: string): Promise<void> => {
+    try {
+      const ride = await fetchRideData(ride_id);
+      setOngoingRideData(ride);
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    }
+  };
+  const fetchRideDetails = async (ride_id: string): Promise<void> => {
+    setRideDetailsLoading(true);
+    try {
+      const ride = await fetchRideData(ride_id);
+      if (ride) setRideData(ride);
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    } finally {
+      setRideDetailsLoading(false);
     }
   };
 
@@ -341,6 +362,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     <RideContext.Provider
       value={{
         rideData,
+        fetchRideDetails,
         rideRequest,
         rebookRideRequest,
         retryRideRequest,
@@ -397,6 +419,7 @@ export interface RideContextType {
 
   rideData: any;
   ongoingRideData: any;
+  fetchRideDetails: (ride_id: string) => Promise<void>;
 
   userCompletedRides: any;
   setUserCompletedRides: Dispatch<SetStateAction<any>>;
