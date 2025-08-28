@@ -6,8 +6,9 @@ import {
   TouchableWithoutFeedback,
   Linking,
   ScrollView,
+  Pressable,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { router } from "expo-router";
 
@@ -543,8 +544,31 @@ const CompletedRides = ({ data }: { data: any }) => (
 const CancelledRides = ({ data }: { data: any }) => (
   <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
     {data.map((ride: any, i: number) => (
-      <View key={i}>
+      <Pressable
+        onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
+        key={i}
+      >
         <View style={styles.ride_card}>
+          <View
+            style={{
+              backgroundColor: "#ff000035",
+              marginBottom: 10,
+              alignSelf: "flex-start",
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 15,
+            }}
+          >
+            <Text
+              style={{
+                color: "#ff0000",
+                fontFamily: "raleway-bold",
+                fontSize: 10,
+              }}
+            >
+              Cancelled
+            </Text>
+          </View>
           <View
             style={{
               flexDirection: "row",
@@ -589,31 +613,31 @@ const CancelledRides = ({ data }: { data: any }) => (
                   })}
                 </Text>
               </View>
-              <View>
+              <Pressable
+                style={{
+                  backgroundColor: "#fff",
+                  paddingHorizontal: 10,
+                  height: 30,
+                  borderRadius: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <Text
                   style={{
-                    color: "#e30f0fff",
-                    fontFamily: "raleway-bold",
-                    fontSize: 12,
-                  }}
-                >
-                  Cancelled
-                </Text>
-                <Text
-                  style={{
-                    color: "#848484ff",
+                    color: "#121212",
                     fontFamily: "raleway-semibold",
-                    fontSize: 11,
-                    alignSelf: "flex-end",
+                    fontSize: 12,
+                    marginBottom: 3,
                   }}
                 >
-                  - By {ride.cancelled.by === "rider" ? "you" : "driver"}
+                  Rebook
                 </Text>
-              </View>
+              </Pressable>
             </View>
           </View>
         </View>
-      </View>
+      </Pressable>
     ))}
   </ScrollView>
 );

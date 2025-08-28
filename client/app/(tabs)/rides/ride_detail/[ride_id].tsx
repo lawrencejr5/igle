@@ -45,16 +45,6 @@ const RideDetails = () => {
       );
   }, [rideData]);
 
-  const date_time = new Intl.DateTimeFormat("en-US", {
-    weekday: "short", // Thur
-    day: "numeric", // 18
-    month: "long", // August
-    year: "numeric", // 2025
-    hour: "numeric", // 5
-    minute: "2-digit", // 18
-    hour12: true, // PM
-  }).format(new Date(rideData.createdAt));
-
   return (
     <>
       {rideDetailsLoading || !rideData ? (
@@ -155,9 +145,14 @@ const RideDetails = () => {
                       fontFamily: "raleway-semibold",
                       color: "#c6c5c5",
                       fontSize: 20,
+                      textAlign: "right",
                     }}
                   >
-                    Igle ride with Nyash
+                    {!rideData.driver
+                      ? "Cancelled ride"
+                      : `Igle ride with ${
+                          rideData.driver.user.name.split(" ")[0]
+                        }`}
                   </Text>
                   <Text
                     style={{
@@ -167,7 +162,15 @@ const RideDetails = () => {
                       textAlign: "right",
                     }}
                   >
-                    {date_time}
+                    {new Intl.DateTimeFormat("en-US", {
+                      weekday: "short", // Thur
+                      day: "numeric", // 18
+                      month: "long", // August
+                      year: "numeric", // 2025
+                      hour: "numeric", // 5
+                      minute: "2-digit", // 18
+                      hour12: true, // PM
+                    }).format(new Date(rideData.createdAt))}
                   </Text>
                 </View>
               </View>
@@ -182,15 +185,66 @@ const RideDetails = () => {
                   borderStyle: "solid",
                 }}
               >
-                <Text
+                <View
                   style={{
-                    color: "#fff",
-                    fontFamily: "raleway-semibold",
-                    fontSize: 22,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  Ride details
-                </Text>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-semibold",
+                      fontSize: 22,
+                    }}
+                  >
+                    Ride details
+                  </Text>
+                  {rideData.status === "cancelled" ? (
+                    <View
+                      style={{
+                        backgroundColor: "#ff000035",
+                        marginBottom: 10,
+                        alignSelf: "flex-start",
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 15,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#ff0000",
+                          fontFamily: "raleway-bold",
+                          fontSize: 10,
+                        }}
+                      >
+                        Cancelled
+                      </Text>
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        backgroundColor: "#4cd90635",
+                        marginBottom: 15,
+                        alignSelf: "flex-start",
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 15,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#4cd906ff",
+                          fontFamily: "raleway-bold",
+                          fontSize: 10,
+                        }}
+                      >
+                        Completed
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <View>
                   <RideRoute
                     from={rideData.pickup.address}
@@ -248,7 +302,20 @@ const RideDetails = () => {
                 </Text>
 
                 {/* Driver card */}
-                <DriverCard name={rideData.driver.user.name} />
+                {rideData.driver ? (
+                  <DriverCard name={rideData.driver.user.name} />
+                ) : (
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 16,
+                      fontFamily: "raleway-regular",
+                      marginTop: 15,
+                    }}
+                  >
+                    No driver was assigned to you
+                  </Text>
+                )}
               </View>
 
               {/* Timeline section */}
