@@ -109,7 +109,7 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
           console.log("No reference found in redirect URL");
         }
       } else {
-        console.log("User cancelled or closed browser:", result.type);
+        showNotification("Funding wallet failed", "error");
       }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg || "Something went wrong";

@@ -7,6 +7,7 @@ import {
   TextInput,
   Animated,
   Dimensions,
+  Pressable,
 } from "react-native";
 import React, {
   FC,
@@ -72,7 +73,6 @@ const WalletScreen: FC<{
       Keyboard.dismiss();
       setBtnLoading(false);
     }
-    // await verify_payment("txn_1755950856875_571854");
   };
 
   return (
@@ -209,12 +209,12 @@ const WalletScreen: FC<{
               gap: 10,
             }}
           >
-            <Suggestion value={1500} />
-            <Suggestion value={3000} />
-            <Suggestion value={5000} />
-            <Suggestion value={10000} />
-            <Suggestion value={25000} />
-            <Suggestion value={50000} />
+            <Suggestion close={closeWallet} value={1500} />
+            <Suggestion close={closeWallet} value={3000} />
+            <Suggestion close={closeWallet} value={5000} />
+            <Suggestion close={closeWallet} value={10000} />
+            <Suggestion close={closeWallet} value={25000} />
+            <Suggestion close={closeWallet} value={50000} />
           </View>
         </View>
         <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
@@ -250,9 +250,26 @@ const WalletScreen: FC<{
 
 export default WalletScreen;
 
-const Suggestion: FC<{ value: number }> = ({ value }) => {
+const Suggestion: FC<{ value: number; close: () => void }> = ({
+  value,
+  close,
+}) => {
+  const { showNotification } = useNotificationContext();
+  const { fundWallet } = useWalletContext();
+
+  const fundWalletFunc = async () => {
+    try {
+      close();
+      await fundWallet("wallet", Number(value));
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    } finally {
+      Keyboard.dismiss();
+    }
+  };
   return (
-    <View
+    <Pressable
+      onPress={fundWalletFunc}
       style={{
         backgroundColor: "#666666ff",
         paddingHorizontal: 10,
@@ -268,13 +285,11 @@ const Suggestion: FC<{ value: number }> = ({ value }) => {
           color: "#fff",
           fontFamily: "poppins-regular",
           textAlign: "center",
-          fontSize: 12,
+          fontSize: 11,
         }}
       >
-        {value.toLocaleString()} NGN
+        NGN {value.toLocaleString()}
       </Text>
-    </View>
+    </Pressable>
   );
 };
-
-const styles = StyleSheet.create({});

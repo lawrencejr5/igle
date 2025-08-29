@@ -123,7 +123,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       userSocket.off("ride_accepted", onRideAccepted);
       userSocket.off("ride_timeout", onRideTimeout);
       userSocket.off("ride_arrival", onRideArrival);
-      userSocket.off("ride_in_progree", onRideStarted);
+      userSocket.off("ride_in_progress", onRideStarted);
       userSocket.off("ride_completed", onRideCompleted);
     };
   }, [userSocket]);
