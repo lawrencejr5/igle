@@ -128,7 +128,13 @@ const CategoryTabs = ({
 };
 
 const EmptyState = ({ message }: { message: string }) => (
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+  <View
+    style={{
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
     <Text
       style={{
         color: "#fff",
@@ -140,6 +146,20 @@ const EmptyState = ({ message }: { message: string }) => (
     >
       {message}
     </Text>
+    <Pressable
+      style={{
+        backgroundColor: "#fff",
+        position: "absolute",
+        bottom: 20,
+        width: "90%",
+        padding: 10,
+        borderRadius: 20,
+      }}
+    >
+      <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
+        Schedule ride
+      </Text>
+    </Pressable>
   </View>
 );
 
