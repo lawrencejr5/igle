@@ -14,6 +14,7 @@ export interface RideType extends Document {
   driver_location?: [number, number];
   status:
     | "pending"
+    | "scheduled"
     | "accepted"
     | "arrived"
     | "ongoing"
@@ -39,6 +40,7 @@ export interface RideType extends Document {
   driver_earnings: number;
   driver_paid: boolean;
   commission: number;
+  scheduled_time: Date | null;
 }
 
 const RideSchema = new Schema<RideType>(
@@ -58,6 +60,7 @@ const RideSchema = new Schema<RideType>(
       type: String,
       enum: [
         "pending",
+        "scheduled",
         "accepted",
         "arrived",
         "ongoing",
@@ -97,6 +100,7 @@ const RideSchema = new Schema<RideType>(
     driver_earnings: { type: Number, required: true },
     driver_paid: { type: Boolean, default: false },
     commission: { type: Number, default: 0 },
+    scheduled_time: { type: Date, default: null },
   },
   { timestamps: true }
 );

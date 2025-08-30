@@ -50,7 +50,7 @@ export const request_ride = async (
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
-    const { km, min } = req.query;
+    const { km, min, scheduled_time } = req.query;
     const { pickup, destination } = req.body;
 
     if (
@@ -67,6 +67,7 @@ export const request_ride = async (
       res.status(400).json({
         msg: "Distance or Duration cannot be empty",
       });
+      return;
     }
 
     const distance_km = Number(km);
@@ -84,24 +85,27 @@ export const request_ride = async (
       duration_mins,
       driver_earnings,
       commission,
-      status: "pending",
+      status: scheduled_time ? "scheduled" : "pending",
+      scheduled_time: scheduled_time
+        ? new Date(scheduled_time as string)
+        : null,
     });
 
-    // Find drivers nearby and emit via Socket.IO
-    io.emit("new_ride_request", {
-      ride_id: new_ride._id,
-    });
+    // If it's an instant ride → emit immediately
+    if (!scheduled_time) {
+      io.emit("new_ride_request", { ride_id: new_ride._id });
+
+      // Start expiration timeout
+      setTimeout(
+        () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
+        90000
+      );
+    }
 
     res.status(201).json({
-      msg: "Ride request created",
+      msg: scheduled_time ? "Scheduled ride created" : "Ride request created",
       ride: new_ride,
     });
-
-    // Start expiration timeout
-    setTimeout(
-      () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
-      90000
-    );
   } catch (err: any) {
     res
       .status(500)
