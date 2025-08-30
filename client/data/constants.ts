@@ -5,4 +5,4 @@ export const API_URLS = {
   rides: "http://192.168.149.123:5000/api/v1/rides",
 };
 
-export const SOCKET_URL = "http://192.168.87.123:5000";
+export const SOCKET_URL = "http://192.168.149.123:5000";

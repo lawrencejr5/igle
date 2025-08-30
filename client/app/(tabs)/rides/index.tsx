@@ -63,7 +63,7 @@ const Rides = () => {
               (ongoingRideData ? (
                 <OngoingRide data={ongoingRideData} />
               ) : (
-                <EmptyState message="You don't have any ongoing rides" />
+                <EmptyState message="You don't have any ongoing rides currently" />
               ))}
 
             {/* Completed data */}
@@ -127,41 +127,85 @@ const CategoryTabs = ({
   );
 };
 
-const EmptyState = ({ message }: { message: string }) => (
-  <View
-    style={{
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-    }}
-  >
-    <Text
+const EmptyState = ({ message }: { message: string }) => {
+  const { setRideStatus, setModalUp } = useRideContext();
+
+  return (
+    <View
       style={{
-        color: "#fff",
-        fontSize: 18,
-        fontFamily: "raleway-bold",
-        textAlign: "center",
-        width: "80%",
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
-      {message}
-    </Text>
-    <Pressable
-      style={{
-        backgroundColor: "#fff",
-        position: "absolute",
-        bottom: 20,
-        width: "90%",
-        padding: 10,
-        borderRadius: 20,
-      }}
-    >
-      <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
-        Schedule ride
-      </Text>
-    </Pressable>
-  </View>
-);
+      <View
+        style={{ justifyContent: "center", alignItems: "center", width: "90%" }}
+      >
+        <Image
+          source={require("../../../assets/images/icons/no-results-white.png")}
+          style={{ width: 100, height: 100, marginBottom: 20 }}
+        />
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 18,
+            fontFamily: "raleway-bold",
+            textAlign: "center",
+          }}
+        >
+          {message}
+        </Text>
+      </View>
+      <View
+        style={{
+          position: "absolute",
+          bottom: 10,
+          alignItems: "center",
+          flex: 1,
+        }}
+      >
+        <Pressable
+          style={{
+            borderColor: "#fff",
+            borderWidth: 1,
+            width: 320,
+            padding: 10,
+            borderRadius: 20,
+            marginTop: 10,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "raleway-bold",
+              textAlign: "center",
+              color: "#fff",
+            }}
+          >
+            Schedule ride
+          </Text>
+        </Pressable>
+        <Pressable
+          style={{
+            backgroundColor: "#fff",
+            width: 320,
+            padding: 10,
+            borderRadius: 20,
+            marginTop: 10,
+          }}
+          onPress={() => {
+            router.push("../home");
+            setRideStatus("booking");
+            setModalUp(true);
+          }}
+        >
+          <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
+            Book ride
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+};
 
 const OngoingRide = ({ data }: { data: any }) => {
   const { showNotification } = useNotificationContext();
