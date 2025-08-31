@@ -9,14 +9,20 @@ import {
   FlatList,
   Dimensions,
   Linking,
-  Alert,
   Pressable,
+  Modal,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState, useEffect, useRef, FC } from "react";
 
 import RideRoute from "./RideRoute";
 
-import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
+import {
+  FontAwesome,
+  MaterialIcons,
+  Ionicons,
+  FontAwesome5,
+} from "@expo/vector-icons";
 
 import { useAuthContext } from "../context/AuthContext";
 import { useMapContext } from "../context/MapContext";
@@ -230,6 +236,7 @@ const BookingModal: FC<{
       ]);
     }
   };
+
   const set_pickup_func = async (place_id: string, place_name: string) => {
     setUserAddress(place_name);
 
@@ -256,6 +263,32 @@ const BookingModal: FC<{
         Choose your route...
       </Text>
 
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 8,
+          borderRadius: 20,
+          // borderColor: "#fff",
+          // borderWidth: 1,
+          backgroundColor: "#515151",
+          marginTop: 20,
+          alignSelf: "flex-end",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <Text
+          style={{
+            color: "#fff",
+            fontFamily: "raleway-semibold",
+            fontSize: 12,
+          }}
+        >
+          Pickup now
+        </Text>
+        <FontAwesome name="chevron-down" color={"#fff"} size={10} />
+      </View>
       {/* Route slection form */}
       <Animated.View style={[styles.form, { opacity }]}>
         <View style={{ flex: 1, marginTop: 10 }}>
@@ -291,7 +324,8 @@ const BookingModal: FC<{
             data={pickupSuggestions}
             keyExtractor={(item) => item.place_id}
             renderItem={({ item }) => (
-              <TouchableWithoutFeedback
+              <Pressable
+                style={styles.suggestion_box}
                 onPress={() =>
                   set_pickup_func(
                     item.place_id,
@@ -299,21 +333,16 @@ const BookingModal: FC<{
                   )
                 }
               >
-                <View style={styles.suggestion_box}>
-                  <Ionicons name="location" size={24} color="#b7b7b7" />
-                  <View>
-                    <Text
-                      style={styles.suggestion_header_text}
-                      numberOfLines={1}
-                    >
-                      {item.structured_formatting.main_text}
-                    </Text>
-                    <Text style={styles.suggestion_sub_text}>
-                      {item.structured_formatting.secondary_text}
-                    </Text>
-                  </View>
+                <Ionicons name="location" size={24} color="#b7b7b7" />
+                <View>
+                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    {item.structured_formatting.main_text}
+                  </Text>
+                  <Text style={styles.suggestion_sub_text}>
+                    {item.structured_formatting.secondary_text}
+                  </Text>
                 </View>
-              </TouchableWithoutFeedback>
+              </Pressable>
             )}
           />
         ) : (
@@ -321,7 +350,8 @@ const BookingModal: FC<{
             data={destinationSuggestions}
             keyExtractor={(item) => item.place_id}
             renderItem={({ item }) => (
-              <TouchableWithoutFeedback
+              <Pressable
+                style={styles.suggestion_box}
                 onPress={() =>
                   set_destination_func(
                     item.place_id,
@@ -329,25 +359,21 @@ const BookingModal: FC<{
                   )
                 }
               >
-                <View style={styles.suggestion_box}>
-                  <Ionicons name="location" size={24} color="#b7b7b7" />
-                  <View>
-                    <Text
-                      style={styles.suggestion_header_text}
-                      numberOfLines={1}
-                    >
-                      {item.structured_formatting.main_text}
-                    </Text>
-                    <Text style={styles.suggestion_sub_text}>
-                      {item.structured_formatting.secondary_text}
-                    </Text>
-                  </View>
+                <Ionicons name="location" size={24} color="#b7b7b7" />
+                <View>
+                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    {item.structured_formatting.main_text}
+                  </Text>
+                  <Text style={styles.suggestion_sub_text}>
+                    {item.structured_formatting.secondary_text}
+                  </Text>
                 </View>
-              </TouchableWithoutFeedback>
+              </Pressable>
             )}
           />
         )}
       </View>
+      <SelectSchedule />
     </>
   );
 };
@@ -983,6 +1009,126 @@ const PaidModal = () => {
   );
 };
 
+const SelectSchedule = () => {
+  const [visible, setVisible] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const options = ["Pickup now", "Pickup later"];
+
+  const handleSelect = (item: string) => {
+    setSelected(item);
+    setVisible(false);
+  };
+  return (
+    <Modal
+      visible={true}
+      transparent
+      animationType="slide" // makes it slide up from the bottom
+      onRequestClose={() => setVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={[styles.modalTitle, { textAlign: "center" }]}>
+            When do you want to ride
+          </Text>
+
+          <TouchableOpacity
+            style={styles.option}
+            onPress={() => handleSelect("Pickup now")}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 15 }}
+              >
+                <Ionicons name="time" color={"#fff"} size={20} />
+                <View>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-bold",
+                      fontSize: 16,
+                    }}
+                  >
+                    {"Now"}
+                  </Text>
+                  <Text
+                    style={{ color: "#fff", fontFamily: "raleway-regular" }}
+                  >
+                    Pick me up now
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.radioOuter}>
+                <View style={styles.radioInner} />
+              </View>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.option}
+            onPress={() => handleSelect("Pickup now")}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 15 }}
+              >
+                <FontAwesome5 name="calendar-day" color={"#fff"} size={20} />
+                <View>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-bold",
+                      fontSize: 16,
+                    }}
+                  >
+                    Later
+                  </Text>
+                  <Text
+                    style={{ color: "#fff", fontFamily: "raleway-regular" }}
+                  >
+                    Schedule the ride for later
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.radioOuter}></View>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#fff",
+              marginVertical: 10,
+              paddingVertical: 10,
+              borderRadius: 5,
+            }}
+          >
+            <Text
+              style={{
+                color: "#121212",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Done
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 export default RouteModal;
 
 const styles = StyleSheet.create({
@@ -1015,7 +1161,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   form: {
-    marginTop: 10,
     flexDirection: "row",
     justifyContent: "center",
     gap: 20,
@@ -1023,7 +1168,6 @@ const styles = StyleSheet.create({
 
   select_ride_container: {
     marginBottom: 20,
-    marginTop: 20,
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
@@ -1236,5 +1380,50 @@ const styles = StyleSheet.create({
   },
   navigationContainer: {
     backgroundColor: "#121212",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#121212",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    maxHeight: "50%",
+    borderTopWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 12,
+    color: "#fff",
+    fontFamily: "raleway-bold",
+  },
+  option: {
+    paddingVertical: 10,
+  },
+  optionText: { fontSize: 16, color: "#fff", fontFamily: "raleway-regular" },
+  closeBtn: {
+    marginTop: 15,
+    alignSelf: "center",
+    padding: 10,
+  },
+  closeText: { color: "red", fontSize: 14, fontFamily: "raleway-semibold" },
+  radioOuter: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#ffffff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  radioInner: {
+    height: 10,
+    width: 10,
+    borderRadius: 5,
+    backgroundColor: "#ffffff",
   },
 });
