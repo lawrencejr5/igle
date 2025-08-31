@@ -157,6 +157,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setDestination("");
     setModalUp(false);
     setPickupCoords(null);
+    setPickupTime("now");
 
     mapRef.current.animateToRegion(region, 100);
   };

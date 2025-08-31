@@ -12,6 +12,7 @@ import {
   Pressable,
   Modal,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import React, { useState, useEffect, useRef, FC } from "react";
 
@@ -379,7 +380,8 @@ const BookingModal: FC<{
           />
         )}
       </View>
-      <SelectSchedule />
+      <PickupTimeModal />
+      <SelectPickupTimeModal />
     </>
   );
 };
@@ -1015,7 +1017,7 @@ const PaidModal = () => {
   );
 };
 
-const SelectSchedule = () => {
+const SelectPickupTimeModal = () => {
   const { setPickupModal, setPickupTime, pickupModal, pickupTime } =
     useRideContext();
 
@@ -1026,7 +1028,7 @@ const SelectSchedule = () => {
     <Modal
       visible={pickupModal}
       transparent
-      animationType="slide" // makes it slide up from the bottom
+      animationType="slide"
       onRequestClose={() => setPickupModal(false)}
     >
       <View style={styles.modalOverlay}>
@@ -1121,6 +1123,112 @@ const SelectSchedule = () => {
             }}
             activeOpacity={0.7}
             onPress={() => setPickupModal(false)}
+          >
+            <Text
+              style={{
+                color: "#121212",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Done
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const PickupTimeModal = () => {
+  const [modal, setModal] = useState(true);
+  const [date, setDate] = useState<Date | null>(null);
+
+  const [showDate, setShowDate] = useState(false);
+  const [showTime, setShowTime] = useState(false);
+
+  const onDateChange = (_: any, selectedDate?: Date) => {
+    if (selectedDate) {
+      setDate(selectedDate);
+      setShowDate(false);
+      setShowTime(true); // open time picker after picking date
+    } else {
+      setShowDate(false);
+    }
+  };
+
+  const onTimeChange = (_: any, selectedTime?: Date) => {
+    if (selectedTime && date) {
+      // merge time into the selected date
+      const newDate = new Date(date);
+      newDate.setHours(selectedTime.getHours());
+      newDate.setMinutes(selectedTime.getMinutes());
+      setDate(newDate);
+    }
+    setShowTime(false);
+  };
+
+  return (
+    <Modal
+      visible={modal}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={[styles.modalTitle, { textAlign: "center" }]}>
+            Pick your time
+          </Text>
+
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setShowDate(true)}
+          >
+            <TextInput
+              style={{
+                backgroundColor: "#515151",
+                color: "#fff",
+                fontFamily: "raleway-semibold",
+                paddingHorizontal: 10,
+                textAlign: "center",
+              }}
+              editable={false}
+              placeholder="--_--_-- --:--"
+              placeholderTextColor={"#d7d7d7"}
+              value={date ? date.toLocaleString() : ""}
+            />
+          </TouchableOpacity>
+
+          {showDate && (
+            <DateTimePicker
+              value={date || new Date()}
+              mode="date"
+              display="default"
+              minimumDate={new Date()}
+              onChange={onDateChange}
+            />
+          )}
+
+          {showTime && (
+            <DateTimePicker
+              value={date || new Date()}
+              mode="time"
+              display="default"
+              is24Hour={true}
+              onChange={onTimeChange}
+            />
+          )}
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#fff",
+              marginVertical: 10,
+              paddingVertical: 10,
+              borderRadius: 5,
+            }}
+            activeOpacity={0.7}
+            onPress={() => setModal(false)}
           >
             <Text
               style={{
