@@ -14,7 +14,15 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import React, { useState, useEffect, useRef, FC } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  FC,
+  Dispatch,
+  SetStateAction,
+  useCallback,
+} from "react";
 
 import RideRoute from "./RideRoute";
 
@@ -224,21 +232,30 @@ const BookingModal: FC<{
     setPickupCoords,
   } = useMapContext();
 
+  const [dateTimeModal, setDateTimeModal] = useState<boolean>(false);
+
   const { setRideStatus, setModalUp, setPickupModal, pickupTime } =
     useRideContext();
 
+  const [placeId, setPlaceId] = useState<string>("");
   const set_destination_func = async (place_id: string, place_name: string) => {
-    setDestination(place_name);
-    setModalUp(false);
-    setRideStatus("choosing_car");
+    if (pickupTime === "later") {
+      setDestination(place_name);
+      setPlaceId(place_id);
+      setDateTimeModal(true);
+    } else {
+      setDestination(place_name);
+      setModalUp(false);
+      setRideStatus("choosing_car");
 
-    const coords = await getPlaceCoords(place_id);
-    if (coords) {
-      setDestinationCoords(coords);
-
-      await calculateRide(pickupCoords || [region.latitude, region.longitude], [
-        ...coords,
-      ]);
+      const coords = await getPlaceCoords(place_id);
+      if (coords) {
+        setDestinationCoords(coords);
+        await calculateRide(
+          pickupCoords || [region.latitude, region.longitude],
+          [...coords]
+        );
+      }
     }
   };
 
@@ -380,7 +397,11 @@ const BookingModal: FC<{
           />
         )}
       </View>
-      <PickupTimeModal />
+      <PickupTimeModal
+        open={dateTimeModal}
+        setOpen={setDateTimeModal}
+        place_id={placeId}
+      />
       <SelectPickupTimeModal />
     </>
   );
@@ -1140,40 +1161,69 @@ const SelectPickupTimeModal = () => {
   );
 };
 
-const PickupTimeModal = () => {
-  const [modal, setModal] = useState(true);
-  const [date, setDate] = useState<Date | null>(null);
+const PickupTimeModal: FC<{
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  place_id: string;
+}> = ({ open, setOpen, place_id }) => {
+  const [date, setDate] = useState<Date>(new Date());
 
   const [showDate, setShowDate] = useState(false);
   const [showTime, setShowTime] = useState(false);
 
-  const onDateChange = (_: any, selectedDate?: Date) => {
+  const onDateChange = useCallback((_: any, selectedDate?: Date) => {
     if (selectedDate) {
-      setDate(selectedDate);
+      const newDate = new Date(date);
+      newDate.setFullYear(selectedDate.getFullYear());
+      newDate.setMonth(selectedDate.getMonth());
+      newDate.setDate(selectedDate.getDate());
+      setDate(newDate);
       setShowDate(false);
-      setShowTime(true); // open time picker after picking date
+      setShowTime(true);
     } else {
       setShowDate(false);
     }
-  };
+  }, []);
 
-  const onTimeChange = (_: any, selectedTime?: Date) => {
-    if (selectedTime && date) {
-      // merge time into the selected date
+  const onTimeChange = useCallback((_: any, selectedTime?: Date) => {
+    if (selectedTime) {
       const newDate = new Date(date);
       newDate.setHours(selectedTime.getHours());
       newDate.setMinutes(selectedTime.getMinutes());
       setDate(newDate);
     }
     setShowTime(false);
+  }, []);
+
+  const {
+    getPlaceCoords,
+    setDestinationCoords,
+    calculateRide,
+    pickupCoords,
+    region,
+  } = useMapContext();
+
+  const { setModalUp, setRideStatus } = useRideContext();
+
+  const schedule_ride = async () => {
+    setOpen(false);
+    setModalUp(false);
+    setRideStatus("choosing_car");
+    const coords = await getPlaceCoords(place_id);
+    if (coords) {
+      setDestinationCoords(coords);
+      await calculateRide(pickupCoords || [region.latitude, region.longitude], [
+        ...coords,
+      ]);
+    }
   };
 
   return (
     <Modal
-      visible={modal}
+      visible={open}
       transparent
       animationType="slide"
-      onRequestClose={() => setModal(false)}
+      onRequestClose={() => setOpen(false)}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
@@ -1202,7 +1252,7 @@ const PickupTimeModal = () => {
 
           {showDate && (
             <DateTimePicker
-              value={date || new Date()}
+              value={date}
               mode="date"
               display="default"
               minimumDate={new Date()}
@@ -1212,7 +1262,7 @@ const PickupTimeModal = () => {
 
           {showTime && (
             <DateTimePicker
-              value={date || new Date()}
+              value={date}
               mode="time"
               display="default"
               is24Hour={true}
@@ -1228,7 +1278,7 @@ const PickupTimeModal = () => {
               borderRadius: 5,
             }}
             activeOpacity={0.7}
-            onPress={() => setModal(false)}
+            onPress={schedule_ride}
           >
             <Text
               style={{
