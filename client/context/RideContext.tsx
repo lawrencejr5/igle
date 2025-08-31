@@ -208,7 +208,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   };
 
   const [rebooking, setRebooking] = useState(false);
-
   const rebookRideRequest = async (ride_id: string) => {
     const token = await AsyncStorage.getItem("token");
     setRebooking(true);
@@ -362,6 +361,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const [pickupTime, setPickupTime] = useState<"now" | "later">("now");
+  const [pickupModal, setPickupModal] = useState<boolean>(false);
+
   return (
     <RideContext.Provider
       value={{
@@ -388,6 +390,10 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         setUserCompletedRides,
         getUserCompletedRides,
         getUserCancelledRides,
+        pickupTime,
+        pickupModal,
+        setPickupTime,
+        setPickupModal,
       }}
     >
       {children}
@@ -433,6 +439,11 @@ export interface RideContextType {
   userCancelledRides: any;
   setUserCancelledRides: Dispatch<SetStateAction<any>>;
   getUserCancelledRides: () => Promise<void>;
+
+  pickupTime: "now" | "later";
+  setPickupTime: Dispatch<SetStateAction<"now" | "later">>;
+  pickupModal: boolean;
+  setPickupModal: Dispatch<SetStateAction<boolean>>;
 }
 
 export const useRideContext = () => {

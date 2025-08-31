@@ -28,8 +28,11 @@ import { useAuthContext } from "../context/AuthContext";
 import { useMapContext } from "../context/MapContext";
 import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
-import { router } from "expo-router";
 import { useWalletContext } from "../context/WalletContext";
+
+import DateTimePicker from "@react-native-community/datetimepicker";
+
+import { router } from "expo-router";
 
 const RouteModal = () => {
   const {
@@ -220,7 +223,8 @@ const BookingModal: FC<{
     setPickupCoords,
   } = useMapContext();
 
-  const { setRideStatus, setModalUp } = useRideContext();
+  const { setRideStatus, setModalUp, setPickupModal, pickupTime } =
+    useRideContext();
 
   const set_destination_func = async (place_id: string, place_name: string) => {
     setDestination(place_name);
@@ -263,14 +267,16 @@ const BookingModal: FC<{
         Choose your route...
       </Text>
 
-      <View
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setPickupModal(true)}
         style={{
           paddingHorizontal: 20,
           paddingVertical: 8,
           borderRadius: 20,
-          // borderColor: "#fff",
-          // borderWidth: 1,
           backgroundColor: "#515151",
+          borderColor: "#fff",
+          borderWidth: pickupTime === "later" ? 1 : 0,
           marginTop: 20,
           alignSelf: "flex-end",
           flexDirection: "row",
@@ -285,10 +291,10 @@ const BookingModal: FC<{
             fontSize: 12,
           }}
         >
-          Pickup now
+          Pickup {pickupTime}
         </Text>
         <FontAwesome name="chevron-down" color={"#fff"} size={10} />
-      </View>
+      </TouchableOpacity>
       {/* Route slection form */}
       <Animated.View style={[styles.form, { opacity }]}>
         <View style={{ flex: 1, marginTop: 10 }}>
@@ -1010,21 +1016,18 @@ const PaidModal = () => {
 };
 
 const SelectSchedule = () => {
-  const [visible, setVisible] = useState(true);
-  const [selected, setSelected] = useState<string | null>(null);
+  const { setPickupModal, setPickupTime, pickupModal, pickupTime } =
+    useRideContext();
 
-  const options = ["Pickup now", "Pickup later"];
-
-  const handleSelect = (item: string) => {
-    setSelected(item);
-    setVisible(false);
+  const handleSelect = (item: "now" | "later") => {
+    setPickupTime(item);
   };
   return (
     <Modal
-      visible={true}
+      visible={pickupModal}
       transparent
       animationType="slide" // makes it slide up from the bottom
-      onRequestClose={() => setVisible(false)}
+      onRequestClose={() => setPickupModal(false)}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
@@ -1034,7 +1037,8 @@ const SelectSchedule = () => {
 
           <TouchableOpacity
             style={styles.option}
-            onPress={() => handleSelect("Pickup now")}
+            activeOpacity={0.7}
+            onPress={() => handleSelect("now")}
           >
             <View
               style={{
@@ -1065,13 +1069,14 @@ const SelectSchedule = () => {
                 </View>
               </View>
               <View style={styles.radioOuter}>
-                <View style={styles.radioInner} />
+                {pickupTime === "now" && <View style={styles.radioInner} />}
               </View>
             </View>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.option}
-            onPress={() => handleSelect("Pickup now")}
+            activeOpacity={0.7}
+            onPress={() => handleSelect("later")}
           >
             <View
               style={{
@@ -1101,7 +1106,9 @@ const SelectSchedule = () => {
                   </Text>
                 </View>
               </View>
-              <View style={styles.radioOuter}></View>
+              <View style={styles.radioOuter}>
+                {pickupTime === "later" && <View style={styles.radioInner} />}
+              </View>
             </View>
           </TouchableOpacity>
 
@@ -1112,6 +1119,8 @@ const SelectSchedule = () => {
               paddingVertical: 10,
               borderRadius: 5,
             }}
+            activeOpacity={0.7}
+            onPress={() => setPickupModal(false)}
           >
             <Text
               style={{
