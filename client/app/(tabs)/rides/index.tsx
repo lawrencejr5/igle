@@ -128,7 +128,7 @@ const CategoryTabs = ({
 };
 
 const EmptyState = ({ message }: { message: string }) => {
-  const { setRideStatus, setModalUp } = useRideContext();
+  const { setRideStatus, setModalUp, setPickupTime } = useRideContext();
 
   return (
     <View
@@ -166,26 +166,6 @@ const EmptyState = ({ message }: { message: string }) => {
       >
         <Pressable
           style={{
-            borderColor: "#fff",
-            borderWidth: 1,
-            width: 320,
-            padding: 10,
-            borderRadius: 20,
-            marginTop: 10,
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: "raleway-bold",
-              textAlign: "center",
-              color: "#fff",
-            }}
-          >
-            Schedule ride
-          </Text>
-        </Pressable>
-        <Pressable
-          style={{
             backgroundColor: "#fff",
             width: 320,
             padding: 10,
@@ -196,10 +176,11 @@ const EmptyState = ({ message }: { message: string }) => {
             router.push("../home");
             setRideStatus("booking");
             setModalUp(true);
+            setPickupTime("later");
           }}
         >
           <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
-            Book ride
+            Schedule ride
           </Text>
         </Pressable>
       </View>

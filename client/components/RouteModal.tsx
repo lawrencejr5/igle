@@ -417,8 +417,15 @@ const ChooseRideModal = () => {
     userAddress,
   } = useMapContext();
 
-  const { modalUp, setModalUp, resetRide, rideRequest, setRideStatus } =
-    useRideContext();
+  const {
+    modalUp,
+    setModalUp,
+    resetRide,
+    rideRequest,
+    setRideStatus,
+    pickupTime,
+    scheduledTime,
+  } = useRideContext();
 
   const { showNotification } = useNotificationContext();
 
@@ -435,10 +442,19 @@ const ChooseRideModal = () => {
       showNotification("Pickup location not set", "error");
 
     try {
-      await rideRequest(
-        { address: userAddress, coordinates: pickupCoords },
-        { address: destination, coordinates: destinationCoords! }
-      );
+      if (pickupTime === "later" && scheduledTime) {
+        await rideRequest(
+          { address: userAddress, coordinates: pickupCoords },
+          { address: destination, coordinates: destinationCoords! },
+          scheduledTime
+        );
+      } else {
+        await rideRequest(
+          { address: userAddress, coordinates: pickupCoords },
+          { address: destination, coordinates: destinationCoords! }
+        );
+      }
+
       setBooking(false);
       setModalUp(false);
       setRideStatus("searching");
@@ -1167,53 +1183,26 @@ const PickupTimeModal: FC<{
   place_id: string;
 }> = ({ open, setOpen, place_id }) => {
   const { showNotification } = useNotificationContext();
-  const [date, setDate] = useState<Date>(new Date());
+  const {
+    scheduledTime,
+    scheduledTimeDif,
+    getTimeDifference,
+    setScheduledTimeDif,
+    setScheduledTime,
+  } = useRideContext();
   const [dateInp, setDateInp] = useState<string>("");
-
-  useEffect(() => {
-    getTimeDifference(date);
-  }, [date]);
 
   const [showDate, setShowDate] = useState(false);
   const [showTime, setShowTime] = useState(false);
 
-  const [timeDif, setTimeDif] = useState("");
-  const getTimeDifference = (targetDate: Date) => {
-    const now = new Date();
-    const diffMs = targetDate.getTime() - now.getTime(); // difference in ms
-
-    if (diffMs <= 0) {
-      return "In the past";
-    }
-
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) {
-      const dif = `${diffDays} day${diffDays > 1 ? "s" : ""} ${
-        diffHours % 24
-      } hr${diffHours % 24 > 1 ? "s" : ""}`;
-      setTimeDif(dif);
-    } else if (diffHours > 0) {
-      const dif = `${diffHours} hr${diffHours > 1 ? "s" : ""} ${
-        diffMinutes % 60
-      } min${diffMinutes % 60 > 1 ? "s" : ""}`;
-      setTimeDif(dif);
-    } else {
-      const dif = `${diffMinutes} min${diffMinutes > 1 ? "s" : ""}`;
-      setTimeDif(dif);
-    }
-  };
-
   const onDateChange = useCallback(
     (_: any, selectedDate?: Date) => {
-      if (selectedDate && date) {
-        const newDate = new Date(date);
+      if (selectedDate && scheduledTime) {
+        const newDate = new Date(scheduledTime);
         newDate.setFullYear(selectedDate.getFullYear());
         newDate.setMonth(selectedDate.getMonth());
         newDate.setDate(selectedDate.getDate());
-        setDate(newDate);
+        setScheduledTime(newDate);
         setDateInp(newDate.toLocaleString());
         setShowDate(false);
         setShowTime(true);
@@ -1221,21 +1210,21 @@ const PickupTimeModal: FC<{
         setShowDate(false);
       }
     },
-    [date]
+    [scheduledTime]
   );
 
   const onTimeChange = useCallback(
     (_: any, selectedTime?: Date) => {
-      if (selectedTime && date) {
-        const newDate = new Date(date);
+      if (selectedTime && scheduledTime) {
+        const newDate = new Date(scheduledTime);
         newDate.setHours(selectedTime.getHours());
         newDate.setMinutes(selectedTime.getMinutes());
-        setDate(newDate);
+        setScheduledTime(newDate);
         setDateInp(newDate.toLocaleString());
       }
       setShowTime(false);
     },
-    [date]
+    [scheduledTime]
   );
 
   const {
@@ -1254,7 +1243,7 @@ const PickupTimeModal: FC<{
     const minAllowed = new Date();
     minAllowed.setMinutes(minAllowed.getMinutes() + 30);
 
-    if (date < minAllowed) {
+    if (scheduledTime < minAllowed) {
       showNotification(
         "Please select a time at least 30 mins from now.",
         "error"
@@ -1286,7 +1275,7 @@ const PickupTimeModal: FC<{
             Pick your time
           </Text>
 
-          {timeDif && (
+          {scheduledTimeDif && (
             <Text
               style={{
                 color: "#fff",
@@ -1294,7 +1283,7 @@ const PickupTimeModal: FC<{
                 marginVertical: 10,
               }}
             >
-              **Scheduled for {timeDif} from now**
+              **Scheduled for {scheduledTimeDif} from now**
             </Text>
           )}
 
@@ -1319,7 +1308,7 @@ const PickupTimeModal: FC<{
 
           {showDate && (
             <DateTimePicker
-              value={date}
+              value={scheduledTime}
               mode="date"
               display="default"
               minimumDate={new Date()}
@@ -1329,7 +1318,7 @@ const PickupTimeModal: FC<{
 
           {showTime && (
             <DateTimePicker
-              value={date}
+              value={scheduledTime}
               mode="time"
               display="default"
               is24Hour={false}
@@ -1338,13 +1327,13 @@ const PickupTimeModal: FC<{
           )}
 
           <TouchableOpacity
-            disabled={!date}
+            disabled={!scheduledTime}
             style={{
               backgroundColor: "#fff",
               marginVertical: 10,
               paddingVertical: 10,
               borderRadius: 5,
-              opacity: !date ? 0.7 : 1,
+              opacity: !scheduledTime ? 0.7 : 1,
             }}
             activeOpacity={0.7}
             onPress={schedule_ride}

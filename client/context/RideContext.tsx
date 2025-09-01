@@ -158,13 +158,58 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setModalUp(false);
     setPickupCoords(null);
     setPickupTime("now");
+    setScheduledTime(new Date());
+    setScheduledTimeDif("");
 
     mapRef.current.animateToRegion(region, 100);
   };
 
+  const [scheduledTime, setScheduledTime] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (scheduledTime) {
+      getTimeDifference(scheduledTime);
+      const time_dif_interval = setInterval(() => {
+        getTimeDifference(scheduledTime);
+      }, 60000);
+
+      return () => clearInterval(time_dif_interval);
+    }
+  }, [scheduledTime]);
+
+  const [scheduledTimeDif, setScheduledTimeDif] = useState<string>("");
+  const getTimeDifference = (targetDate: Date) => {
+    const now = new Date();
+    const diffMs = targetDate.getTime() - now.getTime(); // difference in ms
+
+    if (diffMs <= 0) {
+      return "In the past";
+    }
+
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+      const dif = `${diffDays} day${diffDays > 1 ? "s" : ""} ${
+        diffHours % 24
+      } hr${diffHours % 24 > 1 ? "s" : ""}`;
+      setScheduledTimeDif(dif);
+    } else if (diffHours > 0) {
+      const dif = `${diffHours} hr${diffHours > 1 ? "s" : ""} ${
+        diffMinutes % 60
+      } min${diffMinutes % 60 > 1 ? "s" : ""}`;
+      setScheduledTimeDif(dif);
+    } else {
+      const dif = `${diffMinutes} min${diffMinutes > 1 ? "s" : ""}`;
+      setScheduledTimeDif(dif);
+    }
+  };
+
   const rideRequest = async (
     pickup: { address: string; coordinates: [number, number] },
-    destination: { address: string; coordinates: [number, number] }
+    destination: { address: string; coordinates: [number, number] },
+    scheduled_time?: Date
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     try {
@@ -175,8 +220,18 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       const distanceKm = distance_and_duration?.distanceKm;
       const durationMins = distance_and_duration?.durationMins;
 
+      // build base url
+      let url = `${API_URL}/request?km=${distanceKm}&min=${durationMins}`;
+
+      // only append scheduled_time if it exists
+      if (scheduled_time) {
+        url += `&scheduled_time=${encodeURIComponent(
+          scheduled_time.toISOString()
+        )}`;
+      }
+
       const { data } = await axios.post(
-        `${API_URL}/request?km=${distanceKm}&min=${durationMins}`,
+        url,
         { pickup, destination },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -395,6 +450,11 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         pickupModal,
         setPickupTime,
         setPickupModal,
+        scheduledTime,
+        setScheduledTime,
+        scheduledTimeDif,
+        setScheduledTimeDif,
+        getTimeDifference,
       }}
     >
       {children}
@@ -405,7 +465,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 export interface RideContextType {
   rideRequest: (
     pickup: { address: string; coordinates: [number, number] },
-    destination: { address: string; coordinates: [number, number] }
+    destination: { address: string; coordinates: [number, number] },
+    scheduled_time?: Date
   ) => Promise<void>;
 
   retrying: boolean;
@@ -445,6 +506,12 @@ export interface RideContextType {
   setPickupTime: Dispatch<SetStateAction<"now" | "later">>;
   pickupModal: boolean;
   setPickupModal: Dispatch<SetStateAction<boolean>>;
+
+  scheduledTime: Date;
+  setScheduledTime: Dispatch<SetStateAction<Date>>;
+  scheduledTimeDif: string;
+  setScheduledTimeDif: Dispatch<SetStateAction<string>>;
+  getTimeDifference: (targetDate: Date) => void;
 }
 
 export const useRideContext = () => {
