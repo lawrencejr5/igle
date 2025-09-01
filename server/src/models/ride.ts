@@ -40,6 +40,7 @@ export interface RideType extends Document {
   driver_earnings: number;
   driver_paid: boolean;
   commission: number;
+  scheduled: boolean;
   scheduled_time: Date | null;
 }
 
@@ -100,6 +101,7 @@ const RideSchema = new Schema<RideType>(
     driver_earnings: { type: Number, required: true },
     driver_paid: { type: Boolean, default: false },
     commission: { type: Number, default: 0 },
+    scheduled: { type: Boolean, default: false },
     scheduled_time: { type: Date, default: null },
   },
   { timestamps: true }

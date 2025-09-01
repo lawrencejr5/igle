@@ -80,16 +80,15 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             driver_earnings,
             commission,
             status: scheduled_time ? "scheduled" : "pending",
+            scheduled: scheduled_time ? true : false,
             scheduled_time: scheduled_time
                 ? new Date(scheduled_time)
                 : null,
         });
         // If it's an instant ride → emit immediately
-        if (!scheduled_time) {
-            server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
-            // Start expiration timeout
-            setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 90000);
-        }
+        server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+        // Start expiration timeout
+        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 30000);
         res.status(201).json({
             msg: scheduled_time ? "Scheduled ride created" : "Ride request created",
             ride: new_ride,
@@ -129,7 +128,7 @@ const retry_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             ride,
         });
         // Start expiration timeout
-        setTimeout(() => expire_ride(ride._id, ride.rider.toString()), 90000);
+        setTimeout(() => expire_ride(ride._id, ride.rider.toString()), 30000);
     }
     catch (err) {
         res.status(500).json({ msg: "Failed to retry ride", err: err.message });

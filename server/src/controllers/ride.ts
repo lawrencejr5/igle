@@ -3,7 +3,6 @@ import { Types } from "mongoose";
 
 import Ride from "../models/ride";
 import Wallet from "../models/wallet";
-import User from "../models/user";
 
 import {
   get_driver_id,
@@ -85,21 +84,20 @@ export const request_ride = async (
       driver_earnings,
       commission,
       status: scheduled_time ? "scheduled" : "pending",
+      scheduled: scheduled_time ? true : false,
       scheduled_time: scheduled_time
         ? new Date(scheduled_time as string)
         : null,
     });
 
     // If it's an instant ride → emit immediately
-    if (!scheduled_time) {
-      io.emit("new_ride_request", { ride_id: new_ride._id });
+    io.emit("new_ride_request", { ride_id: new_ride._id });
 
-      // Start expiration timeout
-      setTimeout(
-        () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
-        90000
-      );
-    }
+    // Start expiration timeout
+    setTimeout(
+      () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
+      30000
+    );
 
     res.status(201).json({
       msg: scheduled_time ? "Scheduled ride created" : "Ride request created",
@@ -149,7 +147,7 @@ export const retry_ride = async (
     // Start expiration timeout
     setTimeout(
       () => expire_ride(ride._id as string, ride.rider.toString()),
-      90000
+      30000
     );
   } catch (err: any) {
     res.status(500).json({ msg: "Failed to retry ride", err: err.message });
