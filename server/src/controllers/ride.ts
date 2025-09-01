@@ -21,8 +21,7 @@ import { io } from "../server";
 // 🔄 Helper: Expire a ride
 const expire_ride = async (ride_id: string, user_id?: string) => {
   const ride = await Ride.findById(ride_id);
-  if (!ride || ride.status !== "pending") return;
-
+  if (!ride || !["pending", "scheduled"].includes(ride.status)) return;
   ride.status = "expired";
   await ride.save();
 
@@ -135,7 +134,9 @@ export const retry_ride = async (
       return;
     }
 
-    ride.status = "pending";
+    if (ride.scheduled_time) ride.status = "scheduled";
+    else ride.status = "pending";
+
     await ride.save();
 
     io.emit("new_ride_request", { ride_id: ride._id });
@@ -317,7 +318,11 @@ export const accept_ride = async (
     const driver_id = await get_driver_id(req.user?.id!);
 
     const ride = await Ride.findOneAndUpdate(
-      { _id: ride_id, status: "pending", driver: { $exists: false } },
+      {
+        _id: ride_id,
+        status: { $in: ["pending", "scheduled"] },
+        driver: { $exists: false },
+      },
       { driver: driver_id, status: "accepted" },
       { new: true }
     );

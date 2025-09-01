@@ -896,7 +896,8 @@ const AcceptedModal = () => {
 const PayingModal = () => {
   const { rideDetails } = useMapContext();
 
-  const { setRideStatus, modalUp, setModalUp, payForRide } = useRideContext();
+  const { setRideStatus, modalUp, setModalUp, payForRide, pickupTime } =
+    useRideContext();
 
   const { userWalletBal } = useWalletContext();
 
@@ -1004,7 +1005,15 @@ const PayingModal = () => {
 };
 
 const PaidModal = () => {
-  const { modalUp, setModalUp } = useRideContext();
+  const {
+    modalUp,
+    setModalUp,
+    pickupTime,
+    scheduledTimeDif,
+    setRideStatus,
+    ongoingRideData,
+    resetRide,
+  } = useRideContext();
   return (
     <>
       <TouchableWithoutFeedback
@@ -1023,20 +1032,43 @@ const PaidModal = () => {
           { textAlign: "center", marginTop: 20, fontSize: 16 },
         ]}
       >
-        Alright, hang tight, we'll take it from here...
+        {pickupTime === "later" || ongoingRideData.scheduled_time
+          ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
+          : "Alright, hang tight, we'll take it from here..."}
       </Text>
-
-      <TouchableWithoutFeedback
-        onPress={() => {
-          router.push("../(tabs)/rides");
-        }}
-      >
-        <View
+      {pickupTime === "later" || ongoingRideData.scheduled_time ? (
+        <Pressable
           style={{
             marginVertical: 50,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
+          }}
+          onPress={() => {
+            router.push("../(tabs)/rides");
+            setRideStatus("");
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            See ride details
+          </Text>
+        </Pressable>
+      ) : (
+        <Pressable
+          style={{
+            marginVertical: 50,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
+          }}
+          onPress={() => {
+            router.push("../(tabs)/rides");
           }}
         >
           <Text
@@ -1048,8 +1080,8 @@ const PaidModal = () => {
           >
             Track ride
           </Text>
-        </View>
-      </TouchableWithoutFeedback>
+        </Pressable>
+      )}
     </>
   );
 };

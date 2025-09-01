@@ -277,7 +277,40 @@ const OngoingRide = ({ data }: { data: any }) => {
             </Text>
           </View>
         )}
+        {data.scheduled_time && (
+          <View
+            style={{
+              backgroundColor: "#ff9d003a",
+              paddingVertical: 5,
+              paddingHorizontal: 10,
+              borderRadius: 20,
+            }}
+          >
+            <Text
+              style={{
+                color: "#ff9d00",
+                fontFamily: "raleway-bold",
+                fontSize: 10,
+              }}
+            >
+              Scheduled
+            </Text>
+          </View>
+        )}
       </View>
+      {data.scheduled_time && (
+        <Text
+          style={{
+            color: "#fff",
+            fontFamily: "poppins-regular",
+            fontSize: 11,
+            marginTop: 10,
+          }}
+        >
+          **Ride scheduled for{" "}
+          {new Date(data.scheduled_time).toLocaleString("en-US")}
+        </Text>
+      )}
       {/* Driver details */}
       {data.driver && (
         <>
