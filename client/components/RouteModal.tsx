@@ -13,6 +13,7 @@ import {
   Modal,
   TouchableOpacity,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import React, {
   useState,
@@ -578,6 +579,10 @@ const ChooseRideModal = () => {
 const SearchingModal = () => {
   const { region, mapRef } = useMapContext();
 
+  const [searchText, setSearchText] = useState<string>(
+    "Searching for drivers..."
+  );
+
   const {
     cancelling,
     cancelRideRequest,
@@ -589,6 +594,40 @@ const SearchingModal = () => {
   } = useRideContext();
 
   const { showNotification } = useNotificationContext();
+
+  useEffect(() => {
+    const validStatuses = ["pending", "scheduled"];
+
+    // If status is not valid, just clear and exit
+    if (!validStatuses.includes(ongoingRideData.status)) {
+      setSearchText("Searching for drivers..."); // optional: reset text
+      return;
+    }
+
+    const messages = [
+      { text: "We're trying to locate drivers around you...", delay: 3_000 },
+      {
+        text: "Please wait, still locating drivers around you...",
+        delay: 10_000,
+      },
+      { text: "Expanding area of search...", delay: 10_000 },
+    ];
+
+    let totalDelay = 0;
+    const timeouts: NodeJS.Timeout[] = [];
+
+    messages.forEach(({ text, delay }) => {
+      totalDelay += delay;
+      const id = setTimeout(() => {
+        setSearchText(text);
+      }, totalDelay);
+      timeouts.push(id);
+    });
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
+  }, [ongoingRideData.status]);
 
   const cancel_ride = async () => {
     const reason = "No reason";
@@ -622,15 +661,20 @@ const SearchingModal = () => {
         </View>
       </TouchableWithoutFeedback>
 
-      <Text
-        style={[styles.header_text, { textAlign: "center", marginTop: 10 }]}
-      >
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
         {ongoingRideData.status === "expired"
           ? "Ride timeout"
           : "Searching for driver"}
       </Text>
 
       <View style={{ marginTop: 20 }}>
+        {ongoingRideData.status !== "expired" && (
+          <ActivityIndicator
+            size={"large"}
+            color={"#fff"}
+            style={{ marginBottom: 20, marginTop: 10 }}
+          />
+        )}
         <Text
           style={{
             fontFamily: "raleway-regular",
@@ -640,11 +684,11 @@ const SearchingModal = () => {
         >
           {ongoingRideData.status === "expired"
             ? `No Driver was found at this time to go to ${ongoingRideData.destination.address}`
-            : "We're trying to locate drivers around you..."}
+            : searchText}
         </Text>
       </View>
 
-      {ongoingRideData.status === "expired" ? (
+      {ongoingRideData.status === "expired" && (
         <View
           style={{
             flexDirection: "row",
@@ -702,20 +746,6 @@ const SearchingModal = () => {
             </Text>
           </Pressable>
         </View>
-      ) : (
-        <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
-          <Text
-            style={{
-              color: cancelling ? "#ff000080" : "#ff0000",
-              fontFamily: "raleway-bold",
-              fontSize: 16,
-              textAlign: "center",
-              marginTop: 50,
-            }}
-          >
-            {cancelling ? "Cancelling..." : "Canel ride"}
-          </Text>
-        </TouchableWithoutFeedback>
       )}
     </>
   );
