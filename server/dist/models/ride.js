@@ -50,6 +50,7 @@ const RideSchema = new mongoose_1.Schema({
         type: String,
         enum: [
             "pending",
+            "scheduled",
             "accepted",
             "arrived",
             "ongoing",
@@ -89,5 +90,6 @@ const RideSchema = new mongoose_1.Schema({
     driver_earnings: { type: Number, required: true },
     driver_paid: { type: Boolean, default: false },
     commission: { type: Number, default: 0 },
+    scheduled_time: { type: Date, default: null },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model("Ride", RideSchema);

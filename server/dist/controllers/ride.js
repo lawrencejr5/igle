@@ -26,7 +26,7 @@ const server_1 = require("../server");
 // 🔄 Helper: Expire a ride
 const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
     const ride = yield ride_1.default.findById(ride_id);
-    if (!ride || ride.status !== "pending")
+    if (!ride || !["pending", "scheduled"].includes(ride.status))
         return;
     ride.status = "expired";
     yield ride.save();
@@ -50,7 +50,7 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     var _a;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const { km, min } = req.query;
+        const { km, min, scheduled_time } = req.query;
         const { pickup, destination } = req.body;
         if (!pickup ||
             !pickup.coordinates ||
@@ -63,6 +63,7 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             res.status(400).json({
                 msg: "Distance or Duration cannot be empty",
             });
+            return;
         }
         const distance_km = Number(km);
         const duration_mins = Number(min);
@@ -78,18 +79,21 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             duration_mins,
             driver_earnings,
             commission,
-            status: "pending",
+            status: scheduled_time ? "scheduled" : "pending",
+            scheduled_time: scheduled_time
+                ? new Date(scheduled_time)
+                : null,
         });
-        // Find drivers nearby and emit via Socket.IO
-        server_1.io.emit("new_ride_request", {
-            ride_id: new_ride._id,
-        });
+        // If it's an instant ride → emit immediately
+        if (!scheduled_time) {
+            server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+            // Start expiration timeout
+            setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 90000);
+        }
         res.status(201).json({
-            msg: "Ride request created",
+            msg: scheduled_time ? "Scheduled ride created" : "Ride request created",
             ride: new_ride,
         });
-        // Start expiration timeout
-        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 90000);
     }
     catch (err) {
         res
@@ -114,7 +118,10 @@ const retry_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             res.status(400).json({ msg: "Only expired rides can be retried" });
             return;
         }
-        ride.status = "pending";
+        if (ride.scheduled_time)
+            ride.status = "scheduled";
+        else
+            ride.status = "pending";
         yield ride.save();
         server_1.io.emit("new_ride_request", { ride_id: ride._id });
         res.status(200).json({
@@ -266,7 +273,11 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const { ride_id } = req.query;
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        const ride = yield ride_1.default.findOneAndUpdate({ _id: ride_id, status: "pending", driver: { $exists: false } }, { driver: driver_id, status: "accepted" }, { new: true });
+        const ride = yield ride_1.default.findOneAndUpdate({
+            _id: ride_id,
+            status: { $in: ["pending", "scheduled"] },
+            driver: { $exists: false },
+        }, { driver: driver_id, status: "accepted" }, { new: true });
         const rider_socket_id = yield (0, get_id_1.get_user_socket_id)(ride === null || ride === void 0 ? void 0 : ride.rider);
         const rider_socket = server_1.io.sockets.sockets.get(rider_socket_id);
         if (rider_socket) {
