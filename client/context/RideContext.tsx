@@ -28,6 +28,7 @@ type RideStatusType =
   | "choosing_car"
   | "searching"
   | "accepted"
+  | "pay"
   | "paying"
   | "paid";
 
@@ -97,7 +98,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
     const onRideArrival = async (data: any) => {
       showNotification("Your ride has arrived", "success");
-      console.log("Your ride has arrived");
+      setModalUp(false);
+      setRideStatus("pay");
     };
 
     const onRideStarted = async (data: any) => {

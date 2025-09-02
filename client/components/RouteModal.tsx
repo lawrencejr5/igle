@@ -8,7 +8,6 @@ import {
   TextInput,
   FlatList,
   Dimensions,
-  Linking,
   Pressable,
   Modal,
   TouchableOpacity,
@@ -24,6 +23,8 @@ import React, {
   SetStateAction,
   useCallback,
 } from "react";
+
+import * as Linking from "expo-linking";
 
 import RideRoute from "./RideRoute";
 
@@ -122,16 +123,17 @@ const RouteModal = () => {
         setModalUp(false);
         setRideStatus("searching");
       }
-      if (
-        ongoingRideData.status === "accepted" ||
-        ongoingRideData.status === "arrived"
-      ) {
+      if (ongoingRideData.status === "accepted") {
+        setModalUp(true);
+        setRideStatus("accepted");
+      }
+      if (ongoingRideData.status === "arrived") {
         if (ongoingRideData.payment_status === "paid") {
           setModalUp(false);
           setRideStatus("paid");
         } else {
           setModalUp(true);
-          setRideStatus("accepted");
+          setRideStatus("pay");
         }
       }
       if (ongoingRideData.status === "ongoing") {
@@ -155,6 +157,8 @@ const RouteModal = () => {
       {rideStatus === "searching" && <SearchingModal />}
       {/*  */}
       {rideStatus === "accepted" && <AcceptedModal />}
+      {/*  */}
+      {rideStatus === "pay" && <PayModal />}
       {/*  */}
       {rideStatus === "paying" && <PayingModal />}
       {/*  */}
@@ -758,7 +762,6 @@ const AcceptedModal = () => {
   const {
     cancelling,
     cancelRideRequest,
-    setRideStatus,
     modalUp,
     setModalUp,
     ongoingRideData,
@@ -779,16 +782,6 @@ const AcceptedModal = () => {
     }
   };
 
-  const makeCall = async () => {
-    const url = `tel:${ongoingRideData.driver.user.phone}`;
-    const supported = await Linking.canOpenURL(url);
-
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      showNotification("Could not place call", "error");
-    }
-  };
   return (
     <>
       <TouchableWithoutFeedback
@@ -828,7 +821,11 @@ const AcceptedModal = () => {
           </View>
 
           {/* Call btn */}
-          <TouchableWithoutFeedback onPress={makeCall}>
+          <TouchableWithoutFeedback
+            onPress={() =>
+              Linking.openURL(`tel:${ongoingRideData.driver.user.phone}`)
+            }
+          >
             <View style={styles.callBtn}>
               <FontAwesome name="phone" color={"#121212"} size={20} />
             </View>
@@ -865,35 +862,18 @@ const AcceptedModal = () => {
             alignItems: "center",
           }}
         >
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "raleway-regular",
+              fontSize: 18,
+            }}
+          >
+            Total fare:
+          </Text>
           <Text style={styles.priceText}>
             {rideDetails?.amount.toLocaleString()} NGN
           </Text>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setRideStatus("paying");
-              setModalUp(false);
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "#fff",
-                paddingHorizontal: 20,
-                paddingVertical: 10,
-                borderRadius: 20,
-              }}
-            >
-              <Text
-                style={{
-                  color: "#121212",
-                  fontFamily: "raleway-bold",
-                  textAlign: "center",
-                  fontSize: 12,
-                }}
-              >
-                Pay from wallet
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
         </View>
         <Text
           style={{
@@ -911,7 +891,7 @@ const AcceptedModal = () => {
         <Text
           style={{
             color: cancelling ? "#ff000080" : "#ff0000",
-            marginTop: 50,
+            marginTop: 30,
             fontFamily: "raleway-bold",
             textAlign: "center",
           }}
@@ -919,6 +899,54 @@ const AcceptedModal = () => {
           {cancelling ? "Cancelling..." : "Canel this ride"}
         </Text>
       </TouchableWithoutFeedback>
+    </>
+  );
+};
+
+const PayModal = () => {
+  const { setRideStatus, modalUp, setModalUp, ongoingRideData } =
+    useRideContext();
+
+  return (
+    <>
+      <Pressable
+        onPress={() => {
+          setModalUp(!modalUp);
+        }}
+        style={styles.expand_line_conatiner}
+      >
+        <View style={styles.expand_line} />
+      </Pressable>
+
+      <Text
+        style={[
+          styles.header_text,
+          { textAlign: "center", marginTop: 20, fontSize: 16 },
+        ]}
+      >
+        Your driver has arrived, you can pay for this ride
+      </Text>
+      <Pressable
+        style={{
+          marginVertical: 50,
+          padding: 10,
+          borderRadius: 30,
+          backgroundColor: "#fff",
+        }}
+        onPress={() => {
+          setRideStatus("paying");
+        }}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+            color: "#121212",
+          }}
+        >
+          Pay NGN {ongoingRideData.fare}
+        </Text>
+      </Pressable>
     </>
   );
 };
@@ -1613,7 +1641,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   priceText: {
-    color: "#10b804ff",
+    color: "#fff",
     fontFamily: "poppins-bold",
     fontSize: 18,
   },

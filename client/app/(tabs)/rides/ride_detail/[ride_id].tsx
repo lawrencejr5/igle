@@ -320,45 +320,6 @@ const RideDetails = () => {
                   </Text>
                 )}
               </View>
-
-              {/* Timeline section */}
-              {/* <View
-                style={{
-                  marginTop: 20,
-                  paddingTop: 20,
-                  borderColor: "#c3c3c3",
-                  borderTopWidth: 0.5,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontFamily: "raleway-semibold",
-                    fontSize: 22,
-                  }}
-                >
-                  Ride timeline
-                </Text>
-
-                <View style={{ marginTop: 10 }}>
-                  <Timeline
-                    header="booked at"
-                    time="28 August, 2025, 2:51 pm"
-                  />
-                  <Timeline
-                    header="accepted at"
-                    time="28 August, 2025, 3:00 pm"
-                  />
-                  <Timeline
-                    header="started at"
-                    time="28 August, 2025, 3:07 pm"
-                  />
-                  <Timeline
-                    header="completed at"
-                    time="28 August, 2025, 3:50 pm"
-                  />
-                </View>
-              </View> */}
             </View>
           </ScrollView>
         </View>
