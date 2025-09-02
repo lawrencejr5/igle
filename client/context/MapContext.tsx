@@ -130,7 +130,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       if (data.results.length > 0) {
         setLocationLoading(false);
-        setUserAddress(data.results[0].address_components[2].long_name);
+
+        const address = `${data.results[0].address_components[1].long_name}, ${data.results[0].address_components[2].long_name}`;
+        setUserAddress(address);
       }
     } catch (error) {
       console.error("Error fetching place name", error);
