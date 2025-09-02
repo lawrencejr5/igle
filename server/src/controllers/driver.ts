@@ -31,7 +31,7 @@ export const create_driver = async (
       profile_img,
       current_location: {
         type: "Point",
-        coordinates: [0, 0], // Default coordinates, will be updated later
+        coordinates: [0, 0],
       },
     });
 

@@ -19,7 +19,6 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 import { useRideContext } from "../../../context/RideContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
-import { useWalletContext } from "../../../context/WalletContext";
 import { useMapContext } from "../../../context/MapContext";
 
 import Notification from "../../../components/Notification";
@@ -314,7 +313,7 @@ const OngoingRide = ({ data }: { data: any }) => {
       {/* Driver details */}
       {data.driver && (
         <>
-          <DriverCard name={data.driver.user.name} />
+          <DriverCard name={data.driver.user.name} id={data.driver._id} />
 
           <View
             style={{

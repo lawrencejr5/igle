@@ -71,6 +71,7 @@ interface DriverType {
   bank?: BankInfo;
   rating?: number;
   total_trips?: number;
+  plate_number?: string;
 }
 
 interface DriverAuthContextType {
@@ -91,6 +92,9 @@ interface DriverAuthContextType {
   // Profile retrieval functions
   getDriverProfile: () => Promise<void>;
   getDriverData: (driver_id: string) => Promise<void>;
+
+  gettingDriverData: boolean;
+  setGettingDriverData: Dispatch<SetStateAction<boolean>>;
 
   // Driver status functions
 }
@@ -129,48 +133,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [driver?.driver_id]);
 
-  // Profile retrieval functions
-  const [driverSocket, setDriverSocket] = useState<any>(null);
-  const getDriverProfile = async (token?: string): Promise<void> => {
-    try {
-      const authToken = token || (await AsyncStorage.getItem("token"));
-      const { data } = await axios.get(`${API_URL}/data`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (data.driver) {
-        const {
-          _id,
-          vehicle_type,
-          socket_id,
-          user: { name, email, phone },
-          vehicle: { brand, model, color },
-        } = data.driver;
-
-        setDriver({
-          driver_id: _id,
-          socket_id,
-          vehicle_type,
-          is_available: true,
-          name,
-          email,
-          phone,
-          vehicle_brand: brand,
-          vehicle_model: model,
-          vehicle_color: color,
-        });
-      } else {
-        throw new Error("An error occured");
-      }
-    } catch (error: any) {
-      const errMsg = error.response?.data?.msg;
-      throw new Error(errMsg || "Error getting driver profile");
-    }
-  };
-
-  const getDriverData = async (driver_id: string): Promise<void> => {
+  const getDriverInfo = async (driver_id?: string) => {
     try {
       const authToken = await AsyncStorage.getItem("token");
       const { data } = await axios.get(
@@ -187,29 +150,72 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           _id,
           vehicle_type,
           socket_id,
+          total_trips,
           user: { name, email, phone },
-          vehicle: { brand, model, color },
+          vehicle: { brand, model, color, plate_number },
         } = data.driver;
 
-        setDriverData({
+        const driverInfo = {
           driver_id: _id,
           socket_id,
           vehicle_type,
           name,
           email,
           phone,
+          total_trips,
           vehicle_brand: brand,
           vehicle_model: model,
           vehicle_color: color,
+          plate_number,
+        };
+        return driverInfo;
+      } else {
+        console.log("Something's wrong");
+        throw new Error("An error occured");
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      throw new Error(errMsg || "Error getting driver profile");
+    }
+  };
+
+  // Profile retrieval functions
+  const [driverSocket, setDriverSocket] = useState<any>(null);
+  const getDriverProfile = async (): Promise<void> => {
+    try {
+      const data = await getDriverInfo();
+
+      if (data) {
+        setDriver({ ...data });
+      } else {
+        throw new Error("An error occured");
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      throw new Error(errMsg || "Error getting driver profile");
+    }
+  };
+
+  const [gettingDriverData, setGettingDriverData] = useState<boolean>(false);
+  const getDriverData = async (driver_id: string): Promise<void> => {
+    setGettingDriverData(true);
+    try {
+      const data = await getDriverInfo(driver_id);
+
+      if (data) {
+        setDriverData({
+          ...data,
         });
       } else {
-        console.log("something's wrong");
+        console.log("Something went wrong");
         throw new Error("An error occured");
       }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       console.log(errMsg);
       throw new Error(errMsg || "Error getting driver profile");
+    } finally {
+      setGettingDriverData(false);
     }
   };
 
@@ -358,6 +364,8 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     updateDriverLicense,
     saveBankInfo,
     getDriverProfile,
+    gettingDriverData,
+    setGettingDriverData,
   };
 
   return (

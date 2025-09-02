@@ -303,7 +303,10 @@ const RideDetails = () => {
 
                 {/* Driver card */}
                 {rideData.driver ? (
-                  <DriverCard name={rideData.driver.user.name} />
+                  <DriverCard
+                    name={rideData.driver.user.name}
+                    id={rideData.driver._id}
+                  />
                 ) : (
                   <Text
                     style={{

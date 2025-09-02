@@ -1,15 +1,38 @@
-import { StyleSheet, Text, View, Image, Pressable, Modal } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  Pressable,
+  Modal,
+  ActivityIndicator,
+} from "react-native";
 import React, { Dispatch, FC, SetStateAction, useState } from "react";
 
 import {
   Feather,
   FontAwesome5,
   MaterialCommunityIcons,
+  Ionicons,
 } from "@expo/vector-icons";
-import Ionicons from "@expo/vector-icons/Ionicons";
 
-const DriverCard: FC<{ name: string }> = ({ name }) => {
+import { useDriverAuthContext } from "../context/DriverAuthContext";
+
+import * as Linking from "expo-linking";
+
+const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
   const [openModal, setOpenModal] = useState(false);
+
+  const { getDriverData } = useDriverAuthContext();
+
+  const set_driver = async (id: string) => {
+    try {
+      setOpenModal(true);
+      await getDriverData(id);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <>
@@ -25,7 +48,7 @@ const DriverCard: FC<{ name: string }> = ({ name }) => {
           alignItems: "flex-start",
           gap: 10,
         }}
-        onPress={() => setOpenModal(true)}
+        onPress={() => set_driver(id)}
       >
         {/* Driver image */}
         <Image
@@ -116,6 +139,7 @@ const DriverDetailsModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const { driverData, gettingDriverData } = useDriverAuthContext();
   return (
     <Modal
       visible={open}
@@ -151,139 +175,156 @@ const DriverDetailsModal: FC<{
             }}
           />
 
-          <View style={{ marginTop: 10 }}>
-            <Image
-              source={require("../assets/images/black-profile.jpeg")}
-              style={{
-                height: 100,
-                width: 100,
-                borderRadius: 50,
-                alignSelf: "center",
-              }}
-            />
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-bold",
-                fontSize: 20,
-                alignSelf: "center",
-              }}
-            >
-              Oputa Ifeanyi L.
-            </Text>
+          {gettingDriverData || !driverData ? (
             <View
               style={{
-                flexDirection: "row",
+                height: 200,
+                alignItems: "center",
                 justifyContent: "center",
-                gap: 20,
-                marginTop: 10,
               }}
             >
-              <View style={{ flexDirection: "row", gap: 5 }}>
-                <Ionicons
-                  name="location-outline"
-                  size={18}
-                  color="#d7d7d7"
-                  style={{ marginTop: 3 }}
+              <ActivityIndicator color={"#fff"} size={"large"} />
+            </View>
+          ) : (
+            <>
+              <View style={{ marginTop: 10 }}>
+                <Image
+                  source={require("../assets/images/black-profile.jpeg")}
+                  style={{
+                    height: 100,
+                    width: 100,
+                    borderRadius: 50,
+                    alignSelf: "center",
+                  }}
                 />
                 <Text
                   style={{
-                    color: "#d7d7d7",
-                    fontFamily: "raleway-regular",
-                    fontSize: 12,
-                  }}
-                >
-                  Asaba, Nigeria
-                </Text>
-              </View>
-              <View style={{ flexDirection: "row", gap: 5 }}>
-                <MaterialCommunityIcons
-                  name="history"
-                  size={18}
-                  color="#d7d7d7"
-                  style={{ marginTop: 3 }}
-                />
-                <Text
-                  style={{
-                    color: "#d7d7d7",
-                    fontFamily: "raleway-regular",
-                    fontSize: 12,
-                  }}
-                >
-                  32 rides completed
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <View
-            style={{
-              backgroundColor: "#393939",
-              width: "95%",
-              marginTop: 20,
-              alignSelf: "center",
-              borderRadius: 10,
-              padding: 15,
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <View style={{ alignSelf: "flex-start", alignItems: "center" }}>
-              <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
-                DEL-493-XV
-              </Text>
-              <View style={{ flexDirection: "row", gap: 5 }}>
-                <Feather name="credit-card" size={14} color="#fff" />
-                <Text
-                  style={{
                     color: "#fff",
-                    fontFamily: "raleway-regular",
-                    fontSize: 10,
+                    fontFamily: "raleway-bold",
+                    fontSize: 20,
+                    alignSelf: "center",
                   }}
                 >
-                  Plate number
+                  {driverData?.name}
                 </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 20,
+                    marginTop: 10,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    <Ionicons
+                      name="location-outline"
+                      size={18}
+                      color="#d7d7d7"
+                      style={{ marginTop: 3 }}
+                    />
+                    <Text
+                      style={{
+                        color: "#d7d7d7",
+                        fontFamily: "raleway-regular",
+                        fontSize: 12,
+                      }}
+                    >
+                      Asaba, Nigeria
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    <MaterialCommunityIcons
+                      name="history"
+                      size={18}
+                      color="#d7d7d7"
+                      style={{ marginTop: 3 }}
+                    />
+                    <Text
+                      style={{
+                        color: "#d7d7d7",
+                        fontFamily: "raleway-regular",
+                        fontSize: 12,
+                      }}
+                    >
+                      {driverData?.total_trips || "No"} rides completed
+                    </Text>
+                  </View>
+                </View>
               </View>
-            </View>
-            <View style={{ alignSelf: "flex-start", alignItems: "center" }}>
-              <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
-                Blue Toyota Camry
-              </Text>
-              <View style={{ flexDirection: "row", gap: 5 }}>
-                <FontAwesome5 name="car" size={14} color="#fff" />
+
+              <View
+                style={{
+                  backgroundColor: "#393939",
+                  width: "95%",
+                  marginTop: 20,
+                  alignSelf: "center",
+                  borderRadius: 10,
+                  padding: 15,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ alignSelf: "flex-start", alignItems: "center" }}>
+                  <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
+                    {driverData?.plate_number}
+                  </Text>
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    <Feather name="credit-card" size={14} color="#fff" />
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "raleway-regular",
+                        fontSize: 10,
+                      }}
+                    >
+                      Plate number
+                    </Text>
+                  </View>
+                </View>
+                <View style={{ alignSelf: "flex-start", alignItems: "center" }}>
+                  <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
+                    {`${driverData?.vehicle_color}`}{" "}
+                    {`${driverData?.vehicle_brand}`}{" "}
+                    {`${driverData?.vehicle_model}`}
+                  </Text>
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    <FontAwesome5 name="car" size={14} color="#fff" />
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "raleway-regular",
+                        fontSize: 10,
+                      }}
+                    >
+                      Vehicle info
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <Pressable
+                style={{
+                  backgroundColor: "#fff",
+                  padding: 10,
+                  borderRadius: 20,
+                  alignSelf: "center",
+                  width: "95%",
+                  marginVertical: 20,
+                }}
+                onPress={() => Linking.openURL(`tel:${driverData.phone}`)}
+              >
                 <Text
                   style={{
-                    color: "#fff",
-                    fontFamily: "raleway-regular",
-                    fontSize: 10,
+                    fontFamily: "raleway-bold",
+                    color: "#121212",
+                    textAlign: "center",
                   }}
                 >
-                  Vehicle info
+                  Contact Driver
                 </Text>
-              </View>
-            </View>
-          </View>
-
-          <Pressable
-            style={{
-              backgroundColor: "#fff",
-              padding: 10,
-              borderRadius: 20,
-              alignSelf: "center",
-              width: "95%",
-              marginVertical: 20,
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: "raleway-bold",
-                color: "#121212",
-                textAlign: "center",
-              }}
-            >
-              Contact Driver
-            </Text>
-          </Pressable>
+              </Pressable>
+            </>
+          )}
         </Pressable>
       </Pressable>
     </Modal>

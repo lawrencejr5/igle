@@ -18,7 +18,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNotificationContext } from "./NotificationContext";
 
 import { API_URLS } from "../data/constants";
-import { router } from "expo-router";
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
