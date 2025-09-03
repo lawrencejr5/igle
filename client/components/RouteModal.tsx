@@ -11,7 +11,6 @@ import {
   Pressable,
   Modal,
   TouchableOpacity,
-  Platform,
   ActivityIndicator,
 } from "react-native";
 import React, {
