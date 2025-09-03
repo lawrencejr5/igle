@@ -4,18 +4,38 @@ import React from "react";
 const RideRoute: React.FC<{ from: string; to: string }> = ({ from, to }) => {
   return (
     <View style={styles.route_sec}>
-      <View style={styles.route}>
-        <View style={styles.pickup_icon} />
-        <View style={styles.route_texts}>
-          <Text style={styles.route_type}>Pickup location:</Text>
-          <Text style={styles.route_text}>{from}</Text>
-        </View>
+      <View style={{ alignItems: "center", marginTop: 15 }}>
+        <View
+          style={{
+            width: 12,
+            height: 12,
+            backgroundColor: "#fff",
+            borderRadius: 20,
+          }}
+        />
+        <View
+          style={{
+            width: 1,
+            height: 45,
+            borderLeftWidth: 1,
+            borderColor: "#fff",
+            borderStyle: "dashed",
+          }}
+        />
+        <View style={{ width: 12, height: 12, backgroundColor: "#fff" }} />
       </View>
-      <View style={styles.route}>
-        <View style={styles.dropoff_icon} />
-        <View style={styles.route_texts}>
-          <Text style={styles.route_type}>Drop off location:</Text>
-          <Text style={styles.route_text}>{to}</Text>
+      <View>
+        <View style={styles.route}>
+          <View style={styles.route_texts}>
+            <Text style={styles.route_type}>Pickup location:</Text>
+            <Text style={styles.route_text}>{from}</Text>
+          </View>
+        </View>
+        <View style={styles.route}>
+          <View style={styles.route_texts}>
+            <Text style={styles.route_type}>Drop off location:</Text>
+            <Text style={styles.route_text}>{to}</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -27,6 +47,8 @@ export default RideRoute;
 const styles = StyleSheet.create({
   route_sec: {
     marginTop: 10,
+    flexDirection: "row",
+    gap: 15,
   },
   route: {
     flexDirection: "row",

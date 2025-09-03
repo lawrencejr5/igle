@@ -319,28 +319,54 @@ const BookingModal: FC<{
       </TouchableOpacity>
       {/* Route slection form */}
       <Animated.View style={[styles.form, { opacity }]}>
-        <View style={{ flex: 1, marginTop: 10 }}>
+        <View style={{ flex: 1, marginTop: 10, flexDirection: "row", gap: 15 }}>
           {/* Select pickup and drop off */}
-          <View style={styles.route_inp_container}>
-            <View style={styles.from_circle} />
-            <TextInput
-              style={[styles.route_input]}
-              placeholder="Pickup"
-              value={userAddress}
-              onChangeText={setUserAddress}
-              placeholderTextColor={"#b7b7b7"}
-              editable={true}
+          <View style={{ alignItems: "center", marginTop: 15 }}>
+            <View
+              style={{
+                width: 15,
+                height: 15,
+                backgroundColor: "#9c9c9c",
+                borderRadius: 20,
+              }}
+            />
+            <View
+              style={{
+                width: 1,
+                height: 40,
+                borderLeftWidth: 1,
+                borderColor: "#9c9c9c",
+                borderStyle: "dashed",
+              }}
+            />
+            <View
+              style={{
+                width: 14,
+                height: 14,
+                backgroundColor: "#9c9c9c",
+              }}
             />
           </View>
-          <View style={styles.route_inp_container}>
-            <View style={styles.to_square} />
-            <TextInput
-              style={styles.route_input}
-              placeholder="Destination"
-              value={destination}
-              onChangeText={setDestination}
-              placeholderTextColor={"#b7b7b7"}
-            />
+          <View>
+            <View style={styles.route_inp_container}>
+              <TextInput
+                style={[styles.route_input]}
+                placeholder="Pickup"
+                value={userAddress}
+                onChangeText={setUserAddress}
+                placeholderTextColor={"#b7b7b7"}
+                editable={true}
+              />
+            </View>
+            <View style={styles.route_inp_container}>
+              <TextInput
+                style={styles.route_input}
+                placeholder="Destination"
+                value={destination}
+                onChangeText={setDestination}
+                placeholderTextColor={"#b7b7b7"}
+              />
+            </View>
           </View>
         </View>
       </Animated.View>
@@ -1537,7 +1563,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#515151",
     borderRadius: 5,
     marginTop: 5,
-    width: "90%",
+    width: "95%",
     color: "#ffffff",
     paddingHorizontal: 20,
     fontFamily: "raleway-semibold",
