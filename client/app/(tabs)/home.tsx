@@ -1,168 +1,39 @@
-import { StyleSheet, View, Text, TouchableWithoutFeedback } from "react-native";
-import React, { useState, useEffect, useRef } from "react";
+import { StyleSheet, View, Text } from "react-native";
+import React, { useMemo } from "react";
 
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
-
-import Feather from "@expo/vector-icons/Feather";
-
-import { darkMapStyle } from "../../data/map.dark";
-
-import SideNav from "../../components/SideNav";
-import NotificationScreen from "../../components/screens/NotificationScreen";
-
-import RouteModal from "../../components/RouteModal";
 import Notification from "../../components/Notification";
-
 import { useNotificationContext } from "../../context/NotificationContext";
-import { useMapContext } from "../../context/MapContext";
 
 import { useLoading } from "../../context/LoadingContext";
 import AppLoading from "../../loadings/AppLoading";
 
+import BottomSheet from "@gorhom/bottom-sheet";
+
 const Home = () => {
-  // Side nav state
-  const [sideNavOpen, setSideNavOpen] = useState<boolean>(false);
-
-  // Notification screen state
-  const [openNotification, setOpenNotification] = useState<boolean>(false);
-
   const { notification } = useNotificationContext();
-  const {
-    region,
-    pickupCoords,
-    getPlaceName,
-    userAddress,
-    destination,
-    destinationCoords,
-    routeCoords,
-    mapRef,
-    locationLoading,
-  } = useMapContext();
-
   const { appLoading } = useLoading();
 
-  useEffect(() => {
-    getPlaceName(region.latitude, region.longitude);
-  }, [region]);
-
-  useEffect(() => {
-    if (region && mapRef.current) {
-      mapRef.current.animateToRegion(
-        region,
-        1000 // duration in ms
-      );
-    }
-  }, [region]);
+  const snapPoints = useMemo(() => ["25%", "50%", "75%"], []);
 
   return (
     <>
-      {appLoading || locationLoading ? (
+      {appLoading ? (
         <AppLoading />
       ) : (
         <>
           <Notification notification={notification} />
-          <View style={{ backgroundColor: "#121212", flex: 1 }}>
-            {/* Map */}
-            {region && (
-              <MapView
-                ref={mapRef}
-                style={{ height: "75%" }}
-                provider={PROVIDER_GOOGLE}
-                initialRegion={region}
-                customMapStyle={darkMapStyle}
+          <View style={{ flex: 1, backgroundColor: "grey" }}>
+            <BottomSheet index={0} snapPoints={snapPoints}>
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                <Marker
-                  coordinate={{
-                    latitude: pickupCoords ? pickupCoords[0] : region.latitude,
-                    longitude: pickupCoords
-                      ? pickupCoords[1]
-                      : region.longitude,
-                  }}
-                  title={userAddress}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 5,
-                      borderRadius: 50,
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "black",
-                        padding: 5,
-                        borderRadius: 50,
-                      }}
-                    />
-                  </View>
-                </Marker>
-                {destinationCoords && destination && (
-                  <Marker
-                    coordinate={{
-                      latitude: destinationCoords[0],
-                      longitude: destinationCoords[1],
-                    }}
-                    title={destination}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "white",
-                        padding: 4,
-                        borderRadius: 2,
-                      }}
-                    >
-                      <View
-                        style={{
-                          backgroundColor: "black",
-                          padding: 4,
-                          borderRadius: 2,
-                        }}
-                      />
-                    </View>
-                  </Marker>
-                )}
-
-                {routeCoords.length > 0 && destination && (
-                  <Polyline
-                    coordinates={routeCoords}
-                    strokeColor="#fff"
-                    strokeWidth={4}
-                  />
-                )}
-              </MapView>
-            )}
-
-            {/* Nav */}
-            <View style={styles.nav_container}>
-              <TouchableWithoutFeedback onPress={() => setSideNavOpen(true)}>
-                <View style={styles.nav_box}>
-                  <Feather name="menu" size={22} color="white" />
-                </View>
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback
-                onPress={() => setOpenNotification(true)}
-              >
-                <View style={styles.nav_box}>
-                  <Feather name="bell" size={22} color="white" />
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-
-            {/* Side nav */}
-            <SideNav
-              open={sideNavOpen}
-              setSideNavOpen={setSideNavOpen}
-              mode="rider"
-            />
-
-            {/* Notification screen */}
-            <NotificationScreen
-              open={openNotification}
-              setOpen={setOpenNotification}
-            />
-
-            {/* Choose route Modal */}
-            <RouteModal />
+                <Text style={{ color: "black" }}>I'm awesome</Text>
+              </View>
+            </BottomSheet>
           </View>
         </>
       )}
@@ -171,24 +42,3 @@ const Home = () => {
 };
 
 export default Home;
-
-const styles = StyleSheet.create({
-  nav_container: {
-    width: "100%",
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    justifyContent: "space-between",
-    alignItems: "center",
-    zIndex: 1,
-    position: "absolute",
-    top: 50,
-  },
-  nav_box: {
-    width: 45,
-    height: 45,
-    backgroundColor: "#121212",
-    borderRadius: 7,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

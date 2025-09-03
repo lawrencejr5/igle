@@ -37,7 +37,7 @@ const RootLayout = () => {
   }
 
   return (
-    <GestureHandlerRootView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <LoadingProvider>
         <NotificationProvider>
           <WalletProvider>
