@@ -36,14 +36,23 @@ const add_history = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.add_history = add_history;
-// Get all history for a user
 const get_user_history = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const histories = yield history_1.default.find({ user: user_id }).sort({
-            created_at: -1,
-        });
+        const histories = yield history_1.default.aggregate([
+            { $match: { user: user_id } },
+            {
+                $group: {
+                    _id: "$place_id",
+                    place_id: { $first: "$place_id" },
+                    place_name: { $first: "$place_name" },
+                    user: { $first: "$user" },
+                    created_at: { $first: "$created_at" },
+                },
+            },
+            { $sort: { created_at: -1 } },
+        ]);
         res
             .status(200)
             .json({ msg: "success", rowCount: histories.length, histories });
@@ -57,10 +66,11 @@ exports.get_user_history = get_user_history;
 const delete_history = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const { history_id } = req.query;
+        const { place_id } = req.query;
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const history = yield history_1.default.findByIdAndDelete(history_id, {
+        const history = yield history_1.default.deleteMany({
             user: user_id,
+            place_id,
         });
         if (!history) {
             res.status(404).json({ msg: "History not found." });

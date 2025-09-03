@@ -27,16 +27,25 @@ export const add_history = async (
   }
 };
 
-// Get all history for a user
 export const get_user_history = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
-    const histories = await History.find({ user: user_id }).sort({
-      created_at: -1,
-    });
+    const histories = await History.aggregate([
+      { $match: { user: user_id } },
+      {
+        $group: {
+          _id: "$place_id",
+          place_id: { $first: "$place_id" },
+          place_name: { $first: "$place_name" },
+          user: { $first: "$user" },
+          created_at: { $first: "$created_at" },
+        },
+      },
+      { $sort: { created_at: -1 } },
+    ]);
     res
       .status(200)
       .json({ msg: "success", rowCount: histories.length, histories });
@@ -51,11 +60,12 @@ export const delete_history = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { history_id } = req.query;
+    const { place_id } = req.query;
     const user_id = req.user?.id;
 
-    const history = await History.findByIdAndDelete(history_id, {
+    const history = await History.deleteMany({
       user: user_id,
+      place_id,
     });
     if (!history) {
       res.status(404).json({ msg: "History not found." });

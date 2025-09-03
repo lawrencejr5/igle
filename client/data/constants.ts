@@ -3,6 +3,7 @@ export const API_URLS = {
   drivers: "http://192.168.107.123:5000/api/v1/drivers",
   wallet: "http://192.168.107.123:5000/api/v1/wallet",
   rides: "http://192.168.107.123:5000/api/v1/rides",
+  history: "http://192.168.107.123:5000/api/v1/history",
 };
 
 export const SOCKET_URL = "http://192.168.107.123:5000";
@@ -12,6 +13,7 @@ export const SOCKET_URL = "http://192.168.107.123:5000";
 //   drivers: "https://igleapi.onrender.com/api/v1/drivers",
 //   wallet: "https://igleapi.onrender.com/api/v1/wallet",
 //   rides: "https://igleapi.onrender.com/api/v1/rides",
+//   history: "https://igleapi.onrender.com/api/v1/history",
 // };
 
 // export const SOCKET_URL = "https://igleapi.onrender.com";
