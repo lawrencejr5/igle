@@ -17,6 +17,7 @@ import DriverRouter from "./routes/driver";
 import RideRouter from "./routes/ride";
 import TransactionRouter from "./routes/transaction";
 import WalletRouter from "./routes/wallet";
+import HistoryRouter from "./routes/history";
 
 import { handle_socket_events } from "./sockets";
 
@@ -28,6 +29,7 @@ app.use("/api/v1/drivers", DriverRouter);
 app.use("/api/v1/rides", RideRouter);
 app.use("/api/v1/transactions", TransactionRouter);
 app.use("/api/v1/wallet", WalletRouter);
+app.use("/api/v1/history", HistoryRouter);
 
 app.use(not_found);
 

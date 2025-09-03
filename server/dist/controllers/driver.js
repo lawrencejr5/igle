@@ -36,7 +36,7 @@ const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             profile_img,
             current_location: {
                 type: "Point",
-                coordinates: [0, 0], // Default coordinates, will be updated later
+                coordinates: [0, 0],
             },
         });
         yield wallet_1.default.create({
