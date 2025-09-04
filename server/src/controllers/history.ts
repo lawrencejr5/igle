@@ -8,9 +8,9 @@ export const add_history = async (
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
-    const { place_id, place_name } = req.body;
+    const { place_id, place_name, place_sub_name } = req.body;
 
-    if (!place_id || !place_name) {
+    if (!place_id || !place_name || !place_sub_name) {
       res.status(400).json({ msg: "place_id and place_name are required." });
       return;
     }
@@ -18,6 +18,7 @@ export const add_history = async (
     const history = await History.create({
       place_id,
       place_name,
+      place_sub_name,
       user: user_id,
     });
 
@@ -33,19 +34,7 @@ export const get_user_history = async (
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
-    const histories = await History.aggregate([
-      { $match: { user: user_id } },
-      {
-        $group: {
-          _id: "$place_id",
-          place_id: { $first: "$place_id" },
-          place_name: { $first: "$place_name" },
-          user: { $first: "$user" },
-          created_at: { $first: "$created_at" },
-        },
-      },
-      { $sort: { created_at: -1 } },
-    ]);
+    const histories = await History.find({ user: user_id });
     res
       .status(200)
       .json({ msg: "success", rowCount: histories.length, histories });

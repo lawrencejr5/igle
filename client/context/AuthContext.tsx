@@ -24,8 +24,11 @@ import {
 import { useWalletContext } from "./WalletContext";
 
 import { router } from "expo-router";
+
 import { useDriverAuthContext } from "./DriverAuthContext";
+import { useHistoryContext } from "./HistoryContext";
 import { useLoading } from "./LoadingContext";
+
 import { API_URLS } from "../data/constants";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -34,6 +37,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } =
     useNotificationContext() as NotificationContextType;
   const { getWalletBalance } = useWalletContext();
+  const { getRideHistory, rideHistory } = useHistoryContext();
   const { setAppLoading } = useLoading();
 
   const [signedIn, setSignedIn] = useState<UserType>({
@@ -138,6 +142,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
       await getUserData();
       await getWalletBalance("User");
+      await getRideHistory();
 
       showNotification("Login successful.", "success");
     } catch (err: any) {

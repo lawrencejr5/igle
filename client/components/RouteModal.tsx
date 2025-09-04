@@ -32,6 +32,7 @@ import {
   MaterialIcons,
   Ionicons,
   FontAwesome5,
+  MaterialCommunityIcons,
 } from "@expo/vector-icons";
 
 import { useAuthContext } from "../context/AuthContext";
@@ -39,6 +40,7 @@ import { useMapContext } from "../context/MapContext";
 import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useWalletContext } from "../context/WalletContext";
+import { useHistoryContext } from "../context/HistoryContext";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -48,6 +50,8 @@ const RouteModal = () => {
   const {
     userAddress,
     getPickupSuggestions,
+    setDestinationSuggestions,
+    setPickupSuggestions,
     getDestinationSuggestions,
     destination,
     setDestination,
@@ -59,21 +63,35 @@ const RouteModal = () => {
     useRideContext();
 
   const [activeSuggestion, setActiveSuggestion] = useState<
-    "pickup" | "destination"
-  >("destination");
+    "pickup" | "destination" | ""
+  >("");
+
+  const pickupFocus = () => {
+    setActiveSuggestion("pickup");
+    setPickupSuggestions(null);
+    setDestinationSuggestions(null);
+  };
+  const destinationFocus = () => {
+    setActiveSuggestion("");
+    setPickupSuggestions(null);
+    setDestinationSuggestions(null);
+  };
 
   useEffect(() => {
-    setActiveSuggestion("pickup");
-    if (userAddress) {
-      getPickupSuggestions(userAddress);
-    }
+    userAddress
+      ? getPickupSuggestions(userAddress)
+      : setPickupSuggestions(null);
   }, [userAddress]);
 
   useEffect(() => {
     setActiveSuggestion("destination");
-    if (destination) {
-      getDestinationSuggestions(destination);
-    }
+
+    destination
+      ? getDestinationSuggestions(destination)
+      : (() => {
+          setDestinationSuggestions(null);
+          setActiveSuggestion("");
+        })();
   }, [destination]);
 
   const window_height = Dimensions.get("window").height - 70;
@@ -148,7 +166,12 @@ const RouteModal = () => {
       {rideStatus === "" && <StartModal />}
       {/*  */}
       {rideStatus === "booking" && (
-        <BookingModal opacity={opacity} activeSuggestion={activeSuggestion} />
+        <BookingModal
+          opacity={opacity}
+          activeSuggestion={activeSuggestion}
+          pickupFocus={pickupFocus}
+          destinationFocus={destinationFocus}
+        />
       )}
       {/*  */}
       {rideStatus === "choosing_car" && <ChooseRideModal />}
@@ -219,8 +242,10 @@ const StartModal = () => {
 
 const BookingModal: FC<{
   opacity: any;
-  activeSuggestion: "pickup" | "destination";
-}> = ({ opacity, activeSuggestion }) => {
+  activeSuggestion: "pickup" | "destination" | "";
+  pickupFocus: any;
+  destinationFocus: any;
+}> = ({ opacity, activeSuggestion, pickupFocus, destinationFocus }) => {
   const {
     region,
     userAddress,
@@ -236,13 +261,23 @@ const BookingModal: FC<{
     setPickupCoords,
   } = useMapContext();
 
+  const { addRideHistory, rideHistory } = useHistoryContext();
+
   const [dateTimeModal, setDateTimeModal] = useState<boolean>(false);
 
   const { setRideStatus, setModalUp, setPickupModal, pickupTime } =
     useRideContext();
 
+  const pickupRef = useRef<TextInput>(null);
+  const destinationRef = useRef<TextInput>(null);
+
   const [placeId, setPlaceId] = useState<string>("");
-  const set_destination_func = async (place_id: string, place_name: string) => {
+  const set_destination_func = async (
+    place_id: string,
+    place_name: string,
+    place_sub_name: string
+  ) => {
+    await addRideHistory(place_id, place_name, place_sub_name);
     if (pickupTime === "later") {
       setDestination(place_name);
       setPlaceId(place_id);
@@ -265,6 +300,7 @@ const BookingModal: FC<{
 
   const set_pickup_func = async (place_id: string, place_name: string) => {
     setUserAddress(place_name);
+    destinationRef.current?.focus();
 
     const coords = await getPlaceCoords(place_id);
     if (coords) {
@@ -272,6 +308,7 @@ const BookingModal: FC<{
       setDestination("");
     }
   };
+
   return (
     <>
       <TouchableWithoutFeedback
@@ -353,6 +390,8 @@ const BookingModal: FC<{
                 style={[styles.route_input]}
                 placeholder="Pickup"
                 value={userAddress}
+                ref={pickupRef}
+                onFocus={pickupFocus}
                 onChangeText={setUserAddress}
                 placeholderTextColor={"#b7b7b7"}
                 editable={true}
@@ -363,6 +402,8 @@ const BookingModal: FC<{
                 style={styles.route_input}
                 placeholder="Destination"
                 value={destination}
+                ref={destinationRef}
+                onFocus={destinationFocus}
                 onChangeText={setDestination}
                 placeholderTextColor={"#b7b7b7"}
               />
@@ -399,7 +440,7 @@ const BookingModal: FC<{
               </Pressable>
             )}
           />
-        ) : (
+        ) : activeSuggestion === "destination" ? (
           <FlatList
             data={destinationSuggestions}
             keyExtractor={(item) => item.place_id}
@@ -409,7 +450,8 @@ const BookingModal: FC<{
                 onPress={() =>
                   set_destination_func(
                     item.place_id,
-                    item.structured_formatting.main_text
+                    item.structured_formatting.main_text,
+                    item.structured_formatting.secondary_text
                   )
                 }
               >
@@ -420,6 +462,37 @@ const BookingModal: FC<{
                   </Text>
                   <Text style={styles.suggestion_sub_text}>
                     {item.structured_formatting.secondary_text}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+          />
+        ) : (
+          <FlatList
+            data={rideHistory as any}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.suggestion_box}
+                onPress={() =>
+                  set_destination_func(
+                    item.place_id,
+                    item.place_name,
+                    item.place_sub_name
+                  )
+                }
+              >
+                <MaterialCommunityIcons
+                  name="history"
+                  size={24}
+                  color="#b7b7b7"
+                />
+                <View>
+                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    {item.place_name}
+                  </Text>
+                  <Text style={styles.suggestion_sub_text}>
+                    {item.place_sub_name}
                   </Text>
                 </View>
               </Pressable>

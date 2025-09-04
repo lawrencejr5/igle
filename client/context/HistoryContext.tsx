@@ -1,4 +1,3 @@
-import { StyleSheet, Text, View } from "react-native";
 import React, {
   useState,
   useEffect,
@@ -18,10 +17,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const HistoryContext = createContext<HistoryContextType | null>(null);
 
 const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [rideHistory, setRideHistory] = useState<{
-    place_id: string;
-    place_name: string;
-  } | null>(null);
+  const [rideHistory, setRideHistory] = useState<HistoryType | null>(null);
+
+  useEffect(() => {
+    getRideHistory();
+  }, []);
 
   const api_url = API_URLS.history;
 
@@ -31,7 +31,8 @@ const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.get(api_url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (data.history) setRideHistory(data.history);
+
+      if (data.histories) setRideHistory(data.histories);
     } catch (error: any) {
       const errMsg = error.response.data.msg;
       throw new Error(
@@ -42,13 +43,14 @@ const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const addRideHistory = async (
     place_id: string,
-    place_name: string
+    place_name: string,
+    place_sub_name: string
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     try {
       await axios.post(
         api_url,
-        { place_id, place_name },
+        { place_id, place_name, place_sub_name },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -56,6 +58,7 @@ const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
       await getRideHistory();
     } catch (error: any) {
       const errMsg = error.response.data.msg;
+
       throw new Error(
         errMsg || "An error occured while fetching user ride history"
       );
@@ -93,19 +96,23 @@ const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 interface HistoryContextType {
-  rideHistory: {
-    place_id: string;
-    place_name: string;
-  } | null;
-  setRideHistory: Dispatch<
-    SetStateAction<{
-      place_id: string;
-      place_name: string;
-    } | null>
-  >;
+  rideHistory: HistoryType | null;
+  setRideHistory: Dispatch<SetStateAction<HistoryType | null>>;
   getRideHistory: () => Promise<void>;
-  addRideHistory: (place_name: string, place_id: string) => Promise<void>;
+  addRideHistory: (
+    place_name: string,
+    place_id: string,
+    place_sub_name: string
+  ) => Promise<void>;
   deleteRideHistory: (place_id: string) => Promise<void>;
+}
+
+export interface HistoryType {
+  _id: string;
+  place_id: string;
+  place_name: string;
+  place_sub_name: string;
+  createdAt: Date;
 }
 
 export const useHistoryContext = () => {

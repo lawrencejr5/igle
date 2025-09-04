@@ -17,8 +17,10 @@ import { useMapContext } from "./MapContext";
 import { useDriverAuthContext } from "./DriverAuthContext";
 import { useAuthContext } from "./AuthContext";
 import { useWalletContext } from "./WalletContext";
-import { API_URLS } from "../data/constants";
 import { useLoading } from "./LoadingContext";
+import { useHistoryContext } from "./HistoryContext";
+
+import { API_URLS } from "../data/constants";
 
 const RideContext = createContext<RideContextType | null>(null);
 
@@ -47,6 +49,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     set_user_location,
   } = useMapContext();
   const { getWalletBalance } = useWalletContext();
+  const { getRideHistory } = useHistoryContext();
 
   const [ongoingRideData, setOngoingRideData] = useState<any>(null);
   const [rideData, setRideData] = useState<any>(null);
@@ -62,6 +65,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   useEffect(() => {
     getUserCompletedRides();
     getUserCancelledRides();
+    getRideHistory();
   }, [signedIn]);
 
   useEffect(() => {
