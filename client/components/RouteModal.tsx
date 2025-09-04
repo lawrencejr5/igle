@@ -57,10 +57,26 @@ const RouteModal = () => {
     setDestination,
     setDestinationCoords,
     fetchRoute,
+    setUserAddress,
+    region,
+    getPlaceCoords,
+    calculateRide,
+    pickupCoords,
+    setPickupCoords,
   } = useMapContext();
 
-  const { rideStatus, setRideStatus, modalUp, setModalUp, ongoingRideData } =
-    useRideContext();
+  const [dateTimeModal, setDateTimeModal] = useState<boolean>(false);
+
+  const {
+    rideStatus,
+    setRideStatus,
+    modalUp,
+    setModalUp,
+    ongoingRideData,
+    pickupTime,
+  } = useRideContext();
+
+  const { addRideHistory } = useHistoryContext();
 
   const [activeSuggestion, setActiveSuggestion] = useState<
     "pickup" | "destination" | ""
@@ -195,7 +211,7 @@ const StartModal = () => {
   const { destination, destinationCoords } = useMapContext();
   const { rideHistory } = useHistoryContext();
 
-  const { setRideStatus, setModalUp } = useRideContext();
+  const { setRideStatus, setModalUp, set_destination_func } = useRideContext();
   return (
     <>
       <TouchableWithoutFeedback
@@ -210,8 +226,8 @@ const StartModal = () => {
       </TouchableWithoutFeedback>
 
       <Text style={styles.header_text}>
-        {signedIn.name.split(" ")[1] || signedIn.name.split(" ")[0]}, let's go
-        places...
+        {signedIn.name.split(" ")[1] || signedIn.name.split(" ")[0]}, let's hit
+        the road...
       </Text>
 
       <Pressable
@@ -244,6 +260,13 @@ const StartModal = () => {
             marginTop: 25,
             alignItems: "center",
           }}
+          onPress={() =>
+            set_destination_func(
+              rideHistory[0].place_id,
+              rideHistory[0].place_name,
+              rideHistory[0].place_sub_name
+            )
+          }
         >
           <View
             style={{ backgroundColor: "grey", padding: 5, borderRadius: 5 }}
@@ -285,67 +308,29 @@ const BookingModal: FC<{
   destinationFocus: any;
 }> = ({ opacity, activeSuggestion, pickupFocus, destinationFocus }) => {
   const {
-    region,
     userAddress,
     setUserAddress,
     pickupSuggestions,
     destinationSuggestions,
-    getPlaceCoords,
-    calculateRide,
     destination,
     setDestination,
-    setDestinationCoords,
-    pickupCoords,
-    setPickupCoords,
   } = useMapContext();
 
-  const { addRideHistory, rideHistory } = useHistoryContext();
+  const { rideHistory } = useHistoryContext();
 
-  const [dateTimeModal, setDateTimeModal] = useState<boolean>(false);
-
-  const { setRideStatus, setModalUp, setPickupModal, pickupTime } =
-    useRideContext();
-
-  const pickupRef = useRef<TextInput>(null);
-  const destinationRef = useRef<TextInput>(null);
-
-  const [placeId, setPlaceId] = useState<string>("");
-  const set_destination_func = async (
-    place_id: string,
-    place_name: string,
-    place_sub_name: string
-  ) => {
-    await addRideHistory(place_id, place_name, place_sub_name);
-    if (pickupTime === "later") {
-      setDestination(place_name);
-      setPlaceId(place_id);
-      setDateTimeModal(true);
-    } else {
-      setDestination(place_name);
-      setModalUp(false);
-      setRideStatus("choosing_car");
-
-      const coords = await getPlaceCoords(place_id);
-      if (coords) {
-        setDestinationCoords(coords);
-        await calculateRide(
-          pickupCoords || [region.latitude, region.longitude],
-          [...coords]
-        );
-      }
-    }
-  };
-
-  const set_pickup_func = async (place_id: string, place_name: string) => {
-    setUserAddress(place_name);
-    destinationRef.current?.focus();
-
-    const coords = await getPlaceCoords(place_id);
-    if (coords) {
-      setPickupCoords(coords);
-      setDestination("");
-    }
-  };
+  const {
+    setRideStatus,
+    setModalUp,
+    setPickupModal,
+    pickupTime,
+    pickupRef,
+    destinationRef,
+    set_destination_func,
+    set_pickup_func,
+    placeId,
+    dateTimeModal,
+    setDateTimeModal,
+  } = useRideContext();
 
   return (
     <>

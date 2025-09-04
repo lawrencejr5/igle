@@ -7,7 +7,10 @@ import React, {
   Dispatch,
   SetStateAction,
   ReactNode,
+  useRef,
 } from "react";
+
+import { TextInput } from "react-native";
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -47,9 +50,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     mapRef,
     region,
     set_user_location,
+    getPlaceCoords,
+    pickupCoords,
+    setUserAddress,
+    setPickupSuggestions,
+    setDestinationSuggestions,
   } = useMapContext();
   const { getWalletBalance } = useWalletContext();
-  const { getRideHistory } = useHistoryContext();
+  const { getRideHistory, addRideHistory } = useHistoryContext();
 
   const [ongoingRideData, setOngoingRideData] = useState<any>(null);
   const [rideData, setRideData] = useState<any>(null);
@@ -423,6 +431,64 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const [activeSuggestion, setActiveSuggestion] = useState<
+    "pickup" | "destination" | ""
+  >("");
+  const pickupFocus = () => {
+    setActiveSuggestion("pickup");
+    setPickupSuggestions(null);
+    setDestinationSuggestions(null);
+  };
+  const destinationFocus = () => {
+    setActiveSuggestion("");
+    setPickupSuggestions(null);
+    setDestinationSuggestions(null);
+  };
+
+  const pickupRef = useRef<TextInput>(null);
+  const destinationRef = useRef<TextInput>(null);
+
+  const [dateTimeModal, setDateTimeModal] = useState<boolean>(false);
+
+  const [placeId, setPlaceId] = useState<string>("");
+
+  const set_destination_func = async (
+    place_id: string,
+    place_name: string,
+    place_sub_name: string
+  ) => {
+    await addRideHistory(place_id, place_name, place_sub_name);
+    if (pickupTime === "later") {
+      setDestination(place_name);
+      setPlaceId(place_id);
+      setDateTimeModal(true);
+    } else {
+      setDestination(place_name);
+      setModalUp(false);
+      setRideStatus("choosing_car");
+
+      const coords = await getPlaceCoords(place_id);
+      if (coords) {
+        setDestinationCoords(coords);
+        await calculateRide(
+          pickupCoords || [region.latitude, region.longitude],
+          [...coords]
+        );
+      }
+    }
+  };
+
+  const set_pickup_func = async (place_id: string, place_name: string) => {
+    setUserAddress(place_name);
+    destinationRef.current?.focus();
+
+    const coords = await getPlaceCoords(place_id);
+    if (coords) {
+      setPickupCoords(coords);
+      setDestination("");
+    }
+  };
+
   const [pickupTime, setPickupTime] = useState<"now" | "later">("now");
   const [pickupModal, setPickupModal] = useState<boolean>(false);
 
@@ -442,6 +508,13 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         modalUp,
         setModalUp,
         cancelRideRequest,
+        placeId,
+        pickupRef,
+        destinationRef,
+        dateTimeModal,
+        setDateTimeModal,
+        set_destination_func,
+        set_pickup_func,
         ongoingRideData,
         resetRide,
         cancelling,
@@ -500,6 +573,18 @@ export interface RideContextType {
   rideData: any;
   ongoingRideData: any;
   fetchRideDetails: (ride_id: string) => Promise<void>;
+
+  placeId: string;
+  pickupRef: any;
+  destinationRef: any;
+  dateTimeModal: boolean;
+  setDateTimeModal: Dispatch<SetStateAction<boolean>>;
+  set_destination_func: (
+    place_id: string,
+    place_name: string,
+    place_sub_name: string
+  ) => Promise<void>;
+  set_pickup_func: (place_id: string, place_name: string) => Promise<void>;
 
   userCompletedRides: any;
   setUserCompletedRides: Dispatch<SetStateAction<any>>;
