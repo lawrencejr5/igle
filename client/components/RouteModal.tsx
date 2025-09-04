@@ -21,9 +21,12 @@ import React, {
   Dispatch,
   SetStateAction,
   useCallback,
+  useMemo,
 } from "react";
 
 import * as Linking from "expo-linking";
+
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import RideRoute from "./RideRoute";
 
@@ -57,26 +60,10 @@ const RouteModal = () => {
     setDestination,
     setDestinationCoords,
     fetchRoute,
-    setUserAddress,
-    region,
-    getPlaceCoords,
-    calculateRide,
-    pickupCoords,
-    setPickupCoords,
   } = useMapContext();
 
-  const [dateTimeModal, setDateTimeModal] = useState<boolean>(false);
-
-  const {
-    rideStatus,
-    setRideStatus,
-    modalUp,
-    setModalUp,
-    ongoingRideData,
-    pickupTime,
-  } = useRideContext();
-
-  const { addRideHistory } = useHistoryContext();
+  const { rideStatus, setRideStatus, modalUp, setModalUp, ongoingRideData } =
+    useRideContext();
 
   const [activeSuggestion, setActiveSuggestion] = useState<
     "pickup" | "destination" | ""
@@ -176,32 +163,51 @@ const RouteModal = () => {
     }
   }, [ongoingRideData]);
 
+  const snapPoints = useMemo(() => ["22%", "35%", "75%"], []);
+
   return (
-    <Animated.View style={[styles.modal, { height: height }]}>
-      {/* Form */}
-      {rideStatus === "" && <StartModal />}
-      {/*  */}
-      {rideStatus === "booking" && (
-        <BookingModal
-          opacity={opacity}
-          activeSuggestion={activeSuggestion}
-          pickupFocus={pickupFocus}
-          destinationFocus={destinationFocus}
-        />
-      )}
-      {/*  */}
-      {rideStatus === "choosing_car" && <ChooseRideModal />}
-      {/*  */}
-      {rideStatus === "searching" && <SearchingModal />}
-      {/*  */}
-      {rideStatus === "accepted" && <AcceptedModal />}
-      {/*  */}
-      {rideStatus === "pay" && <PayModal />}
-      {/*  */}
-      {rideStatus === "paying" && <PayingModal />}
-      {/*  */}
-      {rideStatus === "paid" && <PaidModal />}
-    </Animated.View>
+    <BottomSheet
+      index={0}
+      snapPoints={snapPoints}
+      backgroundStyle={{
+        backgroundColor: "#121212",
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+      }}
+      handleIndicatorStyle={{
+        width: 40,
+        height: 5,
+        backgroundColor: "grey",
+        marginTop: 10,
+        borderRadius: 10,
+      }}
+    >
+      <BottomSheetView style={[styles.modal]}>
+        {/* Form */}
+        {rideStatus === "" && <StartModal />}
+        {/*  */}
+        {rideStatus === "booking" && (
+          <BookingModal
+            opacity={opacity}
+            activeSuggestion={activeSuggestion}
+            pickupFocus={pickupFocus}
+            destinationFocus={destinationFocus}
+          />
+        )}
+        {/*  */}
+        {rideStatus === "choosing_car" && <ChooseRideModal />}
+        {/*  */}
+        {rideStatus === "searching" && <SearchingModal />}
+        {/*  */}
+        {rideStatus === "accepted" && <AcceptedModal />}
+        {/*  */}
+        {rideStatus === "pay" && <PayModal />}
+        {/*  */}
+        {rideStatus === "paying" && <PayingModal />}
+        {/*  */}
+        {rideStatus === "paid" && <PaidModal />}
+      </BottomSheetView>
+    </BottomSheet>
   );
 };
 
@@ -214,17 +220,6 @@ const StartModal = () => {
   const { setRideStatus, setModalUp, set_destination_func } = useRideContext();
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setModalUp(true);
-          setRideStatus("booking");
-        }}
-      >
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
       <Text style={styles.header_text}>
         {signedIn.name.split(" ")[1] || signedIn.name.split(" ")[0]}, let's hit
         the road...
@@ -1575,8 +1570,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    paddingTop: 10,
     paddingHorizontal: 20,
-    paddingTop: 12,
     zIndex: 3,
   },
   expand_line_conatiner: {

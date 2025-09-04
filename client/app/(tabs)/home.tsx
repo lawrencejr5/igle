@@ -66,7 +66,7 @@ const Home = () => {
             {region && (
               <MapView
                 ref={mapRef}
-                style={{ height: "75%" }}
+                style={{ height: "82%" }}
                 provider={PROVIDER_GOOGLE}
                 initialRegion={region}
                 customMapStyle={darkMapStyle}
