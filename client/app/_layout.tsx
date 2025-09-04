@@ -1,3 +1,4 @@
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import React, { useState, useEffect } from "react";
 import { Stack } from "expo-router";
 import SafeArea from "../components/SafeArea";
@@ -15,8 +16,6 @@ import RideContextProvider from "../context/RideContext";
 import MapContextProvider from "../context/MapContext";
 import WalletProvider from "../context/WalletContext";
 import DriverContextPrvider from "../context/DriverContext";
-
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");

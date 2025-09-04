@@ -7,7 +7,7 @@ import { useNotificationContext } from "../../context/NotificationContext";
 import { useLoading } from "../../context/LoadingContext";
 import AppLoading from "../../loadings/AppLoading";
 
-import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 const Home = () => {
   const { notification } = useNotificationContext();
@@ -23,16 +23,20 @@ const Home = () => {
         <>
           <Notification notification={notification} />
           <View style={{ flex: 1, backgroundColor: "grey" }}>
-            <BottomSheet index={0} snapPoints={snapPoints}>
-              <View
+            <BottomSheet
+              index={0}
+              snapPoints={snapPoints}
+              backgroundStyle={{ backgroundColor: "lightblue" }}
+            >
+              <BottomSheetView
                 style={{
                   flex: 1,
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Text style={{ color: "black" }}>I'm awesome</Text>
-              </View>
+                <Text>Visible?</Text>
+              </BottomSheetView>
             </BottomSheet>
           </View>
         </>
