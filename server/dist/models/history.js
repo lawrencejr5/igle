@@ -39,5 +39,6 @@ const HistorySchema = new mongoose_1.Schema({
     place_name: { type: String, required: true },
     place_sub_name: { type: String, required: true },
     user: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    lastVisitedAt: { type: Date },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model("History", HistorySchema);

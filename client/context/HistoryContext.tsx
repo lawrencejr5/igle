@@ -17,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const HistoryContext = createContext<HistoryContextType | null>(null);
 
 const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [rideHistory, setRideHistory] = useState<HistoryType | null>(null);
+  const [rideHistory, setRideHistory] = useState<HistoryType[] | null>(null);
 
   useEffect(() => {
     getRideHistory();
@@ -96,8 +96,8 @@ const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 interface HistoryContextType {
-  rideHistory: HistoryType | null;
-  setRideHistory: Dispatch<SetStateAction<HistoryType | null>>;
+  rideHistory: HistoryType[] | null;
+  setRideHistory: Dispatch<SetStateAction<HistoryType[] | null>>;
   getRideHistory: () => Promise<void>;
   addRideHistory: (
     place_name: string,

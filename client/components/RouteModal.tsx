@@ -193,6 +193,7 @@ const StartModal = () => {
   const { signedIn } = useAuthContext();
 
   const { destination, destinationCoords } = useMapContext();
+  const { rideHistory } = useHistoryContext();
 
   const { setRideStatus, setModalUp } = useRideContext();
   return (
@@ -213,29 +214,66 @@ const StartModal = () => {
         places...
       </Text>
 
-      <TouchableWithoutFeedback
+      <Pressable
         onPress={() => {
           setModalUp(true);
           setRideStatus("booking");
         }}
+        style={styles.form}
       >
-        <View style={styles.form}>
-          <View style={styles.text_inp_container}>
-            <Image
-              source={require("../assets/images/icons/car-icon.png")}
-              style={{ height: 30, width: 30 }}
-            />
-            <TextInput
-              placeholder="Where we dey go?"
-              value={destinationCoords ? destination : ""}
-              selection={{ start: 0, end: 0 }}
-              placeholderTextColor={"#8d8d8d"}
-              editable={false}
-              style={[styles.text_input, { color: "#8d8d8d" }]}
-            />
-          </View>
+        <View style={styles.text_inp_container}>
+          <Image
+            source={require("../assets/images/icons/car-icon.png")}
+            style={{ height: 30, width: 30 }}
+          />
+          <TextInput
+            placeholder="Where we dey go?"
+            value={destinationCoords ? destination : ""}
+            selection={{ start: 0, end: 0 }}
+            placeholderTextColor={"#8d8d8d"}
+            editable={false}
+            style={[styles.text_input, { color: "#8d8d8d" }]}
+          />
         </View>
-      </TouchableWithoutFeedback>
+      </Pressable>
+      {rideHistory?.length ? (
+        <Pressable
+          style={{
+            flexDirection: "row",
+            gap: 10,
+            marginTop: 25,
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{ backgroundColor: "grey", padding: 5, borderRadius: 5 }}
+          >
+            <MaterialCommunityIcons name="history" size={24} color="#d0d0d0" />
+          </View>
+          <View>
+            <Text
+              style={{
+                fontFamily: "raleway-bold",
+                fontSize: 16,
+                color: "#8d8d8d",
+              }}
+            >
+              {rideHistory && rideHistory[0].place_name}
+            </Text>
+            <Text
+              style={{
+                fontFamily: "raleway-regular",
+                fontSize: 12,
+                color: "#8d8d8d",
+              }}
+            >
+              {rideHistory && rideHistory[0].place_sub_name}
+            </Text>
+          </View>
+        </Pressable>
+      ) : (
+        <></>
+      )}
     </>
   );
 };

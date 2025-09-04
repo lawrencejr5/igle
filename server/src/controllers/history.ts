@@ -11,21 +11,31 @@ export const add_history = async (
     const user_id = req.user?.id;
     const { place_id, place_name, place_sub_name } = req.body;
 
-    if (!place_id || !place_name || !place_sub_name) {
-      res.status(400).json({ msg: "place_id and place_name are required." });
+    if (!user_id || !place_id || !place_name || !place_sub_name) {
+      res.status(400).json({
+        msg: "Al fields are required.",
+      });
       return;
     }
 
-    const history = await History.create({
-      place_id,
-      place_name,
-      place_sub_name,
-      user: user_id,
-    });
+    const history = await History.findOneAndUpdate(
+      { user: user_id, place_id },
+      {
+        place_name,
+        place_sub_name,
+        lastVisitedAt: new Date(), // refresh visit timestamp
+      },
+      {
+        new: true,
+        upsert: true, // create if not exists
+        setDefaultsOnInsert: true,
+      }
+    );
 
-    res.status(201).json({ msg: "History added successfully.", history });
+    res.status(201).json({ msg: "History saved successfully.", history });
   } catch (err: any) {
-    res.status(500).json({ msg: "Failed to add history.", err: err.message });
+    console.error(err);
+    res.status(500).json({ msg: "Failed to save history.", err: err.message });
   }
 };
 
@@ -35,19 +45,9 @@ export const get_user_history = async (
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
-    const histories = await History.aggregate([
-      { $match: { user: new mongoose.Types.ObjectId(user_id) } }, // ✅ cast to ObjectId
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: "$place_id",
-          latest: { $first: "$$ROOT" },
-        },
-      },
-      { $replaceRoot: { newRoot: "$latest" } },
-      { $limit: 5 },
-      { $sort: { createdAt: -1 } },
-    ]);
+    const histories = await History.find({ user: user_id })
+      .limit(5)
+      .sort({ lastVisitedAt: -1 });
     res
       .status(200)
       .json({ msg: "success", rowCount: histories.length, histories });

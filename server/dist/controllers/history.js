@@ -14,27 +14,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.delete_history = exports.get_user_history = exports.add_history = void 0;
 const history_1 = __importDefault(require("../models/history"));
-const mongoose_1 = __importDefault(require("mongoose"));
 // Create a new history entry
 const add_history = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { place_id, place_name, place_sub_name } = req.body;
-        if (!place_id || !place_name || !place_sub_name) {
-            res.status(400).json({ msg: "place_id and place_name are required." });
+        if (!user_id || !place_id || !place_name || !place_sub_name) {
+            res.status(400).json({
+                msg: "Al fields are required.",
+            });
             return;
         }
-        const history = yield history_1.default.create({
-            place_id,
+        const history = yield history_1.default.findOneAndUpdate({ user: user_id, place_id }, {
             place_name,
             place_sub_name,
-            user: user_id,
+            lastVisitedAt: new Date(), // refresh visit timestamp
+        }, {
+            new: true,
+            upsert: true, // create if not exists
+            setDefaultsOnInsert: true,
         });
-        res.status(201).json({ msg: "History added successfully.", history });
+        res.status(201).json({ msg: "History saved successfully.", history });
     }
     catch (err) {
-        res.status(500).json({ msg: "Failed to add history.", err: err.message });
+        console.error(err);
+        res.status(500).json({ msg: "Failed to save history.", err: err.message });
     }
 });
 exports.add_history = add_history;
@@ -42,19 +47,9 @@ const get_user_history = (req, res) => __awaiter(void 0, void 0, void 0, functio
     var _a;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const histories = yield history_1.default.aggregate([
-            { $match: { user: new mongoose_1.default.Types.ObjectId(user_id) } }, // ✅ cast to ObjectId
-            { $sort: { createdAt: -1 } },
-            {
-                $group: {
-                    _id: "$place_id",
-                    latest: { $first: "$$ROOT" },
-                },
-            },
-            { $replaceRoot: { newRoot: "$latest" } },
-            { $limit: 5 },
-            { $sort: { createdAt: -1 } },
-        ]);
+        const histories = yield history_1.default.find({ user: user_id })
+            .limit(5)
+            .sort({ lastVisitedAt: -1 });
         res
             .status(200)
             .json({ msg: "success", rowCount: histories.length, histories });
