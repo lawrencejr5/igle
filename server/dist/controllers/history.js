@@ -14,19 +14,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.delete_history = exports.get_user_history = exports.add_history = void 0;
 const history_1 = __importDefault(require("../models/history"));
+const mongoose_1 = __importDefault(require("mongoose"));
 // Create a new history entry
 const add_history = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const { place_id, place_name } = req.body;
-        if (!place_id || !place_name) {
+        const { place_id, place_name, place_sub_name } = req.body;
+        if (!place_id || !place_name || !place_sub_name) {
             res.status(400).json({ msg: "place_id and place_name are required." });
             return;
         }
         const history = yield history_1.default.create({
             place_id,
             place_name,
+            place_sub_name,
             user: user_id,
         });
         res.status(201).json({ msg: "History added successfully.", history });
@@ -41,17 +43,17 @@ const get_user_history = (req, res) => __awaiter(void 0, void 0, void 0, functio
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const histories = yield history_1.default.aggregate([
-            { $match: { user: user_id } },
+            { $match: { user: new mongoose_1.default.Types.ObjectId(user_id) } }, // ✅ cast to ObjectId
+            { $sort: { createdAt: -1 } },
             {
                 $group: {
                     _id: "$place_id",
-                    place_id: { $first: "$place_id" },
-                    place_name: { $first: "$place_name" },
-                    user: { $first: "$user" },
-                    created_at: { $first: "$created_at" },
+                    latest: { $first: "$$ROOT" },
                 },
             },
-            { $sort: { created_at: -1 } },
+            { $replaceRoot: { newRoot: "$latest" } },
+            { $limit: 5 },
+            { $sort: { createdAt: -1 } },
         ]);
         res
             .status(200)

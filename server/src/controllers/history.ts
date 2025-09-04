@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import History from "../models/history";
+import mongoose from "mongoose";
 
 // Create a new history entry
 export const add_history = async (
@@ -34,7 +35,19 @@ export const get_user_history = async (
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
-    const histories = await History.find({ user: user_id });
+    const histories = await History.aggregate([
+      { $match: { user: new mongoose.Types.ObjectId(user_id) } }, // ✅ cast to ObjectId
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$place_id",
+          latest: { $first: "$$ROOT" },
+        },
+      },
+      { $replaceRoot: { newRoot: "$latest" } },
+      { $limit: 5 },
+      { $sort: { createdAt: -1 } },
+    ]);
     res
       .status(200)
       .json({ msg: "success", rowCount: histories.length, histories });
