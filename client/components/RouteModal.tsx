@@ -2,29 +2,24 @@ import {
   StyleSheet,
   Text,
   View,
-  Animated,
   TouchableWithoutFeedback,
   Image,
   TextInput,
   FlatList,
-  Dimensions,
   Pressable,
   Modal,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   BackHandler,
   Platform,
 } from "react-native";
 import React, {
   useState,
   useEffect,
-  useRef,
   FC,
   Dispatch,
   SetStateAction,
   useCallback,
-  useMemo,
 } from "react";
 
 import * as Linking from "expo-linking";
@@ -68,7 +63,6 @@ const RouteModal = () => {
   const {
     rideStatus,
     setRideStatus,
-    setModalUp,
     ongoingRideData,
     routeModalRef,
     snapPoints,
@@ -107,8 +101,6 @@ const RouteModal = () => {
         })();
   }, [destination]);
 
-  const opacity = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
     if (ongoingRideData) {
       setDestination(ongoingRideData.destination.address);
@@ -118,68 +110,33 @@ const RouteModal = () => {
         ongoingRideData.status === "pending" ||
         ongoingRideData.status === "expired"
       ) {
-        setModalUp(false);
         setRideStatus("searching");
       }
       if (ongoingRideData.status === "accepted") {
-        setModalUp(true);
         setRideStatus("accepted");
       }
       if (ongoingRideData.status === "arrived") {
         if (ongoingRideData.payment_status === "paid") {
-          setModalUp(false);
           setRideStatus("paid");
         } else {
-          setModalUp(true);
           setRideStatus("pay");
         }
       }
       if (ongoingRideData.status === "ongoing") {
-        setModalUp(false);
         setRideStatus("paid");
       }
     }
   }, [ongoingRideData]);
 
   const handleSheetChange = (index: number) => {
-    if (index === 0 && rideStatus === "booking") {
+    if ((index === 0 || index === 1) && rideStatus === "booking") {
       setRideStatus("");
+      resetRide();
     }
     if (index === 4 && rideStatus === "") {
       setRideStatus("booking");
     }
   };
-
-  const navigation = useNavigation();
-  const handleBackAction = (e?: any) => {
-    if (e) e.preventDefault();
-    if (rideStatus === "booking") {
-      setRideStatus("");
-      return true;
-    }
-    if (rideStatus === "choosing_car") {
-      setRideStatus("booking");
-      resetRide();
-      return true;
-    }
-    return false;
-  };
-
-  useEffect(() => {
-    // Handles navigation back (iOS + Android header back + swipe)
-    const subNav = navigation.addListener("beforeRemove", handleBackAction);
-
-    // Handles hardware back (Android only)
-    const subHW =
-      Platform.OS === "android"
-        ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
-        : null;
-
-    return () => {
-      subNav();
-      if (subHW) subHW.remove();
-    };
-  }, [navigation, rideStatus]);
 
   return (
     <BottomSheet
@@ -210,7 +167,6 @@ const RouteModal = () => {
         {/*  */}
         {rideStatus === "booking" && (
           <BookingModal
-            opacity={opacity}
             activeSuggestion={activeSuggestion}
             pickupFocus={pickupFocus}
             destinationFocus={destinationFocus}
@@ -321,7 +277,6 @@ const StartModal = () => {
 };
 
 const BookingModal: FC<{
-  opacity: any;
   activeSuggestion: "pickup" | "destination" | "";
   pickupFocus: any;
   destinationFocus: any;
@@ -838,16 +793,9 @@ const SearchingModal = () => {
 };
 
 const AcceptedModal = () => {
-  const { region, userAddress, rideDetails, destination, mapRef } =
-    useMapContext();
+  const { region, userAddress, destination, mapRef } = useMapContext();
 
-  const {
-    cancelling,
-    cancelRideRequest,
-    modalUp,
-    setModalUp,
-    ongoingRideData,
-  } = useRideContext();
+  const { cancelling, cancelRideRequest, ongoingRideData } = useRideContext();
 
   const { showNotification } = useNotificationContext();
 
@@ -909,7 +857,8 @@ const AcceptedModal = () => {
           <View style={styles.timeRow}>
             <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
             <Text style={styles.timeText}>
-              {rideDetails?.durationMins} mins ({rideDetails?.distanceKm} km)
+              {ongoingRideData?.duration_mins} mins (
+              {ongoingRideData?.distance_km} km)
             </Text>
           </View>
 
@@ -944,7 +893,7 @@ const AcceptedModal = () => {
             Total fare:
           </Text>
           <Text style={styles.priceText}>
-            {rideDetails?.amount.toLocaleString()} NGN
+            {ongoingRideData?.fare.toLocaleString()} NGN
           </Text>
         </View>
         <Text
@@ -1059,56 +1008,52 @@ const PayingModal = () => {
             marginTop: 25,
           }}
         >
-          <TouchableWithoutFeedback onPress={pay_func} disabled={paying}>
-            <View
-              style={{
-                backgroundColor: "#fff",
-                borderRadius: 20,
-                paddingHorizontal: 30,
-                paddingVertical: 10,
-                flex: 1,
-                opacity: paying ? 0.5 : 1,
-              }}
-            >
-              <Text
-                style={{
-                  color: "#121212",
-                  fontFamily: "raleway-bold",
-                  textAlign: "center",
-                }}
-              >
-                {paying ? "Confirming..." : "Confirm"}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              setRideStatus("accepted");
-              setModalUp(true);
+          <Pressable
+            onPress={pay_func}
+            disabled={paying}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              paddingHorizontal: 30,
+              paddingVertical: 10,
+              flex: 1,
+              opacity: paying ? 0.5 : 1,
             }}
           >
-            <View
+            <Text
               style={{
-                borderRadius: 20,
-                paddingHorizontal: 30,
-                paddingVertical: 10,
-                borderStyle: "solid",
-                borderWidth: 1,
-                borderColor: "#fff",
-                flex: 1,
+                color: "#121212",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
               }}
             >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  textAlign: "center",
-                }}
-              >
-                Cancel
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
+              {paying ? "Confirming..." : "Confirm"}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              setRideStatus("pay");
+            }}
+            style={{
+              borderRadius: 20,
+              paddingHorizontal: 30,
+              paddingVertical: 10,
+              borderStyle: "solid",
+              borderWidth: 1,
+              borderColor: "#fff",
+              flex: 1,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Cancel
+            </Text>
+          </Pressable>
         </View>
       </View>
     </>

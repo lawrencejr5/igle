@@ -11,7 +11,7 @@ import React, {
   useMemo,
 } from "react";
 
-import { TextInput } from "react-native";
+import { TextInput, Platform, BackHandler } from "react-native";
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -23,6 +23,8 @@ import { useAuthContext } from "./AuthContext";
 import { useWalletContext } from "./WalletContext";
 import { useLoading } from "./LoadingContext";
 import { useHistoryContext } from "./HistoryContext";
+
+import { useNavigation } from "expo-router";
 
 import { API_URLS } from "../data/constants";
 import BottomSheet from "@gorhom/bottom-sheet";
@@ -152,7 +154,40 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     if (rideStatus === "choosing_car") routeModalRef.current?.snapToIndex(1);
     if (rideStatus === "searching") routeModalRef.current?.snapToIndex(1);
     if (rideStatus === "accepted") routeModalRef.current?.snapToIndex(3);
+    if (rideStatus === "pay") routeModalRef.current?.snapToIndex(1);
+    if (rideStatus === "paying") routeModalRef.current?.snapToIndex(1);
   }, [rideStatus]);
+
+  const navigation = useNavigation();
+  const handleBackAction = (e?: any) => {
+    if (e) e.preventDefault();
+    if (rideStatus === "booking") {
+      setRideStatus("");
+      resetRide();
+      return true;
+    }
+    if (rideStatus === "choosing_car") {
+      setRideStatus("booking");
+      return true;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    // Handles navigation back (iOS + Android header back + swipe)
+    const subNav = navigation.addListener("beforeRemove", handleBackAction);
+
+    // Handles hardware back (Android only)
+    const subHW =
+      Platform.OS === "android"
+        ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
+        : null;
+
+    return () => {
+      subNav();
+      if (subHW) subHW.remove();
+    };
+  }, [navigation, rideStatus]);
 
   useEffect(() => {
     getUserCancelledRides();
@@ -186,7 +221,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setPickupTime("now");
     setScheduledTime(new Date());
     setScheduledTimeDif("");
-    routeModalRef.current?.snapToIndex(1);
 
     mapRef.current.animateToRegion(region, 100);
   };
@@ -479,7 +513,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       setDestination(place_name);
       setModalUp(false);
       setRideStatus("choosing_car");
-      routeModalRef.current?.snapToIndex(1);
 
       const coords = await getPlaceCoords(place_id);
       if (coords) {
