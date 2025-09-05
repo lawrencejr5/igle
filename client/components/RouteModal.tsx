@@ -12,6 +12,9 @@ import {
   Modal,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
+  BackHandler,
+  Platform,
 } from "react-native";
 import React, {
   useState,
@@ -47,7 +50,7 @@ import { useHistoryContext } from "../context/HistoryContext";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 
 const RouteModal = () => {
   const {
@@ -65,11 +68,11 @@ const RouteModal = () => {
   const {
     rideStatus,
     setRideStatus,
-    modalUp,
     setModalUp,
     ongoingRideData,
     routeModalRef,
     snapPoints,
+    resetRide,
   } = useRideContext();
 
   const [activeSuggestion, setActiveSuggestion] = useState<
@@ -107,22 +110,6 @@ const RouteModal = () => {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (modalUp) {
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [modalUp]);
-
-  useEffect(() => {
     if (ongoingRideData) {
       setDestination(ongoingRideData.destination.address);
       setDestinationCoords(ongoingRideData.destination.coordinates);
@@ -158,14 +145,45 @@ const RouteModal = () => {
     if (index === 0 && rideStatus === "booking") {
       setRideStatus("");
     }
-    if (index === 3 && rideStatus === "") {
+    if (index === 4 && rideStatus === "") {
       setRideStatus("booking");
     }
   };
 
+  const navigation = useNavigation();
+  const handleBackAction = (e?: any) => {
+    if (e) e.preventDefault();
+    if (rideStatus === "booking") {
+      setRideStatus("");
+      return true;
+    }
+    if (rideStatus === "choosing_car") {
+      setRideStatus("booking");
+      resetRide();
+      return true;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    // Handles navigation back (iOS + Android header back + swipe)
+    const subNav = navigation.addListener("beforeRemove", handleBackAction);
+
+    // Handles hardware back (Android only)
+    const subHW =
+      Platform.OS === "android"
+        ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
+        : null;
+
+    return () => {
+      subNav();
+      if (subHW) subHW.remove();
+    };
+  }, [navigation, rideStatus]);
+
   return (
     <BottomSheet
-      index={0}
+      index={1}
       snapPoints={snapPoints}
       ref={routeModalRef}
       onChange={handleSheetChange}
@@ -307,7 +325,7 @@ const BookingModal: FC<{
   activeSuggestion: "pickup" | "destination" | "";
   pickupFocus: any;
   destinationFocus: any;
-}> = ({ opacity, activeSuggestion, pickupFocus, destinationFocus }) => {
+}> = ({ activeSuggestion, pickupFocus, destinationFocus }) => {
   const {
     userAddress,
     setUserAddress,
@@ -366,7 +384,7 @@ const BookingModal: FC<{
         <FontAwesome name="chevron-down" color={"#fff"} size={10} />
       </TouchableOpacity>
       {/* Route slection form */}
-      <Animated.View style={[styles.form, { opacity }]}>
+      <View style={styles.form}>
         <View style={{ flex: 1, marginTop: 10, flexDirection: "row", gap: 15 }}>
           {/* Select pickup and drop off */}
           <View style={{ alignItems: "center", marginTop: 15 }}>
@@ -421,7 +439,7 @@ const BookingModal: FC<{
             </View>
           </View>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Suggestions */}
       <View style={[styles.suggestions_container]}>
@@ -531,15 +549,8 @@ const ChooseRideModal = () => {
     userAddress,
   } = useMapContext();
 
-  const {
-    setModalUp,
-    resetRide,
-    rideRequest,
-    setRideStatus,
-    pickupTime,
-    scheduledTime,
-    routeModalRef,
-  } = useRideContext();
+  const { resetRide, rideRequest, setRideStatus, pickupTime, scheduledTime } =
+    useRideContext();
 
   const { showNotification } = useNotificationContext();
 
@@ -570,9 +581,7 @@ const ChooseRideModal = () => {
       }
 
       setBooking(false);
-      setModalUp(false);
       setRideStatus("searching");
-      routeModalRef.current.snapToIndex(1);
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {
@@ -661,18 +670,6 @@ const ChooseRideModal = () => {
           </Text>
         </View>
       </TouchableWithoutFeedback>
-      <Pressable style={{ padding: 10 }} onPress={resetRide}>
-        <Text
-          style={{
-            color: "#ff0000",
-            fontFamily: "raleway-bold",
-            fontSize: 16,
-            textAlign: "center",
-          }}
-        >
-          Cancel
-        </Text>
-      </Pressable>
     </>
   );
 };
@@ -687,8 +684,6 @@ const SearchingModal = () => {
   const {
     cancelling,
     cancelRideRequest,
-    modalUp,
-    setModalUp,
     ongoingRideData,
     retrying,
     retryRideRequest,

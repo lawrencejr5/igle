@@ -66,7 +66,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const [rideStatus, setRideStatus] = useState<RideStatusType>("");
   const [modalUp, setModalUp] = useState<boolean>(false);
-  const snapPoints = useMemo(() => ["22%", "35%", "60%", "93%"], []);
+  const snapPoints = useMemo(() => ["22%", "35%", "60%", "80%", "93%"], []);
   const routeModalRef = useRef<BottomSheet>(null);
 
   const { getDriverData } = useDriverAuthContext();
@@ -145,6 +145,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       userSocket.off("ride_completed", onRideCompleted);
     };
   }, [userSocket]);
+
+  useEffect(() => {
+    if (rideStatus === "") routeModalRef.current?.snapToIndex(1);
+    if (rideStatus === "booking") routeModalRef.current?.snapToIndex(4);
+    if (rideStatus === "choosing_car") routeModalRef.current?.snapToIndex(1);
+    if (rideStatus === "searching") routeModalRef.current?.snapToIndex(1);
+    if (rideStatus === "accepted") routeModalRef.current?.snapToIndex(3);
+  }, [rideStatus]);
 
   useEffect(() => {
     getUserCancelledRides();
