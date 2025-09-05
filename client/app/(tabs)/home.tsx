@@ -52,7 +52,7 @@ const Home = () => {
         1000 // duration in ms
       );
     }
-  }, [region]);
+  }, [region, mapRef.current]);
 
   return (
     <>
@@ -179,7 +179,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: "space-between",
     alignItems: "center",
-    zIndex: 1,
     position: "absolute",
     top: 50,
   },

@@ -8,6 +8,7 @@ import React, {
   SetStateAction,
   ReactNode,
   useRef,
+  useMemo,
 } from "react";
 
 import { TextInput } from "react-native";
@@ -24,6 +25,7 @@ import { useLoading } from "./LoadingContext";
 import { useHistoryContext } from "./HistoryContext";
 
 import { API_URLS } from "../data/constants";
+import BottomSheet from "@gorhom/bottom-sheet";
 
 const RideContext = createContext<RideContextType | null>(null);
 
@@ -64,6 +66,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const [rideStatus, setRideStatus] = useState<RideStatusType>("");
   const [modalUp, setModalUp] = useState<boolean>(false);
+  const snapPoints = useMemo(() => ["22%", "35%", "60%", "93%"], []);
+  const routeModalRef = useRef<BottomSheet>(null);
 
   const { getDriverData } = useDriverAuthContext();
   const { setLoadingState, setRideDetailsLoading } = useLoading();
@@ -174,6 +178,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setPickupTime("now");
     setScheduledTime(new Date());
     setScheduledTimeDif("");
+    routeModalRef.current?.snapToIndex(1);
 
     mapRef.current.animateToRegion(region, 100);
   };
@@ -466,6 +471,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       setDestination(place_name);
       setModalUp(false);
       setRideStatus("choosing_car");
+      routeModalRef.current?.snapToIndex(1);
 
       const coords = await getPlaceCoords(place_id);
       if (coords) {
@@ -507,6 +513,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         setRideStatus,
         modalUp,
         setModalUp,
+        snapPoints,
+        routeModalRef,
         cancelRideRequest,
         placeId,
         pickupRef,
@@ -569,6 +577,8 @@ export interface RideContextType {
   setRideStatus: Dispatch<SetStateAction<RideStatusType>>;
   modalUp: boolean;
   setModalUp: Dispatch<SetStateAction<boolean>>;
+  routeModalRef: any;
+  snapPoints: any;
 
   rideData: any;
   ongoingRideData: any;

@@ -62,8 +62,15 @@ const RouteModal = () => {
     fetchRoute,
   } = useMapContext();
 
-  const { rideStatus, setRideStatus, modalUp, setModalUp, ongoingRideData } =
-    useRideContext();
+  const {
+    rideStatus,
+    setRideStatus,
+    modalUp,
+    setModalUp,
+    ongoingRideData,
+    routeModalRef,
+    snapPoints,
+  } = useRideContext();
 
   const [activeSuggestion, setActiveSuggestion] = useState<
     "pickup" | "destination" | ""
@@ -97,37 +104,21 @@ const RouteModal = () => {
         })();
   }, [destination]);
 
-  const window_height = Dimensions.get("window").height - 70;
-  const height = useRef(new Animated.Value(220)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (modalUp) {
-      Animated.parallel([
-        Animated.timing(height, {
-          toValue: window_height,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
     } else {
-      Animated.parallel([
-        Animated.timing(height, {
-          toValue: 220,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
     }
   }, [modalUp]);
 
@@ -163,12 +154,25 @@ const RouteModal = () => {
     }
   }, [ongoingRideData]);
 
-  const snapPoints = useMemo(() => ["22%", "35%", "75%"], []);
+  const handleSheetChange = (index: number) => {
+    if (index === 0 && rideStatus === "booking") {
+      setRideStatus("");
+    }
+    if (index === 3 && rideStatus === "") {
+      setRideStatus("booking");
+    }
+  };
 
   return (
     <BottomSheet
       index={0}
       snapPoints={snapPoints}
+      ref={routeModalRef}
+      onChange={handleSheetChange}
+      enableContentPanningGesture={true}
+      enableDynamicSizing={false}
+      enableOverDrag={false}
+      style={{ zIndex: 3, elevation: 3 }}
       backgroundStyle={{
         backgroundColor: "#121212",
         borderTopLeftRadius: 20,
@@ -217,7 +221,8 @@ const StartModal = () => {
   const { destination, destinationCoords } = useMapContext();
   const { rideHistory } = useHistoryContext();
 
-  const { setRideStatus, setModalUp, set_destination_func } = useRideContext();
+  const { setRideStatus, setModalUp, set_destination_func, routeModalRef } =
+    useRideContext();
   return (
     <>
       <Text style={styles.header_text}>
@@ -227,8 +232,9 @@ const StartModal = () => {
 
       <Pressable
         onPress={() => {
-          setModalUp(true);
           setRideStatus("booking");
+          setModalUp(true);
+          routeModalRef.current.snapToIndex(3);
         }}
         style={styles.form}
       >
@@ -314,8 +320,6 @@ const BookingModal: FC<{
   const { rideHistory } = useHistoryContext();
 
   const {
-    setRideStatus,
-    setModalUp,
     setPickupModal,
     pickupTime,
     pickupRef,
@@ -329,17 +333,6 @@ const BookingModal: FC<{
 
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setModalUp(false);
-          setRideStatus("");
-        }}
-      >
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
       <Text style={[styles.header_text, { textAlign: "center" }]}>
         Choose your route...
       </Text>
@@ -539,13 +532,13 @@ const ChooseRideModal = () => {
   } = useMapContext();
 
   const {
-    modalUp,
     setModalUp,
     resetRide,
     rideRequest,
     setRideStatus,
     pickupTime,
     scheduledTime,
+    routeModalRef,
   } = useRideContext();
 
   const { showNotification } = useNotificationContext();
@@ -579,6 +572,7 @@ const ChooseRideModal = () => {
       setBooking(false);
       setModalUp(false);
       setRideStatus("searching");
+      routeModalRef.current.snapToIndex(1);
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {
@@ -587,16 +581,6 @@ const ChooseRideModal = () => {
   };
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setModalUp(!modalUp);
-        }}
-      >
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
       <Text style={[styles.header_text, { textAlign: "center" }]}>
         Select Igle ride...
       </Text>
@@ -677,10 +661,7 @@ const ChooseRideModal = () => {
           </Text>
         </View>
       </TouchableWithoutFeedback>
-      <TouchableWithoutFeedback
-        style={{ marginVertical: 20 }}
-        onPress={resetRide}
-      >
+      <Pressable style={{ padding: 10 }} onPress={resetRide}>
         <Text
           style={{
             color: "#ff0000",
@@ -691,7 +672,7 @@ const ChooseRideModal = () => {
         >
           Cancel
         </Text>
-      </TouchableWithoutFeedback>
+      </Pressable>
     </>
   );
 };
@@ -771,16 +752,6 @@ const SearchingModal = () => {
   };
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setModalUp(!modalUp);
-        }}
-      >
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
       <Text style={[styles.header_text, { textAlign: "center" }]}>
         {ongoingRideData.status === "expired"
           ? "Ride timeout"
@@ -900,16 +871,6 @@ const AcceptedModal = () => {
 
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setModalUp(!modalUp);
-        }}
-      >
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
       <Text style={[styles.header_text, { textAlign: "center" }]}>
         Driver found
       </Text>
@@ -1025,15 +986,6 @@ const PayModal = () => {
 
   return (
     <>
-      <Pressable
-        onPress={() => {
-          setModalUp(!modalUp);
-        }}
-        style={styles.expand_line_conatiner}
-      >
-        <View style={styles.expand_line} />
-      </Pressable>
-
       <Text
         style={[
           styles.header_text,
@@ -1089,16 +1041,6 @@ const PayingModal = () => {
 
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setModalUp(!modalUp);
-        }}
-      >
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
       <Text
         style={[
           styles.header_text,
@@ -1180,8 +1122,6 @@ const PayingModal = () => {
 
 const PaidModal = () => {
   const {
-    modalUp,
-    setModalUp,
     pickupTime,
     scheduledTimeDif,
     setRideStatus,
@@ -1190,16 +1130,6 @@ const PaidModal = () => {
   } = useRideContext();
   return (
     <>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setModalUp(!modalUp);
-        }}
-      >
-        <View style={styles.expand_line_conatiner}>
-          <View style={styles.expand_line} />
-        </View>
-      </TouchableWithoutFeedback>
-
       <Text
         style={[
           styles.header_text,
