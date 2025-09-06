@@ -1,12 +1,12 @@
 export const API_URLS = {
-  users: "http://192.168.107.123:5000/api/v1/users",
-  drivers: "http://192.168.107.123:5000/api/v1/drivers",
-  wallet: "http://192.168.107.123:5000/api/v1/wallet",
-  rides: "http://192.168.107.123:5000/api/v1/rides",
-  history: "http://192.168.107.123:5000/api/v1/history",
+  users: "http://192.168.61.123:5000/api/v1/users",
+  drivers: "http://192.168.61.123:5000/api/v1/drivers",
+  wallet: "http://192.168.61.123:5000/api/v1/wallet",
+  rides: "http://192.168.61.123:5000/api/v1/rides",
+  history: "http://192.168.61.123:5000/api/v1/history",
 };
 
-export const SOCKET_URL = "http://192.168.107.123:5000";
+export const SOCKET_URL = "http://192.168.61.123:5000";
 
 // export const API_URLS = {
 //   users: "https://igleapi.onrender.com/api/v1/users",

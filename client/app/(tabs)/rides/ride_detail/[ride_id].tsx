@@ -7,6 +7,8 @@ import {
 } from "react-native";
 import React, { useState, useEffect, FC } from "react";
 
+import { useNavigation, useRoute } from "@react-navigation/native";
+
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 import AppLoading from "../../../../loadings/AppLoading";
@@ -22,7 +24,20 @@ import { useRideContext } from "../../../../context/RideContext";
 import { useLoading } from "../../../../context/LoadingContext";
 
 const RideDetails = () => {
-  const { region, mapRef } = useMapContext();
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  useEffect(() => {
+    // Hide tab bar when this screen is active
+    navigation.setOptions({ tabBarStyle: { display: "none" } });
+
+    return () => {
+      // Show tab bar when navigating away
+      navigation.setOptions({ tabBarStyle: { display: "flex" } });
+    };
+  }, [navigation, route]);
+
+  const { mapRef } = useMapContext();
   const { rideData, fetchRideDetails } = useRideContext();
   const { rideDetailsLoading } = useLoading();
 

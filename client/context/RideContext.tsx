@@ -222,7 +222,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setScheduledTime(new Date());
     setScheduledTimeDif("");
 
-    mapRef.current.animateToRegion(region, 100);
+    mapRef.current && mapRef.current.animateToRegion(region, 100);
   };
 
   const [scheduledTime, setScheduledTime] = useState<Date>(new Date());

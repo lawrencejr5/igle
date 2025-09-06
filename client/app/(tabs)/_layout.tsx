@@ -1,11 +1,17 @@
-import { Image, StyleSheet, View } from "react-native";
-import React from "react";
+import { Image, View, Animated } from "react-native";
+import React, { useMemo } from "react";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+import { useSegments } from "expo-router";
 
 import { Tabs } from "expo-router";
 
 const TabsLayout = () => {
+  const segments = useSegments() as string[];
+
+  const hideTabs = segments[1] === "rides" && segments[2] === "ride_detail";
+
   return (
     <GestureHandlerRootView>
       <Tabs
@@ -16,6 +22,7 @@ const TabsLayout = () => {
             height: 80,
             borderTopWidth: 0,
             elevation: 0,
+            display: hideTabs ? "none" : undefined,
           },
           tabBarActiveTintColor: "#fff",
           tabBarInactiveTintColor: "#606060",

@@ -107,20 +107,20 @@ const CategoryTabs = ({
   return (
     <View style={styles.nav_container}>
       {tabs.map((tab) => (
-        <TouchableWithoutFeedback key={tab} onPress={() => setCategory(tab)}>
-          <View
-            style={[styles.nav_box, category === tab && styles.nav_box_active]}
+        <Pressable
+          key={tab}
+          onPress={() => setCategory(tab)}
+          style={[styles.nav_box, category === tab && styles.nav_box_active]}
+        >
+          <Text
+            style={[
+              styles.nav_text,
+              category === tab && styles.nav_text_active,
+            ]}
           >
-            <Text
-              style={[
-                styles.nav_text,
-                category === tab && styles.nav_text_active,
-              ]}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
-          </View>
-        </TouchableWithoutFeedback>
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </Text>
+        </Pressable>
       ))}
     </View>
   );
