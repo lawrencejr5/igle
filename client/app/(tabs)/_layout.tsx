@@ -10,83 +10,105 @@ const TabsLayout = () => {
 
   const hideTabs = segments[1] === "rides" && segments[2] === "ride_detail";
 
+  // animated value for smooth transitions
+  const tabOpacity = useMemo(() => new Animated.Value(1), []);
+
+  React.useEffect(() => {
+    Animated.timing(tabOpacity, {
+      toValue: hideTabs ? 0 : 1,
+      duration: 250, // ms
+      useNativeDriver: true,
+    }).start();
+  }, [hideTabs]);
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          paddingTop: 10,
-          height: 80,
-          borderTopWidth: 0,
-          elevation: 0,
-          display: hideTabs ? "none" : undefined,
-        },
-        tabBarActiveTintColor: "#fff",
-        tabBarInactiveTintColor: "#606060",
-        tabBarLabelStyle: { fontFamily: "raleway-semibold", fontSize: 10 },
-        tabBarBackground: () => (
-          <View
-            style={{
-              flex: 1,
-              overflow: "hidden",
-              backgroundColor: "#121212",
-            }}
-          />
-        ),
-      }}
-    >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={
-                focused
-                  ? require("../../assets/images/icons/home-fill.png")
-                  : require("../../assets/images/icons/home-fill-grey.png")
-              }
-              style={{ height: 25, width: 25 }}
-              resizeMode="contain"
+    <View style={{ backgroundColor: "#121212", flex: 1 }}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            paddingTop: 10,
+            height: 80,
+            borderTopWidth: 0,
+            elevation: 0,
+            display: hideTabs ? "none" : undefined,
+            opacity: tabOpacity as unknown as number, // RN style wants number, Animated works fine
+            transform: [
+              {
+                translateY: tabOpacity.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [80, 0], // slide down when hiding
+                }),
+              },
+            ],
+          },
+          tabBarActiveTintColor: "#fff",
+          tabBarInactiveTintColor: "#606060",
+          tabBarLabelStyle: { fontFamily: "raleway-semibold", fontSize: 10 },
+          tabBarBackground: () => (
+            <View
+              style={{
+                flex: 1,
+                overflow: "hidden",
+                backgroundColor: "#121212",
+              }}
             />
           ),
         }}
-      />
-      <Tabs.Screen
-        name="rides"
-        options={{
-          title: "Rides",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={
-                focused
-                  ? require("../../assets/images/icons/schedule-fill.png")
-                  : require("../../assets/images/icons/schedule-fill-grey.png")
-              }
-              style={{ height: 25, width: 25 }}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: "Account",
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={
-                focused
-                  ? require("../../assets/images/icons/user-fill.png")
-                  : require("../../assets/images/icons/user-fill-grey.png")
-              }
-              style={{ height: 25, width: 25 }}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ focused }) => (
+              <Image
+                source={
+                  focused
+                    ? require("../../assets/images/icons/home-fill.png")
+                    : require("../../assets/images/icons/home-fill-grey.png")
+                }
+                style={{ height: 25, width: 25 }}
+                resizeMode="contain"
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="rides"
+          options={{
+            title: "Rides",
+            tabBarIcon: ({ focused }) => (
+              <Image
+                source={
+                  focused
+                    ? require("../../assets/images/icons/schedule-fill.png")
+                    : require("../../assets/images/icons/schedule-fill-grey.png")
+                }
+                style={{ height: 25, width: 25 }}
+                resizeMode="contain"
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="account"
+          options={{
+            title: "Account",
+            tabBarIcon: ({ focused }) => (
+              <Image
+                source={
+                  focused
+                    ? require("../../assets/images/icons/user-fill.png")
+                    : require("../../assets/images/icons/user-fill-grey.png")
+                }
+                style={{ height: 25, width: 25 }}
+                resizeMode="contain"
+              />
+            ),
+          }}
+        />
+      </Tabs>
+    </View>
   );
 };
 
