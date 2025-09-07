@@ -68,7 +68,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const [rideStatus, setRideStatus] = useState<RideStatusType>("");
   const [modalUp, setModalUp] = useState<boolean>(false);
-  const snapPoints = useMemo(() => ["22%", "35%", "60%", "80%", "93%"], []);
   const routeModalRef = useRef<BottomSheet>(null);
 
   const { getDriverData } = useDriverAuthContext();
@@ -554,7 +553,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         setRideStatus,
         modalUp,
         setModalUp,
-        snapPoints,
         routeModalRef,
         cancelRideRequest,
         placeId,
@@ -619,7 +617,6 @@ export interface RideContextType {
   modalUp: boolean;
   setModalUp: Dispatch<SetStateAction<boolean>>;
   routeModalRef: any;
-  snapPoints: any;
 
   rideData: any;
   ongoingRideData: any;

@@ -5,6 +5,7 @@ import {
   Image,
   ScrollView,
   TouchableWithoutFeedback,
+  Pressable,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -47,7 +48,8 @@ const Account = () => {
             }}
           >
             {/* Account name */}
-            <View
+            <Pressable
+              onPress={() => console.log("Bankai")}
               style={{
                 flexDirection: "row",
                 justifyContent: "flex-start",
@@ -74,7 +76,7 @@ const Account = () => {
               >
                 {signedIn?.name}
               </Text>
-            </View>
+            </Pressable>
 
             {/* Wallet */}
             <TouchableWithoutFeedback

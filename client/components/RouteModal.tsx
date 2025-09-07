@@ -20,6 +20,7 @@ import React, {
   Dispatch,
   SetStateAction,
   useCallback,
+  useMemo,
 } from "react";
 
 import * as Linking from "expo-linking";
@@ -65,7 +66,6 @@ const RouteModal = () => {
     setRideStatus,
     ongoingRideData,
     routeModalRef,
-    snapPoints,
     resetRide,
   } = useRideContext();
 
@@ -137,6 +137,8 @@ const RouteModal = () => {
       setRideStatus("booking");
     }
   };
+
+  const snapPoints = useMemo(() => ["22%", "32%", "60%", "80%", "93%"], []);
 
   return (
     <BottomSheet
@@ -1442,7 +1444,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingTop: 10,
     paddingHorizontal: 20,
-    zIndex: 3,
   },
   expand_line_conatiner: {
     width: "100%",
