@@ -759,6 +759,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     gap: 20,
     marginVertical: 20,
+    zIndex: 500,
   },
   nav_box: {
     backgroundColor: "grey",

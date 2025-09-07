@@ -147,9 +147,9 @@ const RouteModal = () => {
       ref={routeModalRef}
       onChange={handleSheetChange}
       enableContentPanningGesture={true}
+      enableHandlePanningGesture={true}
       enableDynamicSizing={false}
       enableOverDrag={false}
-      style={{ zIndex: 3, elevation: 3 }}
       backgroundStyle={{
         backgroundColor: "#121212",
         borderTopLeftRadius: 20,
