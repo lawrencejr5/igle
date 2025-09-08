@@ -21,6 +21,7 @@ import { useWalletContext } from "../../../context/WalletContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
+import { router } from "expo-router";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
@@ -45,10 +46,12 @@ const Account = () => {
               paddingTop: 50,
               paddingBottom: 30,
               paddingHorizontal: 20,
+              zIndex: 500,
             }}
           >
             {/* Account name */}
             <Pressable
+              onPress={() => router.push("./account/personal_details")}
               style={{
                 flexDirection: "row",
                 justifyContent: "flex-start",
@@ -78,49 +81,46 @@ const Account = () => {
             </Pressable>
 
             {/* Wallet */}
-            <TouchableWithoutFeedback
+            <Pressable
               onPress={() => setWalletOpen((prev: any) => !prev)}
+              style={{
+                backgroundColor: "#2c2c2c",
+                paddingVertical: 15,
+                paddingHorizontal: 20,
+                marginTop: 20,
+                borderRadius: 10,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
               <View
                 style={{
-                  backgroundColor: "#2c2c2c",
-                  paddingVertical: 15,
-                  paddingHorizontal: 20,
-                  marginTop: 20,
-                  borderRadius: 10,
                   flexDirection: "row",
-                  justifyContent: "space-between",
+                  justifyContent: "flex-start",
                   alignItems: "center",
+                  gap: 10,
                 }}
               >
-                <View
+                <Entypo name="wallet" size={24} color="#c8c5c5" />
+                <Text
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    alignItems: "center",
-                    gap: 10,
+                    color: "#c8c5c5",
+                    fontFamily: "raleway-bold",
+                    fontSize: 16,
                   }}
                 >
-                  <Entypo name="wallet" size={24} color="#c8c5c5" />
-                  <Text
-                    style={{
-                      color: "#c8c5c5",
-                      fontFamily: "raleway-bold",
-                      fontSize: 16,
-                    }}
-                  >
-                    Wallet
-                  </Text>
-                </View>
-                <View>
-                  <Text style={{ fontFamily: "poppins-bold", color: "#fff" }}>
-                    {walletLoading
-                      ? "----"
-                      : `${userWalletBal.toLocaleString()} NGN`}
-                  </Text>
-                </View>
+                  Wallet
+                </Text>
               </View>
-            </TouchableWithoutFeedback>
+              <View>
+                <Text style={{ fontFamily: "poppins-bold", color: "#fff" }}>
+                  {walletLoading
+                    ? "----"
+                    : `${userWalletBal.toLocaleString()} NGN`}
+                </Text>
+              </View>
+            </Pressable>
 
             {/* Other settings */}
             <View
@@ -139,10 +139,13 @@ const Account = () => {
               >
                 Account settings
               </Text>
-              <View style={styles.setting_box}>
+              <Pressable
+                style={styles.setting_box}
+                onPress={() => router.push("./account/personal_details")}
+              >
                 <FontAwesome name="user" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Personal details</Text>
-              </View>
+              </Pressable>
               <View style={styles.setting_box}>
                 <Feather name="bell" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Notifications</Text>
@@ -190,7 +193,7 @@ export default Account;
 
 const styles = StyleSheet.create({
   setting_box: {
-    marginTop: 20,
+    marginTop: 25,
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",

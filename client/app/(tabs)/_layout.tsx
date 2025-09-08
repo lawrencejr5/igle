@@ -8,7 +8,9 @@ import { Tabs } from "expo-router";
 const TabsLayout = () => {
   const segments = useSegments() as string[];
 
-  const hideTabs = segments[1] === "rides" && segments[2] === "ride_detail";
+  const hideTabs =
+    (segments[1] === "rides" && segments[2] === "ride_detail") ||
+    (segments[1] === "account" && segments[2] === "personal_details");
 
   // animated value for smooth transitions
   const tabOpacity = useMemo(() => new Animated.Value(1), []);
@@ -16,7 +18,7 @@ const TabsLayout = () => {
   React.useEffect(() => {
     Animated.timing(tabOpacity, {
       toValue: hideTabs ? 0 : 1,
-      duration: 250, // ms
+      duration: 250,
       useNativeDriver: true,
     }).start();
   }, [hideTabs]);
