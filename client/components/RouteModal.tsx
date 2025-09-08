@@ -250,8 +250,9 @@ const StartModal = () => {
           >
             <MaterialCommunityIcons name="history" size={24} color="#d0d0d0" />
           </View>
-          <View>
+          <View style={{ width: "80%" }}>
             <Text
+              numberOfLines={1}
               style={{
                 fontFamily: "raleway-bold",
                 fontSize: 16,
@@ -261,6 +262,7 @@ const StartModal = () => {
               {rideHistory && rideHistory[0].place_name}
             </Text>
             <Text
+              numberOfLines={1}
               style={{
                 fontFamily: "raleway-regular",
                 fontSize: 12,

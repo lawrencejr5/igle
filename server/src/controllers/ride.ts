@@ -205,7 +205,7 @@ export const rebook_ride = async (
     // Start expiration timeout
     setTimeout(
       () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
-      90000
+      30000
     );
   } catch (err: any) {
     res.status(500).json({ msg: "Failed to rebook ride", err: err.message });

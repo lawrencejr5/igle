@@ -49,7 +49,6 @@ const Account = () => {
           >
             {/* Account name */}
             <Pressable
-              onPress={() => console.log("Bankai")}
               style={{
                 flexDirection: "row",
                 justifyContent: "flex-start",

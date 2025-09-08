@@ -75,8 +75,8 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             pickup,
             destination,
             fare,
-            distance_km,
-            duration_mins,
+            distance_km: Math.round(distance_km),
+            duration_mins: Math.round(duration_mins),
             driver_earnings,
             commission,
             status: scheduled_time ? "scheduled" : "pending",
@@ -173,7 +173,7 @@ const rebook_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             ride: new_ride,
         });
         // Start expiration timeout
-        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 90000);
+        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 30000);
     }
     catch (err) {
         res.status(500).json({ msg: "Failed to rebook ride", err: err.message });
