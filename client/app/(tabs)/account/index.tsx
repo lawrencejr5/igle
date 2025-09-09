@@ -154,10 +154,13 @@ const Account = () => {
                 <Feather name="settings" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>App preferences</Text>
               </View>
-              <View style={styles.setting_box}>
+              <Pressable
+                onPress={() => router.push("./account/security")}
+                style={styles.setting_box}
+              >
                 <Feather name="lock" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Security</Text>
-              </View>
+              </Pressable>
               <View style={styles.setting_box}>
                 <Entypo name="location-pin" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Saved places</Text>

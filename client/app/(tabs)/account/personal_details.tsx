@@ -209,7 +209,7 @@ const EditProfilePicModal: FC<{
             <Pressable
               style={{
                 width: "80%",
-                backgroundColor: "#676565ff",
+                backgroundColor: "#383838",
                 paddingVertical: 10,
                 borderRadius: 20,
                 alignSelf: "center",
@@ -266,7 +266,8 @@ const styles = StyleSheet.create({
   item_sub_text: {
     fontFamily: "raleway-semibold",
     color: "#fff",
-    fontSize: 14,
+    fontSize: 16,
+    marginTop: 10,
   },
 
   modal_overlay: {
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
   },
   modal_text_input: {
     width: "100%",
-    backgroundColor: "#8b8b8bff",
+    backgroundColor: "#383838",
     borderRadius: 7,
     marginTop: 20,
     color: "#fff",

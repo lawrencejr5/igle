@@ -1,0 +1,166 @@
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  TextInput,
+  Modal,
+} from "react-native";
+import { FC, Dispatch, SetStateAction, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { AntDesign, Feather } from "@expo/vector-icons";
+import React from "react";
+
+const SecuritySettings = () => {
+  const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);
+  return (
+    <>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
+      >
+        <View>
+          <Pressable
+            style={{ paddingVertical: 15, paddingRight: 15 }}
+            onPress={() => router.back()}
+          >
+            <AntDesign name="arrowleft" size={26} color={"#fff"} />
+          </Pressable>
+          <Text
+            style={{
+              fontFamily: "raleway-semibold",
+              color: "#fff",
+              fontSize: 22,
+            }}
+          >
+            Security
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => setPasswordModalOpen(true)}
+          style={{
+            marginTop: 30,
+            borderColor: "#656565",
+            borderWidth: 0.5,
+            borderRadius: 5,
+            padding: 10,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View>
+            <Text
+              style={{
+                color: "#aaa",
+                fontFamily: "raleway-semibold",
+                fontSize: 12,
+              }}
+            >
+              Password
+            </Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                marginTop: 10,
+                fontSize: 16,
+              }}
+            >
+              Change password
+            </Text>
+          </View>
+          <Feather name="chevron-right" color={"#fff"} size={24} />
+        </Pressable>
+      </SafeAreaView>
+      <ChangePasswordModal
+        open={passwordModalOpen}
+        setOpen={setPasswordModalOpen}
+      />
+    </>
+  );
+};
+
+export default SecuritySettings;
+
+const ChangePasswordModal: FC<{
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}> = ({ open, setOpen }) => {
+  const [oldPassword, setOldPassword] = useState<string>("");
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={open}
+      onRequestClose={() => setOpen(false)}
+    >
+      <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
+        <Pressable onPress={() => {}} style={styles.modal}>
+          <Text style={styles.modal_header}>Change password</Text>
+          <TextInput
+            value={oldPassword}
+            onChangeText={setOldPassword}
+            placeholder="old password"
+            secureTextEntry
+            style={styles.modal_text_input}
+          />
+          <TextInput
+            value=""
+            placeholder="new password"
+            secureTextEntry
+            style={styles.modal_text_input}
+          />
+          <TextInput
+            value=""
+            placeholder="confirm password"
+            secureTextEntry
+            style={styles.modal_text_input}
+          />
+          <Pressable style={styles.modal_submit_btn}>
+            <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
+              Update
+            </Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  modal_overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modal: {
+    backgroundColor: "#121212",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  modal_header: {
+    fontFamily: "raleway-semibold",
+    fontSize: 18,
+    color: "#fff",
+  },
+  modal_text_input: {
+    width: "100%",
+    backgroundColor: "#383838",
+    borderRadius: 7,
+    marginTop: 20,
+    color: "#fff",
+    paddingHorizontal: 15,
+    fontFamily: "raleway-bold",
+  },
+  modal_submit_btn: {
+    backgroundColor: "#fff",
+    width: "100%",
+    paddingVertical: 10,
+    borderRadius: 7,
+    marginTop: 20,
+  },
+});
