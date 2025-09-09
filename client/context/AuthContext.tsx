@@ -126,6 +126,79 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Update phone number function
+  const updateName = async (fullname: string): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      await axios.patch(
+        `${API_URL}/name`,
+        { fullname },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await getUserData();
+
+      showNotification("Email updated successfully.", "success");
+    } catch (err: any) {
+      showNotification(
+        err.response?.data?.msg || "Email update failed.",
+        "error"
+      );
+      throw new Error(err.response?.data?.msg);
+    }
+  };
+
+  // Update phone number function
+  const updateEmail = async (email: string): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      await axios.patch(
+        `${API_URL}/email`,
+        { email },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await getUserData();
+
+      showNotification("Email updated successfully.", "success");
+    } catch (err: any) {
+      showNotification(
+        err.response?.data?.msg || "Email update failed.",
+        "error"
+      );
+      throw new Error(err.response?.data?.msg);
+    }
+  };
+
+  const updatePassword = async (
+    old_password: string,
+    new_password: string,
+    confirm_password: string
+  ): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const password = {
+        old_password,
+        new_password,
+        confirm_password,
+      };
+      await axios.patch(
+        `${API_URL}/email`,
+        { ...password },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showNotification("Password updated successfully.", "success");
+
+      await logout();
+    } catch (err: any) {
+      showNotification(
+        err.response?.data?.msg || "Email update failed.",
+        "error"
+      );
+      throw new Error(err.response?.data?.msg);
+    }
+  };
+
   // Login function (email or phone)
   const login = async (email: string, password: string): Promise<void> => {
     try {
