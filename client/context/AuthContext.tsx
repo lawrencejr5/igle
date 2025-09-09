@@ -131,17 +131,19 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.patch(
-        `${API_URL}/name`,
-        { fullname },
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${API_URL}/name?fullname=${fullname}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       await getUserData();
 
-      showNotification("Email updated successfully.", "success");
+      showNotification("Name updated successfully.", "success");
     } catch (err: any) {
       showNotification(
-        err.response?.data?.msg || "Email update failed.",
+        err.response?.data?.msg || "Name update failed.",
         "error"
       );
       throw new Error(err.response?.data?.msg);
@@ -153,9 +155,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.patch(
-        `${API_URL}/email`,
-        { email },
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${API_URL}/email?email=${email}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       await getUserData();
@@ -332,6 +336,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         register,
         login,
         updatePhone,
+        updateEmail,
+        updateName,
+        updatePassword,
         getUserData,
         signedIn,
         isAuthenticated,
@@ -375,6 +382,13 @@ export interface AuthContextType {
     password: string
   ) => Promise<void>;
   updatePhone: (phone: string) => Promise<void>;
+  updateName: (name: string) => Promise<void>;
+  updateEmail: (email: string) => Promise<void>;
+  updatePassword: (
+    old_password: string,
+    new_password: string,
+    confirm_password: string
+  ) => Promise<void>;
   getUserData: () => Promise<void>;
   signedIn: UserType;
   isAuthenticated: boolean;

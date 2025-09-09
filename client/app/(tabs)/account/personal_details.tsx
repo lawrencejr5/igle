@@ -13,14 +13,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 
+import { useAuthContext } from "../../../context/AuthContext";
+
+import Notification from "../../../components/Notification";
+import { useNotificationContext } from "../../../context/NotificationContext";
+
 const PersonalDetails = () => {
   const [openNameModal, setOpenNameModal] = useState<boolean>(false);
   const [openEmailModal, setOpenEmailModal] = useState<boolean>(false);
   const [openPhoneModal, setOpenPhoneModal] = useState<boolean>(false);
   const [openProfilePicModal, setOpenProfilePicModal] =
     useState<boolean>(false);
+
+  const { notification } = useNotificationContext();
+  const { signedIn } = useAuthContext();
   return (
     <>
+      <Notification notification={notification} />
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
       >
@@ -59,7 +68,9 @@ const PersonalDetails = () => {
             >
               <View>
                 <Text style={styles.item_header_text}>Fullname:</Text>
-                <Text style={styles.item_sub_text}>Bombom Nyash</Text>
+                <Text style={styles.item_sub_text}>
+                  {signedIn && signedIn.name}
+                </Text>
               </View>
               <Feather name="chevron-right" color={"#fff"} size={24} />
             </Pressable>
@@ -69,7 +80,9 @@ const PersonalDetails = () => {
             >
               <View>
                 <Text style={styles.item_header_text}>Email:</Text>
-                <Text style={styles.item_sub_text}>bombomnyash@gmail.com</Text>
+                <Text style={styles.item_sub_text}>
+                  {signedIn && signedIn.email}
+                </Text>
               </View>
               <Feather name="chevron-right" color={"#fff"} size={24} />
             </Pressable>
@@ -85,7 +98,7 @@ const PersonalDetails = () => {
                     { fontFamily: "poppins-regular", marginTop: 3 },
                   ]}
                 >
-                  09025816161
+                  {signedIn && signedIn.phone}
                 </Text>
               </View>
               <Feather name="chevron-right" color={"#fff"} size={24} />
@@ -110,6 +123,22 @@ const EditNameModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const { updateName, signedIn } = useAuthContext();
+
+  const [fullname, setFullname] = useState<string>(signedIn && signedIn.name);
+
+  const [updating, setUpdating] = useState<boolean>(false);
+  const update_name = async () => {
+    setUpdating(true);
+    try {
+      await updateName(fullname);
+      setOpen(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setUpdating(false);
+    }
+  };
   return (
     <Modal
       animationType="slide"
@@ -121,10 +150,18 @@ const EditNameModal: FC<{
         <Pressable onPress={() => {}} style={styles.modal}>
           <Text style={styles.modal_header}>Update fullname</Text>
 
-          <TextInput value="Bombom Nyash" style={styles.modal_text_input} />
-          <Pressable style={styles.modal_submit_btn}>
+          <TextInput
+            value={fullname}
+            onChangeText={setFullname}
+            style={styles.modal_text_input}
+          />
+          <Pressable
+            style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
+            disabled={updating}
+            onPress={update_name}
+          >
             <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-              Update
+              {updating ? "Updating..." : "Update"}
             </Text>
           </Pressable>
         </Pressable>
@@ -137,6 +174,22 @@ const EditEmailModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const { signedIn, updateEmail } = useAuthContext();
+  const [email, setEmail] = useState<string>(signedIn && signedIn.email);
+
+  const [updating, setUpdating] = useState<boolean>(false);
+  const update_email = async () => {
+    setUpdating(true);
+    try {
+      await updateEmail(email);
+      setOpen(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -149,12 +202,17 @@ const EditEmailModal: FC<{
           <Text style={styles.modal_header}>Update email</Text>
 
           <TextInput
-            value="bombomnyash@gmail.com"
+            value={email}
+            onChangeText={setEmail}
             style={styles.modal_text_input}
           />
-          <Pressable style={styles.modal_submit_btn}>
+          <Pressable
+            style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
+            onPress={update_email}
+            disabled={updating}
+          >
             <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-              Update
+              {updating ? "Updating..." : "Update"}
             </Text>
           </Pressable>
         </Pressable>
@@ -167,6 +225,22 @@ const EditPhoneModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const { signedIn, updatePhone } = useAuthContext();
+  const [phone, setPhone] = useState<string>(signedIn && signedIn.phone);
+
+  const [updating, setUpdating] = useState<boolean>(false);
+  const update_phone = async () => {
+    setUpdating(true);
+    try {
+      await updatePhone(phone);
+      setOpen(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -178,10 +252,18 @@ const EditPhoneModal: FC<{
         <Pressable onPress={() => {}} style={styles.modal}>
           <Text style={styles.modal_header}>Update phone</Text>
 
-          <TextInput value="09025816161" style={styles.modal_text_input} />
-          <Pressable style={styles.modal_submit_btn}>
+          <TextInput
+            value={phone}
+            onChangeText={setPhone}
+            style={styles.modal_text_input}
+          />
+          <Pressable
+            style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
+            onPress={update_phone}
+            disabled={updating}
+          >
             <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-              Update
+              {updating ? "Updating..." : "Update"}
             </Text>
           </Pressable>
         </Pressable>
