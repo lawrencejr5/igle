@@ -6,16 +6,23 @@ import {
   TextInput,
   Modal,
 } from "react-native";
-import { FC, Dispatch, SetStateAction, useState } from "react";
+import React, { FC, Dispatch, SetStateAction, useState } from "react";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { AntDesign, Feather } from "@expo/vector-icons";
-import React from "react";
+
+import Notification from "../../../components/Notification";
+
+import { useAuthContext } from "../../../context/AuthContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
 
 const SecuritySettings = () => {
+  const { notification } = useNotificationContext();
   const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);
   return (
     <>
+      <Notification notification={notification} />
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
       >
@@ -87,7 +94,27 @@ const ChangePasswordModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const { updatePassword } = useAuthContext();
+
   const [oldPassword, setOldPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+
+  const [updating, setUpdating] = useState<boolean>(false);
+  const update_password = async () => {
+    setUpdating(true);
+    try {
+      await updatePassword(oldPassword, newPassword, confirmPassword);
+      setOpen(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setUpdating(false);
+      setConfirmPassword("");
+      setNewPassword("");
+      setOldPassword("");
+    }
+  };
 
   return (
     <Modal
@@ -107,20 +134,26 @@ const ChangePasswordModal: FC<{
             style={styles.modal_text_input}
           />
           <TextInput
-            value=""
+            value={newPassword}
+            onChangeText={setNewPassword}
             placeholder="new password"
             secureTextEntry
             style={styles.modal_text_input}
           />
           <TextInput
-            value=""
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
             placeholder="confirm password"
             secureTextEntry
             style={styles.modal_text_input}
           />
-          <Pressable style={styles.modal_submit_btn}>
+          <Pressable
+            style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
+            disabled={updating}
+            onPress={update_password}
+          >
             <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-              Update
+              {updating ? "Updating..." : "Update"}
             </Text>
           </Pressable>
         </Pressable>

@@ -187,13 +187,14 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         confirm_password,
       };
       await axios.patch(
-        `${API_URL}/email`,
+        `${API_URL}/password`,
         { ...password },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showNotification("Password updated successfully.", "success");
-
-      await logout();
+      setTimeout(async () => {
+        await logout();
+      }, 1000);
     } catch (err: any) {
       showNotification(
         err.response?.data?.msg || "Email update failed.",
