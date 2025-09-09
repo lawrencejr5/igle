@@ -552,11 +552,12 @@ const CompletedRides = ({ data }: { data: any }) => (
                   paddingBottom: 10,
                 }}
               >
-                <View>
+                <View style={{ width: 200, paddingHorizontal: 10 }}>
                   <Text
                     style={{
                       fontFamily: "raleway-bold",
                       color: "#fff",
+                      flexShrink: 1,
                     }}
                   >
                     {ride.destination.address}

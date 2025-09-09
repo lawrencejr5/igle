@@ -52,12 +52,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       await getPlaceName(region.latitude, region.longitude);
     };
     if (region) get_place_name_func();
-    if (region && mapRef.current) {
-      mapRef.current.animateToRegion(
-        region,
-        1000 // duration in ms
-      );
-    }
   }, [region]);
 
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
