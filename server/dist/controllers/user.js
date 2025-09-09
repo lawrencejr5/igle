@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.update_driver_application = exports.update_phone = exports.update_password = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
+exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -213,13 +213,55 @@ const update_phone = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             res.status(404).json({ msg: "User not found." });
             return;
         }
-        res.status(200).json({ msg: "Phone number updated successfully.", user });
+        res.status(200).json({ msg: "Phone number updated successfully." });
     }
     catch (err) {
         res.status(500).json({ msg: "Server error." });
     }
 });
 exports.update_phone = update_phone;
+const update_name = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { fullname } = req.query;
+    const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    try {
+        if (!fullname) {
+            res.status(400).json({ msg: "Name is required." });
+            return;
+        }
+        const user = yield user_1.default.findByIdAndUpdate(user_id, { name: fullname }, { new: true });
+        if (!user) {
+            res.status(404).json({ msg: "User not found." });
+            return;
+        }
+        res.status(200).json({ msg: "Fullname updated successfully." });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.update_name = update_name;
+const update_email = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { email } = req.query;
+    const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    try {
+        if (!email) {
+            res.status(400).json({ msg: "Email is required." });
+            return;
+        }
+        const user = yield user_1.default.findByIdAndUpdate(user_id, { email }, { new: true });
+        if (!user) {
+            res.status(404).json({ msg: "User not found." });
+            return;
+        }
+        res.status(200).json({ msg: "Email updated successfully." });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.update_email = update_email;
 // Update user driver application status
 const update_driver_application = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

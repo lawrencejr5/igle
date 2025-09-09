@@ -8,6 +8,8 @@ import {
   update_location,
   get_user_data,
   update_phone,
+  update_name,
+  update_email,
   update_driver_application,
 } from "../controllers/user";
 
@@ -19,6 +21,8 @@ UserRouter.post("/google_auth", google_auth);
 
 UserRouter.patch("/location", auth, update_location);
 UserRouter.patch("/phone", auth, update_phone);
+UserRouter.patch("/name", auth, update_name);
+UserRouter.patch("/email", auth, update_email);
 UserRouter.patch("/driver_application", auth, update_driver_application);
 
 UserRouter.get("/data", auth, get_user_data);

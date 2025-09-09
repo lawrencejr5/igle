@@ -250,7 +250,59 @@ export const update_phone = async (
       return;
     }
 
-    res.status(200).json({ msg: "Phone number updated successfully.", user });
+    res.status(200).json({ msg: "Phone number updated successfully." });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const update_name = async (req: Request, res: Response) => {
+  const { fullname } = req.query;
+  const user_id = req.user?.id;
+  try {
+    if (!fullname) {
+      res.status(400).json({ msg: "Name is required." });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      user_id,
+      { name: fullname },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ msg: "User not found." });
+      return;
+    }
+
+    res.status(200).json({ msg: "Fullname updated successfully." });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const update_email = async (req: Request, res: Response) => {
+  const { email } = req.query;
+  const user_id = req.user?.id;
+  try {
+    if (!email) {
+      res.status(400).json({ msg: "Email is required." });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      user_id,
+      { email },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ msg: "User not found." });
+      return;
+    }
+
+    res.status(200).json({ msg: "Email updated successfully." });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }
