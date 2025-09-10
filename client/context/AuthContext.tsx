@@ -122,6 +122,33 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [removingPic, setRemovingPic] = useState<boolean>(false);
+  const removeProfilePic = async (): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+
+    setRemovingPic(true);
+    try {
+      const { data } = await axios.patch(
+        `${API_URL}/remove_pic`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (data) {
+        await getUserData();
+        showNotification(data.msg, "success");
+      }
+    } catch (error: any) {
+      const errMsg = error.response.data.msg;
+      showNotification(errMsg || "An error occured", "error");
+    } finally {
+      setRemovingPic(false);
+    }
+  };
+
   // Update phone number function
   const updatePhone = async (phone: string): Promise<void> => {
     try {
@@ -354,9 +381,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       value={{
         register,
         login,
-        uploadProfilePic,
         uploadingPic,
-        setUploadingPic,
+        uploadProfilePic,
+        removingPic,
+        removeProfilePic,
         updatePhone,
         updateEmail,
         updateName,
@@ -405,8 +433,9 @@ export interface AuthContextType {
     password: string
   ) => Promise<void>;
   uploadingPic: boolean;
-  setUploadingPic: Dispatch<SetStateAction<boolean>>;
   uploadProfilePic: (formaData: any) => Promise<void>;
+  removingPic: boolean;
+  removeProfilePic: () => Promise<void>;
   updatePhone: (phone: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
   updateEmail: (email: string) => Promise<void>;

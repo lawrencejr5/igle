@@ -195,11 +195,48 @@ export const upload_profile_pic = async (req: Request, res: Response) => {
       folder: "igle_images/profile_pic",
     });
 
-    const profile_pic = uploadedFile.url;
+    const user = await User.findById(user_id);
 
-    await User.findByIdAndUpdate(user_id, { profile_pic });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-    res.status(201).json({ msg: "profile pic has been updated" });
+    // Remove old profile pic from Cloudinary if it exists
+    if (user.profile_pic_public_id) {
+      await cloudinary.uploader.destroy(user.profile_pic_public_id);
+    }
+
+    user.profile_pic = uploadedFile.url;
+    user.profile_pic_public_id = uploadedFile.public_id;
+
+    await user.save();
+
+    res.status(201).json({ msg: "Profile pic has been updated" });
+  } catch (err) {
+    res.status(500).json({ msg: "An error occured" });
+  }
+};
+
+export const remove_profile_pic = async (req: Request, res: Response) => {
+  const user_id = req.user?.id;
+  try {
+    const userId = req.user?.id; // assuming you attach user ID from auth middleware
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.profile_pic) {
+      const publicId = user.profile_pic_public_id;
+      if (publicId) await cloudinary.uploader.destroy(publicId);
+    }
+
+    user.profile_pic = null;
+    user.profile_pic_public_id = null;
+    await user.save();
+
+    return res.json({ msg: "Profile pic removed", user });
   } catch (err) {
     res.status(500).json({ msg: "An error occured" });
   }

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
+exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.remove_profile_pic = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -176,15 +176,48 @@ const upload_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, funct
         const uploadedFile = yield upload_1.cloudinary.uploader.upload(filePath, {
             folder: "igle_images/profile_pic",
         });
-        const profile_pic = uploadedFile.url;
-        yield user_1.default.findByIdAndUpdate(user_id, { profile_pic });
-        res.status(201).json({ msg: "profile pic has been updated" });
+        const user = yield user_1.default.findById(user_id);
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
+        // Remove old profile pic from Cloudinary if it exists
+        if (user.profile_pic_public_id) {
+            yield upload_1.cloudinary.uploader.destroy(user.profile_pic_public_id);
+        }
+        user.profile_pic = uploadedFile.url;
+        user.profile_pic_public_id = uploadedFile.public_id;
+        yield user.save();
+        res.status(201).json({ msg: "Profile pic has been updated" });
     }
     catch (err) {
         res.status(500).json({ msg: "An error occured" });
     }
 });
 exports.upload_profile_pic = upload_profile_pic;
+const remove_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    try {
+        const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.id; // assuming you attach user ID from auth middleware
+        const user = yield user_1.default.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        if (user.profile_pic) {
+            const publicId = user.profile_pic_public_id;
+            if (publicId)
+                yield upload_1.cloudinary.uploader.destroy(publicId);
+        }
+        user.profile_pic = null;
+        user.profile_pic_public_id = null;
+        yield user.save();
+        return res.json({ msg: "Profile pic removed", user });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "An error occured" });
+    }
+});
+exports.remove_profile_pic = remove_profile_pic;
 const update_password = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {

@@ -13,6 +13,7 @@ import {
   update_password,
   update_driver_application,
   upload_profile_pic,
+  remove_profile_pic,
 } from "../controllers/user";
 
 import { auth } from "../middleware/auth";
@@ -28,6 +29,7 @@ UserRouter.patch(
   [auth, upload.single("profile_pic")],
   upload_profile_pic
 );
+UserRouter.patch("/remove_pic", auth, remove_profile_pic);
 UserRouter.patch("/phone", auth, update_phone);
 UserRouter.patch("/name", auth, update_name);
 UserRouter.patch("/email", auth, update_email);

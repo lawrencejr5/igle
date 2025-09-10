@@ -40,6 +40,7 @@ const UserSchema = new mongoose_1.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String }, // optional if Google user
     profile_pic: { type: String },
+    profile_pic_public_id: { type: String },
     google_id: { type: String, unique: true, sparse: true }, // only Google users
     socket_id: { type: String, default: null },
     is_online: { type: Boolean, default: true },

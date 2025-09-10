@@ -29,7 +29,7 @@ const PersonalDetails = () => {
     useState<boolean>(false);
 
   const { notification } = useNotificationContext();
-  const { signedIn, uploadingPic } = useAuthContext();
+  const { signedIn, uploadingPic, removingPic } = useAuthContext();
   return (
     <>
       <Notification notification={notification} />
@@ -72,7 +72,7 @@ const PersonalDetails = () => {
                   opacity: uploadingPic ? 0.4 : 1,
                 }}
               />
-              {uploadingPic && (
+              {(uploadingPic || removingPic) && (
                 <View
                   style={{
                     position: "absolute",
@@ -309,9 +309,8 @@ const EditProfilePicModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
-  const { uploadProfilePic } = useAuthContext();
+  const { uploadProfilePic, removeProfilePic, removingPic } = useAuthContext();
 
-  const [uploading, setUploading] = useState<boolean>(false);
   const takePhotoAndCrop = async () => {
     setOpen(false);
     try {
@@ -347,6 +346,16 @@ const EditProfilePicModal: FC<{
     }
   };
 
+  const remove_profile_pic = async () => {
+    try {
+      await removeProfilePic();
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setOpen(false);
+    }
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -360,13 +369,16 @@ const EditProfilePicModal: FC<{
 
           <View style={{ marginTop: 20 }}>
             <Pressable
+              onPress={remove_profile_pic}
+              disabled={removingPic}
               style={{
                 width: "80%",
                 backgroundColor: "#383838",
-                paddingVertical: 10,
-                borderRadius: 20,
+                paddingVertical: 15,
+                borderRadius: 40,
                 alignSelf: "center",
                 marginVertical: 10,
+                opacity: removingPic ? 0.5 : 1,
               }}
             >
               <Text
@@ -376,7 +388,7 @@ const EditProfilePicModal: FC<{
                   color: "#fff",
                 }}
               >
-                Delete profile photo
+                {removingPic ? "Removing..." : "Remove profile photo"}
               </Text>
             </Pressable>
             <Pressable
@@ -384,8 +396,8 @@ const EditProfilePicModal: FC<{
               style={{
                 width: "80%",
                 backgroundColor: "#fff",
-                paddingVertical: 10,
-                borderRadius: 20,
+                paddingVertical: 15,
+                borderRadius: 40,
                 alignSelf: "center",
                 marginVertical: 10,
               }}
