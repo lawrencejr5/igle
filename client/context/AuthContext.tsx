@@ -40,14 +40,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { getRideHistory, rideHistory } = useHistoryContext();
   const { setAppLoading } = useLoading();
 
-  const [signedIn, setSignedIn] = useState<UserType>({
-    user_id: "",
-    email: "",
-    phone: "",
-    name: "",
-    driver_application: "",
-    is_driver: false,
-  });
+  const [signedIn, setSignedIn] = useState<UserType | null>(null);
 
   const { setDriver } = useDriverAuthContext();
 
@@ -60,7 +53,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (signedIn.user_id) {
+    if (signedIn?.user_id) {
       const socket = initUserSocket(signedIn.user_id);
       setUserSocket(socket);
 
@@ -104,9 +97,12 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [uploadingPic, setUploadingPic] = useState<boolean>(false);
   const uploadProfilePic = async (formaData: any): Promise<void> => {
     if (!formaData) showNotification("No image was selected", "error");
     const token = await AsyncStorage.getItem("token");
+
+    setUploadingPic(true);
     try {
       const { data } = await axios.patch(`${API_URL}/profile_pic`, formaData, {
         headers: {
@@ -121,6 +117,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     } catch (error: any) {
       const errMsg = error.response.data.msg;
       showNotification(errMsg || "An error occured", "error");
+    } finally {
+      setUploadingPic(false);
     }
   };
 
@@ -261,12 +259,20 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const { _id, name, email, phone, driver_application, is_driver } =
-        data.user;
+      const {
+        _id,
+        name,
+        profile_pic,
+        email,
+        phone,
+        driver_application,
+        is_driver,
+      } = data.user;
 
       setSignedIn({
         user_id: _id,
         name,
+        profile_pic,
         email,
         phone,
         driver_application,
@@ -306,7 +312,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.patch(
         `${API_URL}/driver_application`,
-        // `${API_URL}/driver_application`,
         { driver_application: status },
         {
           headers: {
@@ -339,14 +344,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     setTimeout(() => {
       router.push("/");
-      setSignedIn({
-        user_id: "",
-        name: "",
-        phone: "",
-        email: "",
-        driver_application: "",
-        is_driver: false,
-      });
+      setSignedIn(null);
       setDriver(null);
     }, 500);
   };
@@ -357,6 +355,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         register,
         login,
         uploadProfilePic,
+        uploadingPic,
+        setUploadingPic,
         updatePhone,
         updateEmail,
         updateName,
@@ -385,6 +385,7 @@ export const useAuthContext = () => {
 
 type UserType = {
   user_id: string;
+  profile_pic: string;
   name: string;
   email: string;
   phone: string;
@@ -403,6 +404,8 @@ export interface AuthContextType {
     email: string, // email or phone
     password: string
   ) => Promise<void>;
+  uploadingPic: boolean;
+  setUploadingPic: Dispatch<SetStateAction<boolean>>;
   uploadProfilePic: (formaData: any) => Promise<void>;
   updatePhone: (phone: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
@@ -413,7 +416,7 @@ export interface AuthContextType {
     confirm_password: string
   ) => Promise<void>;
   getUserData: () => Promise<void>;
-  signedIn: UserType;
+  signedIn: UserType | null;
   isAuthenticated: boolean;
   logout: () => void;
 

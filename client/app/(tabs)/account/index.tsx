@@ -64,7 +64,11 @@ const Account = () => {
               }}
             >
               <Image
-                source={require("../../../assets/images/black-profile.jpeg")}
+                source={
+                  signedIn?.profile_pic
+                    ? { uri: signedIn?.profile_pic } // remote image from backend
+                    : require("../../../assets/images/user.png") // fallback local asset
+                }
                 style={{ height: 70, width: 70, borderRadius: 50 }}
               />
               <Text

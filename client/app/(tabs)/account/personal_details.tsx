@@ -6,6 +6,7 @@ import {
   Image,
   Modal,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import React, { Dispatch, SetStateAction, FC, useState } from "react";
 
@@ -28,7 +29,7 @@ const PersonalDetails = () => {
     useState<boolean>(false);
 
   const { notification } = useNotificationContext();
-  const { signedIn } = useAuthContext();
+  const { signedIn, uploadingPic } = useAuthContext();
   return (
     <>
       <Notification notification={notification} />
@@ -57,10 +58,36 @@ const PersonalDetails = () => {
             onPress={() => setOpenProfilePicModal(true)}
             style={{ alignSelf: "center" }}
           >
-            <Image
-              source={require("../../../assets/images/black-profile.jpeg")}
-              style={{ height: 120, width: 120, borderRadius: 50 }}
-            />
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <Image
+                source={
+                  signedIn?.profile_pic
+                    ? { uri: signedIn?.profile_pic }
+                    : require("../../../assets/images/user.png")
+                }
+                style={{
+                  height: 120,
+                  width: 120,
+                  borderRadius: 60,
+                  opacity: uploadingPic ? 0.4 : 1,
+                }}
+              />
+              {uploadingPic && (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    height: 120,
+                    width: 120,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <ActivityIndicator size="large" color="#fff" />
+                </View>
+              )}
+            </View>
           </Pressable>
 
           <View style={{ marginTop: 50 }}>
@@ -127,13 +154,15 @@ const EditNameModal: FC<{
 }> = ({ open, setOpen }) => {
   const { updateName, signedIn } = useAuthContext();
 
-  const [fullname, setFullname] = useState<string>(signedIn && signedIn.name);
+  const [fullname, setFullname] = useState<string | null>(
+    signedIn && signedIn.name
+  );
 
   const [updating, setUpdating] = useState<boolean>(false);
   const update_name = async () => {
     setUpdating(true);
     try {
-      await updateName(fullname);
+      await updateName(fullname!);
       setOpen(false);
     } catch (error) {
       console.log(error);
@@ -153,7 +182,7 @@ const EditNameModal: FC<{
           <Text style={styles.modal_header}>Update fullname</Text>
 
           <TextInput
-            value={fullname}
+            value={fullname!}
             onChangeText={setFullname}
             style={styles.modal_text_input}
           />
@@ -177,13 +206,15 @@ const EditEmailModal: FC<{
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
   const { signedIn, updateEmail } = useAuthContext();
-  const [email, setEmail] = useState<string>(signedIn && signedIn.email);
+  const [email, setEmail] = useState<string | null>(
+    signedIn && signedIn?.email
+  );
 
   const [updating, setUpdating] = useState<boolean>(false);
   const update_email = async () => {
     setUpdating(true);
     try {
-      await updateEmail(email);
+      await updateEmail(email!);
       setOpen(false);
     } catch (error) {
       console.log(error);
@@ -204,7 +235,7 @@ const EditEmailModal: FC<{
           <Text style={styles.modal_header}>Update email</Text>
 
           <TextInput
-            value={email}
+            value={email!}
             onChangeText={setEmail}
             style={styles.modal_text_input}
           />
@@ -228,13 +259,13 @@ const EditPhoneModal: FC<{
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
   const { signedIn, updatePhone } = useAuthContext();
-  const [phone, setPhone] = useState<string>(signedIn && signedIn.phone);
+  const [phone, setPhone] = useState<string | null>(signedIn && signedIn.phone);
 
   const [updating, setUpdating] = useState<boolean>(false);
   const update_phone = async () => {
     setUpdating(true);
     try {
-      await updatePhone(phone);
+      await updatePhone(phone!);
       setOpen(false);
     } catch (error) {
       console.log(error);
@@ -255,7 +286,7 @@ const EditPhoneModal: FC<{
           <Text style={styles.modal_header}>Update phone</Text>
 
           <TextInput
-            value={phone}
+            value={phone!}
             onChangeText={setPhone}
             style={styles.modal_text_input}
           />
@@ -280,34 +311,39 @@ const EditProfilePicModal: FC<{
 }> = ({ open, setOpen }) => {
   const { uploadProfilePic } = useAuthContext();
 
+  const [uploading, setUploading] = useState<boolean>(false);
   const takePhotoAndCrop = async () => {
     setOpen(false);
-    // Request camera permissions first
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      alert("Sorry, we need camera roll permissions to make this work!");
-      return;
-    }
-
-    let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true, // This is the key to enabling cropping
-      aspect: [1, 1], // The aspect ratio for the crop
-      quality: 1,
-    });
-
-    // Check if the user cancelled the action
-    if (!result.canceled) {
-      if (result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const formData = new FormData();
-        formData.append("profile_pic", {
-          uri: asset.uri,
-          type: asset.mimeType,
-          name: asset.fileName,
-        } as any);
-
-        await uploadProfilePic(formData);
+    try {
+      // Request camera permissions first
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need camera roll permissions to make this work!");
+        return;
       }
+
+      let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true, // This is the key to enabling cropping
+        aspect: [1, 1], // The aspect ratio for the crop
+        quality: 1,
+      });
+
+      // Check if the user cancelled the action
+      if (!result.canceled) {
+        if (result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          const formData = new FormData();
+          formData.append("profile_pic", {
+            uri: asset.uri,
+            type: asset.mimeType,
+            name: asset.fileName,
+          } as any);
+
+          await uploadProfilePic(formData);
+        }
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 

@@ -10,7 +10,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
 
@@ -26,14 +25,14 @@ const SideNav: React.FC<{
   const { driver } = useDriverAuthContext();
 
   const go_to_driver = () => {
-    if (signedIn.is_driver) {
+    if (signedIn?.is_driver) {
       router.push("../(driver)/home");
     } else {
-      if (signedIn.driver_application === "none")
+      if (signedIn?.driver_application === "none")
         router.push("../(driver_auth)/choose_car_type");
-      else if (signedIn.driver_application === "rejected")
+      else if (signedIn?.driver_application === "rejected")
         router.push("../(driver_auth)/choose_car_type");
-      else if (signedIn.driver_application === "submitted")
+      else if (signedIn?.driver_application === "submitted")
         router.push("../(driver_auth)/reviewing_message");
       else router.push("../(tabs)/home");
     }
@@ -90,7 +89,11 @@ const SideNav: React.FC<{
                 {/* User */}
                 <View style={styles.user_card}>
                   <Image
-                    source={require("../assets/images/black-profile.jpeg")}
+                    source={
+                      signedIn?.profile_pic
+                        ? { uri: signedIn?.profile_pic } // remote image from backend
+                        : require("../assets/images/user.png") // fallback local asset
+                    }
                     style={styles.user_img}
                   />
 
