@@ -12,15 +12,22 @@ import {
   update_email,
   update_password,
   update_driver_application,
+  upload_profile_pic,
 } from "../controllers/user";
 
 import { auth } from "../middleware/auth";
+import { upload } from "../middleware/upload";
 
 UserRouter.post("/register", register);
 UserRouter.post("/login", login);
 UserRouter.post("/google_auth", google_auth);
 
 UserRouter.patch("/location", auth, update_location);
+UserRouter.patch(
+  "/profile_pic",
+  [auth, upload.single("profile_pic")],
+  upload_profile_pic
+);
 UserRouter.patch("/phone", auth, update_phone);
 UserRouter.patch("/name", auth, update_name);
 UserRouter.patch("/email", auth, update_email);

@@ -13,6 +13,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 
+import * as ImagePicker from "expo-image-picker";
+
 import { useAuthContext } from "../../../context/AuthContext";
 
 import Notification from "../../../components/Notification";
@@ -276,6 +278,29 @@ const EditProfilePicModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const takePhotoAndCrop = async () => {
+    setOpen(false);
+    // Request camera permissions first
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      alert("Sorry, we need camera roll permissions to make this work!");
+      return;
+    }
+
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true, // This is the key to enabling cropping
+      aspect: [1, 1], // The aspect ratio for the crop
+      quality: 1,
+    });
+
+    // Check if the user cancelled the action
+    if (!result.canceled) {
+      if (result.assets && result.assets.length > 0) {
+        console.log(result.assets);
+      }
+    }
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -309,6 +334,7 @@ const EditProfilePicModal: FC<{
               </Text>
             </Pressable>
             <Pressable
+              onPress={takePhotoAndCrop}
               style={{
                 width: "80%",
                 backgroundColor: "#fff",

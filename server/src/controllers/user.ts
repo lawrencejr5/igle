@@ -11,6 +11,8 @@ import { OAuth2Client } from "google-auth-library";
 import User, { UserType } from "../models/user";
 import Wallet from "../models/wallet";
 
+import { cloudinary } from "../middleware/upload";
+
 const jwt_secret = process.env.JWT_SECRET;
 
 export const register = async (req: Request, res: Response): Promise<void> => {
@@ -179,6 +181,27 @@ export const get_user_data = async (
     res.status(200).json({ msg: "success", user });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const upload_profile_pic = async (req: Request, res: Response) => {
+  const user_id = req.user?.id;
+  const filePath = req.file?.path;
+
+  try {
+    if (!filePath) return res.status(404).json({ msg: "No file was found" });
+
+    const uploadedFile = await cloudinary.uploader.upload(filePath as string, {
+      folder: "igle_images/profile_pic",
+    });
+
+    const profile_pic = uploadedFile.url;
+
+    await User.findByIdAndUpdate(user_id, { profile_pic });
+
+    res.status(201).json({ msg: "profile pic has been updated" });
+  } catch (err) {
+    res.status(500).json({ msg: "An error occured" });
   }
 };
 

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
+exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -20,6 +20,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const google_auth_library_1 = require("google-auth-library");
 const user_1 = __importDefault(require("../models/user"));
 const wallet_1 = __importDefault(require("../models/wallet"));
+const upload_1 = require("../middleware/upload");
 const jwt_secret = process.env.JWT_SECRET;
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -165,6 +166,25 @@ const get_user_data = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.get_user_data = get_user_data;
+const upload_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    const filePath = (_b = req.file) === null || _b === void 0 ? void 0 : _b.path;
+    try {
+        if (!filePath)
+            return res.status(404).json({ msg: "No file was found" });
+        const uploadedFile = yield upload_1.cloudinary.uploader.upload(filePath, {
+            folder: "igle_images/profile_pic",
+        });
+        const profile_pic = uploadedFile.url;
+        yield user_1.default.findByIdAndUpdate(user_id, { profile_pic });
+        res.status(201).json({ msg: "profile pic has been updated" });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "An error occured" });
+    }
+});
+exports.upload_profile_pic = upload_profile_pic;
 const update_password = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
