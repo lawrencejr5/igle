@@ -278,6 +278,8 @@ const EditProfilePicModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
+  const { uploadProfilePic } = useAuthContext();
+
   const takePhotoAndCrop = async () => {
     setOpen(false);
     // Request camera permissions first
@@ -296,7 +298,15 @@ const EditProfilePicModal: FC<{
     // Check if the user cancelled the action
     if (!result.canceled) {
       if (result.assets && result.assets.length > 0) {
-        console.log(result.assets);
+        const asset = result.assets[0];
+        const formData = new FormData();
+        formData.append("profile_pic", {
+          uri: asset.uri,
+          type: asset.mimeType,
+          name: asset.fileName,
+        } as any);
+
+        await uploadProfilePic(formData);
       }
     }
   };

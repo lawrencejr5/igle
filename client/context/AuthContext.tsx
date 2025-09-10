@@ -104,6 +104,26 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const uploadProfilePic = async (formaData: any): Promise<void> => {
+    if (!formaData) showNotification("No image was selected", "error");
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.patch(`${API_URL}/profile_pic`, formaData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      if (data) {
+        await getUserData();
+        showNotification(data.msg, "success");
+      }
+    } catch (error: any) {
+      const errMsg = error.response.data.msg;
+      showNotification(errMsg || "An error occured", "error");
+    }
+  };
+
   // Update phone number function
   const updatePhone = async (phone: string): Promise<void> => {
     try {
@@ -336,6 +356,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       value={{
         register,
         login,
+        uploadProfilePic,
         updatePhone,
         updateEmail,
         updateName,
@@ -382,6 +403,7 @@ export interface AuthContextType {
     email: string, // email or phone
     password: string
   ) => Promise<void>;
+  uploadProfilePic: (formaData: any) => Promise<void>;
   updatePhone: (phone: string) => Promise<void>;
   updateName: (name: string) => Promise<void>;
   updateEmail: (email: string) => Promise<void>;
