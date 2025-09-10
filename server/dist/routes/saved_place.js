@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const SavedPlaceRouter = (0, express_1.Router)();
+const auth_1 = require("../middleware/auth");
+const saved_place_1 = require("../controllers/saved_place");
+SavedPlaceRouter.use(auth_1.auth);
+SavedPlaceRouter.get("/", saved_place_1.get_saved_places);
+SavedPlaceRouter.post("/", saved_place_1.save_place);
+exports.default = SavedPlaceRouter;
