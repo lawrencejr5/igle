@@ -202,8 +202,8 @@ const StartModal = () => {
   return (
     <>
       <Text style={styles.header_text}>
-        {signedIn.name.split(" ")[1] || signedIn.name.split(" ")[0]}, let's hit
-        the road...
+        {signedIn?.name.split(" ")[1] || signedIn?.name.split(" ")[0]}, let's
+        hit the road...
       </Text>
 
       <Pressable

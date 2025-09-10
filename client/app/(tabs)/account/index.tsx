@@ -56,7 +56,7 @@ const Account = () => {
                 flexDirection: "row",
                 justifyContent: "flex-start",
                 alignItems: "center",
-                gap: 15,
+                gap: 25,
                 marginTop: 20,
                 padding: 10,
                 borderRadius: 10,
@@ -165,10 +165,13 @@ const Account = () => {
                 <Feather name="lock" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Security</Text>
               </Pressable>
-              <View style={styles.setting_box}>
+              <Pressable
+                onPress={() => router.push("./account/saved_places")}
+                style={styles.setting_box}
+              >
                 <Entypo name="location-pin" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Saved places</Text>
-              </View>
+              </Pressable>
               <View style={styles.setting_box}>
                 <Feather name="help-circle" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Help and support</Text>
