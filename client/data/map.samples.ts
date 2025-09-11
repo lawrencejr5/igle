@@ -51,3 +51,72 @@ const dataSample2 = [
     types: ["premise", "street_address"],
   },
 ];
+
+const suggestions = [
+  {
+    description: "Asaba, Nigeria",
+    matched_substrings: [[Object]],
+    place_id: "ChIJOb1hsLKSQxARiZS-ytsRlnQ",
+    reference: "ChIJOb1hsLKSQxARiZS-ytsRlnQ",
+    structured_formatting: {
+      main_text: "Asaba",
+      main_text_matched_substrings: [Array],
+      secondary_text: "Nigeria",
+    },
+    terms: [[Object], [Object]],
+    types: ["geocode", "locality", "political"],
+  },
+  {
+    description: "Anambra, Nigeria",
+    matched_substrings: [[Object]],
+    place_id: "ChIJ-cKEFhqFQxAR0LT76AGtYs8",
+    reference: "ChIJ-cKEFhqFQxAR0LT76AGtYs8",
+    structured_formatting: {
+      main_text: "Anambra",
+      main_text_matched_substrings: [Array],
+      secondary_text: "Nigeria",
+    },
+    terms: [[Object], [Object]],
+    types: ["administrative_area_level_1", "geocode", "political"],
+  },
+  {
+    description: "Awka, Nigeria",
+    matched_substrings: [[Object]],
+    place_id: "ChIJU-eUi72CQxARU0e9iuuRI88",
+    reference: "ChIJU-eUi72CQxARU0e9iuuRI88",
+    structured_formatting: {
+      main_text: "Awka",
+      main_text_matched_substrings: [Array],
+      secondary_text: "Nigeria",
+    },
+    terms: [[Object], [Object]],
+    types: ["geocode", "locality", "political"],
+  },
+  {
+    description: "asaba Delta state, Dennis Osadebay Way, Asaba, Nigeria",
+    matched_substrings: [[Object]],
+    place_id: "ChIJNQREV0TzQxARZeBGAkPu_rA",
+    reference: "ChIJNQREV0TzQxARZeBGAkPu_rA",
+    structured_formatting: {
+      main_text: "asaba Delta state",
+      main_text_matched_substrings: [Array],
+      secondary_text: "Dennis Osadebay Way, Asaba, Nigeria",
+    },
+    terms: [[Object], [Object], [Object], [Object]],
+    types: ["establishment", "place_of_worship", "point_of_interest"],
+  },
+  {
+    description:
+      "Asaba International Airport, Asaba International Airport, Asaba, Nigeria",
+    matched_substrings: [[Object]],
+    place_id: "ChIJDxCG60DxQxARigErC_uwPKY",
+    reference: "ChIJDxCG60DxQxARigErC_uwPKY",
+    structured_formatting: {
+      main_text: "Asaba International Airport",
+      main_text_matched_substrings: [Array],
+      secondary_text: "Asaba International Airport, Asaba, Nigeria",
+    },
+    terms: [[Object], [Object], [Object], [Object]],
+    types: ["airport", "establishment", "point_of_interest"],
+  },
+];

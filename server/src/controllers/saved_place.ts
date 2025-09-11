@@ -4,15 +4,24 @@ import SavedPlace from "../models/saved_place";
 
 export const save_place = async (req: Request, res: Response) => {
   const user = req.user?.id;
-  const { place_name, place_sub_name, place_coords } = req.body;
+  const { place_header, place_id, place_name, place_sub_name, place_coords } =
+    req.body;
 
   if (!user) return res.status(404).json({ msg: "User not found" });
-  if (!place_name || !place_sub_name || !place_coords)
+  if (
+    !place_header ||
+    !place_id ||
+    !place_name ||
+    !place_sub_name ||
+    !place_coords
+  )
     return res.status(404).json({ msg: "Some fields are missing" });
 
   try {
     const savedPlace = await SavedPlace.create({
       user,
+      place_header,
+      place_id,
       place_name,
       place_sub_name,
       place_coords,

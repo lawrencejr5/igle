@@ -382,7 +382,6 @@ const BookingModal: FC<{
                 onFocus={pickupFocus}
                 onChangeText={setUserAddress}
                 placeholderTextColor={"#b7b7b7"}
-                editable={true}
               />
             </View>
             <View style={styles.route_inp_container}>

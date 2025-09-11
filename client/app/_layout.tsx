@@ -16,6 +16,7 @@ import MapContextProvider from "../context/MapContext";
 import WalletProvider from "../context/WalletContext";
 import DriverContextPrvider from "../context/DriverContext";
 import HistoryProvider from "../context/HistoryContext";
+import SavedPlaceProvider from "../context/SavedPlaceContext";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -48,11 +49,13 @@ const RootLayout = () => {
                   <AuthProvider>
                     <DriverContextPrvider>
                       <RideContextProvider>
-                        <Stack
-                          screenOptions={{
-                            headerShown: false,
-                          }}
-                        />
+                        <SavedPlaceProvider>
+                          <Stack
+                            screenOptions={{
+                              headerShown: false,
+                            }}
+                          />
+                        </SavedPlaceProvider>
                       </RideContextProvider>
                     </DriverContextPrvider>
                   </AuthProvider>

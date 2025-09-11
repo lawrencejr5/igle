@@ -4,6 +4,7 @@ export const API_URLS = {
   wallet: "http://192.168.131.123:5000/api/v1/wallet",
   rides: "http://192.168.131.123:5000/api/v1/rides",
   history: "http://192.168.131.123:5000/api/v1/history",
+  saved_place: "http://192.168.131.123:5000/api/v1/saved_place",
 };
 
 export const SOCKET_URL = "http://192.168.131.123:5000";

@@ -303,7 +303,7 @@ export interface MapContextType {
   set_user_location: () => Promise<void>;
   userAddress: string;
   setUserAddress: Dispatch<SetStateAction<string>>;
-  getSuggestions: (text: string) => Promise<void>;
+  getSuggestions: (text: string) => Promise<any>;
   mapSuggestions: any;
   setMapSuggestions: Dispatch<SetStateAction<any>>;
   getDestinationSuggestions: (text: string) => Promise<void>;
