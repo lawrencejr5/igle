@@ -1,4 +1,12 @@
-import React, { FC, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  Dispatch,
+  FC,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   StyleSheet,
@@ -7,6 +15,7 @@ import {
   Pressable,
   TextInput,
   FlatList,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -32,6 +41,16 @@ import { useMapContext } from "../../../context/MapContext";
 const SavedPlaces = () => {
   const { notification } = useNotificationContext();
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const [editable, setEditable] = useState<boolean>(false);
+  const [placeHeader, setPlaceHeader] = useState<string>("");
+
+  const addPlace = (place: string, edit: boolean) => {
+    bottomSheetRef.current?.snapToIndex(0);
+    setPlaceHeader(place);
+    setEditable(edit);
+  };
+
   return (
     <>
       <Notification notification={notification} />
@@ -55,9 +74,9 @@ const SavedPlaces = () => {
             Saved places
           </Text>
         </View>
-        <View style={{ marginTop: 10 }}>
+        <View style={{ marginTop: 10, zIndex: 1000 }}>
           <Pressable
-            onPress={() => bottomSheetRef.current?.snapToIndex(0)}
+            onPress={() => addPlace("home", false)}
             style={{
               flexDirection: "row",
               gap: 10,
@@ -77,6 +96,7 @@ const SavedPlaces = () => {
             </Text>
           </Pressable>
           <Pressable
+            onPress={() => addPlace("office", false)}
             style={{
               flexDirection: "row",
               gap: 10,
@@ -96,6 +116,7 @@ const SavedPlaces = () => {
             </Text>
           </Pressable>
           <Pressable
+            onPress={() => addPlace("", true)}
             style={{
               flexDirection: "row",
               gap: 10,
@@ -116,31 +137,50 @@ const SavedPlaces = () => {
           </Pressable>
         </View>
       </SafeAreaView>
-      <PlaceModal ref={bottomSheetRef} />
+      <PlaceModal
+        ref={bottomSheetRef}
+        placeHeader={placeHeader}
+        setPlaceHeader={setPlaceHeader}
+        editable={editable}
+      />
     </>
   );
 };
 
 export default SavedPlaces;
 
-const PlaceModal: FC<{ ref: any }> = ({ ref }) => {
+const PlaceModal: FC<{
+  ref: any;
+  placeHeader: string;
+  setPlaceHeader: Dispatch<SetStateAction<string>>;
+  editable: boolean;
+}> = ({ ref, placeHeader, setPlaceHeader, editable }) => {
   const { searchResults, searchPlace, savePlace } = useSavedPlaceContext();
+
   const { getPlaceCoords } = useMapContext();
-  const [placeHeader, setPlaceheader] = useState<string>("home");
   const [place, setPlace] = useState<string>("");
+
+  const handleSheetChange = (index: number) => {
+    if (index === -1) {
+      setPlaceHeader("");
+      setPlace("");
+      Keyboard.dismiss();
+    }
+  };
 
   const save_place = async (
     place_id: string,
     place_name: string,
     place_sub_name: string
   ) => {
+    ref.current?.snapToIndex(-1);
     try {
-      ref.current.collapse();
+      setPlace(place_name);
 
       const coords: any = await getPlaceCoords(place_id);
 
       await savePlace(
-        placeHeader,
+        placeHeader.toLocaleLowerCase(),
         place_id,
         place_name,
         place_sub_name,
@@ -161,6 +201,7 @@ const PlaceModal: FC<{ ref: any }> = ({ ref }) => {
       snapPoints={snapPoints}
       index={-1}
       ref={ref}
+      onChange={handleSheetChange}
       enableContentPanningGesture={true}
       enableHandlePanningGesture={true}
       enableDynamicSizing={false}
@@ -199,8 +240,9 @@ const PlaceModal: FC<{ ref: any }> = ({ ref }) => {
             <MaterialIcons name="place" size={20} color={"#fff"} />
             <TextInput
               value={placeHeader}
-              onChangeText={setPlaceheader}
-              editable={false}
+              onChangeText={setPlaceHeader}
+              editable={editable}
+              placeholder="Enter place eg hotel, studio"
               style={{
                 backgroundColor: "transparent",
                 flex: 1,

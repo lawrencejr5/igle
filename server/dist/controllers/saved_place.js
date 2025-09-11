@@ -17,17 +17,27 @@ const saved_place_1 = __importDefault(require("../models/saved_place"));
 const save_place = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-    const { place_name, place_sub_name, place_coords } = req.body;
+    const { place_header, place_id, place_name, place_sub_name, place_coords } = req.body;
     if (!user)
         return res.status(404).json({ msg: "User not found" });
-    if (!place_name || !place_sub_name || !place_coords)
+    if (!place_header ||
+        !place_id ||
+        !place_name ||
+        !place_sub_name ||
+        !place_coords)
         return res.status(404).json({ msg: "Some fields are missing" });
     try {
-        const savedPlace = yield saved_place_1.default.create({
+        const savedPlace = yield saved_place_1.default.findOneAndUpdate({ place_header, user }, {
             user,
+            place_header,
+            place_id,
             place_name,
             place_sub_name,
             place_coords,
+        }, {
+            new: true,
+            upsert: true,
+            setDefaultsOnInsert: true,
         });
         res.status(201).json({ msg: "Place has been saved", savedPlace });
     }

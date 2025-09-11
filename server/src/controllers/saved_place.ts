@@ -18,14 +18,22 @@ export const save_place = async (req: Request, res: Response) => {
     return res.status(404).json({ msg: "Some fields are missing" });
 
   try {
-    const savedPlace = await SavedPlace.create({
-      user,
-      place_header,
-      place_id,
-      place_name,
-      place_sub_name,
-      place_coords,
-    });
+    const savedPlace = await SavedPlace.findOneAndUpdate(
+      { place_header, user },
+      {
+        user,
+        place_header,
+        place_id,
+        place_name,
+        place_sub_name,
+        place_coords,
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true,
+      }
+    );
 
     res.status(201).json({ msg: "Place has been saved", savedPlace });
   } catch (error) {

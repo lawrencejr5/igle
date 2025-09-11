@@ -8,6 +8,7 @@ const SavedPlaceSchema = new mongoose_1.Schema({
         required: true,
     },
     place_header: { type: String, required: true },
+    place_id: { type: String, required: true },
     place_name: { type: String, required: true },
     place_sub_name: { type: String, required: true },
     place_coords: { type: [Number, Number], required: true },
