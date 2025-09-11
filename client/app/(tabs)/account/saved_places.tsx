@@ -86,90 +86,34 @@ const SavedPlaces = () => {
         <View style={{ marginTop: 10, zIndex: 1000 }}>
           <Pressable
             onPress={() => addPlace("home", false)}
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              marginTop: 10,
-              paddingVertical: 15,
-              alignItems: "center",
-            }}
+            style={styles.place_box}
           >
             <Entypo name="home" color={"#fff"} size={22} />
             {homePlace ? (
-              <View style={{ width: 300 }}>
-                <Text
-                  style={{
-                    fontFamily: "raleway-bold",
-                    color: "#fff",
-                    fontSize: 16,
-                  }}
-                >
-                  Home
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "raleway-regular",
-                    color: "#fff",
-                    fontSize: 14,
-                  }}
-                >
+              <View style={styles.place_box_text_container}>
+                <Text style={styles.place_box_header}>Home</Text>
+                <Text style={styles.place_box_name}>
                   {`${homePlace.place_name}, ${homePlace.place_sub_name}`}
                 </Text>
               </View>
             ) : (
-              <Text
-                style={{
-                  fontFamily: "raleway-regular",
-                  color: "#fff",
-                  fontSize: 16,
-                }}
-              >
-                Add home location
-              </Text>
+              <Text style={styles.place_box_add}>Add home location</Text>
             )}
           </Pressable>
           <Pressable
             onPress={() => addPlace("office", false)}
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              marginTop: 10,
-              paddingVertical: 15,
-              alignItems: "center",
-            }}
+            style={styles.place_box}
           >
             <FontAwesome name="briefcase" color={"#fff"} size={20} />
             {officePlace ? (
-              <View style={{ width: 300 }}>
-                <Text
-                  style={{
-                    fontFamily: "raleway-bold",
-                    color: "#fff",
-                    fontSize: 16,
-                  }}
-                >
-                  Office
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "raleway-regular",
-                    color: "#fff",
-                    fontSize: 14,
-                  }}
-                >
+              <View style={styles.place_box_text_container}>
+                <Text style={styles.place_box_header}>Office</Text>
+                <Text style={styles.place_box_name}>
                   {`${officePlace.place_name}, ${officePlace.place_sub_name}`}
                 </Text>
               </View>
             ) : (
-              <Text
-                style={{
-                  fontFamily: "raleway-regular",
-                  color: "#fff",
-                  fontSize: 16,
-                }}
-              >
-                Add office location
-              </Text>
+              <Text style={styles.place_box_add}>Add office location</Text>
             )}
           </Pressable>
 
@@ -179,38 +123,17 @@ const SavedPlaces = () => {
               keyExtractor={(item) => item.place_id}
               renderItem={({ item }) => {
                 return (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: 10,
-                      marginTop: 10,
-                      paddingVertical: 15,
-                      alignItems: "center",
-                    }}
-                  >
+                  <View style={styles.place_box}>
                     <FontAwesome6
                       name="location-dot"
                       color={"#fff"}
                       size={20}
                     />
-                    <View style={{ width: 300 }}>
-                      <Text
-                        style={{
-                          fontFamily: "raleway-bold",
-                          color: "#fff",
-                          fontSize: 16,
-                          textTransform: "capitalize",
-                        }}
-                      >
+                    <View style={styles.place_box_text_container}>
+                      <Text style={styles.place_box_header}>
                         {item.place_header}
                       </Text>
-                      <Text
-                        style={{
-                          fontFamily: "raleway-regular",
-                          color: "#fff",
-                          fontSize: 14,
-                        }}
-                      >
+                      <Text style={styles.place_box_name}>
                         {`${item.place_name}, ${item.place_sub_name}`}
                       </Text>
                     </View>
@@ -222,23 +145,10 @@ const SavedPlaces = () => {
 
           <Pressable
             onPress={() => addPlace("", true)}
-            style={{
-              flexDirection: "row",
-              gap: 10,
-              marginTop: 10,
-              paddingVertical: 15,
-            }}
+            style={styles.place_box}
           >
             <Feather name="plus" color={"#fff"} size={22} />
-            <Text
-              style={{
-                fontFamily: "raleway-regular",
-                color: "#fff",
-                fontSize: 16,
-              }}
-            >
-              Add place
-            </Text>
+            <Text style={styles.place_box_add}>Add place</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -332,53 +242,23 @@ const PlaceModal: FC<{
           Choose address
         </Text>
         <View style={{ marginTop: 20 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 7,
-              backgroundColor: "#484848",
-              paddingHorizontal: 10,
-              borderRadius: 7,
-            }}
-          >
+          <View style={styles.text_inp_holder}>
             <MaterialIcons name="place" size={20} color={"#fff"} />
             <TextInput
               value={placeHeader}
               onChangeText={setPlaceHeader}
               editable={editable}
-              placeholder="Enter place eg hotel, studio"
-              style={{
-                backgroundColor: "transparent",
-                flex: 1,
-                color: "#fff",
-                fontFamily: "raleway-bold",
-                textTransform: "capitalize",
-              }}
+              placeholder="Enter place eg. Hotel, School"
+              style={styles.text_inp}
             />
           </View>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 7,
-              backgroundColor: "#484848",
-              paddingHorizontal: 10,
-              borderRadius: 7,
-              marginTop: 10,
-            }}
-          >
+          <View style={styles.text_inp_holder}>
             <Feather name="search" size={20} color={"#fff"} />
             <TextInput
               value={place}
               onChangeText={setPlace}
               placeholder="Search address"
-              style={{
-                backgroundColor: "transparent",
-                flex: 1,
-                color: "#fff",
-                fontFamily: "raleway-bold",
-              }}
+              style={styles.text_inp}
             />
           </View>
         </View>
@@ -416,6 +296,49 @@ const PlaceModal: FC<{
 };
 
 const styles = StyleSheet.create({
+  place_box: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  place_box_text_container: { width: 300 },
+  place_box_header: {
+    fontFamily: "raleway-bold",
+    color: "#fff",
+    fontSize: 16,
+    textTransform: "capitalize",
+  },
+  place_box_name: {
+    fontFamily: "raleway-regular",
+    color: "#fff",
+    fontSize: 14,
+    flexShrink: 1,
+  },
+  place_box_add: {
+    fontFamily: "raleway-regular",
+    color: "#fff",
+    fontSize: 16,
+  },
+
+  text_inp_holder: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    backgroundColor: "#484848",
+    paddingHorizontal: 10,
+    borderRadius: 7,
+    marginTop: 10,
+  },
+  text_inp: {
+    backgroundColor: "transparent",
+    flex: 1,
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    textTransform: "capitalize",
+  },
+
   suggestions_container: {
     flex: 1,
     marginTop: 30,
