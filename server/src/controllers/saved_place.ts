@@ -56,3 +56,22 @@ export const get_saved_places = async (req: Request, res: Response) => {
     res.status(500).json({ msg: "An error occured while saving places" });
   }
 };
+
+export const delete_saved_place = async (req: Request, res: Response) => {
+  const user = req.user?.id;
+  if (!user) return res.status(404).json({ msg: "User not found" });
+
+  const { place_header } = req.query;
+  if (!place_header) return res.status(404).json({ msg: "place not found" });
+
+  try {
+    const deletedPlace = await SavedPlace.deleteOne({ user, place_header });
+
+    if (!deletedPlace)
+      return res.status(404).json({ msg: "No place was deleted" });
+
+    res.status(201).json({ msg: "Place deleted" });
+  } catch (error) {
+    res.status(500).json({ msg: "An error occured while saving places" });
+  }
+};
