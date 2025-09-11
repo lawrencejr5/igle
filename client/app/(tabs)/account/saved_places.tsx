@@ -62,8 +62,21 @@ const SavedPlaces = () => {
     setEditable(edit);
   };
 
-  const [actionModalOpen, setActionModal] = useState<boolean>(false);
+  const [actionModalOpen, setActionModalOpen] = useState<boolean>(false);
+  const [actionPlaceHeader, setActionPlaceHeader] = useState<string>("");
+  const [actionPlaceName, setActionPlaceName] = useState<string>("");
+  const [actionPlaceSubName, setActionPlaceSubName] = useState<string>("");
 
+  const open_action = (
+    place_header: string,
+    place_name: string,
+    place_sub_name: string
+  ) => {
+    setActionModalOpen(true);
+    setActionPlaceHeader(place_header);
+    setActionPlaceName(place_name);
+    setActionPlaceSubName(place_sub_name);
+  };
   return (
     <>
       <Notification notification={notification} />
@@ -89,7 +102,15 @@ const SavedPlaces = () => {
         </View>
         <View style={{ marginTop: 10, zIndex: 1000 }}>
           <Pressable
-            onPress={() => addPlace("home", false)}
+            onPress={() => {
+              homePlace
+                ? open_action(
+                    homePlace.place_header,
+                    homePlace.place_name,
+                    homePlace.place_sub_name
+                  )
+                : addPlace("home", false);
+            }}
             style={styles.place_box}
           >
             <Entypo name="home" color={"#fff"} size={22} />
@@ -105,7 +126,15 @@ const SavedPlaces = () => {
             )}
           </Pressable>
           <Pressable
-            onPress={() => addPlace("office", false)}
+            onPress={() => {
+              officePlace
+                ? open_action(
+                    officePlace.place_header,
+                    officePlace.place_name,
+                    officePlace.place_sub_name
+                  )
+                : addPlace("office", false);
+            }}
             style={styles.place_box}
           >
             <FontAwesome name="briefcase" color={"#fff"} size={20} />
@@ -127,7 +156,16 @@ const SavedPlaces = () => {
               keyExtractor={(item) => item.place_id}
               renderItem={({ item }) => {
                 return (
-                  <View style={styles.place_box}>
+                  <Pressable
+                    onPress={() =>
+                      open_action(
+                        item.place_header,
+                        item.place_name,
+                        item.place_sub_name
+                      )
+                    }
+                    style={styles.place_box}
+                  >
                     <FontAwesome6
                       name="location-dot"
                       color={"#fff"}
@@ -141,7 +179,7 @@ const SavedPlaces = () => {
                         {`${item.place_name}, ${item.place_sub_name}`}
                       </Text>
                     </View>
-                  </View>
+                  </Pressable>
                 );
               }}
             />
@@ -163,7 +201,13 @@ const SavedPlaces = () => {
         setPlaceHeader={setPlaceHeader}
         editable={editable}
       />
-      <ActionModal open={actionModalOpen} setOpen={setActionModal} />
+      <ActionModal
+        open={actionModalOpen}
+        setOpen={setActionModalOpen}
+        place_name={actionPlaceName}
+        place_header={actionPlaceHeader}
+        place_sub_name={actionPlaceSubName}
+      />
     </>
   );
 };
@@ -201,7 +245,7 @@ const PlaceModal: FC<{
       const coords: any = await getPlaceCoords(place_id);
 
       await savePlace(
-        placeHeader.toLocaleLowerCase(),
+        placeHeader.toLocaleLowerCase().trim(),
         place_id,
         place_name,
         place_sub_name,
@@ -304,7 +348,21 @@ const PlaceModal: FC<{
 const ActionModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-}> = ({ open, setOpen }) => {
+  place_header: string;
+  place_name: string;
+  place_sub_name: string;
+}> = ({ open, setOpen, place_name, place_header, place_sub_name }) => {
+  const { deleteSavedPlace } = useSavedPlaceContext();
+
+  const delete_place = async () => {
+    try {
+      setOpen(false);
+      await deleteSavedPlace(place_header);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -335,9 +393,10 @@ const ActionModal: FC<{
                 color: "#fff",
                 fontFamily: "raleway-bold",
                 fontSize: 18,
+                textTransform: "capitalize",
               }}
             >
-              Home
+              {place_header}
             </Text>
             <Text
               style={{
@@ -346,7 +405,7 @@ const ActionModal: FC<{
                 flexShrink: 1,
               }}
             >
-              Anglican girls grammar school
+              {`${place_name}, ${place_sub_name}`}
             </Text>
           </View>
           <View style={{ marginTop: 20 }}>
@@ -372,6 +431,7 @@ const ActionModal: FC<{
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={delete_place}
               style={{
                 width: "100%",
                 borderRadius: 7,

@@ -33,6 +33,7 @@ interface SavedPlaceContextType {
     place_coords: [number, number]
   ) => Promise<void>;
   getSavedPlaces: () => Promise<void>;
+  deleteSavedPlace: (place_header: string) => Promise<void>;
   searchPlace: (query: string) => Promise<void>;
   searchResults: any[];
   loading: boolean;
@@ -105,6 +106,25 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const deleteSavedPlace = async (place_header: string): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    setLoading(true);
+    try {
+      const { data } = await axios.delete(
+        `${API_URL}?place_header=${place_header}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showNotification(data.msg, "success");
+      await getSavedPlaces();
+    } catch (error: any) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     getSavedPlaces();
   }, []);
@@ -115,6 +135,7 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
         savedPlaces,
         savePlace,
         getSavedPlaces,
+        deleteSavedPlace,
         searchPlace,
         searchResults,
         loading,
@@ -129,5 +150,3 @@ export const useSavedPlaceContext = () =>
   useContext(SavedPlaceContext) as SavedPlaceContextType;
 
 export default SavedPlaceProvider;
-
-const styles = StyleSheet.create({});
