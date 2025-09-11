@@ -44,12 +44,7 @@ import { useMapContext } from "../../../context/MapContext";
 const SavedPlaces = () => {
   const { notification } = useNotificationContext();
 
-  const { savedPlaces } = useSavedPlaceContext();
-  const homePlace = savedPlaces.find((p) => p.place_header === "home");
-  const officePlace = savedPlaces.find((p) => p.place_header === "office");
-  const otherPlaces = savedPlaces.filter(
-    (p) => p.place_header !== "home" && p.place_header !== "office"
-  );
+  const { homePlace, officePlace, otherPlaces } = useSavedPlaceContext();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [placeModalOpen, setPlaceOpenModal] = useState<boolean>(false);
@@ -408,7 +403,7 @@ const ActionModal: FC<{
   const edit_place = async () => {
     try {
       setOpen(false);
-      setEditModal(place_header, false, place_name);
+      setEditModal(place_header.toLocaleLowerCase().trim(), false, place_name);
     } catch (error) {
       console.log(error);
     }

@@ -35,6 +35,7 @@ import {
   Ionicons,
   FontAwesome5,
   MaterialCommunityIcons,
+  Entypo,
 } from "@expo/vector-icons";
 
 import { useAuthContext } from "../context/AuthContext";
@@ -47,6 +48,7 @@ import { useHistoryContext } from "../context/HistoryContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { router, useNavigation } from "expo-router";
+import { useSavedPlaceContext } from "../context/SavedPlaceContext";
 
 const RouteModal = () => {
   const {
@@ -138,7 +140,7 @@ const RouteModal = () => {
     }
   };
 
-  const snapPoints = useMemo(() => ["22%", "32%", "60%", "80%", "93%"], []);
+  const snapPoints = useMemo(() => ["22%", "40%", "60%", "80%", "93%"], []);
 
   return (
     <BottomSheet
@@ -195,6 +197,8 @@ const StartModal = () => {
   const { signedIn } = useAuthContext();
 
   const { destination, destinationCoords } = useMapContext();
+  const { savedPlaces, homePlace, officePlace, otherPlaces } =
+    useSavedPlaceContext();
   const { rideHistory } = useHistoryContext();
 
   const { setRideStatus, setModalUp, set_destination_func, routeModalRef } =
@@ -229,7 +233,57 @@ const StartModal = () => {
           />
         </View>
       </Pressable>
-      {rideHistory?.length ? (
+      <View style={{ marginTop: 20, flexDirection: "row", gap: 10 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            width: 150,
+          }}
+        >
+          <Entypo name="home" color={"#8d8d8d"} size={22} />
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ fontFamily: "raleway-bold", color: "#8d8d8d" }}>
+              Home
+            </Text>
+            <Text
+              style={{
+                fontFamily: "raleway-regular",
+                color: "#8d8d8d",
+              }}
+              numberOfLines={1}
+            >
+              Anglican girls grammar school
+            </Text>
+          </View>
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            width: 150,
+          }}
+        >
+          <FontAwesome name="briefcase" color={"#8d8d8d"} size={20} />
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ fontFamily: "raleway-bold", color: "#8d8d8d" }}>
+              Office
+            </Text>
+            <Text
+              style={{
+                fontFamily: "raleway-regular",
+                color: "#8d8d8d",
+              }}
+              numberOfLines={1}
+            >
+              Anglican girls grammar school
+            </Text>
+          </View>
+        </View>
+      </View>
+      {rideHistory?.length && (
         <Pressable
           style={{
             flexDirection: "row",
@@ -273,8 +327,6 @@ const StartModal = () => {
             </Text>
           </View>
         </Pressable>
-      ) : (
-        <></>
       )}
     </>
   );
@@ -507,7 +559,7 @@ const ChooseRideModal = () => {
     userAddress,
   } = useMapContext();
 
-  const { resetRide, rideRequest, setRideStatus, pickupTime, scheduledTime } =
+  const { rideRequest, setRideStatus, pickupTime, scheduledTime } =
     useRideContext();
 
   const { showNotification } = useNotificationContext();

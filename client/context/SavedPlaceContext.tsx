@@ -25,6 +25,9 @@ interface SavedPlace {
 
 interface SavedPlaceContextType {
   savedPlaces: SavedPlace[];
+  homePlace: SavedPlace | null;
+  officePlace: SavedPlace | null;
+  otherPlaces: SavedPlace[] | null;
   savePlace: (
     place_header: string,
     place_id: string,
@@ -46,7 +49,6 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext();
   const { getSuggestions } = useMapContext();
 
-  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [loading, setLoading] = useState(false);
 
   // New state for search results
@@ -91,6 +93,10 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
+  const [homePlace, setHomePlace] = useState<SavedPlace | null>(null);
+  const [officePlace, setOfficePlace] = useState<SavedPlace | null>(null);
+  const [otherPlaces, setOtherPlaces] = useState<SavedPlace[] | null>(null);
   const getSavedPlaces = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     setLoading(true);
@@ -98,7 +104,19 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.get(`${API_URL}/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSavedPlaces(data.saved_places || []);
+
+      const savedPlaces: SavedPlace[] = data.saved_places;
+
+      const homePlace = savedPlaces.find((p) => p.place_header === "home");
+      setHomePlace(homePlace || null);
+      const officePlace = savedPlaces.find((p) => p.place_header === "office");
+      setOfficePlace(officePlace || null);
+      const otherPlaces = savedPlaces.filter(
+        (p) => p.place_header !== "home" && p.place_header !== "office"
+      );
+      setOtherPlaces(otherPlaces || null);
+
+      setSavedPlaces(savedPlaces || []);
     } catch (error: any) {
       console.log(error);
     } finally {
@@ -133,6 +151,9 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
     <SavedPlaceContext.Provider
       value={{
         savedPlaces,
+        homePlace,
+        officePlace,
+        otherPlaces,
         savePlace,
         getSavedPlaces,
         deleteSavedPlace,
