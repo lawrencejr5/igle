@@ -52,13 +52,25 @@ const SavedPlaces = () => {
   );
 
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const [placeModalOpen, setPlaceOpenModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (placeModalOpen) bottomSheetRef.current?.snapToIndex(0);
+    else bottomSheetRef.current?.close();
+  }, [placeModalOpen]);
 
   const [editable, setEditable] = useState<boolean>(false);
   const [placeHeader, setPlaceHeader] = useState<string>("");
+  const [placeName, setPlaceName] = useState<string>("");
 
-  const addPlace = (place: string, edit: boolean) => {
-    bottomSheetRef.current?.snapToIndex(0);
-    setPlaceHeader(place);
+  const addPlace = (
+    place_header: string,
+    edit: boolean,
+    place_name?: string
+  ) => {
+    setPlaceOpenModal(true);
+    setPlaceHeader(place_header);
+    setPlaceName(place_name || "");
     setEditable(edit);
   };
 
@@ -77,6 +89,7 @@ const SavedPlaces = () => {
     setActionPlaceName(place_name);
     setActionPlaceSubName(place_sub_name);
   };
+
   return (
     <>
       <Notification notification={notification} />
@@ -197,13 +210,18 @@ const SavedPlaces = () => {
 
       <PlaceModal
         ref={bottomSheetRef}
+        open={placeModalOpen}
+        setOpen={setPlaceOpenModal}
         placeHeader={placeHeader}
         setPlaceHeader={setPlaceHeader}
+        place={placeName}
+        setPlace={setPlaceName}
         editable={editable}
       />
       <ActionModal
         open={actionModalOpen}
         setOpen={setActionModalOpen}
+        setEditModal={addPlace}
         place_name={actionPlaceName}
         place_header={actionPlaceHeader}
         place_sub_name={actionPlaceSubName}
@@ -217,18 +235,30 @@ export default SavedPlaces;
 const PlaceModal: FC<{
   ref: any;
   placeHeader: string;
+  place: string;
+  setPlace: Dispatch<SetStateAction<string>>;
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
   setPlaceHeader: Dispatch<SetStateAction<string>>;
   editable: boolean;
-}> = ({ ref, placeHeader, setPlaceHeader, editable }) => {
+}> = ({
+  ref,
+  placeHeader,
+  place,
+  setPlace,
+  setOpen,
+  setPlaceHeader,
+  editable,
+}) => {
   const { searchResults, searchPlace, savePlace } = useSavedPlaceContext();
 
   const { getPlaceCoords } = useMapContext();
-  const [place, setPlace] = useState<string>("");
 
   const handleSheetChange = (index: number) => {
     if (index === -1) {
       setPlaceHeader("");
       setPlace("");
+      setOpen(false);
       Keyboard.dismiss();
     }
   };
@@ -238,7 +268,6 @@ const PlaceModal: FC<{
     place_name: string,
     place_sub_name: string
   ) => {
-    ref.current?.snapToIndex(-1);
     try {
       setPlace(place_name);
 
@@ -251,6 +280,7 @@ const PlaceModal: FC<{
         place_sub_name,
         coords
       );
+      setOpen(false);
     } catch (error) {
       console.log(error);
     }
@@ -348,16 +378,37 @@ const PlaceModal: FC<{
 const ActionModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  setEditModal: (
+    place_header: string,
+    edit: boolean,
+    place_name?: string
+  ) => void;
   place_header: string;
   place_name: string;
   place_sub_name: string;
-}> = ({ open, setOpen, place_name, place_header, place_sub_name }) => {
+}> = ({
+  open,
+  setOpen,
+  setEditModal,
+  place_name,
+  place_header,
+  place_sub_name,
+}) => {
   const { deleteSavedPlace } = useSavedPlaceContext();
 
   const delete_place = async () => {
     try {
       setOpen(false);
       await deleteSavedPlace(place_header);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const edit_place = async () => {
+    try {
+      setOpen(false);
+      setEditModal(place_header, false, place_name);
     } catch (error) {
       console.log(error);
     }
@@ -410,6 +461,7 @@ const ActionModal: FC<{
           </View>
           <View style={{ marginTop: 20 }}>
             <TouchableOpacity
+              onPress={edit_place}
               style={{
                 width: "100%",
                 borderRadius: 7,

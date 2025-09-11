@@ -82,7 +82,7 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showNotification(data.msg, "success");
-      await getSavedPlaces(); // Refresh list after saving
+      await getSavedPlaces();
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       showNotification(errMsg || "An error occurred", "error");
