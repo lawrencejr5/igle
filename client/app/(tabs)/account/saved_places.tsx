@@ -16,6 +16,8 @@ import {
   TextInput,
   FlatList,
   Keyboard,
+  Modal,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -59,6 +61,8 @@ const SavedPlaces = () => {
     setPlaceHeader(place);
     setEditable(edit);
   };
+
+  const [actionModalOpen, setActionModal] = useState<boolean>(false);
 
   return (
     <>
@@ -152,12 +156,14 @@ const SavedPlaces = () => {
           </Pressable>
         </View>
       </SafeAreaView>
+
       <PlaceModal
         ref={bottomSheetRef}
         placeHeader={placeHeader}
         setPlaceHeader={setPlaceHeader}
         editable={editable}
       />
+      <ActionModal open={actionModalOpen} setOpen={setActionModal} />
     </>
   );
 };
@@ -292,6 +298,105 @@ const PlaceModal: FC<{
         </View>
       </BottomSheetView>
     </BottomSheet>
+  );
+};
+
+const ActionModal: FC<{
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}> = ({ open, setOpen }) => {
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={open}
+      onRequestClose={() => setOpen(false)}
+    >
+      <Pressable
+        onPress={() => setOpen(false)}
+        style={{
+          flex: 1,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          justifyContent: "flex-end",
+        }}
+      >
+        <Pressable
+          onPress={() => {}}
+          style={{
+            backgroundColor: "#2b2b2b",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+          }}
+        >
+          <View style={{ width: 300 }}>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                fontSize: 18,
+              }}
+            >
+              Home
+            </Text>
+            <Text
+              style={{
+                color: "#aaa",
+                fontFamily: "raleway-semibold",
+                flexShrink: 1,
+              }}
+            >
+              Anglican girls grammar school
+            </Text>
+          </View>
+          <View style={{ marginTop: 20 }}>
+            <TouchableOpacity
+              style={{
+                width: "100%",
+                borderRadius: 7,
+                padding: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <Feather name="edit-3" size={18} color={"#fff"} />
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-semibold",
+                  fontSize: 16,
+                }}
+              >
+                Edit place
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                width: "100%",
+                borderRadius: 7,
+                padding: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                marginTop: 15,
+              }}
+            >
+              <Feather name="trash" size={18} color={"#ff0000"} />
+              <Text
+                style={{
+                  fontFamily: "raleway-semibold",
+                  fontSize: 16,
+                  color: "#ff0000",
+                }}
+              >
+                Delete place
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 };
 
