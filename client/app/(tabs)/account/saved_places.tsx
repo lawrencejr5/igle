@@ -26,6 +26,7 @@ import {
   FontAwesome,
   MaterialIcons,
   Ionicons,
+  FontAwesome6,
 } from "@expo/vector-icons";
 
 import { router } from "expo-router";
@@ -40,6 +41,14 @@ import { useMapContext } from "../../../context/MapContext";
 
 const SavedPlaces = () => {
   const { notification } = useNotificationContext();
+
+  const { savedPlaces } = useSavedPlaceContext();
+  const homePlace = savedPlaces.find((p) => p.place_header === "home");
+  const officePlace = savedPlaces.find((p) => p.place_header === "office");
+  const otherPlaces = savedPlaces.filter(
+    (p) => p.place_header !== "home" && p.place_header !== "office"
+  );
+
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const [editable, setEditable] = useState<boolean>(false);
@@ -82,18 +91,42 @@ const SavedPlaces = () => {
               gap: 10,
               marginTop: 10,
               paddingVertical: 15,
+              alignItems: "center",
             }}
           >
             <Entypo name="home" color={"#fff"} size={22} />
-            <Text
-              style={{
-                fontFamily: "raleway-regular",
-                color: "#fff",
-                fontSize: 16,
-              }}
-            >
-              Add home location
-            </Text>
+            {homePlace ? (
+              <View style={{ width: 300 }}>
+                <Text
+                  style={{
+                    fontFamily: "raleway-bold",
+                    color: "#fff",
+                    fontSize: 16,
+                  }}
+                >
+                  Home
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "raleway-regular",
+                    color: "#fff",
+                    fontSize: 14,
+                  }}
+                >
+                  {`${homePlace.place_name}, ${homePlace.place_sub_name}`}
+                </Text>
+              </View>
+            ) : (
+              <Text
+                style={{
+                  fontFamily: "raleway-regular",
+                  color: "#fff",
+                  fontSize: 16,
+                }}
+              >
+                Add home location
+              </Text>
+            )}
           </Pressable>
           <Pressable
             onPress={() => addPlace("office", false)}
@@ -102,19 +135,91 @@ const SavedPlaces = () => {
               gap: 10,
               marginTop: 10,
               paddingVertical: 15,
+              alignItems: "center",
             }}
           >
             <FontAwesome name="briefcase" color={"#fff"} size={20} />
-            <Text
-              style={{
-                fontFamily: "raleway-regular",
-                color: "#fff",
-                fontSize: 16,
-              }}
-            >
-              Add office location
-            </Text>
+            {officePlace ? (
+              <View style={{ width: 300 }}>
+                <Text
+                  style={{
+                    fontFamily: "raleway-bold",
+                    color: "#fff",
+                    fontSize: 16,
+                  }}
+                >
+                  Office
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "raleway-regular",
+                    color: "#fff",
+                    fontSize: 14,
+                  }}
+                >
+                  {`${officePlace.place_name}, ${officePlace.place_sub_name}`}
+                </Text>
+              </View>
+            ) : (
+              <Text
+                style={{
+                  fontFamily: "raleway-regular",
+                  color: "#fff",
+                  fontSize: 16,
+                }}
+              >
+                Add office location
+              </Text>
+            )}
           </Pressable>
+
+          {otherPlaces && (
+            <FlatList
+              data={otherPlaces}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => {
+                return (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 10,
+                      marginTop: 10,
+                      paddingVertical: 15,
+                      alignItems: "center",
+                    }}
+                  >
+                    <FontAwesome6
+                      name="location-dot"
+                      color={"#fff"}
+                      size={20}
+                    />
+                    <View style={{ width: 300 }}>
+                      <Text
+                        style={{
+                          fontFamily: "raleway-bold",
+                          color: "#fff",
+                          fontSize: 16,
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {item.place_header}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "raleway-regular",
+                          color: "#fff",
+                          fontSize: 14,
+                        }}
+                      >
+                        {`${item.place_name}, ${item.place_sub_name}`}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              }}
+            />
+          )}
+
           <Pressable
             onPress={() => addPlace("", true)}
             style={{

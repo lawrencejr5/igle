@@ -16,7 +16,9 @@ import { useMapContext } from "./MapContext";
 
 interface SavedPlace {
   _id: string;
+  place_id: string;
   place_name: string;
+  place_header: string;
   place_sub_name: string;
   place_coords: [number, number];
 }
