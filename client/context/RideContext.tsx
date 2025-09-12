@@ -149,10 +149,10 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (rideStatus === "") routeModalRef.current?.snapToIndex(1);
-    if (rideStatus === "booking") routeModalRef.current?.snapToIndex(4);
+    if (rideStatus === "booking") routeModalRef.current?.snapToIndex(5);
     if (rideStatus === "choosing_car") routeModalRef.current?.snapToIndex(1);
     if (rideStatus === "searching") routeModalRef.current?.snapToIndex(1);
-    if (rideStatus === "accepted") routeModalRef.current?.snapToIndex(3);
+    if (rideStatus === "accepted") routeModalRef.current?.snapToIndex(4);
     if (rideStatus === "pay") routeModalRef.current?.snapToIndex(1);
     if (rideStatus === "paying") routeModalRef.current?.snapToIndex(1);
   }, [rideStatus]);

@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   BackHandler,
   Platform,
+  // ScrollView,
 } from "react-native";
 import React, {
   useState,
@@ -25,7 +26,12 @@ import React, {
 
 import * as Linking from "expo-linking";
 
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+
+import { ScrollView } from "react-native-gesture-handler";
 
 import RideRoute from "./RideRoute";
 
@@ -36,6 +42,8 @@ import {
   FontAwesome5,
   MaterialCommunityIcons,
   Entypo,
+  Feather,
+  FontAwesome6,
 } from "@expo/vector-icons";
 
 import { useAuthContext } from "../context/AuthContext";
@@ -135,12 +143,15 @@ const RouteModal = () => {
       setRideStatus("");
       resetRide();
     }
-    if (index === 4 && rideStatus === "") {
+    if (index === 5 && rideStatus === "") {
       setRideStatus("booking");
     }
   };
 
-  const snapPoints = useMemo(() => ["22%", "40%", "60%", "80%", "93%"], []);
+  const snapPoints = useMemo(
+    () => ["22%", "30%", "40%", "60%", "80%", "93%"],
+    []
+  );
 
   return (
     <BottomSheet
@@ -197,8 +208,6 @@ const StartModal = () => {
   const { signedIn } = useAuthContext();
 
   const { destination, destinationCoords } = useMapContext();
-  const { savedPlaces, homePlace, officePlace, otherPlaces } =
-    useSavedPlaceContext();
   const { rideHistory } = useHistoryContext();
 
   const { setRideStatus, setModalUp, set_destination_func, routeModalRef } =
@@ -233,58 +242,12 @@ const StartModal = () => {
           />
         </View>
       </Pressable>
-      <View style={{ marginTop: 20, flexDirection: "row", gap: 10 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            width: 150,
-          }}
-        >
-          <Entypo name="home" color={"#8d8d8d"} size={22} />
-          <View style={{ flexShrink: 1 }}>
-            <Text style={{ fontFamily: "raleway-bold", color: "#8d8d8d" }}>
-              Home
-            </Text>
-            <Text
-              style={{
-                fontFamily: "raleway-regular",
-                color: "#8d8d8d",
-              }}
-              numberOfLines={1}
-            >
-              Anglican girls grammar school
-            </Text>
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            width: 150,
-          }}
-        >
-          <FontAwesome name="briefcase" color={"#8d8d8d"} size={20} />
-          <View style={{ flexShrink: 1 }}>
-            <Text style={{ fontFamily: "raleway-bold", color: "#8d8d8d" }}>
-              Office
-            </Text>
-            <Text
-              style={{
-                fontFamily: "raleway-regular",
-                color: "#8d8d8d",
-              }}
-              numberOfLines={1}
-            >
-              Anglican girls grammar school
-            </Text>
-          </View>
-        </View>
-      </View>
+
+      {/* Saved places scroll view */}
+      <SavedPlaces />
+
       {rideHistory?.length && (
-        <Pressable
+        <TouchableOpacity
           style={{
             flexDirection: "row",
             gap: 10,
@@ -326,9 +289,189 @@ const StartModal = () => {
               {rideHistory && rideHistory[0].place_sub_name}
             </Text>
           </View>
-        </Pressable>
+        </TouchableOpacity>
       )}
     </>
+  );
+};
+
+const SavedPlaces = () => {
+  const { homePlace, officePlace, otherPlaces } = useSavedPlaceContext();
+  const { set_destination_func } = useRideContext();
+  return (
+    <View style={{ marginTop: 20 }}>
+      <ScrollView
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10 }}
+      >
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => {
+            homePlace
+              ? set_destination_func(
+                  homePlace.place_id,
+                  homePlace.place_name,
+                  homePlace.place_sub_name
+                )
+              : router.push("../(tabs)/account/saved_places");
+          }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            width: 140,
+          }}
+        >
+          <Entypo name="home" color={"#8d8d8d"} size={22} />
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ fontFamily: "raleway-bold", color: "#8d8d8d" }}>
+              Home
+            </Text>
+            {homePlace ? (
+              <Text
+                style={{
+                  fontFamily: "raleway-regular",
+                  color: "#8d8d8d",
+                  fontSize: 12,
+                }}
+                numberOfLines={1}
+              >
+                {homePlace.place_name}
+              </Text>
+            ) : (
+              <Text
+                style={{
+                  fontFamily: "raleway-regular",
+                  color: "#8d8d8d",
+                  fontSize: 12,
+                }}
+                numberOfLines={1}
+              >
+                Add place <Feather name="plus" color={"#8d8d8d"} size={12} />
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => {
+            officePlace
+              ? set_destination_func(
+                  officePlace.place_id,
+                  officePlace.place_name,
+                  officePlace.place_sub_name
+                )
+              : router.push("../(tabs)/account/saved_places");
+          }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            width: 140,
+          }}
+        >
+          <FontAwesome name="briefcase" color={"#8d8d8d"} size={20} />
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ fontFamily: "raleway-bold", color: "#8d8d8d" }}>
+              Office
+            </Text>
+            {officePlace ? (
+              <Text
+                style={{
+                  fontFamily: "raleway-regular",
+                  color: "#8d8d8d",
+                  fontSize: 12,
+                }}
+                numberOfLines={1}
+              >
+                {officePlace.place_name}
+              </Text>
+            ) : (
+              <Text
+                style={{
+                  fontFamily: "raleway-regular",
+                  color: "#8d8d8d",
+                  fontSize: 12,
+                }}
+                numberOfLines={1}
+              >
+                Add place <Feather name="plus" color={"#8d8d8d"} size={12} />
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
+        {otherPlaces && (
+          <FlatList
+            data={otherPlaces}
+            keyExtractor={(otherPlaces) => otherPlaces._id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => {
+                  set_destination_func(
+                    item.place_id,
+                    item.place_name,
+                    item.place_sub_name
+                  );
+                }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  width: 140,
+                }}
+              >
+                <FontAwesome6 name="location-dot" color={"#8d8d8d"} size={20} />
+                <View style={{ flexShrink: 1 }}>
+                  <Text
+                    style={{
+                      fontFamily: "raleway-bold",
+                      color: "#8d8d8d",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {item.place_header}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "raleway-regular",
+                      color: "#8d8d8d",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {item.place_name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        )}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => router.push("../(tabs)/account/saved_places")}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            width: 140,
+          }}
+        >
+          <FontAwesome6 name="plus" color={"#8d8d8d"} size={20} />
+          <View style={{ flexShrink: 1 }}>
+            <Text
+              style={{
+                fontFamily: "raleway-bold",
+                color: "#8d8d8d",
+                textTransform: "capitalize",
+              }}
+            >
+              Add Place
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
