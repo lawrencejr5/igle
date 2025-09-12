@@ -5,6 +5,7 @@ export const API_URLS = {
   rides: "http://192.168.131.123:5000/api/v1/rides",
   history: "http://192.168.131.123:5000/api/v1/history",
   saved_place: "http://192.168.131.123:5000/api/v1/saved_place",
+  activity: "http://192.168.131.123:5000/api/v1/activity",
 };
 
 export const SOCKET_URL = "http://192.168.131.123:5000";

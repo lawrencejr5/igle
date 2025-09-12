@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Stack } from "expo-router";
-import SafeArea from "../components/SafeArea";
 
 import * as SystemUI from "expo-system-ui";
 import { useFonts } from "expo-font";
@@ -17,6 +16,7 @@ import WalletProvider from "../context/WalletContext";
 import DriverContextPrvider from "../context/DriverContext";
 import HistoryProvider from "../context/HistoryContext";
 import SavedPlaceProvider from "../context/SavedPlaceContext";
+import ActivityProvider from "../context/ActivityContext";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
@@ -42,27 +42,29 @@ const RootLayout = () => {
     <GestureHandlerRootView>
       <LoadingProvider>
         <NotificationProvider>
-          <WalletProvider>
-            <MapContextProvider>
-              <HistoryProvider>
-                <DriverAuthProvider>
-                  <AuthProvider>
-                    <DriverContextPrvider>
-                      <RideContextProvider>
-                        <SavedPlaceProvider>
-                          <Stack
-                            screenOptions={{
-                              headerShown: false,
-                            }}
-                          />
-                        </SavedPlaceProvider>
-                      </RideContextProvider>
-                    </DriverContextPrvider>
-                  </AuthProvider>
-                </DriverAuthProvider>
-              </HistoryProvider>
-            </MapContextProvider>
-          </WalletProvider>
+          <ActivityProvider>
+            <WalletProvider>
+              <MapContextProvider>
+                <HistoryProvider>
+                  <DriverAuthProvider>
+                    <AuthProvider>
+                      <DriverContextPrvider>
+                        <RideContextProvider>
+                          <SavedPlaceProvider>
+                            <Stack
+                              screenOptions={{
+                                headerShown: false,
+                              }}
+                            />
+                          </SavedPlaceProvider>
+                        </RideContextProvider>
+                      </DriverContextPrvider>
+                    </AuthProvider>
+                  </DriverAuthProvider>
+                </HistoryProvider>
+              </MapContextProvider>
+            </WalletProvider>
+          </ActivityProvider>
         </NotificationProvider>
       </LoadingProvider>
     </GestureHandlerRootView>
