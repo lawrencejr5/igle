@@ -28,6 +28,7 @@ import { useNavigation } from "expo-router";
 
 import { API_URLS } from "../data/constants";
 import BottomSheet from "@gorhom/bottom-sheet";
+import { useActivityContext } from "./ActivityContext";
 
 const RideContext = createContext<RideContextType | null>(null);
 
@@ -62,6 +63,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   } = useMapContext();
   const { getWalletBalance } = useWalletContext();
   const { getRideHistory, addRideHistory } = useHistoryContext();
+  const { createActivity } = useActivityContext();
 
   const [ongoingRideData, setOngoingRideData] = useState<any>(null);
   const [rideData, setRideData] = useState<any>(null);
@@ -425,6 +427,13 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         }
       );
       await getWalletBalance("User");
+
+      await createActivity(
+        "transaction",
+        "Payment for ride",
+        `${ongoingRideData.fare} was debitted from ur wallet`
+      );
+
       await fetchOngoingRideData(ongoingRideData._id);
       setModalUp(false);
       setRideStatus("paid");
