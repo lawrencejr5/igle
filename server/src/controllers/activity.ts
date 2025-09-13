@@ -30,7 +30,7 @@ export const get_user_activities = async (req: Request, res: Response) => {
     const user = req.user?.id;
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    const activities = await Activity.find({ user });
+    const activities = await Activity.find({ user }).sort({ createdAt: -1 });
 
     res
       .status(200)

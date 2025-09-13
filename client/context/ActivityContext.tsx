@@ -31,6 +31,7 @@ export interface ActivityType {
   message: string;
   metadata?: Record<string, any>;
   is_read: boolean;
+  createdAt: Date;
 }
 
 const ActivityContext = createContext<ActivityContextType | null>(null);
@@ -98,6 +99,44 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const formatTime = (createdAt: Date): string => {
+    if (!createdAt) return "just now";
+
+    const commentDate = new Date(createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - commentDate.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+
+    if (diffMinutes < 1) {
+      return "just now";
+    } else if (diffMinutes < 60) {
+      return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""} ago`;
+    }
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) {
+      return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    }
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) {
+      return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    }
+
+    const diffWeeks = Math.floor(diffDays / 7);
+    if (diffWeeks < 4) {
+      return `${diffWeeks} week${diffWeeks !== 1 ? "s" : ""} ago`;
+    }
+
+    const diffMonths = Math.floor(diffWeeks / 4);
+    if (diffMonths < 12) {
+      return `${diffMonths} month${diffMonths !== 1 ? "s" : ""} ago`;
+    }
+
+    const diffYears = Math.floor(diffMonths / 12);
+    return `${diffYears} year${diffYears !== 1 ? "s" : ""} ago`;
+  };
+
   useEffect(() => {
     fetchActivities();
   }, []);
@@ -110,6 +149,7 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
         fetchActivities,
         createActivity,
         removeActivity,
+        formatTime,
       }}
     >
       {children}
@@ -130,6 +170,7 @@ interface ActivityContextType {
     metadata?: Record<string, any>
   ) => Promise<void>;
   removeActivity: (activity_id: string) => Promise<void>;
+  formatTime: (createdAt: Date) => string;
 }
 
 export const useActivityContext = () =>

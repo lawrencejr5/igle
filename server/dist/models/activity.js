@@ -13,7 +13,7 @@ const ActivitySchema = new mongoose_1.Schema({
             "system",
             "security",
             "phone_update",
-            "email_updated",
+            "email_update",
         ],
         required: true,
     },

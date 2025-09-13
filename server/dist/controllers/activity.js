@@ -43,7 +43,7 @@ const get_user_activities = (req, res) => __awaiter(void 0, void 0, void 0, func
         const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!user)
             return res.status(404).json({ msg: "User not found" });
-        const activities = yield activity_1.default.find({ user });
+        const activities = yield activity_1.default.find({ user }).sort({ createdAt: -1 });
         res
             .status(200)
             .json({ msg: "Success", row_count: activities.length, activities });

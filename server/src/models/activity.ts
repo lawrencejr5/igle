@@ -31,7 +31,7 @@ const ActivitySchema = new Schema<ActivitySchemaType>(
         "system",
         "security",
         "phone_update",
-        "email_updated",
+        "email_update",
       ],
       required: true,
     },
