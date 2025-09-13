@@ -18,12 +18,14 @@ export interface ActivityType {
   _id: string;
   type:
     | "ride"
+    | "cancelled_ride"
     | "scheduled_ride"
     | "wallet_funding"
-    | "transaction"
+    | "ride_payment"
     | "system"
     | "security"
-    | "user_details";
+    | "email_update"
+    | "phone_update";
   user: string;
   title: string;
   message: string;

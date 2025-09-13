@@ -16,6 +16,7 @@ exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = export
 const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
+const activity_1 = __importDefault(require("../models/activity"));
 const get_id_1 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const wallet_2 = require("../utils/wallet");
@@ -436,6 +437,13 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     server_1.io.to(driver_socket).emit("ride_completed", {
                         msg: "You have finished the ride",
                     });
+                yield activity_1.default.create({
+                    type: "ride",
+                    user: ride.rider,
+                    title: "Ride completed",
+                    message: `Your ride to ${ride.destination.address} has been completed`,
+                    metadata: { ride_id: ride._id, driver_id: ride.driver },
+                });
                 if (!result.success) {
                     res.status(result.statusCode).json({ msg: result.message });
                     return;

@@ -195,10 +195,9 @@ const upload_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.upload_profile_pic = upload_profile_pic;
 const remove_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    var _a;
     try {
-        const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.id; // assuming you attach user ID from auth middleware
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id; // assuming you attach user ID from auth middleware
         const user = yield user_1.default.findById(userId);
         if (!user) {
             return res.status(404).json({ error: "User not found" });
@@ -266,7 +265,7 @@ const update_phone = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             res.status(404).json({ msg: "User not found." });
             return;
         }
-        res.status(200).json({ msg: "Phone number updated successfully." });
+        res.status(200).json({ msg: "Phone number updated successfully.", user });
     }
     catch (err) {
         res.status(500).json({ msg: "Server error." });
@@ -287,7 +286,7 @@ const update_name = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             res.status(404).json({ msg: "User not found." });
             return;
         }
-        res.status(200).json({ msg: "Fullname updated successfully." });
+        res.status(200).json({ msg: "Fullname updated successfully.", user });
     }
     catch (err) {
         res.status(500).json({ msg: "Server error." });
@@ -308,7 +307,7 @@ const update_email = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             res.status(404).json({ msg: "User not found." });
             return;
         }
-        res.status(200).json({ msg: "Email updated successfully." });
+        res.status(200).json({ msg: "Email updated successfully.", user });
     }
     catch (err) {
         res.status(500).json({ msg: "Server error." });

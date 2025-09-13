@@ -49,7 +49,7 @@ const SecuritySettings = () => {
             marginTop: 30,
             borderColor: "#656565",
             borderWidth: 0.5,
-            borderRadius: 5,
+            borderRadius: 10,
             padding: 10,
             flexDirection: "row",
             justifyContent: "space-between",

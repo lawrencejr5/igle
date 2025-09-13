@@ -36,7 +36,6 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     owner_type: "Driver" | "User"
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
-    setWalletLoading(true);
     try {
       const { data } = await axios.get(
         `${API_URL}/balance?owner_type=${owner_type}`,
@@ -54,8 +53,6 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } catch (error: any) {
       const errMsg = error.response.data.msg;
       throw new Error(errMsg);
-    } finally {
-      setWalletLoading(false);
     }
   };
 

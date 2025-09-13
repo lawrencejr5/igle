@@ -218,7 +218,6 @@ export const upload_profile_pic = async (req: Request, res: Response) => {
 };
 
 export const remove_profile_pic = async (req: Request, res: Response) => {
-  const user_id = req.user?.id;
   try {
     const userId = req.user?.id; // assuming you attach user ID from auth middleware
     const user = await User.findById(userId);
@@ -310,7 +309,7 @@ export const update_phone = async (
       return;
     }
 
-    res.status(200).json({ msg: "Phone number updated successfully." });
+    res.status(200).json({ msg: "Phone number updated successfully.", user });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }
@@ -336,7 +335,7 @@ export const update_name = async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(200).json({ msg: "Fullname updated successfully." });
+    res.status(200).json({ msg: "Fullname updated successfully.", user });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }
@@ -362,7 +361,7 @@ export const update_email = async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(200).json({ msg: "Email updated successfully." });
+    res.status(200).json({ msg: "Email updated successfully.", user });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }

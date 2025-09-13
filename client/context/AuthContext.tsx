@@ -30,6 +30,7 @@ import { useHistoryContext } from "./HistoryContext";
 import { useLoading } from "./LoadingContext";
 
 import { API_URLS } from "../data/constants";
+import { useActivityContext } from "./ActivityContext";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -37,8 +38,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } =
     useNotificationContext() as NotificationContextType;
   const { getWalletBalance } = useWalletContext();
-  const { getRideHistory, rideHistory } = useHistoryContext();
+  const { getRideHistory } = useHistoryContext();
   const { setAppLoading } = useLoading();
+  const { createActivity } = useActivityContext();
 
   const [signedIn, setSignedIn] = useState<UserType | null>(null);
 
@@ -153,13 +155,20 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const updatePhone = async (phone: string): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
-      await axios.patch(
+      const { data } = await axios.patch(
         `${API_URL}/phone`,
         { phone },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       await getUserData();
+
+      await createActivity(
+        "phone_update",
+        "Phone number updated",
+        `Your phone number has been updated`,
+        { phone: data.user.phone }
+      );
 
       showNotification("Phone updated successfully.", "success");
     } catch (err: any) {
@@ -199,7 +208,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const updateEmail = async (email: string): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
-      await axios.patch(
+      const { data } = await axios.patch(
         `${API_URL}/email?email=${email}`,
         {},
         {
@@ -208,6 +217,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
 
       await getUserData();
+
+      await createActivity(
+        "email_update",
+        "Email updated",
+        `Your email has been updated`,
+        { email: data.user.email }
+      );
 
       showNotification("Email updated successfully.", "success");
     } catch (err: any) {

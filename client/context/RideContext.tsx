@@ -353,12 +353,18 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setCancelling(true);
     const token = await AsyncStorage.getItem("token");
     try {
-      await axios.patch(
+      const { data } = await axios.patch(
         `${API_URL}/cancel?ride_id=${ride_id}`,
         { reason, by },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       resetRide();
+      await createActivity(
+        "cancelled_ride",
+        "Cancelled ride",
+        `You cancelled your ride to ${data.ride.destination.address}`,
+        { ride_id: data.ride._id }
+      );
       await getUserCancelledRides();
       showNotification("Ride request cancelled", "error");
     } catch (error: any) {
@@ -429,7 +435,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       await getWalletBalance("User");
 
       await createActivity(
-        "transaction",
+        "ride_payment",
         "Payment for ride",
         `${ongoingRideData.fare} was debitted from ur wallet`
       );

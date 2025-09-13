@@ -419,9 +419,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderColor: "#656565ff",
-    borderWidth: 0.5,
-    borderRadius: 5,
+    borderBottomWidth: 0.5,
     padding: 10,
+    paddingLeft: 0,
     marginBottom: 20,
   },
   item_header_text: {

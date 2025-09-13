@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 
 import Ride from "../models/ride";
 import Wallet from "../models/wallet";
+import Activity from "../models/activity";
 
 import {
   get_driver_id,
@@ -514,6 +515,14 @@ export const update_ride_status = async (
           io.to(driver_socket).emit("ride_completed", {
             msg: "You have finished the ride",
           });
+
+        await Activity.create({
+          type: "ride",
+          user: ride.rider,
+          title: "Ride completed",
+          message: `Your ride to ${ride.destination.address} has been completed`,
+          metadata: { ride_id: ride._id, driver_id: ride.driver },
+        });
 
         if (!result.success) {
           res.status(result.statusCode!).json({ msg: result.message });

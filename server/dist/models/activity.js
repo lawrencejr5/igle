@@ -6,12 +6,14 @@ const ActivitySchema = new mongoose_1.Schema({
         type: String,
         enum: [
             "ride",
+            "cancelled_ride",
             "scheduled_ride",
             "wallet_funding",
-            "transaction",
+            "ride_payment",
             "system",
             "security",
-            "user_details",
+            "phone_update",
+            "email_updated",
         ],
         required: true,
     },
@@ -35,6 +37,6 @@ const ActivitySchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
-});
+}, { timestamps: true });
 const ActivityModel = (0, mongoose_1.model)("Activity", ActivitySchema);
 exports.default = ActivityModel;
