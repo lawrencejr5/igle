@@ -149,7 +149,7 @@ const RouteModal = () => {
   };
 
   const snapPoints = useMemo(
-    () => ["22%", "30%", "40%", "60%", "80%", "93%"],
+    () => ["22%", "32%", "40%", "60%", "80%", "93%"],
     []
   );
 
@@ -251,7 +251,7 @@ const StartModal = () => {
           style={{
             flexDirection: "row",
             gap: 10,
-            marginTop: 25,
+            marginTop: 30,
             alignItems: "center",
           }}
           onPress={() =>

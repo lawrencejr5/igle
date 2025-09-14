@@ -4,6 +4,8 @@ import {
   View,
   TouchableWithoutFeedback,
   Modal,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import React, { FC } from "react";
 
@@ -15,13 +17,17 @@ import {
   ActivityType,
 } from "../../context/ActivityContext";
 import { FlatList } from "react-native-gesture-handler";
-import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Entypo,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 
 const NotificationScreen: React.FC<{
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }> = ({ open, setOpen }) => {
-  const { activities, formatTime } = useActivityContext();
+  const { activities, activityLoading, formatTime } = useActivityContext();
 
   return (
     <Modal
@@ -66,30 +72,71 @@ const NotificationScreen: React.FC<{
           </TouchableWithoutFeedback>
         </View>
         {/* ...Notification content... */}
-        <View style={{ marginTop: 25 }}>
-          <FlatList
-            data={activities}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => {
-              const { createdAt } = item;
-              const formattedTime = formatTime(createdAt);
-              return (
-                <NotificationItem
-                  type={item.type}
-                  title={item.title}
-                  message={item.message}
-                  createdAt={formattedTime}
-                />
-              );
+        {activityLoading ? (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
             }}
-          />
-        </View>
+          >
+            <ActivityIndicator
+              color={"#fff"}
+              style={{ transform: [{ scale: 3 }] }}
+            />
+          </View>
+        ) : activities?.length! > 0 ? (
+          <View style={{ marginTop: 25 }}>
+            <FlatList
+              data={activities}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => {
+                const { createdAt } = item;
+                const formattedTime = formatTime(createdAt);
+                return (
+                  <NotificationItem
+                    type={item.type}
+                    title={item.title}
+                    message={item.message}
+                    createdAt={formattedTime}
+                  />
+                );
+              }}
+            />
+          </View>
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 20,
+            }}
+          >
+            <Image
+              source={require("../../assets/images/empty_inbox-nobg.png")}
+              style={{ width: 200, height: 200, borderRadius: 20 }}
+            />
+            <Text
+              style={{
+                fontFamily: "raleway-semibold",
+                color: "#fff",
+                fontSize: 18,
+                textAlign: "center",
+                marginTop: 20,
+                flexShrink: 1,
+              }}
+            >
+              No notifications for you at this point...
+            </Text>
+          </View>
+        )}
       </View>
     </Modal>
   );
 };
 
-const NotificationItem: FC<{
+export const NotificationItem: FC<{
   type: ActivityType["type"];
   title: string;
   message: string;
@@ -123,6 +170,10 @@ const NotificationItem: FC<{
           />
         ) : type === "phone_update" ? (
           <Feather name="phone" size={20} color={"#fff"} />
+        ) : type === "ride" ? (
+          <MaterialCommunityIcons name="car" size={20} color={"#fff"} />
+        ) : type === "ride_payment" ? (
+          <MaterialIcons name="payment" size={20} color={"#fff"} />
         ) : type === "cancelled_ride" ? (
           <MaterialCommunityIcons name="car-off" size={20} color={"#fff"} />
         ) : type === "scheduled_ride" ? (

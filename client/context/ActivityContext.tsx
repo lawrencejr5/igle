@@ -38,14 +38,14 @@ const ActivityContext = createContext<ActivityContextType | null>(null);
 
 const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [activities, setActivities] = useState<ActivityType[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   const { showNotification } = useNotificationContext();
 
   const API_URL = API_URLS.activity;
 
   const fetchActivities = async (): Promise<void> => {
-    setLoading(true);
+    setActivityLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.get(API_URL, {
@@ -55,7 +55,7 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } catch (error: any) {
       showNotification("Failed to fetch activities", "error");
     } finally {
-      setLoading(false);
+      setActivityLoading(false);
     }
   };
 
@@ -65,7 +65,7 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     message?: string,
     metadata?: Record<string, any>
   ): Promise<void> => {
-    setLoading(true);
+    setActivityLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.post(
@@ -78,12 +78,12 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } catch (error: any) {
       console.log("Failed to create activity");
     } finally {
-      setLoading(false);
+      setActivityLoading(false);
     }
   };
 
   const removeActivity = async (activity_id: string): Promise<void> => {
-    setLoading(true);
+    setActivityLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.delete(API_URL, {
@@ -95,7 +95,7 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } catch (error: any) {
       showNotification("Failed to delete activity", "error");
     } finally {
-      setLoading(false);
+      setActivityLoading(false);
     }
   };
 
@@ -145,7 +145,7 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     <ActivityContext.Provider
       value={{
         activities,
-        loading,
+        activityLoading,
         fetchActivities,
         createActivity,
         removeActivity,
@@ -161,7 +161,7 @@ export default ActivityProvider;
 
 interface ActivityContextType {
   activities: ActivityType[] | null;
-  loading: boolean;
+  activityLoading: boolean;
   fetchActivities: () => Promise<void>;
   createActivity: (
     type: ActivityType["type"],

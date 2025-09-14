@@ -74,6 +74,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const { getDriverData } = useDriverAuthContext();
   const { setLoadingState, setRideDetailsLoading } = useLoading();
+  const { fetchActivities } = useActivityContext();
 
   const { userSocket, signedIn } = useAuthContext();
 
@@ -131,6 +132,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       showNotification("Your ride has been completed", "success");
 
       await set_user_location();
+      await getUserCompletedRides();
+      await fetchActivities();
 
       if (region) mapRef.current.animateToRegion(region, 1000);
     };

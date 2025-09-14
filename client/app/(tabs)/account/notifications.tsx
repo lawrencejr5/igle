@@ -1,5 +1,12 @@
-import { StyleSheet, Text, View, Pressable } from "react-native";
-import React, { FC } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  ActivityIndicator,
+  Image,
+} from "react-native";
+import React, { FC, useEffect } from "react";
 
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Feather from "@expo/vector-icons/Feather";
@@ -8,13 +15,21 @@ import {
   useActivityContext,
   ActivityType,
 } from "../../../context/ActivityContext";
+
 import { FlatList } from "react-native-gesture-handler";
-import { Entypo, MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
+import { NotificationItem } from "../../../components/screens/NotificationScreen";
+
 const AccountNotification = () => {
-  const { activities, formatTime } = useActivityContext();
+  const { activities, activityLoading, fetchActivities, formatTime } =
+    useActivityContext();
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
 
   return (
     <SafeAreaView
@@ -38,103 +53,66 @@ const AccountNotification = () => {
         </Text>
       </View>
       {/* ...Notification content... */}
-      <View style={{ marginTop: 25 }}>
-        <FlatList
-          data={activities}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => {
-            const { createdAt } = item;
-            const formattedTime = formatTime(createdAt);
-            return (
-              <NotificationItem
-                type={item.type}
-                title={item.title}
-                message={item.message}
-                createdAt={formattedTime}
-              />
-            );
+      {activityLoading ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
           }}
-        />
-      </View>
-    </SafeAreaView>
-  );
-};
-
-const NotificationItem: FC<{
-  type: ActivityType["type"];
-  title: string;
-  message: string;
-  createdAt: string;
-}> = ({ type, title, message, createdAt }) => {
-  return (
-    <View
-      style={{
-        marginBottom: 15,
-        flexDirection: "row",
-        justifyContent: "flex-start",
-        alignItems: "flex-start",
-        gap: 10,
-        width: "100%",
-      }}
-    >
-      <View
-        style={{
-          backgroundColor: "#5f5d5d",
-          padding: 10,
-          borderRadius: "50%",
-        }}
-      >
-        {type === "security" ? (
-          <Feather name="lock" size={20} color={"#fff"} />
-        ) : type === "email_update" ? (
-          <MaterialCommunityIcons
-            name="email-outline"
-            size={20}
+        >
+          <ActivityIndicator
             color={"#fff"}
+            style={{ transform: [{ scale: 3 }] }}
           />
-        ) : type === "phone_update" ? (
-          <Feather name="phone" size={20} color={"#fff"} />
-        ) : type === "cancelled_ride" ? (
-          <MaterialCommunityIcons name="car-off" size={20} color={"#fff"} />
-        ) : type === "scheduled_ride" ? (
-          <MaterialCommunityIcons name="car-clock" size={20} color={"#fff"} />
-        ) : (
-          <Feather name="bell" size={20} color={"#fff"} />
-        )}
-      </View>
-      <View style={{ flexShrink: 1 }}>
-        <Text
-          numberOfLines={1}
+        </View>
+      ) : activities?.length! > 0 ? (
+        <View style={{ marginTop: 25 }}>
+          <FlatList
+            data={activities}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => {
+              const { createdAt } = item;
+              const formattedTime = formatTime(createdAt);
+              return (
+                <NotificationItem
+                  type={item.type}
+                  title={item.title}
+                  message={item.message}
+                  createdAt={formattedTime}
+                />
+              );
+            }}
+          />
+        </View>
+      ) : (
+        <View
           style={{
-            color: "#fff",
-            fontFamily: "raleway-semibold",
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 20,
           }}
         >
-          {title}
-        </Text>
-        <Text
-          style={{
-            color: "#c9c9c9ff",
-            fontFamily: "raleway-regular",
-            fontSize: 12,
-            marginTop: 5,
-          }}
-          numberOfLines={2}
-        >
-          {message}
-        </Text>
-        <Text
-          style={{
-            color: "#838383ff",
-            fontFamily: "raleway-regular",
-            fontSize: 11,
-            marginTop: 5,
-          }}
-        >
-          {createdAt}
-        </Text>
-      </View>
-    </View>
+          <Image
+            source={require("../../../assets/images/empty_inbox-nobg.png")}
+            style={{ width: 200, height: 200, borderRadius: 20 }}
+          />
+          <Text
+            style={{
+              fontFamily: "raleway-semibold",
+              color: "#fff",
+              fontSize: 18,
+              textAlign: "center",
+              marginTop: 20,
+              flexShrink: 1,
+            }}
+          >
+            No notifications for you at this point...
+          </Text>
+        </View>
+      )}
+    </SafeAreaView>
   );
 };
 

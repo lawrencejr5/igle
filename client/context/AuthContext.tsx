@@ -31,6 +31,7 @@ import { useLoading } from "./LoadingContext";
 
 import { API_URLS } from "../data/constants";
 import { useActivityContext } from "./ActivityContext";
+import { useSavedPlaceContext } from "./SavedPlaceContext";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -41,6 +42,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { getRideHistory } = useHistoryContext();
   const { setAppLoading } = useLoading();
   const { createActivity, fetchActivities } = useActivityContext();
+  const { getSavedPlaces } = useSavedPlaceContext();
 
   const [signedIn, setSignedIn] = useState<UserType | null>(null);
 
@@ -290,6 +292,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await getWalletBalance("User");
       await getRideHistory();
       await fetchActivities();
+      await getSavedPlaces();
 
       showNotification("Login successful.", "success");
     } catch (err: any) {
