@@ -12,6 +12,7 @@ const TabsLayout = () => {
     (segments[1] === "rides" && segments[2] === "ride_detail") ||
     (segments[1] === "account" && segments[2] === "personal_details") ||
     (segments[1] === "account" && segments[2] === "saved_places") ||
+    (segments[1] === "account" && segments[2] === "notifications") ||
     (segments[1] === "account" && segments[2] === "security");
 
   // animated value for smooth transitions

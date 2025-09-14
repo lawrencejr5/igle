@@ -1,10 +1,4 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableWithoutFeedback,
-  Modal,
-} from "react-native";
+import { StyleSheet, Text, View, Pressable } from "react-native";
 import React, { FC } from "react";
 
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
@@ -13,79 +7,56 @@ import Feather from "@expo/vector-icons/Feather";
 import {
   useActivityContext,
   ActivityType,
-} from "../../context/ActivityContext";
+} from "../../../context/ActivityContext";
 import { FlatList } from "react-native-gesture-handler";
-import { Entypo, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Entypo, MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 
-const NotificationScreen: React.FC<{
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ open, setOpen }) => {
+const AccountNotification = () => {
   const { activities, formatTime } = useActivityContext();
 
   return (
-    <Modal
-      animationType="slide"
-      visible={open}
-      transparent
-      onRequestClose={() => setOpen(false)}
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
     >
-      <View
-        style={{
-          ...StyleSheet.absoluteFillObject,
-          backgroundColor: "#121212",
-          width: "100%",
-          zIndex: 5,
-          paddingTop: 20,
-          paddingHorizontal: 20,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-        }}
-      >
-        <View
+      <View>
+        <Pressable
+          style={{ paddingVertical: 15, paddingRight: 15 }}
+          onPress={() => router.back()}
+        >
+          <AntDesign name="arrowleft" size={26} color={"#fff"} />
+        </Pressable>
+        <Text
           style={{
-            flexDirection: "row",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
+            fontFamily: "raleway-semibold",
+            color: "#fff",
+            fontSize: 22,
           }}
         >
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: "raleway-bold",
-              fontSize: 25,
-            }}
-          >
-            Notifications
-          </Text>
-          <TouchableWithoutFeedback
-            onPress={() => setOpen(false)}
-            style={{ padding: 10 }}
-          >
-            <FontAwesome5 name="times" size={24} color="#fff" />
-          </TouchableWithoutFeedback>
-        </View>
-        {/* ...Notification content... */}
-        <View style={{ marginTop: 25 }}>
-          <FlatList
-            data={activities}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => {
-              const { createdAt } = item;
-              const formattedTime = formatTime(createdAt);
-              return (
-                <NotificationItem
-                  type={item.type}
-                  title={item.title}
-                  message={item.message}
-                  createdAt={formattedTime}
-                />
-              );
-            }}
-          />
-        </View>
+          Notifications
+        </Text>
       </View>
-    </Modal>
+      {/* ...Notification content... */}
+      <View style={{ marginTop: 25 }}>
+        <FlatList
+          data={activities}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => {
+            const { createdAt } = item;
+            const formattedTime = formatTime(createdAt);
+            return (
+              <NotificationItem
+                type={item.type}
+                title={item.title}
+                message={item.message}
+                createdAt={formattedTime}
+              />
+            );
+          }}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -167,6 +138,6 @@ const NotificationItem: FC<{
   );
 };
 
-export default NotificationScreen;
+export default AccountNotification;
 
 const styles = StyleSheet.create({});

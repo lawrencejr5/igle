@@ -5,6 +5,7 @@ import {
   TouchableWithoutFeedback,
   Animated,
   Image,
+  Pressable,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -224,18 +225,12 @@ const SideNav: React.FC<{
 
               {/* Switch mode */}
               <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
-                <TouchableWithoutFeedback
+                <Pressable
+                  style={styles.switch_btn}
                   onPress={() => router.push("../(tabs)/home")}
                 >
-                  <View style={styles.switch_btn}>
-                    <Text style={styles.switch_btn_text}>Rider mode</Text>
-                    {/* <FontAwesome6
-                      name="arrow-right-arrow-left"
-                      size={18}
-                      color="black"
-                    /> */}
-                  </View>
-                </TouchableWithoutFeedback>
+                  <Text style={styles.switch_btn_text}>Rider mode</Text>
+                </Pressable>
               </View>
             </Animated.View>
           </TouchableWithoutFeedback>

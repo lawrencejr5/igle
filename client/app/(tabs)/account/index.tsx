@@ -150,10 +150,13 @@ const Account = () => {
                 <FontAwesome name="user" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Personal details</Text>
               </Pressable>
-              <View style={styles.setting_box}>
+              <Pressable
+                onPress={() => router.push("./account/notifications")}
+                style={styles.setting_box}
+              >
                 <Feather name="bell" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Notifications</Text>
-              </View>
+              </Pressable>
               <View style={styles.setting_box}>
                 <Feather name="settings" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>App preferences</Text>

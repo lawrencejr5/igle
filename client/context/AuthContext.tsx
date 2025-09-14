@@ -40,7 +40,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { getWalletBalance } = useWalletContext();
   const { getRideHistory } = useHistoryContext();
   const { setAppLoading } = useLoading();
-  const { createActivity } = useActivityContext();
+  const { createActivity, fetchActivities } = useActivityContext();
 
   const [signedIn, setSignedIn] = useState<UserType | null>(null);
 
@@ -252,6 +252,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         { ...password },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      await createActivity(
+        "security",
+        "Password updated",
+        `Your password has been changed`
+      );
+
       showNotification("Password updated successfully.", "success");
       setTimeout(async () => {
         await logout();
@@ -282,6 +289,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await getUserData();
       await getWalletBalance("User");
       await getRideHistory();
+      await fetchActivities();
 
       showNotification("Login successful.", "success");
     } catch (err: any) {
