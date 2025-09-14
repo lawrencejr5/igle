@@ -46,7 +46,6 @@ const Account = () => {
               paddingTop: 50,
               paddingBottom: 30,
               paddingHorizontal: 20,
-              zIndex: 500,
             }}
           >
             {/* Account name */}
