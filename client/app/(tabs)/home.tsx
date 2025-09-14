@@ -34,6 +34,8 @@ const Home = () => {
     userAddress,
     destination,
     destinationCoords,
+    pickupMarker,
+    destinationMarker,
     routeCoords,
     mapRef,
     mapPadding,
@@ -49,17 +51,21 @@ const Home = () => {
   useEffect(() => {
     if (region && mapRef.current) {
       setTimeout(() => {
-        mapRef.current.animateToRegion(
-          region,
-          1000 // duration in ms
-        );
+        if (mapRef.current) {
+          mapRef.current.animateToRegion(
+            region,
+            1000 // duration in ms
+          );
+        }
       }, 500);
     }
   }, [region, mapRef.current]);
 
+  const isReady = !appLoading && !locationLoading;
+
   return (
     <>
-      {appLoading || locationLoading ? (
+      {!isReady ? (
         <AppLoading />
       ) : (
         <>
@@ -76,13 +82,9 @@ const Home = () => {
                 mapPadding={mapPadding}
               >
                 <Marker
-                  coordinate={{
-                    latitude: pickupCoords ? pickupCoords[0] : region.latitude,
-                    longitude: pickupCoords
-                      ? pickupCoords[1]
-                      : region.longitude,
-                  }}
+                  coordinate={routeCoords.length > 0 ? routeCoords[0] : region}
                   title={userAddress}
+                  anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <View
                     style={{
@@ -100,13 +102,11 @@ const Home = () => {
                     />
                   </View>
                 </Marker>
-                {destinationCoords && destination && (
+                {routeCoords.length > 0 && destination && (
                   <Marker
-                    coordinate={{
-                      latitude: destinationCoords[0],
-                      longitude: destinationCoords[1],
-                    }}
+                    coordinate={routeCoords[routeCoords.length - 1]}
                     title={destination}
+                    anchor={{ x: 0.2, y: 0.2 }}
                   >
                     <View
                       style={{
@@ -126,7 +126,23 @@ const Home = () => {
                   </Marker>
                 )}
 
-                {routeCoords.length > 0 && destination && (
+                {/* {routeCoords.length > 0 && (
+                  <Marker
+                    coordinate={routeCoords[routeCoords.length - 1]}
+                    pinColor="blue"
+                    title="Polyline End"
+                  />
+                )}
+
+                {routeCoords.length > 0 && (
+                  <Marker
+                    coordinate={routeCoords[0]}
+                    pinColor="red"
+                    title="Destination Marker"
+                  />
+                )} */}
+
+                {pickupMarker && destinationMarker && destination && (
                   <Polyline
                     coordinates={routeCoords}
                     strokeColor="#fff"

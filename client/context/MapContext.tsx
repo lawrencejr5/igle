@@ -71,19 +71,68 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     amount: number;
   } | null>(null);
 
-  const [routeCoords, setRouteCoords] = useState<
-    { latitude: number; longitude: number }[]
-  >([]);
+  const [routeCoords, setRouteCoords] = useState<CoordsType[]>([]);
 
+  const getRoute = async (
+    pickup: [number, number],
+    destination: [number, number]
+  ) => {
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickup[0]},${pickup[1]}&destination=${destination[0]},${destination[1]}&key=${API_KEY}`;
+
+    try {
+      const response = await axios.get(url);
+
+      if (!response.data.routes || response.data.routes.length === 0) {
+        return null;
+      }
+
+      const route = response.data.routes[0];
+      const leg = route.legs[0];
+
+      // decode polyline points into [{latitude, longitude}, ...]
+      const coords = decodePolyline(route.overview_polyline.points);
+      // snapped pickup & destination from leg
+      const pickupOnRoad = {
+        latitude: leg.start_location.lat,
+        longitude: leg.start_location.lng,
+      };
+
+      const destinationOnRoad = {
+        latitude: leg.end_location.lat,
+        longitude: leg.end_location.lng,
+      };
+
+      // console.log(coords, leg);
+
+      return {
+        coords, // full polyline path
+        pickupOnRoad, // snapped pickup
+        destinationOnRoad, // snapped destination
+        leg, // full leg details (distance, duration, etc.)
+      };
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
+  const [pickupMarker, setPickupMarker] = useState<CoordsType | null>(null);
+  const [destinationMarker, setDestinationMarker] = useState<CoordsType | null>(
+    null
+  );
   const fetchRoute = async (destinationCoords: [number, number]) => {
-    const coords = await getRoute(
+    const result = await getRoute(
       pickupCoords || [region.latitude, region.longitude],
       destinationCoords
     );
-    if (coords) {
-      setRouteCoords(coords);
+
+    if (result) {
+      setRouteCoords(result.coords);
+      setPickupMarker(result.pickupOnRoad);
+      setDestinationMarker(result.destinationOnRoad);
+
       // 👇 Zoom map to fit route
-      mapRef.current?.fitToCoordinates(coords, {
+      mapRef.current?.fitToCoordinates(result.coords, {
         edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
         animated: true,
       });
@@ -203,21 +252,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }));
   };
 
-  const getRoute = async (
-    pickup: [number, number],
-    destination: [number, number]
-  ) => {
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickup[0]},${pickup[1]}&destination=${destination[0]},${destination[1]}&key=${API_KEY}`;
-
-    try {
-      const response = await axios.get(url);
-      const points = response.data.routes[0].overview_polyline.points;
-      return decodePolyline(points);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const [calculating, setCalculating] = useState<boolean>(false);
   const calculateRide = async (
     pickup: [number, number],
@@ -298,6 +332,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
         locationLoading,
         routeCoords,
+        pickupMarker,
+        destinationMarker,
         mapRef,
         mapPadding,
         setMapPadding,
@@ -314,6 +350,8 @@ type MapPadding = {
   left: number;
   right: number;
 };
+
+type CoordsType = { latitude: number; longitude: number };
 
 export interface MapContextType {
   region: any;
@@ -365,6 +403,8 @@ export interface MapContextType {
   locationLoading: boolean;
 
   routeCoords: { latitude: number; longitude: number }[];
+  pickupMarker: CoordsType | null;
+  destinationMarker: CoordsType | null;
   mapRef: any;
   mapPadding: MapPadding;
   setMapPadding: Dispatch<SetStateAction<MapPadding>>;
