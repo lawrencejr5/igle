@@ -36,6 +36,7 @@ const Home = () => {
     destinationCoords,
     routeCoords,
     mapRef,
+    mapPadding,
     locationLoading,
   } = useMapContext();
 
@@ -47,10 +48,12 @@ const Home = () => {
 
   useEffect(() => {
     if (region && mapRef.current) {
-      mapRef.current.animateToRegion(
-        region,
-        1000 // duration in ms
-      );
+      setTimeout(() => {
+        mapRef.current.animateToRegion(
+          region,
+          1000 // duration in ms
+        );
+      }, 500);
     }
   }, [region, mapRef.current]);
 
@@ -66,10 +69,11 @@ const Home = () => {
             {region && (
               <MapView
                 ref={mapRef}
-                style={{ height: "82%" }}
+                style={{ ...StyleSheet.absoluteFillObject }}
                 provider={PROVIDER_GOOGLE}
                 initialRegion={region}
                 customMapStyle={darkMapStyle}
+                mapPadding={mapPadding}
               >
                 <Marker
                   coordinate={{

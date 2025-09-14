@@ -26,6 +26,15 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     set_user_location();
   }, []);
 
+  const mapRef = useRef<MapView>(null);
+
+  const [mapPadding, setMapPadding] = useState<MapPadding>({
+    top: 50,
+    left: 10,
+    right: 10,
+    bottom: 240,
+  });
+
   const [userAddress, setUserAddress] = useState<string>("");
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(
     null
@@ -66,7 +75,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     { latitude: number; longitude: number }[]
   >([]);
 
-  const mapRef = useRef<MapView>(null);
   const fetchRoute = async (destinationCoords: [number, number]) => {
     const coords = await getRoute(
       pickupCoords || [region.latitude, region.longitude],
@@ -291,11 +299,20 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         locationLoading,
         routeCoords,
         mapRef,
+        mapPadding,
+        setMapPadding,
       }}
     >
       {children}
     </MapContext.Provider>
   );
+};
+
+type MapPadding = {
+  bottom: number;
+  top: number;
+  left: number;
+  right: number;
 };
 
 export interface MapContextType {
@@ -349,6 +366,8 @@ export interface MapContextType {
 
   routeCoords: { latitude: number; longitude: number }[];
   mapRef: any;
+  mapPadding: MapPadding;
+  setMapPadding: Dispatch<SetStateAction<MapPadding>>;
 }
 
 export const useMapContext = () => {

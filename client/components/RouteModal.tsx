@@ -10,9 +10,7 @@ import {
   Modal,
   TouchableOpacity,
   ActivityIndicator,
-  BackHandler,
-  Platform,
-  // ScrollView,
+  Dimensions,
 } from "react-native";
 import React, {
   useState,
@@ -69,6 +67,7 @@ const RouteModal = () => {
     setDestination,
     setDestinationCoords,
     fetchRoute,
+    setMapPadding,
   } = useMapContext();
 
   const {
@@ -138,7 +137,28 @@ const RouteModal = () => {
     }
   }, [ongoingRideData]);
 
+  const windowHeight = Dimensions.get("window").height;
+
+  const snapPoints = useMemo(
+    () => ["22%", "32%", "40%", "60%", "80%", "93%"],
+    []
+  );
+
   const handleSheetChange = (index: number) => {
+    const snapValue = snapPoints[index];
+    let sheetHeight = 0;
+
+    if (typeof snapValue === "string" && snapValue.includes("%")) {
+      const percent = parseFloat(snapValue) / 100;
+      sheetHeight = windowHeight * percent;
+    } else if (typeof snapValue === "number") {
+      sheetHeight = snapValue;
+    }
+
+    // always update padding
+    if (index < 4) setMapPadding((prev) => ({ ...prev, bottom: sheetHeight }));
+
+    // your ride logic
     if ((index === 0 || index === 1) && rideStatus === "booking") {
       setRideStatus("");
       resetRide();
@@ -147,11 +167,6 @@ const RouteModal = () => {
       setRideStatus("booking");
     }
   };
-
-  const snapPoints = useMemo(
-    () => ["22%", "32%", "40%", "60%", "80%", "93%"],
-    []
-  );
 
   return (
     <BottomSheet
