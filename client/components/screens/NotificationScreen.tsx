@@ -68,7 +68,7 @@ const NotificationScreen: React.FC<{
             onPress={() => setOpen(false)}
             style={{ padding: 10 }}
           >
-            <FontAwesome5 name="times" size={24} color="#fff" />
+            <FontAwesome5 name="chevron-down" size={24} color="#fff" />
           </TouchableWithoutFeedback>
         </View>
         {/* ...Notification content... */}

@@ -51,21 +51,16 @@ const Home = () => {
   useEffect(() => {
     if (region && mapRef.current) {
       setTimeout(() => {
-        if (mapRef.current) {
-          mapRef.current.animateToRegion(
-            region,
-            1000 // duration in ms
-          );
-        }
+        mapRef.current.animateToRegion(region, 1000);
       }, 500);
     }
   }, [region, mapRef.current]);
 
-  const isReady = !appLoading && !locationLoading;
+  const isLoading = appLoading && locationLoading;
 
   return (
     <>
-      {!isReady ? (
+      {isLoading ? (
         <AppLoading />
       ) : (
         <>

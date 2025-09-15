@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, {
   useState,
@@ -163,14 +165,14 @@ const RouteModal = () => {
       setRideStatus("");
       resetRide();
     }
-    if (index === 5 && rideStatus === "") {
-      setRideStatus("booking");
-    }
+    // if (index === 5 && rideStatus === "") {
+    //   setRideStatus("booking");
+    // }
   };
 
   return (
     <BottomSheet
-      index={1}
+      index={5}
       snapPoints={snapPoints}
       ref={routeModalRef}
       onChange={handleSheetChange}
@@ -178,6 +180,7 @@ const RouteModal = () => {
       enableHandlePanningGesture={true}
       enableDynamicSizing={false}
       enableOverDrag={false}
+      keyboardBehavior="interactive"
       backgroundStyle={{
         backgroundColor: "#121212",
         borderTopLeftRadius: 20,
@@ -191,9 +194,9 @@ const RouteModal = () => {
         borderRadius: 10,
       }}
     >
-      <BottomSheetView style={[styles.modal]}>
+      <BottomSheetView style={styles.modal}>
         {/* Form */}
-        {rideStatus === "" && <StartModal />}
+        {rideStatus === "" && <RateModal />}
         {/*  */}
         {rideStatus === "booking" && (
           <BookingModal
@@ -1466,6 +1469,155 @@ const SelectPickupTimeModal = () => {
   );
 };
 
+const RateModal = () => {
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={styles.header_text}>You have arrived!</Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "space-between",
+          paddingBottom: 20,
+        }}
+      >
+        <View style={{ alignItems: "center" }}>
+          <Image
+            source={require("../assets/images/black-profile.jpeg")}
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: 40,
+              marginTop: 20,
+            }}
+          />
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "raleway-regular",
+              marginTop: 10,
+            }}
+          >
+            How was this driver?
+          </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 20,
+              marginTop: 20,
+            }}
+          >
+            <Feather name="star" size={30} color={"#fff"} />
+            <Feather name="star" size={30} color={"#fff"} />
+            <Feather name="star" size={30} color={"#fff"} />
+            <Feather name="star" size={30} color={"#fff"} />
+            <Feather name="star" size={30} color={"#fff"} />
+          </View>
+          <View style={{ width: "100%" }}>
+            <TextInput
+              style={{
+                backgroundColor: "transparent",
+                borderColor: "#fff",
+                borderWidth: 1,
+                borderRadius: 10,
+                padding: 20,
+                marginTop: 20,
+                fontFamily: "raleway-regular",
+              }}
+              placeholder="Write a review"
+            />
+          </View>
+        </View>
+        <View>
+          <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
+            Ride summary
+          </Text>
+          <RideRoute from="Aggs" to="Okpanam road" />
+
+          <Text
+            style={{
+              color: "#d2ceceff",
+              fontFamily: "raleway-bold",
+              fontSize: 14,
+              marginBottom: 10,
+            }}
+          >
+            **You rode 3km for 20 mins
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-regular",
+                fontSize: 18,
+              }}
+            >
+              Total fare:
+            </Text>
+            <Text style={styles.priceText}>5,000 NGN (Paid)</Text>
+          </View>
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 20,
+            marginTop: 20,
+          }}
+        >
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: "transparent",
+              borderColor: "#fff",
+              borderWidth: 1,
+              borderRadius: 50,
+              width: 100,
+              paddingVertical: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Skip
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 50,
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              flex: 1,
+            }}
+          >
+            <Text
+              style={{
+                color: "#121212",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Submit review
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const PickupTimeModal: FC<{
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -1648,9 +1800,7 @@ export default RouteModal;
 const styles = StyleSheet.create({
   modal: {
     width: "100%",
-    backgroundColor: "#121212",
-    position: "absolute",
-    bottom: 0,
+    height: "100%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 10,
