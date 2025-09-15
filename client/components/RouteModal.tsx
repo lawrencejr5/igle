@@ -1476,7 +1476,7 @@ const RateModal = () => {
   const { rating, review, setRating, setReview, createRating, ratingLoading } =
     useRatingContext();
 
-  const { resetRide } = useRideContext();
+  const { resetRide, ongoingRideData } = useRideContext();
 
   const rate_driver = async () => {
     try {
@@ -1558,7 +1558,10 @@ const RateModal = () => {
           <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
             Ride summary
           </Text>
-          <RideRoute from="Aggs" to="Okpanam road" />
+          <RideRoute
+            from={ongoingRideData?.pickup.address}
+            to={ongoingRideData.destination.address}
+          />
 
           <Text
             style={{
@@ -1568,7 +1571,8 @@ const RateModal = () => {
               marginBottom: 10,
             }}
           >
-            **You rode 3km for 20 mins
+            **You rode {ongoingRideData.distance_km}km for{" "}
+            {ongoingRideData?.duration_mins} mins
           </Text>
 
           <View
@@ -1587,7 +1591,9 @@ const RateModal = () => {
             >
               Total fare:
             </Text>
-            <Text style={styles.priceText}>5,000 NGN (Paid)</Text>
+            <Text style={styles.priceText}>
+              NGN {ongoingRideData.fare.toLocaleString()}(Paid)
+            </Text>
           </View>
         </View>
         <View

@@ -72,7 +72,6 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
         params: { driver_id },
       });
-      //   setRatings(data.ratings || null);
     } catch (error: any) {
       console.log("Failed to fetch driver ratings", "error");
     } finally {
@@ -87,7 +86,6 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.get(`${API_URL}/user`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      //   setRatings(data.ratings || null);
     } catch (error: any) {
       console.log("Failed to fetch your ratings", "error");
     } finally {
@@ -111,8 +109,9 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      showNotification("Rating submitted", "success");
-      //   await fetchRideRatings(ride);
+      showNotification("Thanks for ur rating", "success");
+      setRating(0);
+      setReview("");
     } catch (error: any) {
       showNotification("Failed to submit rating", "error");
     } finally {

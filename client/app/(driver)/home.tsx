@@ -220,7 +220,7 @@ const HomePage = () => {
 
   return (
     <>
-      <Notification notification={notification} />
+      {/* {notification.visible && <Notification notification={notification} />} */}
       <View style={styles.container}>
         {/* Map */}
         {region && (
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: "space-between",
     alignItems: "center",
-    zIndex: 1,
+    zIndex: 2,
     position: "absolute",
     top: 50,
     gap: 10,
