@@ -1470,6 +1470,9 @@ const SelectPickupTimeModal = () => {
 };
 
 const RateModal = () => {
+  const [rating, setRating] = useState<number>(0);
+  const [review, setReview] = useState<string>("");
+
   return (
     <View style={{ flex: 1 }}>
       <Text style={styles.header_text}>You have arrived!</Text>
@@ -1506,18 +1509,25 @@ const RateModal = () => {
               marginTop: 20,
             }}
           >
-            <Feather name="star" size={30} color={"#fff"} />
-            <Feather name="star" size={30} color={"#fff"} />
-            <Feather name="star" size={30} color={"#fff"} />
-            <Feather name="star" size={30} color={"#fff"} />
-            <Feather name="star" size={30} color={"#fff"} />
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                <FontAwesome
+                  name={rating >= star ? "star" : "star-o"}
+                  size={30}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+            ))}
           </View>
           <View style={{ width: "100%" }}>
             <TextInput
+              value={review}
+              onChangeText={setReview}
               style={{
                 backgroundColor: "transparent",
                 borderColor: "#fff",
                 borderWidth: 1,
+                color: "#fff",
                 borderRadius: 10,
                 padding: 20,
                 marginTop: 20,
@@ -1527,6 +1537,7 @@ const RateModal = () => {
             />
           </View>
         </View>
+
         <View>
           <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
             Ride summary
