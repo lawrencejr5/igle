@@ -22,6 +22,7 @@ import SavedPlaceRouter from "./routes/saved_place";
 import ActivityRouter from "./routes/activity";
 
 import { handle_socket_events } from "./sockets";
+import RatingRouter from "./routes/rating";
 
 app.use(cors());
 app.use(express.json());
@@ -34,6 +35,7 @@ app.use("/api/v1/wallet", WalletRouter);
 app.use("/api/v1/history", HistoryRouter);
 app.use("/api/v1/saved_place", SavedPlaceRouter);
 app.use("/api/v1/activity", ActivityRouter);
+app.use("/api/v1/rating", RatingRouter);
 
 app.use(not_found);
 
