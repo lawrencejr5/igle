@@ -40,7 +40,8 @@ type RideStatusType =
   | "accepted"
   | "pay"
   | "paying"
-  | "paid";
+  | "paid"
+  | "rating";
 
 export const RideContextProvider: FC<{ children: ReactNode }> = ({
   children,
@@ -93,7 +94,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       try {
         await fetchOngoingRideData(ride_id);
         await getDriverData(driver_id);
-        setModalUp(true);
         setRideStatus("accepted");
         console.log("accepted", data);
       } catch (error: any) {
@@ -118,7 +118,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
     const onRideArrival = async (data: any) => {
       showNotification("Your ride has arrived", "success");
-      setModalUp(false);
       setRideStatus("pay");
     };
 
@@ -128,12 +127,13 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     };
 
     const onRideCompleted = async (data: any) => {
-      resetRide();
       showNotification("Your ride has been completed", "success");
 
       await set_user_location();
       await getUserCompletedRides();
       await fetchActivities();
+
+      setRideStatus("rating");
 
       if (region) mapRef.current.animateToRegion(region, 1000);
     };
@@ -173,6 +173,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
     if (rideStatus === "paying") {
       routeModalRef.current?.snapToIndex(1);
+    }
+    if (rideStatus === "rating") {
+      routeModalRef.current?.snapToIndex(5);
     }
   }, [rideStatus]);
 
@@ -595,6 +598,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         set_destination_func,
         set_pickup_func,
         ongoingRideData,
+        setOngoingRideData,
         resetRide,
         cancelling,
         setCancelling,
@@ -652,6 +656,7 @@ export interface RideContextType {
 
   rideData: any;
   ongoingRideData: any;
+  setOngoingRideData: Dispatch<SetStateAction<any>>;
   fetchRideDetails: (ride_id: string) => Promise<void>;
 
   placeId: string;

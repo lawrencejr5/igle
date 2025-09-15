@@ -57,6 +57,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { router, useNavigation } from "expo-router";
 import { useSavedPlaceContext } from "../context/SavedPlaceContext";
+import { useRatingContext } from "../context/RatingContext";
 
 const RouteModal = () => {
   const {
@@ -165,14 +166,14 @@ const RouteModal = () => {
       setRideStatus("");
       resetRide();
     }
-    // if (index === 5 && rideStatus === "") {
-    //   setRideStatus("booking");
-    // }
+    if (index === 5 && rideStatus === "") {
+      setRideStatus("booking");
+    }
   };
 
   return (
     <BottomSheet
-      index={5}
+      index={1}
       snapPoints={snapPoints}
       ref={routeModalRef}
       onChange={handleSheetChange}
@@ -196,7 +197,7 @@ const RouteModal = () => {
     >
       <BottomSheetView style={styles.modal}>
         {/* Form */}
-        {rideStatus === "" && <RateModal />}
+        {rideStatus === "" && <StartModal />}
         {/*  */}
         {rideStatus === "booking" && (
           <BookingModal
@@ -217,6 +218,8 @@ const RouteModal = () => {
         {rideStatus === "paying" && <PayingModal />}
         {/*  */}
         {rideStatus === "paid" && <PaidModal />}
+        {/*  */}
+        {rideStatus === "rating" && <RateModal />}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -1470,8 +1473,19 @@ const SelectPickupTimeModal = () => {
 };
 
 const RateModal = () => {
-  const [rating, setRating] = useState<number>(0);
-  const [review, setReview] = useState<string>("");
+  const { rating, review, setRating, setReview, createRating, ratingLoading } =
+    useRatingContext();
+
+  const { resetRide } = useRideContext();
+
+  const rate_driver = async () => {
+    try {
+      await createRating();
+      resetRide();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -1502,6 +1516,7 @@ const RateModal = () => {
           >
             How was this driver?
           </Text>
+
           <View
             style={{
               flexDirection: "row",
@@ -1519,6 +1534,7 @@ const RateModal = () => {
               </TouchableOpacity>
             ))}
           </View>
+
           <View style={{ width: "100%" }}>
             <TextInput
               value={review}
@@ -1584,6 +1600,7 @@ const RateModal = () => {
         >
           <TouchableOpacity
             activeOpacity={0.7}
+            onPress={resetRide}
             style={{
               backgroundColor: "transparent",
               borderColor: "#fff",
@@ -1604,6 +1621,8 @@ const RateModal = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={rate_driver}
+            disabled={ratingLoading}
             activeOpacity={0.7}
             style={{
               backgroundColor: "#fff",
@@ -1611,6 +1630,7 @@ const RateModal = () => {
               paddingHorizontal: 20,
               paddingVertical: 10,
               flex: 1,
+              opacity: ratingLoading ? 0.5 : 1,
             }}
           >
             <Text
@@ -1620,7 +1640,7 @@ const RateModal = () => {
                 textAlign: "center",
               }}
             >
-              Submit review
+              {ratingLoading ? "Submitting" : "Submit review"}
             </Text>
           </TouchableOpacity>
         </View>
