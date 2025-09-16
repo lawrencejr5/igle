@@ -58,6 +58,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, useNavigation } from "expo-router";
 import { useSavedPlaceContext } from "../context/SavedPlaceContext";
 import { useRatingContext } from "../context/RatingContext";
+import { DriverDetailsModal } from "./DriverCard";
+import { useDriverAuthContext } from "../context/DriverAuthContext";
 
 const RouteModal = () => {
   const {
@@ -1031,6 +1033,8 @@ const AcceptedModal = () => {
     }
   };
 
+  const [openDriverDetails, setOpenDriverDetails] = useState<boolean>(false);
+
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -1046,7 +1050,11 @@ const AcceptedModal = () => {
         {/* Header */}
         <View style={styles.rideRequestHeader}>
           {/* User */}
-          <View style={styles.userInfo}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setOpenDriverDetails(true)}
+            style={styles.userInfo}
+          >
             <Image
               source={require("../assets/images/black-profile.jpeg")}
               style={styles.userImage}
@@ -1057,7 +1065,13 @@ const AcceptedModal = () => {
               </Text>
               <Text style={styles.userRides}>No ride completed</Text>
             </View>
-          </View>
+          </TouchableOpacity>
+
+          <DriverDetailsModal
+            id={ongoingRideData.driver._id}
+            open={openDriverDetails}
+            setOpen={setOpenDriverDetails}
+          />
 
           {/* Call btn */}
           <TouchableWithoutFeedback

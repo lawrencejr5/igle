@@ -7,7 +7,13 @@ import {
   Modal,
   ActivityIndicator,
 } from "react-native";
-import React, { Dispatch, FC, SetStateAction, useState } from "react";
+import React, {
+  Dispatch,
+  FC,
+  SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   Feather,
@@ -23,17 +29,6 @@ import * as Linking from "expo-linking";
 const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
   const [openModal, setOpenModal] = useState(false);
 
-  const { getDriverData } = useDriverAuthContext();
-
-  const set_driver = async (id: string) => {
-    try {
-      setOpenModal(true);
-      await getDriverData(id);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   return (
     <>
       <Pressable
@@ -48,7 +43,7 @@ const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
           alignItems: "flex-start",
           gap: 10,
         }}
-        onPress={() => set_driver(id)}
+        onPress={() => setOpenModal(true)}
       >
         {/* Driver image */}
         <Image
@@ -130,16 +125,23 @@ const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
           </View>
         </View>
       </Pressable>
-      <DriverDetailsModal open={openModal} setOpen={setOpenModal} />
+      <DriverDetailsModal open={openModal} setOpen={setOpenModal} id={id} />
     </>
   );
 };
 
-const DriverDetailsModal: FC<{
+export const DriverDetailsModal: FC<{
+  id: string;
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-}> = ({ open, setOpen }) => {
-  const { driverData, gettingDriverData } = useDriverAuthContext();
+}> = ({ id, open, setOpen }) => {
+  const { driverData, gettingDriverData, getDriverData } =
+    useDriverAuthContext();
+
+  useEffect(() => {
+    (async () => await getDriverData(id))();
+  }, [id, open]);
+
   return (
     <Modal
       visible={open}

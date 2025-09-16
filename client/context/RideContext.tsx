@@ -128,12 +128,11 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
     const onRideCompleted = async (data: any) => {
       showNotification("Your ride has been completed", "success");
+      setRideStatus("rating");
 
       await set_user_location();
       await getUserCompletedRides();
       await fetchActivities();
-
-      setRideStatus("rating");
 
       if (region) mapRef.current.animateToRegion(region, 1000);
     };
