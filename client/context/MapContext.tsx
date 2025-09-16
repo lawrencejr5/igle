@@ -22,9 +22,24 @@ import * as Location from "expo-location";
 const MapContext = createContext<MapContextType | null>(null);
 
 const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const [region, setRegion] = useState<any>({
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 0.02,
+    longitudeDelta: 0.02,
+  });
+
   useEffect(() => {
     set_user_location();
   }, []);
+
+  useEffect(() => {
+    const get_place_name_func = async () => {
+      if (!region?.latitude || !region?.longitude) return;
+      await getPlaceName(region.latitude, region.longitude);
+    };
+    get_place_name_func();
+  }, [region]);
 
   const mapRef = useRef<MapView>(null);
 
@@ -49,19 +64,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       calculateRide(pickupCoords, destinationCoords);
     }
   }, [destinationCoords]);
-
-  const [region, setRegion] = useState<any>({
-    latitude: 0,
-    longitude: 0,
-    latitudeDelta: 0.02,
-    longitudeDelta: 0.02,
-  });
-  useEffect(() => {
-    const get_place_name_func = async () => {
-      await getPlaceName(region.latitude, region.longitude);
-    };
-    if (region) get_place_name_func();
-  }, [region]);
 
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
 
@@ -105,10 +107,10 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       // console.log(coords, leg);
 
       return {
-        coords, // full polyline path
-        pickupOnRoad, // snapped pickup
-        destinationOnRoad, // snapped destination
-        leg, // full leg details (distance, duration, etc.)
+        coords,
+        pickupOnRoad,
+        destinationOnRoad,
+        leg,
       };
     } catch (error) {
       console.error(error);
@@ -156,14 +158,16 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
 
       let location = await Location.getCurrentPositionAsync({});
-      setRegion({
+      let newRegion = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         latitudeDelta: 0.02,
         longitudeDelta: 0.02,
-      });
-      await AsyncStorage.setItem("region", JSON.stringify(region));
-      if (region) mapRef.current?.animateToRegion(region, 1000);
+      };
+      setRegion(newRegion);
+      await AsyncStorage.setItem("region", JSON.stringify(newRegion));
+
+      // if (region) mapRef.current?.animateToRegion(region, 1000);
     } catch (error: any) {
       throw new Error(error.message);
     } finally {
@@ -172,6 +176,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const getPlaceName = async (lat: number, lng: number): Promise<void> => {
+    if (!lat || !lng) return; // prevent bad calls
+
     setLocationLoading(true);
 
     const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${API_KEY}`;
@@ -180,8 +186,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.get(url);
 
       if (data.results.length > 0) {
-        setLocationLoading(false);
-
         const address = `${data.results[0].address_components[1].long_name}, ${data.results[0].address_components[2].long_name}`;
         setUserAddress(address);
       }
