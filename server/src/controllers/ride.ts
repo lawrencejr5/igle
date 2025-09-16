@@ -4,6 +4,7 @@ import { Types } from "mongoose";
 import Ride from "../models/ride";
 import Wallet from "../models/wallet";
 import Activity from "../models/activity";
+import Driver from "../models/driver";
 
 import {
   get_driver_id,
@@ -502,6 +503,12 @@ export const update_ride_status = async (
         if (ride.status !== "ongoing") {
           res.status(400).json({ msg: "Failed to complete this ride" });
           return;
+        }
+
+        const driver = await Driver.findById(ride.driver);
+        if (driver) {
+          driver.total_trips += 1;
+          await driver.save();
         }
 
         const result = await complete_ride(ride);

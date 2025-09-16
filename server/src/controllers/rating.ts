@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Rating from "../models/rating";
+import Driver from "../models/driver";
 
 export const create_rating = async (req: Request, res: Response) => {
   try {
@@ -15,6 +16,21 @@ export const create_rating = async (req: Request, res: Response) => {
       user,
       driver,
     });
+
+    // After creating the rating, recalculate the driver's average rating
+    const ratings = await Rating.find({ driver });
+    let average = 0;
+    if (ratings.length > 0) {
+      const total = ratings.reduce((sum, r) => sum + r.rating, 0);
+      average = total / ratings.length;
+      // Round to one decimal place, but remove trailing .0
+      average = Math.round(average * 10) / 10;
+      if (average % 1 === 0) average = Math.floor(average); // e.g. 5.0 -> 5
+    }
+
+    // Update the driver's rating field
+    await Driver.findByIdAndUpdate(driver, { rating: average });
+
     res.status(201).json({ msg: "Rating submitted", rating: newRating });
   } catch (error) {
     res.status(500).json({ msg: "An error occured" });
@@ -37,8 +53,22 @@ export const get_driver_ratings = async (req: Request, res: Response) => {
     const { driver_id } = req.query;
     if (!driver_id)
       return res.status(400).json({ msg: "Driver id not provided" });
+
     const ratings = await Rating.find({ driver: driver_id });
-    res.status(200).json({ msg: "Success", ratings });
+
+    // Calculate average rating
+    let average = 0;
+    if (ratings.length > 0) {
+      const total = ratings.reduce((sum, r) => sum + r.rating, 0);
+      average = total / ratings.length;
+    }
+
+    res.status(200).json({
+      msg: "Success",
+      reviews: ratings,
+      average_rating: average,
+      ratings_count: ratings.length,
+    });
   } catch (error) {
     res.status(500).json({ msg: "An error occured" });
   }
