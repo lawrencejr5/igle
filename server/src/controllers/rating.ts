@@ -25,11 +25,16 @@ export const create_rating = async (req: Request, res: Response) => {
       average = total / ratings.length;
       // Round to one decimal place, but remove trailing .0
       average = Math.round(average * 10) / 10;
-      if (average % 1 === 0) average = Math.floor(average); // e.g. 5.0 -> 5
+      if (average % 1 === 0) average = Math.floor(average);
     }
 
     // Update the driver's rating field
-    await Driver.findByIdAndUpdate(driver, { rating: average });
+    const driverData = await Driver.findById(driver);
+    if (driverData) {
+      driverData.rating = average;
+      driverData.num_of_reviews += 1;
+      await driverData.save();
+    }
 
     res.status(201).json({ msg: "Rating submitted", rating: newRating });
   } catch (error) {
@@ -61,6 +66,13 @@ export const get_driver_ratings = async (req: Request, res: Response) => {
     if (ratings.length > 0) {
       const total = ratings.reduce((sum, r) => sum + r.rating, 0);
       average = total / ratings.length;
+    }
+    if (ratings.length > 0) {
+      const total = ratings.reduce((sum, r) => sum + r.rating, 0);
+      average = total / ratings.length;
+      // Round to one decimal place, but remove trailing .0
+      average = Math.round(average * 10) / 10;
+      if (average % 1 === 0) average = Math.floor(average); // e.g. 5.0 -> 5
     }
 
     res.status(200).json({

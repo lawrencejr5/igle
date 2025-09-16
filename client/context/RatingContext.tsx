@@ -12,7 +12,6 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URLS } from "../data/constants";
 import { useNotificationContext } from "./NotificationContext";
-import { useRideContext } from "./RideContext";
 
 export interface RatingType {
   _id: string;
@@ -22,6 +21,16 @@ export interface RatingType {
   user: string;
   driver: string;
   createdAt: Date;
+}
+
+interface Rating {
+  rating: number;
+  review: string;
+  ride: string;
+  user: string;
+  driver: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface RatingContextType {
@@ -34,15 +43,16 @@ interface RatingContextType {
   fetchRideRatings: (ride_id: string) => Promise<void>;
   fetchDriverRatings: (driver_id: string) => Promise<void>;
   fetchUserRatings: () => Promise<void>;
-  createRating: () => Promise<void>;
+  createRating: (ride: string, driver: string) => Promise<void>;
+
+  driverRating: number;
+  driverReviews: Rating | null;
 }
 
 const RatingContext = createContext<RatingContextType | null>(null);
 
 const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [rideRatings, setRideRatings] = useState<RatingType[] | null>(null);
-
-  const { ongoingRideData } = useRideContext();
 
   const [ratingLoading, setRatingLoading] = useState(false);
   const { showNotification } = useNotificationContext();
@@ -64,14 +74,21 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [driverRating, setDriverRating] = useState<number>(0);
+  const [driverReviews, setDriverReviews] = useState<Rating | null>(null);
   const fetchDriverRatings = async (driver_id: string): Promise<void> => {
     setRatingLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(`${API_URL}/driver`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { driver_id },
-      });
+      const { data } = await axios.get(
+        `${API_URL}/driver?driver_id=${driver_id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!data) throw new Error("Unable to fetch driver ratings");
+      setDriverRating(data.average_rating);
+      setDriverReviews(data.reviews);
     } catch (error: any) {
       console.log("Failed to fetch driver ratings", "error");
     } finally {
@@ -95,7 +112,7 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [rating, setRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
-  const createRating = async (): Promise<void> => {
+  const createRating = async (ride: string, driver: string): Promise<void> => {
     setRatingLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
@@ -104,8 +121,8 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         {
           rating,
           review,
-          ride: ongoingRideData._id,
-          driver: ongoingRideData.driver,
+          ride,
+          driver,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -132,6 +149,9 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         fetchDriverRatings,
         fetchUserRatings,
         createRating,
+
+        driverRating,
+        driverReviews,
       }}
     >
       {children}

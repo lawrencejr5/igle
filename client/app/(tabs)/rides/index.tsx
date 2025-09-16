@@ -313,7 +313,13 @@ const OngoingRide = ({ data }: { data: any }) => {
       {/* Driver details */}
       {data.driver && (
         <>
-          <DriverCard name={data.driver.user.name} id={data.driver._id} />
+          <DriverCard
+            name={data.driver.user.name}
+            id={data.driver._id}
+            rating={data.driver.rating}
+            total_trips={data.driver.total_trips}
+            num_of_reviews={data.driver.num_of_reviews}
+          />
 
           <View
             style={{

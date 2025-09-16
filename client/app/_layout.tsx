@@ -48,21 +48,21 @@ const RootLayout = () => {
               <MapContextProvider>
                 <SavedPlaceProvider>
                   <HistoryProvider>
-                    <DriverAuthProvider>
-                      <AuthProvider>
-                        <DriverContextPrvider>
-                          <RideContextProvider>
-                            <RatingProvider>
+                    <RatingProvider>
+                      <DriverAuthProvider>
+                        <AuthProvider>
+                          <DriverContextPrvider>
+                            <RideContextProvider>
                               <Stack
                                 screenOptions={{
                                   headerShown: false,
                                 }}
                               />
-                            </RatingProvider>
-                          </RideContextProvider>
-                        </DriverContextPrvider>
-                      </AuthProvider>
-                    </DriverAuthProvider>
+                            </RideContextProvider>
+                          </DriverContextPrvider>
+                        </AuthProvider>
+                      </DriverAuthProvider>
+                    </RatingProvider>
                   </HistoryProvider>
                 </SavedPlaceProvider>
               </MapContextProvider>

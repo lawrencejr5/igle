@@ -241,7 +241,8 @@ export const get_ride_data = async (
     const ride = await Ride.findById(ride_id)
       .populate({
         path: "driver",
-        select: "user vehicle_type vehicle current_location",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
           select: "name email phone",

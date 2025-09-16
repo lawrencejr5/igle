@@ -38,6 +38,7 @@ export interface DriverType extends Document {
   };
   rating?: number;
   total_trips: number;
+  num_of_reviews: number
 }
 
 const DriverSchema = new Schema<DriverType>({
@@ -89,6 +90,7 @@ const DriverSchema = new Schema<DriverType>({
   },
   rating: { type: Number, default: 5 },
   total_trips: { type: Number, default: 0 },
+  num_of_reviews: { type: Number, default: 0 },
 });
 
 DriverSchema.index({ current_location: "2dsphere" });

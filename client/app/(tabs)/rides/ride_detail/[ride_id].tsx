@@ -306,6 +306,9 @@ const RideDetails = () => {
                   <DriverCard
                     name={rideData.driver.user.name}
                     id={rideData.driver._id}
+                    rating={rideData.driver.rating}
+                    total_trips={rideData.driver.total_trips}
+                    num_of_reviews={rideData.driver.num_of_reviews}
                   />
                 ) : (
                   <Text

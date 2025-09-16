@@ -26,7 +26,13 @@ import { useDriverAuthContext } from "../context/DriverAuthContext";
 
 import * as Linking from "expo-linking";
 
-const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
+const DriverCard: FC<{
+  name: string;
+  id: string;
+  rating: number;
+  total_trips: number;
+  num_of_reviews: number;
+}> = ({ name, id, rating, total_trips, num_of_reviews }) => {
   const [openModal, setOpenModal] = useState(false);
 
   return (
@@ -89,7 +95,7 @@ const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
                 marginTop: 5,
               }}
             >
-              Verified driver
+              {total_trips || "No"} ride(s) completed
             </Text>
           </View>
 
@@ -105,7 +111,7 @@ const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
                   fontFamily: "poppins-regular",
                 }}
               >
-                5
+                {rating || 5}
               </Text>
               <Image
                 source={require("../assets/images/icons/star-icon.png")}
@@ -120,7 +126,7 @@ const DriverCard: FC<{ name: string; id: string }> = ({ name, id }) => {
                 fontSize: 12,
               }}
             >
-              No reviews
+              {num_of_reviews || "No"} reviews
             </Text>
           </View>
         </View>
