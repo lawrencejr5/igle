@@ -32,7 +32,7 @@ import { useActivityContext } from "./ActivityContext";
 
 const RideContext = createContext<RideContextType | null>(null);
 
-type RideStatusType =
+type RideModalStatus =
   | ""
   | "booking"
   | "choosing_car"
@@ -42,6 +42,52 @@ type RideStatusType =
   | "paying"
   | "paid"
   | "rating";
+
+type RideStatus =
+  | "pending"
+  | "scheduled"
+  | "accepted"
+  | "arrived"
+  | "ongoing"
+  | "completed"
+  | "cancelled"
+  | "expired";
+
+interface Ride {
+  _id: string;
+  duration_mins: string;
+  distance_km: string;
+  pickup: { address: string; coordinates: [number, number] };
+  destination: { address: string; coordinates: [number, number] };
+  status: RideStatus;
+  fare: number;
+  payment_status: string;
+  scheduled_time?: Date;
+  driver: {
+    _id: string;
+    vehicle_type: string;
+    vehicle: {
+      model: string;
+      brand: string;
+      color: string;
+    };
+    current_location: { coordinates: [number, number] };
+    total_trips: number;
+    rating: number;
+    num_of_reviews: number;
+    user: {
+      _id: string;
+      name: string;
+      email: string;
+      phone: string;
+    };
+  };
+  rider: {
+    _id: string;
+    name: string;
+    phone: string;
+  };
+}
 
 export const RideContextProvider: FC<{ children: ReactNode }> = ({
   children,
@@ -69,7 +115,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const [ongoingRideData, setOngoingRideData] = useState<any>(null);
   const [rideData, setRideData] = useState<any>(null);
 
-  const [rideStatus, setRideStatus] = useState<RideStatusType>("");
+  const [rideStatus, setRideStatus] = useState<RideModalStatus>("");
   const [modalUp, setModalUp] = useState<boolean>(false);
   const routeModalRef = useRef<BottomSheet>(null);
 
@@ -394,7 +440,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
-  const fetchRideData = async (ride_id: string): Promise<any> => {
+  const fetchRideData = async (ride_id: string): Promise<Ride | undefined> => {
     const token = await AsyncStorage.getItem("token");
     try {
       const { data } = await axios.get(`${API_URL}/data?ride_id=${ride_id}`, {
@@ -406,6 +452,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       showNotification(error.response.data.msg, "error");
     }
   };
+
   const fetchOngoingRideData = async (ride_id: string): Promise<void> => {
     try {
       const ride = await fetchRideData(ride_id);
@@ -415,6 +462,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       showNotification(error.response.data.msg, "error");
     }
   };
+
   const fetchRideDetails = async (ride_id: string): Promise<void> => {
     setRideDetailsLoading(true);
     try {
@@ -471,7 +519,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const fetchUserRides = async (
     status: "completed" | "cancelled"
-  ): Promise<any> => {
+  ): Promise<Ride> => {
     const token = await AsyncStorage.getItem("token");
     try {
       const { data } = await axios.get(`${API_URL}/user?status=${status}`, {
@@ -485,7 +533,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
-  const [userCompletedRides, setUserCompletedRides] = useState<any>(null);
+  const [userCompletedRides, setUserCompletedRides] = useState<Ride | null>(
+    null
+  );
   const getUserCompletedRides = async (): Promise<void> => {
     setLoadingState((prev: any) => ({ ...prev, completedRides: true }));
     try {
@@ -498,7 +548,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
-  const [userCancelledRides, setUserCancelledRides] = useState<any>(null);
+  const [userCancelledRides, setUserCancelledRides] = useState<Ride | null>(
+    null
+  );
   const getUserCancelledRides = async (): Promise<void> => {
     setLoadingState((prev: any) => ({ ...prev, cancelledRides: true }));
     try {
@@ -509,20 +561,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     } finally {
       setLoadingState((prev: any) => ({ ...prev, cancelledRides: false }));
     }
-  };
-
-  const [activeSuggestion, setActiveSuggestion] = useState<
-    "pickup" | "destination" | ""
-  >("");
-  const pickupFocus = () => {
-    setActiveSuggestion("pickup");
-    setPickupSuggestions(null);
-    setDestinationSuggestions(null);
-  };
-  const destinationFocus = () => {
-    setActiveSuggestion("");
-    setPickupSuggestions(null);
-    setDestinationSuggestions(null);
   };
 
   const pickupRef = useRef<TextInput>(null);
@@ -647,15 +685,15 @@ export interface RideContextType {
 
   payForRide: () => Promise<void>;
 
-  rideStatus: RideStatusType;
-  setRideStatus: Dispatch<SetStateAction<RideStatusType>>;
+  rideStatus: RideModalStatus;
+  setRideStatus: Dispatch<SetStateAction<RideModalStatus>>;
   modalUp: boolean;
   setModalUp: Dispatch<SetStateAction<boolean>>;
   routeModalRef: any;
 
-  rideData: any;
-  ongoingRideData: any;
-  setOngoingRideData: Dispatch<SetStateAction<any>>;
+  rideData: Ride;
+  ongoingRideData: Ride;
+  setOngoingRideData: Dispatch<SetStateAction<Ride>>;
   fetchRideDetails: (ride_id: string) => Promise<void>;
 
   placeId: string;
@@ -670,11 +708,11 @@ export interface RideContextType {
   ) => Promise<void>;
   set_pickup_func: (place_id: string, place_name: string) => Promise<void>;
 
-  userCompletedRides: any;
-  setUserCompletedRides: Dispatch<SetStateAction<any>>;
+  userCompletedRides: Ride | null;
+  setUserCompletedRides: Dispatch<SetStateAction<Ride | null>>;
   getUserCompletedRides: () => Promise<void>;
-  userCancelledRides: any;
-  setUserCancelledRides: Dispatch<SetStateAction<any>>;
+  userCancelledRides: Ride | null;
+  setUserCancelledRides: Dispatch<SetStateAction<Ride | null>>;
   getUserCancelledRides: () => Promise<void>;
 
   pickupTime: "now" | "later";

@@ -1494,7 +1494,7 @@ const RateModal = () => {
 
   const rate_driver = async () => {
     try {
-      await createRating(ongoingRideData._id, ongoingRideData.driver);
+      await createRating(ongoingRideData._id, ongoingRideData.driver._id);
       resetRide();
     } catch (error) {
       console.log(error);
