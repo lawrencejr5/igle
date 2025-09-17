@@ -18,6 +18,7 @@ import { useMapContext } from "../../context/MapContext";
 
 import { useLoading } from "../../context/LoadingContext";
 import AppLoading from "../../loadings/AppLoading";
+import { useRideContext } from "../../context/RideContext";
 
 const Home = () => {
   // Side nav state
@@ -29,11 +30,9 @@ const Home = () => {
   const { notification } = useNotificationContext();
   const {
     region,
-    pickupCoords,
     getPlaceName,
     userAddress,
     destination,
-    destinationCoords,
     pickupMarker,
     destinationMarker,
     routeCoords,
@@ -41,6 +40,8 @@ const Home = () => {
     mapPadding,
     locationLoading,
   } = useMapContext();
+
+  const { rideStatus, ongoingRideData } = useRideContext();
 
   const { appLoading } = useLoading();
 
@@ -76,74 +77,102 @@ const Home = () => {
                 customMapStyle={darkMapStyle}
                 mapPadding={mapPadding}
               >
-                <Marker
-                  coordinate={routeCoords.length > 0 ? routeCoords[0] : region}
-                  title={userAddress}
-                  anchor={{ x: 0.2, y: 0.2 }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "white",
-                      padding: 5,
-                      borderRadius: 50,
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "black",
-                        padding: 5,
-                        borderRadius: 50,
-                      }}
-                    />
-                  </View>
-                </Marker>
-                {routeCoords.length > 0 && destination && (
+                {rideStatus !== "track_driver" &&
+                rideStatus !== "track_ride" ? (
                   <Marker
-                    coordinate={routeCoords[routeCoords.length - 1]}
-                    title={destination}
+                    coordinate={
+                      routeCoords.length > 0 ? routeCoords[0] : region
+                    }
+                    title={userAddress}
                     anchor={{ x: 0.2, y: 0.2 }}
                   >
                     <View
                       style={{
                         backgroundColor: "white",
-                        padding: 4,
-                        borderRadius: 2,
+                        padding: 5,
+                        borderRadius: 50,
                       }}
                     >
                       <View
                         style={{
                           backgroundColor: "black",
-                          padding: 4,
-                          borderRadius: 2,
+                          padding: 5,
+                          borderRadius: 50,
+                        }}
+                      />
+                    </View>
+                  </Marker>
+                ) : (
+                  <Marker
+                    coordinate={
+                      ongoingRideData.driver.current_location && {
+                        latitude:
+                          ongoingRideData.driver.current_location
+                            .coordinates[0],
+                        longitude:
+                          ongoingRideData.driver.current_location
+                            .coordinates[1],
+                      }
+                    }
+                    title={userAddress}
+                    anchor={{ x: 0.2, y: 0.2 }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        padding: 5,
+                        borderRadius: 50,
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: "black",
+                          padding: 5,
+                          borderRadius: 50,
                         }}
                       />
                     </View>
                   </Marker>
                 )}
 
-                {/* {routeCoords.length > 0 && (
-                  <Marker
-                    coordinate={routeCoords[routeCoords.length - 1]}
-                    pinColor="blue"
-                    title="Polyline End"
-                  />
-                )}
+                {routeCoords.length > 0 &&
+                  destination &&
+                  rideStatus !== "track_driver" &&
+                  rideStatus !== "track_ride" && (
+                    <Marker
+                      coordinate={routeCoords[routeCoords.length - 1]}
+                      title={destination}
+                      anchor={{ x: 0.2, y: 0.2 }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: "white",
+                          padding: 4,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: "black",
+                            padding: 4,
+                            borderRadius: 2,
+                          }}
+                        />
+                      </View>
+                    </Marker>
+                  )}
 
-                {routeCoords.length > 0 && (
-                  <Marker
-                    coordinate={routeCoords[0]}
-                    pinColor="red"
-                    title="Destination Marker"
-                  />
-                )} */}
-
-                {pickupMarker && destinationMarker && destination && (
-                  <Polyline
-                    coordinates={routeCoords}
-                    strokeColor="#fff"
-                    strokeWidth={4}
-                  />
-                )}
+                {pickupMarker &&
+                  destinationMarker &&
+                  destination &&
+                  rideStatus !== "track_driver" &&
+                  rideStatus !== "track_ride" && (
+                    <Polyline
+                      coordinates={routeCoords}
+                      strokeColor="#fff"
+                      strokeWidth={4}
+                    />
+                  )}
               </MapView>
             )}
 

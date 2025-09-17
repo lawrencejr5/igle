@@ -107,8 +107,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     getPlaceCoords,
     pickupCoords,
     setUserAddress,
-    setPickupSuggestions,
-    setDestinationSuggestions,
   } = useMapContext();
   const { getWalletBalance } = useWalletContext();
   const { getRideHistory, addRideHistory } = useHistoryContext();
@@ -214,6 +212,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
     if (rideStatus === "accepted") {
       routeModalRef.current?.snapToIndex(4);
+    }
+    if (rideStatus === "track_driver") {
+      routeModalRef.current?.snapToIndex(0);
     }
     if (rideStatus === "pay") {
       routeModalRef.current?.snapToIndex(1);

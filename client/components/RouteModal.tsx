@@ -215,6 +215,8 @@ const RouteModal = () => {
         {/*  */}
         {rideStatus === "accepted" && <AcceptedModal />}
         {/*  */}
+        {rideStatus === "track_driver" && <TrackDriver />}
+        {/*  */}
         {rideStatus === "pay" && <PayModal />}
         {/*  */}
         {rideStatus === "paying" && <PayingModal />}
@@ -1020,9 +1022,10 @@ const SearchingModal = () => {
 };
 
 const AcceptedModal = () => {
-  const { region, userAddress, destination, mapRef } = useMapContext();
+  const { region, mapRef } = useMapContext();
 
-  const { cancelling, cancelRideRequest, ongoingRideData } = useRideContext();
+  const { cancelling, cancelRideRequest, ongoingRideData, setRideStatus } =
+    useRideContext();
 
   const { showNotification } = useNotificationContext();
 
@@ -1039,8 +1042,6 @@ const AcceptedModal = () => {
     }
   };
 
-  const [openDriverDetails, setOpenDriverDetails] = useState<boolean>(false);
-
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -1052,100 +1053,38 @@ const AcceptedModal = () => {
       </Text>
 
       {/* Ride request card */}
-      <View style={styles.rideRequestCard}>
-        {/* Header */}
-        <View style={styles.rideRequestHeader}>
-          {/* User */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => setOpenDriverDetails(true)}
-            style={styles.userInfo}
-          >
-            <Image
-              source={require("../assets/images/black-profile.jpeg")}
-              style={styles.userImage}
-            />
-            <View>
-              <Text style={styles.userName}>
-                {ongoingRideData.driver.user.name}
-              </Text>
-              <Text style={styles.userRides}>No ride completed</Text>
-            </View>
-          </TouchableOpacity>
+      <RideRequestCard />
 
-          <DriverDetailsModal
-            id={ongoingRideData.driver._id}
-            open={openDriverDetails}
-            setOpen={setOpenDriverDetails}
-          />
-
-          {/* Call btn */}
-          <TouchableWithoutFeedback
-            onPress={() =>
-              Linking.openURL(`tel:${ongoingRideData.driver.user.phone}`)
-            }
-          >
-            <View style={styles.callBtn}>
-              <FontAwesome name="phone" color={"#121212"} size={20} />
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-
-        {/* Estimated time and duration */}
-        <View style={{ marginVertical: 20 }}>
-          <View style={styles.timeRow}>
-            <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
-            <Text style={styles.timeText}>
-              {ongoingRideData?.duration_mins} mins (
-              {ongoingRideData?.distance_km} km)
-            </Text>
-          </View>
-
-          <View style={styles.timeRow}>
-            <Ionicons name="car" color={"#d7d7d7"} size={16} />
-            <Text style={styles.timeText}>
-              {ongoingRideData.driver?.vehicle.color}{" "}
-              {ongoingRideData.driver?.vehicle.brand}{" "}
-              {ongoingRideData.driver?.vehicle.model}
-            </Text>
-          </View>
-        </View>
-
-        {/* Ride route card */}
-        <RideRoute from={userAddress} to={destination} />
-
-        {/* Price */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: "raleway-regular",
-              fontSize: 18,
-            }}
-          >
-            Total fare:
-          </Text>
-          <Text style={styles.priceText}>
-            {ongoingRideData?.fare.toLocaleString()} NGN
-          </Text>
-        </View>
+      <TouchableOpacity
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 50,
+          backgroundColor: "#fff",
+          marginTop: 20,
+        }}
+        onPress={() => {
+          setRideStatus("track_driver");
+          mapRef.current.animateToRegion(
+            {
+              ...region,
+              latitude: ongoingRideData.driver.current_location.coordinates[0],
+              longitude: ongoingRideData.driver.current_location.coordinates[1],
+            },
+            1000
+          );
+        }}
+      >
         <Text
           style={{
-            marginVertical: 20,
-            color: "#fff",
-            fontFamily: "raleway-regular",
-            fontSize: 12,
+            fontFamily: "raleway-bold",
+            color: "#121212",
+            textAlign: "center",
           }}
         >
-          *Please ensure the driver has arrived before paying for this ride
+          Track driver
         </Text>
-      </View>
+      </TouchableOpacity>
 
       <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
         <Text
@@ -1159,6 +1098,34 @@ const AcceptedModal = () => {
           {cancelling ? "Cancelling..." : "Canel this ride"}
         </Text>
       </TouchableWithoutFeedback>
+    </>
+  );
+};
+
+const TrackDriver = () => {
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
+        Tracking driver...
+      </Text>
+      <Pressable
+        style={{
+          marginVertical: 30,
+          padding: 10,
+          borderRadius: 30,
+          backgroundColor: "#fff",
+        }}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+            color: "#121212",
+          }}
+        >
+          See ride info
+        </Text>
+      </Pressable>
     </>
   );
 };
@@ -1205,8 +1172,7 @@ const PayModal = () => {
 const PayingModal = () => {
   const { rideDetails } = useMapContext();
 
-  const { setRideStatus, modalUp, setModalUp, payForRide, pickupTime } =
-    useRideContext();
+  const { setRideStatus, payForRide } = useRideContext();
 
   const { userWalletBal } = useWalletContext();
 
@@ -1300,13 +1266,8 @@ const PayingModal = () => {
 };
 
 const PaidModal = () => {
-  const {
-    pickupTime,
-    scheduledTimeDif,
-    setRideStatus,
-    ongoingRideData,
-    resetRide,
-  } = useRideContext();
+  const { pickupTime, scheduledTimeDif, setRideStatus, ongoingRideData } =
+    useRideContext();
   return (
     <>
       <Text
@@ -1849,6 +1810,111 @@ const PickupTimeModal: FC<{
         </View>
       </View>
     </Modal>
+  );
+};
+
+const RideRequestCard = () => {
+  const { ongoingRideData } = useRideContext();
+  const { userAddress, destination } = useMapContext();
+  const [openDriverDetails, setOpenDriverDetails] = useState<boolean>(false);
+
+  return (
+    <View style={styles.rideRequestCard}>
+      {/* Header */}
+      <View style={styles.rideRequestHeader}>
+        {/* User */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setOpenDriverDetails(true)}
+          style={styles.userInfo}
+        >
+          <Image
+            source={require("../assets/images/black-profile.jpeg")}
+            style={styles.userImage}
+          />
+          <View>
+            <Text style={styles.userName}>
+              {ongoingRideData.driver.user.name}
+            </Text>
+            <Text style={styles.userRides}>
+              {ongoingRideData.driver.total_trips || "No"} ride(s) completed
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <DriverDetailsModal
+          id={ongoingRideData.driver._id}
+          open={openDriverDetails}
+          setOpen={setOpenDriverDetails}
+        />
+
+        {/* Call btn */}
+        <TouchableWithoutFeedback
+          onPress={() =>
+            Linking.openURL(`tel:${ongoingRideData.driver.user.phone}`)
+          }
+        >
+          <View style={styles.callBtn}>
+            <FontAwesome name="phone" color={"#121212"} size={20} />
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+
+      {/* Estimated time and duration */}
+      <View style={{ marginVertical: 20 }}>
+        <View style={styles.timeRow}>
+          <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
+          <Text style={styles.timeText}>
+            {ongoingRideData?.duration_mins} mins (
+            {ongoingRideData?.distance_km} km)
+          </Text>
+        </View>
+
+        <View style={styles.timeRow}>
+          <Ionicons name="car" color={"#d7d7d7"} size={16} />
+          <Text style={styles.timeText}>
+            {ongoingRideData.driver?.vehicle.color}{" "}
+            {ongoingRideData.driver?.vehicle.brand}{" "}
+            {ongoingRideData.driver?.vehicle.model}
+          </Text>
+        </View>
+      </View>
+
+      {/* Ride route card */}
+      <RideRoute from={userAddress} to={destination} />
+
+      {/* Price */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            color: "#fff",
+            fontFamily: "raleway-regular",
+            fontSize: 18,
+          }}
+        >
+          Total fare:
+        </Text>
+        <Text style={styles.priceText}>
+          {ongoingRideData?.fare.toLocaleString()} NGN
+        </Text>
+      </View>
+      {/* <Text
+          style={{
+            marginVertical: 20,
+            color: "#fff",
+            fontFamily: "raleway-regular",
+            fontSize: 12,
+          }}
+        >
+          *Please ensure the driver has arrived before paying for this ride
+        </Text> */}
+    </View>
   );
 };
 
