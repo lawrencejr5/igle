@@ -38,6 +38,8 @@ type RideModalStatus =
   | "choosing_car"
   | "searching"
   | "accepted"
+  | "track_driver"
+  | "track_ride"
   | "pay"
   | "paying"
   | "paid"

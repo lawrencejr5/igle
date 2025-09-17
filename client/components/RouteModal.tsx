@@ -321,13 +321,15 @@ const StartModal = () => {
 const SavedPlaces = () => {
   const { homePlace, officePlace, otherPlaces } = useSavedPlaceContext();
   const { set_destination_func } = useRideContext();
+
   return (
     <View style={{ marginTop: 20 }}>
       <ScrollView
-        horizontal={true}
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 10 }}
       >
+        {/* Home */}
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => {
@@ -357,6 +359,7 @@ const SavedPlaces = () => {
                   fontFamily: "raleway-regular",
                   color: "#8d8d8d",
                   fontSize: 12,
+                  textTransform: "capitalize",
                 }}
                 numberOfLines={1}
               >
@@ -376,6 +379,8 @@ const SavedPlaces = () => {
             )}
           </View>
         </TouchableOpacity>
+
+        {/* Office */}
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => {
@@ -405,6 +410,7 @@ const SavedPlaces = () => {
                   fontFamily: "raleway-regular",
                   color: "#8d8d8d",
                   fontSize: 12,
+                  textTransform: "capitalize",
                 }}
                 numberOfLines={1}
               >
@@ -424,52 +430,52 @@ const SavedPlaces = () => {
             )}
           </View>
         </TouchableOpacity>
-        {otherPlaces && (
-          <FlatList
-            data={otherPlaces}
-            keyExtractor={(otherPlaces) => otherPlaces._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => {
-                  set_destination_func(
-                    item.place_id,
-                    item.place_name,
-                    item.place_sub_name
-                  );
-                }}
+
+        {/* Other places */}
+        {otherPlaces?.map((item) => (
+          <TouchableOpacity
+            key={item._id}
+            activeOpacity={0.7}
+            onPress={() => {
+              set_destination_func(
+                item.place_id,
+                item.place_name,
+                item.place_sub_name
+              );
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+              width: 140,
+            }}
+          >
+            <FontAwesome6 name="location-dot" color={"#8d8d8d"} size={20} />
+            <View style={{ flexShrink: 1 }}>
+              <Text
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  width: 140,
+                  fontFamily: "raleway-bold",
+                  color: "#8d8d8d",
+                  textTransform: "capitalize",
                 }}
               >
-                <FontAwesome6 name="location-dot" color={"#8d8d8d"} size={20} />
-                <View style={{ flexShrink: 1 }}>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-bold",
-                      color: "#8d8d8d",
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {item.place_header}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-regular",
-                      color: "#8d8d8d",
-                    }}
-                    numberOfLines={1}
-                  >
-                    {item.place_name}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        )}
+                {item.place_header}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "raleway-regular",
+                  color: "#8d8d8d",
+                  textTransform: "capitalize",
+                }}
+                numberOfLines={1}
+              >
+                {item.place_name}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+
+        {/* Add new place */}
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => router.push("../(tabs)/account/saved_places")}
