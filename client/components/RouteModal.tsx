@@ -58,7 +58,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { router, useNavigation } from "expo-router";
 import { useSavedPlaceContext } from "../context/SavedPlaceContext";
 import { useRatingContext } from "../context/RatingContext";
-import { DriverDetailsModal } from "./DriverCard";
+import DriverCard, { DriverDetailsModal } from "./DriverCard";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
 
 const RouteModal = () => {
@@ -197,7 +197,11 @@ const RouteModal = () => {
         borderRadius: 10,
       }}
     >
-      <BottomSheetView style={styles.modal}>
+      <BottomSheetView
+        key={rideStatus}
+        pointerEvents="box-none"
+        style={styles.modal}
+      >
         {/* Form */}
         {rideStatus === "" && <StartModal />}
         {/*  */}
@@ -213,9 +217,9 @@ const RouteModal = () => {
         {/*  */}
         {rideStatus === "searching" && <SearchingModal />}
         {/*  */}
-        {rideStatus === "accepted" && <AcceptedModal />}
+        {rideStatus === "accepted" && <AcceptedModal key={"accepted"} />}
         {/*  */}
-        {rideStatus === "track_driver" && <TrackDriver />}
+        {rideStatus === "track_driver" && <TrackDriver key={"track_driver"} />}
         {/*  */}
         {rideStatus === "pay" && <PayModal />}
         {/*  */}
@@ -1042,6 +1046,20 @@ const AcceptedModal = () => {
     }
   };
 
+  const track_driver = () => {
+    setRideStatus("track_driver");
+    if (mapRef.current)
+      mapRef.current.animateToRegion(
+        {
+          longitudeDelta: 0.02,
+          latitudeDelta: 0.02,
+          latitude: ongoingRideData.driver.current_location.coordinates[0],
+          longitude: ongoingRideData.driver.current_location.coordinates[1],
+        },
+        1000
+      );
+  };
+
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -1053,9 +1071,10 @@ const AcceptedModal = () => {
       </Text>
 
       {/* Ride request card */}
-      <RideRequestCard />
+      {ongoingRideData && <RideRequestCard />}
 
       <TouchableOpacity
+        activeOpacity={0.7}
         style={{
           width: "100%",
           padding: 10,
@@ -1063,17 +1082,7 @@ const AcceptedModal = () => {
           backgroundColor: "#fff",
           marginTop: 20,
         }}
-        onPress={() => {
-          setRideStatus("track_driver");
-          mapRef.current.animateToRegion(
-            {
-              ...region,
-              latitude: ongoingRideData.driver.current_location.coordinates[0],
-              longitude: ongoingRideData.driver.current_location.coordinates[1],
-            },
-            1000
-          );
-        }}
+        onPress={track_driver}
       >
         <Text
           style={{
@@ -1103,12 +1112,35 @@ const AcceptedModal = () => {
 };
 
 const TrackDriver = () => {
+  const { setRideStatus, ongoingRideData } = useRideContext();
+  const { mapRef, routeCoords } = useMapContext();
+
+  const see_ride_info = () => {
+    if (mapRef.current)
+      mapRef.current.fitToCoordinates(routeCoords, {
+        edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
+        animated: true,
+      });
+    setRideStatus("accepted");
+  };
+
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
         Tracking driver...
       </Text>
-      <Pressable
+
+      <DriverCard
+        name={ongoingRideData.driver.user.name}
+        id={ongoingRideData.driver._id}
+        total_trips={ongoingRideData.driver.total_trips}
+        rating={ongoingRideData.driver.rating}
+        num_of_reviews={ongoingRideData.driver.num_of_reviews}
+      />
+
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={see_ride_info}
         style={{
           marginVertical: 30,
           padding: 10,
@@ -1125,7 +1157,7 @@ const TrackDriver = () => {
         >
           See ride info
         </Text>
-      </Pressable>
+      </TouchableOpacity>
     </>
   );
 };
@@ -1815,7 +1847,6 @@ const PickupTimeModal: FC<{
 
 const RideRequestCard = () => {
   const { ongoingRideData } = useRideContext();
-  const { userAddress, destination } = useMapContext();
   const [openDriverDetails, setOpenDriverDetails] = useState<boolean>(false);
 
   return (
@@ -1881,7 +1912,10 @@ const RideRequestCard = () => {
       </View>
 
       {/* Ride route card */}
-      <RideRoute from={userAddress} to={destination} />
+      <RideRoute
+        from={ongoingRideData.pickup.address}
+        to={ongoingRideData.destination.address}
+      />
 
       {/* Price */}
       <View

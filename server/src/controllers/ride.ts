@@ -270,7 +270,8 @@ export const get_user_rides = async (
       .sort({ createdAt: -1 })
       .populate({
         path: "driver",
-        select: "user vehicle_type vehicle current_location",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
           select: "name email phone",
@@ -296,7 +297,8 @@ export const get_user_active_ride = async (
       .sort({ createdAt: -1 })
       .populate({
         path: "driver",
-        select: "user vehicle_type vehicle current_location",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
           select: "name email phone",

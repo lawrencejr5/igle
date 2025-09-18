@@ -1,4 +1,10 @@
-import { StyleSheet, View, Text, TouchableWithoutFeedback } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableWithoutFeedback,
+  Image,
+} from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
@@ -19,6 +25,7 @@ import { useMapContext } from "../../context/MapContext";
 import { useLoading } from "../../context/LoadingContext";
 import AppLoading from "../../loadings/AppLoading";
 import { useRideContext } from "../../context/RideContext";
+import DriverMarker from "../../components/DriverMarker";
 
 const Home = () => {
   // Side nav state
@@ -104,34 +111,19 @@ const Home = () => {
                   </Marker>
                 ) : (
                   <Marker
-                    coordinate={
-                      ongoingRideData.driver.current_location && {
-                        latitude:
-                          ongoingRideData.driver.current_location
-                            .coordinates[0],
-                        longitude:
-                          ongoingRideData.driver.current_location
-                            .coordinates[1],
-                      }
-                    }
-                    title={userAddress}
+                    coordinate={{
+                      latitude:
+                        ongoingRideData.driver.current_location.coordinates[0],
+                      longitude:
+                        ongoingRideData.driver.current_location.coordinates[1],
+                    }}
+                    title={ongoingRideData.driver.user.name}
                     anchor={{ x: 0.2, y: 0.2 }}
                   >
-                    <View
-                      style={{
-                        backgroundColor: "white",
-                        padding: 5,
-                        borderRadius: 50,
-                      }}
-                    >
-                      <View
-                        style={{
-                          backgroundColor: "black",
-                          padding: 5,
-                          borderRadius: 50,
-                        }}
-                      />
-                    </View>
+                    <Image
+                      source={require("../../assets/images/black-profile.jpeg")}
+                      style={{ height: 35, width: 35, borderRadius: 50 }}
+                    />
                   </Marker>
                 )}
 
