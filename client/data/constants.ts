@@ -1,15 +1,15 @@
 export const API_URLS = {
-  users: "http://192.168.131.123:5000/api/v1/users",
-  drivers: "http://192.168.131.123:5000/api/v1/drivers",
-  wallet: "http://192.168.131.123:5000/api/v1/wallet",
-  rides: "http://192.168.131.123:5000/api/v1/rides",
-  history: "http://192.168.131.123:5000/api/v1/history",
-  saved_place: "http://192.168.131.123:5000/api/v1/saved_place",
-  activity: "http://192.168.131.123:5000/api/v1/activity",
-  rating: "http://192.168.131.123:5000/api/v1/rating",
+  users: "http://192.168.107.123:5000/api/v1/users",
+  drivers: "http://192.168.107.123:5000/api/v1/drivers",
+  wallet: "http://192.168.107.123:5000/api/v1/wallet",
+  rides: "http://192.168.107.123:5000/api/v1/rides",
+  history: "http://192.168.107.123:5000/api/v1/history",
+  saved_place: "http://192.168.107.123:5000/api/v1/saved_place",
+  activity: "http://192.168.107.123:5000/api/v1/activity",
+  rating: "http://192.168.107.123:5000/api/v1/rating",
 };
 
-export const SOCKET_URL = "http://192.168.131.123:5000";
+export const SOCKET_URL = "http://192.168.107.123:5000";
 
 // export const API_URLS = {
 //   users: "https://igleapi.onrender.com/api/v1/users",

@@ -227,6 +227,8 @@ const RouteModal = () => {
         {/*  */}
         {rideStatus === "paid" && <PaidModal />}
         {/*  */}
+        {rideStatus === "track_ride" && <TrackRide />}
+        {/*  */}
         {rideStatus === "rating" && <RateModal />}
       </BottomSheetView>
     </BottomSheet>
@@ -1163,19 +1165,20 @@ const TrackDriver = () => {
 };
 
 const PayModal = () => {
-  const { setRideStatus, modalUp, setModalUp, ongoingRideData } =
-    useRideContext();
+  const { setRideStatus, ongoingRideData } = useRideContext();
 
   return (
     <>
-      <Text
-        style={[
-          styles.header_text,
-          { textAlign: "center", marginTop: 20, fontSize: 16 },
-        ]}
-      >
-        Your driver has arrived, you can pay for this ride
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Driver arrived
       </Text>
+
+      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+        Your driver has arrived!
+      </Text>
+
+      <RideRequestCard />
+
       <Pressable
         style={{
           marginVertical: 50,
@@ -1300,6 +1303,13 @@ const PayingModal = () => {
 const PaidModal = () => {
   const { pickupTime, scheduledTimeDif, setRideStatus, ongoingRideData } =
     useRideContext();
+  const { mapRef, region } = useMapContext();
+
+  const track_ride = () => {
+    setRideStatus("track_ride");
+    if (mapRef.current) mapRef.current.animateToRegion(region, 1000);
+  };
+
   return (
     <>
       <Text
@@ -1313,16 +1323,13 @@ const PaidModal = () => {
           : "Alright, hang tight, we'll take it from here..."}
       </Text>
       {pickupTime === "later" || ongoingRideData.scheduled_time ? (
-        <Pressable
+        <TouchableOpacity
+          activeOpacity={0.7}
           style={{
             marginVertical: 50,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
-          }}
-          onPress={() => {
-            router.push("../(tabs)/rides");
-            setRideStatus("");
           }}
         >
           <Text
@@ -1334,18 +1341,17 @@ const PaidModal = () => {
           >
             See ride details
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       ) : (
-        <Pressable
+        <TouchableOpacity
+          activeOpacity={0.7}
           style={{
             marginVertical: 50,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
           }}
-          onPress={() => {
-            router.push("../(tabs)/rides");
-          }}
+          onPress={track_ride}
         >
           <Text
             style={{
@@ -1356,8 +1362,41 @@ const PaidModal = () => {
           >
             Track ride
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       )}
+    </>
+  );
+};
+
+const TrackRide = () => {
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
+        Tracking ride...
+      </Text>
+
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => {
+          router.push("../(tabs)/rides");
+        }}
+        style={{
+          marginVertical: 30,
+          padding: 10,
+          borderRadius: 30,
+          backgroundColor: "#fff",
+        }}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+            color: "#121212",
+          }}
+        >
+          See ride info
+        </Text>
+      </TouchableOpacity>
     </>
   );
 };
