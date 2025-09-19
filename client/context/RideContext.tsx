@@ -132,14 +132,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     getRideHistory();
   }, [signedIn]);
 
-  // useEffect(() => {
-  //   if (ongoingRideData)
-  //     fetchRoute([
-  //       ongoingRideData.destination.coordinates[0]!,
-  //       ongoingRideData.destination.coordinates[1]!,
-  //     ]);
-  // }, [ongoingRideData]);
-
   useEffect(() => {
     if (!userSocket) return;
 
@@ -185,7 +177,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       showNotification("Your ride has been completed", "success");
       setRideStatus("rating");
 
-      await set_user_location();
       await getUserCompletedRides();
       await fetchActivities();
 
@@ -357,7 +348,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     scheduled_time?: Date
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
-    console.log(pickup.coordinates);
 
     try {
       const distance_and_duration = await calculateRide(

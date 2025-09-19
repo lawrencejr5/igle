@@ -736,6 +736,7 @@ const ChooseRideModal = () => {
     destination,
     destinationCoords,
     userAddress,
+    region,
   } = useMapContext();
 
   const { rideRequest, setRideStatus, pickupTime, scheduledTime } =
@@ -750,19 +751,22 @@ const ChooseRideModal = () => {
     if (!destination || !destinationCoords)
       showNotification("Destination not set", "error");
 
-    if (!userAddress || !pickupCoords)
-      showNotification("Pickup location not set", "error");
-
     try {
       if (pickupTime === "later" && scheduledTime) {
         await rideRequest(
-          { address: userAddress, coordinates: pickupCoords! },
+          {
+            address: userAddress,
+            coordinates: pickupCoords || [region.latitude, region.longitude],
+          },
           { address: destination, coordinates: destinationCoords! },
           scheduledTime
         );
       } else {
         await rideRequest(
-          { address: userAddress, coordinates: pickupCoords! },
+          {
+            address: userAddress,
+            coordinates: pickupCoords || [region.latitude, region.longitude],
+          },
           { address: destination, coordinates: destinationCoords! }
         );
       }

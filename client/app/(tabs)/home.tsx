@@ -65,11 +65,9 @@ const Home = () => {
     }
   }, [region, mapRef.current]);
 
-  const isLoading = appLoading || locationLoading;
-
   return (
     <>
-      {isLoading ? (
+      {appLoading || locationLoading ? (
         <AppLoading />
       ) : (
         <>

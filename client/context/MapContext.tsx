@@ -161,14 +161,13 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
 
       let location = await Location.getCurrentPositionAsync({});
-      let newRegion = {
+      setRegion({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         latitudeDelta: 0.02,
         longitudeDelta: 0.02,
-      };
-      setRegion(newRegion);
-      await AsyncStorage.setItem("region", JSON.stringify(newRegion));
+      });
+      await AsyncStorage.setItem("region", JSON.stringify(region));
 
       // if (region) mapRef.current?.animateToRegion(region, 1000);
     } catch (error: any) {
