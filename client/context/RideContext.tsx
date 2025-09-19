@@ -112,8 +112,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { getRideHistory, addRideHistory } = useHistoryContext();
   const { createActivity } = useActivityContext();
 
-  const [ongoingRideData, setOngoingRideData] = useState<any>(null);
-  const [rideData, setRideData] = useState<any>(null);
+  const [ongoingRideData, setOngoingRideData] = useState<Ride | null>(null);
+  const [rideData, setRideData] = useState<Ride | null>(null);
 
   const [rideStatus, setRideStatus] = useState<RideModalStatus>("");
   const [modalUp, setModalUp] = useState<boolean>(false);
@@ -122,6 +122,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { getDriverData } = useDriverAuthContext();
   const { setLoadingState, setRideDetailsLoading } = useLoading();
   const { fetchActivities } = useActivityContext();
+  const { fetchRoute } = useMapContext();
 
   const { userSocket, signedIn } = useAuthContext();
 
@@ -130,6 +131,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     getUserCancelledRides();
     getRideHistory();
   }, [signedIn]);
+
+  // useEffect(() => {
+  //   if (ongoingRideData)
+  //     fetchRoute([
+  //       ongoingRideData.destination.coordinates[0]!,
+  //       ongoingRideData.destination.coordinates[1]!,
+  //     ]);
+  // }, [ongoingRideData]);
 
   useEffect(() => {
     if (!userSocket) return;
@@ -221,6 +230,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
     if (rideStatus === "paying") {
       routeModalRef.current?.snapToIndex(1);
+    }
+    if (rideStatus === "paid") {
+      routeModalRef.current?.snapToIndex(0);
     }
     if (rideStatus === "track_ride") {
       routeModalRef.current?.snapToIndex(0);
@@ -345,6 +357,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     scheduled_time?: Date
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    console.log(pickup.coordinates);
+
     try {
       const distance_and_duration = await calculateRide(
         pickup.coordinates,
@@ -378,7 +392,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const [retrying, setRetrying] = useState(false);
   const retryRideRequest = async () => {
     const token = await AsyncStorage.getItem("token");
-    const ride_id = ongoingRideData._id;
+    const ride_id = ongoingRideData?._id;
 
     setRetrying(true);
     try {
@@ -462,7 +476,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const fetchOngoingRideData = async (ride_id: string): Promise<void> => {
     try {
       const ride = await fetchRideData(ride_id);
-      setOngoingRideData(ride);
+      setOngoingRideData(ride!);
     } catch (error: any) {
       console.log(error);
       showNotification(error.response.data.msg, "error");
@@ -499,7 +513,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     const token = await AsyncStorage.getItem("token");
     try {
       await axios.post(
-        `${API_URL}/pay?ride_id=${ongoingRideData._id}`,
+        `${API_URL}/pay?ride_id=${ongoingRideData?._id}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -510,10 +524,10 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       await createActivity(
         "ride_payment",
         "Payment for ride",
-        `${ongoingRideData.fare} was debitted from ur wallet`
+        `${ongoingRideData?.fare} was debitted from ur wallet`
       );
 
-      await fetchOngoingRideData(ongoingRideData._id);
+      await fetchOngoingRideData(ongoingRideData?._id!);
       setModalUp(false);
       setRideStatus("paid");
       showNotification("Payment successfull", "success");
@@ -594,10 +608,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       const coords = await getPlaceCoords(place_id);
       if (coords) {
         setDestinationCoords(coords);
-        await calculateRide(
-          pickupCoords || [region.latitude, region.longitude],
-          [...coords]
-        );
+        console.log(pickupCoords);
       }
     }
   };
@@ -697,9 +708,9 @@ export interface RideContextType {
   setModalUp: Dispatch<SetStateAction<boolean>>;
   routeModalRef: any;
 
-  rideData: Ride;
-  ongoingRideData: Ride;
-  setOngoingRideData: Dispatch<SetStateAction<Ride>>;
+  rideData: Ride | null;
+  ongoingRideData: Ride | null;
+  setOngoingRideData: Dispatch<SetStateAction<Ride | null>>;
   fetchRideDetails: (ride_id: string) => Promise<void>;
 
   placeId: string;

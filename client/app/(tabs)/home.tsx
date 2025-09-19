@@ -65,7 +65,7 @@ const Home = () => {
     }
   }, [region, mapRef.current]);
 
-  const isLoading = appLoading && locationLoading;
+  const isLoading = appLoading || locationLoading;
 
   return (
     <>
@@ -112,7 +112,7 @@ const Home = () => {
                   </Marker>
                 ) : (
                   <>
-                    {rideStatus === "track_driver" && (
+                    {rideStatus === "track_driver" && ongoingRideData && (
                       <Marker
                         coordinate={{
                           latitude:
@@ -122,7 +122,7 @@ const Home = () => {
                             ongoingRideData.driver.current_location
                               .coordinates[1],
                         }}
-                        title={ongoingRideData.driver.user.name}
+                        title={"Your driver is here!"}
                         anchor={{ x: 0.2, y: 0.2 }}
                       >
                         <Image
@@ -131,7 +131,7 @@ const Home = () => {
                         />
                       </Marker>
                     )}
-                    {rideStatus === "track_ride" && (
+                    {rideStatus === "track_ride" && ongoingRideData && (
                       <Marker
                         coordinate={{
                           latitude: ongoingRideData.pickup.coordinates[0],
@@ -194,7 +194,7 @@ const Home = () => {
                     <Polyline
                       coordinates={routeCoords}
                       strokeColor="#fff"
-                      strokeWidth={4}
+                      strokeWidth={2}
                     />
                   )}
               </MapView>

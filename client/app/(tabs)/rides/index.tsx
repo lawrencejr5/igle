@@ -240,7 +240,7 @@ const OngoingRide = ({ data }: { data: any }) => {
     const ride_id = ongoingRideData?._id;
 
     try {
-      await cancelRideRequest(ride_id, by, reason);
+      ride_id && (await cancelRideRequest(ride_id, by, reason));
       if (region) mapRef.current.animateToRegion(region, 1000);
     } catch (error: any) {
       showNotification(error.message, "error");
@@ -251,7 +251,7 @@ const OngoingRide = ({ data }: { data: any }) => {
     router.push("../(tabs)/home");
     setRideStatus("track_ride");
     setTimeout(() => {
-      if (mapRef.current)
+      if (mapRef.current && ongoingRideData)
         mapRef.current.animateToRegion(
           {
             longitudeDelta: 0.02,
@@ -431,8 +431,7 @@ const OngoingRide = ({ data }: { data: any }) => {
             >
               <Text style={styles.pay_btn_text}>Track</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.7}
+            <TouchableWithoutFeedback
               onPress={cancel_ride}
               disabled={cancelling}
             >
@@ -446,7 +445,7 @@ const OngoingRide = ({ data }: { data: any }) => {
               >
                 {cancelling ? "Cancelling..." : "Cancel ride"}
               </Text>
-            </TouchableOpacity>
+            </TouchableWithoutFeedback>
           </>
         ) : (
           <>
@@ -470,7 +469,7 @@ const OngoingRide = ({ data }: { data: any }) => {
                   backgroundColor: "transparent",
                   borderColor: "white",
                   borderWidth: 1,
-                  opacity: paying ? 0.5 : 1,
+                  opacity: cancelling ? 0.5 : 1,
                 },
               ]}
             >

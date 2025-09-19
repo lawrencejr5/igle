@@ -60,8 +60,11 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     [number, number] | null
   >(null);
   useEffect(() => {
-    if (destinationCoords && pickupCoords) {
-      calculateRide(pickupCoords, destinationCoords);
+    if (destinationCoords) {
+      calculateRide(
+        pickupCoords || [region.latitude, region.longitude],
+        destinationCoords
+      );
     }
   }, [destinationCoords]);
 

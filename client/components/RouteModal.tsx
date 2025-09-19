@@ -59,7 +59,6 @@ import { router, useNavigation } from "expo-router";
 import { useSavedPlaceContext } from "../context/SavedPlaceContext";
 import { useRatingContext } from "../context/RatingContext";
 import DriverCard, { DriverDetailsModal } from "./DriverCard";
-import { useDriverAuthContext } from "../context/DriverAuthContext";
 
 const RouteModal = () => {
   const {
@@ -733,7 +732,7 @@ const ChooseRideModal = () => {
   const {
     rideDetails,
     calculating,
-    region,
+    pickupCoords,
     destination,
     destinationCoords,
     userAddress,
@@ -748,8 +747,6 @@ const ChooseRideModal = () => {
   const book_ride = async () => {
     setBooking(true);
 
-    const pickupCoords: [number, number] = [region.latitude, region.longitude];
-
     if (!destination || !destinationCoords)
       showNotification("Destination not set", "error");
 
@@ -759,13 +756,13 @@ const ChooseRideModal = () => {
     try {
       if (pickupTime === "later" && scheduledTime) {
         await rideRequest(
-          { address: userAddress, coordinates: pickupCoords },
+          { address: userAddress, coordinates: pickupCoords! },
           { address: destination, coordinates: destinationCoords! },
           scheduledTime
         );
       } else {
         await rideRequest(
-          { address: userAddress, coordinates: pickupCoords },
+          { address: userAddress, coordinates: pickupCoords! },
           { address: destination, coordinates: destinationCoords! }
         );
       }
@@ -885,7 +882,7 @@ const SearchingModal = () => {
     const validStatuses = ["pending", "scheduled"];
 
     // If status is not valid, just clear and exit
-    if (!validStatuses.includes(ongoingRideData.status)) {
+    if (!validStatuses.includes(ongoingRideData?.status!)) {
       setSearchText("Searching for drivers..."); // optional: reset text
       return;
     }
@@ -913,15 +910,15 @@ const SearchingModal = () => {
     return () => {
       timeouts.forEach(clearTimeout);
     };
-  }, [ongoingRideData.status]);
+  }, [ongoingRideData?.status]);
 
   const cancel_ride = async () => {
     const reason = "No reason";
     const by = "rider";
-    const ride_id = ongoingRideData._id;
+    const ride_id = ongoingRideData?._id;
 
     try {
-      await cancelRideRequest(ride_id, by, reason);
+      ride_id && (await cancelRideRequest(ride_id, by, reason));
       if (region) mapRef.current.animateToRegion(region, 1000);
     } catch (error: any) {
       showNotification(error.message, "error");
@@ -938,13 +935,13 @@ const SearchingModal = () => {
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
-        {ongoingRideData.status === "expired"
+        {ongoingRideData?.status === "expired"
           ? "Ride timeout"
           : "Searching for driver"}
       </Text>
 
       <View style={{ marginTop: 20 }}>
-        {ongoingRideData.status !== "expired" && (
+        {ongoingRideData?.status !== "expired" && (
           <ActivityIndicator
             size={"large"}
             color={"#fff"}
@@ -958,13 +955,13 @@ const SearchingModal = () => {
             textAlign: "center",
           }}
         >
-          {ongoingRideData.status === "expired"
+          {ongoingRideData?.status === "expired"
             ? `No Driver was found at this time to go to ${ongoingRideData.destination.address}`
             : searchText}
         </Text>
       </View>
 
-      {ongoingRideData.status === "expired" && (
+      {ongoingRideData?.status === "expired" && (
         <View
           style={{
             flexDirection: "row",
@@ -1038,10 +1035,10 @@ const AcceptedModal = () => {
   const cancel_ride = async () => {
     const reason = "No reason";
     const by = "rider";
-    const ride_id = ongoingRideData._id;
+    const ride_id = ongoingRideData?._id;
 
     try {
-      await cancelRideRequest(ride_id, by, reason);
+      ride_id && (await cancelRideRequest(ride_id, by, reason));
       if (region) mapRef.current.animateToRegion(region, 1000);
     } catch (error: any) {
       showNotification(error.message, "error");
@@ -1051,7 +1048,7 @@ const AcceptedModal = () => {
   const track_driver = () => {
     setRideStatus("track_driver");
     setTimeout(() => {
-      if (mapRef.current)
+      if (mapRef.current && ongoingRideData)
         mapRef.current.animateToRegion(
           {
             longitudeDelta: 0.02,
@@ -1134,13 +1131,15 @@ const TrackDriver = () => {
         Tracking driver...
       </Text>
 
-      <DriverCard
-        name={ongoingRideData.driver.user.name}
-        id={ongoingRideData.driver._id}
-        total_trips={ongoingRideData.driver.total_trips}
-        rating={ongoingRideData.driver.rating}
-        num_of_reviews={ongoingRideData.driver.num_of_reviews}
-      />
+      {ongoingRideData && (
+        <DriverCard
+          name={ongoingRideData?.driver.user.name}
+          id={ongoingRideData?.driver._id}
+          total_trips={ongoingRideData?.driver.total_trips}
+          rating={ongoingRideData?.driver.rating}
+          num_of_reviews={ongoingRideData?.driver.num_of_reviews}
+        />
+      )}
 
       <TouchableOpacity
         activeOpacity={0.7}
@@ -1199,7 +1198,7 @@ const PayModal = () => {
             color: "#121212",
           }}
         >
-          Pay NGN {ongoingRideData.fare}
+          Pay NGN {ongoingRideData?.fare.toLocaleString()}
         </Text>
       </Pressable>
     </>
@@ -1311,7 +1310,7 @@ const PaidModal = () => {
     setRideStatus("track_ride");
     if (mapRef.current)
       setTimeout(() => {
-        if (mapRef.current)
+        if (mapRef.current && ongoingRideData)
           mapRef.current.animateToRegion(
             {
               longitudeDelta: 0.02,
@@ -1327,11 +1326,11 @@ const PaidModal = () => {
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
-        {pickupTime === "later" || ongoingRideData.scheduled_time
+        {pickupTime === "later" || ongoingRideData?.scheduled_time
           ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
           : "Alright, hang tight, we'll take it from here..."}
       </Text>
-      {pickupTime === "later" || ongoingRideData.scheduled_time ? (
+      {pickupTime === "later" || ongoingRideData?.scheduled_time ? (
         <TouchableOpacity
           activeOpacity={0.7}
           style={{
@@ -1541,7 +1540,8 @@ const RateModal = () => {
 
   const rate_driver = async () => {
     try {
-      await createRating(ongoingRideData._id, ongoingRideData.driver._id);
+      ongoingRideData &&
+        (await createRating(ongoingRideData._id, ongoingRideData.driver._id));
       resetRide();
     } catch (error) {
       console.log(error);
@@ -1619,10 +1619,12 @@ const RateModal = () => {
           <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
             Ride summary
           </Text>
-          <RideRoute
-            from={ongoingRideData?.pickup.address}
-            to={ongoingRideData.destination.address}
-          />
+          {ongoingRideData && (
+            <RideRoute
+              from={ongoingRideData?.pickup.address}
+              to={ongoingRideData.destination.address}
+            />
+          )}
 
           <Text
             style={{
@@ -1632,7 +1634,7 @@ const RateModal = () => {
               marginBottom: 10,
             }}
           >
-            **You rode {ongoingRideData.distance_km}km for{" "}
+            **You rode {ongoingRideData?.distance_km}km for{" "}
             {ongoingRideData?.duration_mins} mins
           </Text>
 
@@ -1653,7 +1655,7 @@ const RateModal = () => {
               Total fare:
             </Text>
             <Text style={styles.priceText}>
-              NGN {ongoingRideData.fare.toLocaleString()}(Paid)
+              NGN {ongoingRideData?.fare.toLocaleString()}(Paid)
             </Text>
           </View>
         </View>
@@ -1913,24 +1915,26 @@ const RideRequestCard = () => {
           />
           <View>
             <Text style={styles.userName}>
-              {ongoingRideData.driver.user.name}
+              {ongoingRideData?.driver.user.name}
             </Text>
             <Text style={styles.userRides}>
-              {ongoingRideData.driver.total_trips || "No"} ride(s) completed
+              {ongoingRideData?.driver.total_trips || "No"} ride(s) completed
             </Text>
           </View>
         </TouchableOpacity>
 
-        <DriverDetailsModal
-          id={ongoingRideData.driver._id}
-          open={openDriverDetails}
-          setOpen={setOpenDriverDetails}
-        />
+        {ongoingRideData && (
+          <DriverDetailsModal
+            id={ongoingRideData?.driver._id}
+            open={openDriverDetails}
+            setOpen={setOpenDriverDetails}
+          />
+        )}
 
         {/* Call btn */}
         <TouchableWithoutFeedback
           onPress={() =>
-            Linking.openURL(`tel:${ongoingRideData.driver.user.phone}`)
+            Linking.openURL(`tel:${ongoingRideData?.driver.user.phone}`)
           }
         >
           <View style={styles.callBtn}>
@@ -1952,18 +1956,20 @@ const RideRequestCard = () => {
         <View style={styles.timeRow}>
           <Ionicons name="car" color={"#d7d7d7"} size={16} />
           <Text style={styles.timeText}>
-            {ongoingRideData.driver?.vehicle.color}{" "}
-            {ongoingRideData.driver?.vehicle.brand}{" "}
-            {ongoingRideData.driver?.vehicle.model}
+            {ongoingRideData?.driver?.vehicle.color}{" "}
+            {ongoingRideData?.driver?.vehicle.brand}{" "}
+            {ongoingRideData?.driver?.vehicle.model}
           </Text>
         </View>
       </View>
 
       {/* Ride route card */}
-      <RideRoute
-        from={ongoingRideData.pickup.address}
-        to={ongoingRideData.destination.address}
-      />
+      {ongoingRideData && (
+        <RideRoute
+          from={ongoingRideData?.pickup.address}
+          to={ongoingRideData?.destination.address}
+        />
+      )}
 
       {/* Price */}
       <View
