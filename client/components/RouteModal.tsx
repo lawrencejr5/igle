@@ -1050,16 +1050,18 @@ const AcceptedModal = () => {
 
   const track_driver = () => {
     setRideStatus("track_driver");
-    if (mapRef.current)
-      mapRef.current.animateToRegion(
-        {
-          longitudeDelta: 0.02,
-          latitudeDelta: 0.02,
-          latitude: ongoingRideData.driver.current_location.coordinates[0],
-          longitude: ongoingRideData.driver.current_location.coordinates[1],
-        },
-        1000
-      );
+    setTimeout(() => {
+      if (mapRef.current)
+        mapRef.current.animateToRegion(
+          {
+            longitudeDelta: 0.02,
+            latitudeDelta: 0.02,
+            latitude: ongoingRideData.driver.current_location.coordinates[0],
+            longitude: ongoingRideData.driver.current_location.coordinates[1],
+          },
+          1000
+        );
+    }, 1000);
   };
 
   return (
@@ -1303,21 +1305,28 @@ const PayingModal = () => {
 const PaidModal = () => {
   const { pickupTime, scheduledTimeDif, setRideStatus, ongoingRideData } =
     useRideContext();
-  const { mapRef, region } = useMapContext();
+  const { mapRef } = useMapContext();
 
   const track_ride = () => {
     setRideStatus("track_ride");
-    if (mapRef.current) mapRef.current.animateToRegion(region, 1000);
+    if (mapRef.current)
+      setTimeout(() => {
+        if (mapRef.current)
+          mapRef.current.animateToRegion(
+            {
+              longitudeDelta: 0.02,
+              latitudeDelta: 0.02,
+              latitude: ongoingRideData.pickup.coordinates[0],
+              longitude: ongoingRideData.pickup.coordinates[1],
+            },
+            1000
+          );
+      }, 1000);
   };
 
   return (
     <>
-      <Text
-        style={[
-          styles.header_text,
-          { textAlign: "center", marginTop: 20, fontSize: 16 },
-        ]}
-      >
+      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
         {pickupTime === "later" || ongoingRideData.scheduled_time
           ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
           : "Alright, hang tight, we'll take it from here..."}
@@ -1326,7 +1335,7 @@ const PaidModal = () => {
         <TouchableOpacity
           activeOpacity={0.7}
           style={{
-            marginVertical: 50,
+            marginVertical: 20,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
@@ -1346,7 +1355,7 @@ const PaidModal = () => {
         <TouchableOpacity
           activeOpacity={0.7}
           style={{
-            marginVertical: 50,
+            marginVertical: 20,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",

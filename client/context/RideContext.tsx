@@ -525,7 +525,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const fetchUserRides = async (
     status: "completed" | "cancelled"
-  ): Promise<Ride> => {
+  ): Promise<Ride[]> => {
     const token = await AsyncStorage.getItem("token");
     try {
       const { data } = await axios.get(`${API_URL}/user?status=${status}`, {
@@ -539,7 +539,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
-  const [userCompletedRides, setUserCompletedRides] = useState<Ride | null>(
+  const [userCompletedRides, setUserCompletedRides] = useState<Ride[] | null>(
     null
   );
   const getUserCompletedRides = async (): Promise<void> => {
@@ -554,7 +554,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
-  const [userCancelledRides, setUserCancelledRides] = useState<Ride | null>(
+  const [userCancelledRides, setUserCancelledRides] = useState<Ride[] | null>(
     null
   );
   const getUserCancelledRides = async (): Promise<void> => {
@@ -714,11 +714,11 @@ export interface RideContextType {
   ) => Promise<void>;
   set_pickup_func: (place_id: string, place_name: string) => Promise<void>;
 
-  userCompletedRides: Ride | null;
-  setUserCompletedRides: Dispatch<SetStateAction<Ride | null>>;
+  userCompletedRides: Ride[] | null;
+  setUserCompletedRides: Dispatch<SetStateAction<Ride[] | null>>;
   getUserCompletedRides: () => Promise<void>;
-  userCancelledRides: Ride | null;
-  setUserCancelledRides: Dispatch<SetStateAction<Ride | null>>;
+  userCancelledRides: Ride[] | null;
+  setUserCancelledRides: Dispatch<SetStateAction<Ride[] | null>>;
   getUserCancelledRides: () => Promise<void>;
 
   pickupTime: "now" | "later";

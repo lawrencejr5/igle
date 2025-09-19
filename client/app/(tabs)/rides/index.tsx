@@ -7,6 +7,7 @@ import {
   Linking,
   ScrollView,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -69,7 +70,7 @@ const Rides = () => {
             {category === "completed" &&
               (loadingState.completedRides ? (
                 <RideLoading />
-              ) : userCompletedRides.length === 0 ? (
+              ) : userCompletedRides?.length === 0 ? (
                 <EmptyState message="You haven't completed any rides yet" />
               ) : (
                 <CompletedRides data={userCompletedRides} />
@@ -79,7 +80,7 @@ const Rides = () => {
             {category === "cancelled" &&
               (loadingState.cancelledRides ? (
                 <RideLoading />
-              ) : userCancelledRides.length === 0 ? (
+              ) : userCancelledRides?.length === 0 ? (
                 <EmptyState message="You haven't cancelled any rides yet" />
               ) : (
                 <CancelledRides data={userCancelledRides} />
@@ -197,6 +198,7 @@ const OngoingRide = ({ data }: { data: any }) => {
     ongoingRideData,
     retrying,
     retryRideRequest,
+    setRideStatus,
   } = useRideContext();
   const { region, mapRef } = useMapContext();
 
@@ -243,6 +245,23 @@ const OngoingRide = ({ data }: { data: any }) => {
     } catch (error: any) {
       showNotification(error.message, "error");
     }
+  };
+
+  const track_ride = () => {
+    router.push("../(tabs)/home");
+    setRideStatus("track_ride");
+    setTimeout(() => {
+      if (mapRef.current)
+        mapRef.current.animateToRegion(
+          {
+            longitudeDelta: 0.02,
+            latitudeDelta: 0.02,
+            latitude: ongoingRideData.pickup.coordinates[0],
+            longitude: ongoingRideData.pickup.coordinates[1],
+          },
+          1000
+        );
+    }, 1000);
   };
 
   return (
@@ -385,7 +404,8 @@ const OngoingRide = ({ data }: { data: any }) => {
       {data.driver ? (
         data.payment_status === "paid" ? (
           <>
-            <TouchableWithoutFeedback
+            <TouchableOpacity
+              activeOpacity={0.7}
               onPress={() => makeCall(data.driver.user.phone)}
             >
               <View
@@ -403,11 +423,16 @@ const OngoingRide = ({ data }: { data: any }) => {
                   <FontAwesome5 name="phone-alt" color="#fff" size={14} />
                 </Text>
               </View>
-            </TouchableWithoutFeedback>
-            <View style={styles.pay_btn}>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={track_ride}
+              style={styles.pay_btn}
+            >
               <Text style={styles.pay_btn_text}>Track</Text>
-            </View>
-            <TouchableWithoutFeedback
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
               onPress={cancel_ride}
               disabled={cancelling}
             >
@@ -421,69 +446,68 @@ const OngoingRide = ({ data }: { data: any }) => {
               >
                 {cancelling ? "Cancelling..." : "Cancel ride"}
               </Text>
-            </TouchableWithoutFeedback>
+            </TouchableOpacity>
           </>
         ) : (
           <>
-            <TouchableWithoutFeedback onPress={pay_func} disabled={paying}>
-              <View style={styles.pay_btn}>
-                <Text style={styles.pay_btn_text}>
-                  {paying
-                    ? "Paying..."
-                    : `Pay ${data.fare.toLocaleString()} NGN`}
-                </Text>
-              </View>
-            </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={pay_func}
+              disabled={paying}
+              style={styles.pay_btn}
+            >
+              <Text style={styles.pay_btn_text}>
+                {paying ? "Paying..." : `Pay ${data.fare.toLocaleString()} NGN`}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
               onPress={cancel_ride}
               disabled={cancelling}
+              style={[
+                styles.pay_btn,
+                {
+                  backgroundColor: "transparent",
+                  borderColor: "white",
+                  borderWidth: 1,
+                  opacity: paying ? 0.5 : 1,
+                },
+              ]}
             >
-              <View
-                style={[
-                  styles.pay_btn,
-                  {
-                    backgroundColor: "transparent",
-                    borderColor: "white",
-                    borderWidth: 1,
-                    opacity: paying ? 0.5 : 1,
-                  },
-                ]}
-              >
-                <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
-                  {cancelling ? "Cancelling..." : "Cancel ride"}
-                </Text>
-              </View>
-            </TouchableWithoutFeedback>
+              <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
+                {cancelling ? "Cancelling..." : "Cancel ride"}
+              </Text>
+            </TouchableOpacity>
           </>
         )
       ) : data.status === "expired" ? (
-        <TouchableWithoutFeedback onPress={retry_ride}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            {retrying ? (
-              <Text style={{ color: "#9e9d9d", fontFamily: "raleway-bold" }}>
-                Retrying...
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={retry_ride}
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {retrying ? (
+            <Text style={{ color: "#9e9d9d", fontFamily: "raleway-bold" }}>
+              Retrying...
+            </Text>
+          ) : (
+            <>
+              <Text style={{ color: "#d2d2d2", fontFamily: "raleway-bold" }}>
+                Retry&nbsp;
               </Text>
-            ) : (
-              <>
-                <Text style={{ color: "#d2d2d2", fontFamily: "raleway-bold" }}>
-                  Retry&nbsp;
-                </Text>
-                <FontAwesome6
-                  name="rotate-right"
-                  color="#fff"
-                  size={10}
-                  style={{ marginTop: 4 }}
-                />
-              </>
-            )}
-          </View>
-        </TouchableWithoutFeedback>
+              <FontAwesome6
+                name="rotate-right"
+                color="#fff"
+                size={10}
+                style={{ marginTop: 4 }}
+              />
+            </>
+          )}
+        </TouchableOpacity>
       ) : (
         <>
           <Text
@@ -495,7 +519,11 @@ const OngoingRide = ({ data }: { data: any }) => {
           >
             Still searching for driver...
           </Text>
-          <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={cancel_ride}
+            disabled={cancelling}
+          >
             <Text
               style={{
                 color: cancelling ? "#ff000080" : "#ff0000",
@@ -506,7 +534,7 @@ const OngoingRide = ({ data }: { data: any }) => {
             >
               {cancelling ? "Cancelling..." : "Cancel ride"}
             </Text>
-          </TouchableWithoutFeedback>
+          </TouchableOpacity>
         </>
       )}
     </View>
@@ -611,13 +639,13 @@ const CompletedRides = ({ data }: { data: any }) => (
               from={ride.pickup.address}
               to={ride.destination.address}
             />
-            <TouchableWithoutFeedback
+            <TouchableOpacity
+              activeOpacity={0.7}
               onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
+              style={styles.pay_btn}
             >
-              <View style={styles.pay_btn}>
-                <Text style={styles.pay_btn_text}>View ride details</Text>
-              </View>
-            </TouchableWithoutFeedback>
+              <Text style={styles.pay_btn_text}>View ride details</Text>
+            </TouchableOpacity>
           </View>
         </View>
       );
@@ -684,7 +712,8 @@ const CancelledRides = ({ data }: { data: any }) => {
                   flex: 1,
                 }}
               >
-                <Pressable
+                <TouchableOpacity
+                  activeOpacity={0.7}
                   onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
                   style={{ width: "65%" }}
                 >
@@ -711,8 +740,9 @@ const CancelledRides = ({ data }: { data: any }) => {
                       day: "numeric",
                     })}
                   </Text>
-                </Pressable>
-                <Pressable
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.7}
                   onPress={() => rebook_ride(ride._id)}
                   disabled={rebookingId === ride._id}
                   style={{
@@ -735,7 +765,7 @@ const CancelledRides = ({ data }: { data: any }) => {
                   >
                     {rebookingId === ride._id ? "Rebooking..." : "Rebook"}
                   </Text>
-                </Pressable>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
