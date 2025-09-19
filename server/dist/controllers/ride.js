@@ -17,6 +17,7 @@ const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const activity_1 = __importDefault(require("../models/activity"));
+const driver_1 = __importDefault(require("../models/driver"));
 const get_id_1 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const wallet_2 = require("../utils/wallet");
@@ -202,7 +203,7 @@ const get_ride_data = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const ride = yield ride_1.default.findById(ride_id)
             .populate({
             path: "driver",
-            select: "user vehicle_type vehicle current_location",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
             populate: {
                 path: "user",
                 select: "name email phone",
@@ -228,7 +229,7 @@ const get_user_rides = (req, res) => __awaiter(void 0, void 0, void 0, function*
             .sort({ createdAt: -1 })
             .populate({
             path: "driver",
-            select: "user vehicle_type vehicle current_location",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
             populate: {
                 path: "user",
                 select: "name email phone",
@@ -253,7 +254,7 @@ const get_user_active_ride = (req, res) => __awaiter(void 0, void 0, void 0, fun
             .sort({ createdAt: -1 })
             .populate({
             path: "driver",
-            select: "user vehicle_type vehicle current_location",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
             populate: {
                 path: "user",
                 select: "name email phone",
@@ -426,6 +427,11 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 if (ride.status !== "ongoing") {
                     res.status(400).json({ msg: "Failed to complete this ride" });
                     return;
+                }
+                const driver = yield driver_1.default.findById(ride.driver);
+                if (driver) {
+                    driver.total_trips += 1;
+                    yield driver.save();
                 }
                 const result = yield (0, complete_ride_1.complete_ride)(ride);
                 // Emitting ride status

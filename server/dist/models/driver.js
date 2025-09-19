@@ -83,6 +83,7 @@ const DriverSchema = new mongoose_1.Schema({
     },
     rating: { type: Number, default: 5 },
     total_trips: { type: Number, default: 0 },
+    num_of_reviews: { type: Number, default: 0 },
 });
 DriverSchema.index({ current_location: "2dsphere" });
 exports.default = mongoose_1.default.model("Driver", DriverSchema);

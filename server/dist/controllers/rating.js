@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.get_user_ratings = exports.get_driver_ratings = exports.get_ride_ratings = exports.create_rating = void 0;
 const rating_1 = __importDefault(require("../models/rating"));
+const driver_1 = __importDefault(require("../models/driver"));
 const create_rating = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -28,6 +29,24 @@ const create_rating = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             user,
             driver,
         });
+        // After creating the rating, recalculate the driver's average rating
+        const ratings = yield rating_1.default.find({ driver });
+        let average = 0;
+        if (ratings.length > 0) {
+            const total = ratings.reduce((sum, r) => sum + r.rating, 0);
+            average = total / ratings.length;
+            // Round to one decimal place, but remove trailing .0
+            average = Math.round(average * 10) / 10;
+            if (average % 1 === 0)
+                average = Math.floor(average);
+        }
+        // Update the driver's rating field
+        const driverData = yield driver_1.default.findById(driver);
+        if (driverData) {
+            driverData.rating = average;
+            driverData.num_of_reviews += 1;
+            yield driverData.save();
+        }
         res.status(201).json({ msg: "Rating submitted", rating: newRating });
     }
     catch (error) {
@@ -54,7 +73,26 @@ const get_driver_ratings = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (!driver_id)
             return res.status(400).json({ msg: "Driver id not provided" });
         const ratings = yield rating_1.default.find({ driver: driver_id });
-        res.status(200).json({ msg: "Success", ratings });
+        // Calculate average rating
+        let average = 0;
+        if (ratings.length > 0) {
+            const total = ratings.reduce((sum, r) => sum + r.rating, 0);
+            average = total / ratings.length;
+        }
+        if (ratings.length > 0) {
+            const total = ratings.reduce((sum, r) => sum + r.rating, 0);
+            average = total / ratings.length;
+            // Round to one decimal place, but remove trailing .0
+            average = Math.round(average * 10) / 10;
+            if (average % 1 === 0)
+                average = Math.floor(average); // e.g. 5.0 -> 5
+        }
+        res.status(200).json({
+            msg: "Success",
+            reviews: ratings,
+            average_rating: average,
+            ratings_count: ratings.length,
+        });
     }
     catch (error) {
         res.status(500).json({ msg: "An error occured" });
