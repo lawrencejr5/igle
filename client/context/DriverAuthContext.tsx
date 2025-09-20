@@ -158,8 +158,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           vehicle: { brand, model, color, plate_number },
         } = data.driver;
 
-        console.log("Availabilty: ", is_available);
-
         const driverInfo = {
           driver_id: _id,
           socket_id,

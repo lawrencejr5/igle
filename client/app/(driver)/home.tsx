@@ -679,7 +679,9 @@ const HomePage = () => {
                   <Text style={styles.status_text}>You're offline</Text>
                 </TouchableOpacity>
               )}
-              <Ionicons name="wallet" size={24} color="#d7d7d7" />
+              <TouchableOpacity activeOpacity={20}>
+                <Ionicons name="wallet" size={30} color="#d7d7d7" />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
