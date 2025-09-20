@@ -136,14 +136,16 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const getDriverInfo = async (driver_id?: string) => {
     try {
       const authToken = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(
-        `${API_URL}/data?driver_id=${driver_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+
+      const url = driver_id
+        ? `${API_URL}/data?driver_id=${driver_id}`
+        : `${API_URL}/data`;
+
+      const { data } = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
       if (data.driver) {
         const {
@@ -151,9 +153,12 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           vehicle_type,
           socket_id,
           total_trips,
+          is_available,
           user: { name, email, phone },
           vehicle: { brand, model, color, plate_number },
         } = data.driver;
+
+        console.log("Availabilty: ", is_available);
 
         const driverInfo = {
           driver_id: _id,
@@ -167,6 +172,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           vehicle_model: model,
           vehicle_color: color,
           plate_number,
+          is_available,
         };
         return driverInfo;
       } else {

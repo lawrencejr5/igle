@@ -4,6 +4,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState, useEffect, useMemo } from "react";
 
@@ -106,7 +107,7 @@ const HomePage = () => {
 
   useEffect(() => {
     if (driveStatus !== "incoming") {
-      setCountDown(90);
+      setCountDown(30);
       return;
     }
 
@@ -115,7 +116,7 @@ const HomePage = () => {
         if (prev === 1) {
           setDriveStatus("searching");
           setIncomingRideData(null);
-          return 90;
+          return 30;
         }
         return prev - 1;
       });
@@ -220,7 +221,7 @@ const HomePage = () => {
 
   return (
     <>
-      {/* {notification.visible && <Notification notification={notification} />} */}
+      {notification.visible && <Notification notification={notification} />}
       <View style={styles.container}>
         {/* Map */}
         {region && (
@@ -656,25 +657,29 @@ const HomePage = () => {
             {/* Offline mode */}
             <View style={styles.main_modal}>
               <Image
-                source={require("../../assets/images/black-profile.jpeg")}
+                source={require("../../assets/images/user.png")}
                 style={styles.profileImage}
               />
-              <TouchableWithoutFeedback onPress={setAvailableFunc}>
-                {driver?.is_available ? (
-                  <View
-                    style={[styles.status, { backgroundColor: "#40863a4f" }]}
-                  >
-                    <Text style={[styles.status_text, { color: "#33b735ff" }]}>
-                      You're online
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.status}>
-                    <Text style={styles.status_text}>You're offline</Text>
-                  </View>
-                )}
-              </TouchableWithoutFeedback>
-              <FontAwesome name="sliders" size={24} color="#d7d7d7" />
+              {driver?.is_available ? (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={setAvailableFunc}
+                  style={[styles.status, { backgroundColor: "#40863a4f" }]}
+                >
+                  <Text style={[styles.status_text, { color: "#33b735ff" }]}>
+                    You're online
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={setAvailableFunc}
+                  style={styles.status}
+                >
+                  <Text style={styles.status_text}>You're offline</Text>
+                </TouchableOpacity>
+              )}
+              <Ionicons name="wallet" size={24} color="#d7d7d7" />
             </View>
           </View>
         </View>
@@ -708,7 +713,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: "space-between",
     alignItems: "center",
-    zIndex: 2,
     position: "absolute",
     top: 50,
     gap: 10,
@@ -888,9 +892,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   profileImage: {
-    height: 40,
-    width: 40,
+    height: 35,
+    width: 35,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#fff",
   },
   status: {
     backgroundColor: "#ff44002a",

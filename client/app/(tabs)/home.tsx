@@ -71,7 +71,7 @@ const Home = () => {
         <AppLoading />
       ) : (
         <>
-          <Notification notification={notification} />
+          {notification.visible && <Notification notification={notification} />}
           <View style={{ backgroundColor: "#121212", flex: 1 }}>
             {/* Map */}
             {region && (
