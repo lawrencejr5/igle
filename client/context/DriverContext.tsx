@@ -95,6 +95,10 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [ongoingRideData, driveStatus]);
 
+  useEffect(() => {
+    (async () => await fetchActiveRide())();
+  }, []);
+
   const API_URL = API_URLS.drivers;
 
   // Driver status functions
@@ -271,6 +275,25 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Fetch driver's active ride
+  const fetchActiveRide = async (): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(`${API_URL}/ride/active`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (data.ride) {
+        setOngoingRideData(data.ride);
+      } else {
+        setOngoingRideData(null);
+      }
+    } catch (error: any) {
+      setOngoingRideData(null);
+    }
+  };
+
   return (
     <DriverContext.Provider
       value={{
@@ -296,6 +319,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         setToPickupRouteCoords,
         toDestinationRouteCoords,
         setToDestinationRouteCoords,
+
+        fetchActiveRide,
       }}
     >
       {children}
@@ -341,6 +366,8 @@ interface DriverConextType {
   setToDestinationRouteCoords: Dispatch<
     SetStateAction<{ latitude: number; longitude: number }[]>
   >;
+
+  fetchActiveRide: () => Promise<void>;
 }
 
 export default DriverContextPrvider;

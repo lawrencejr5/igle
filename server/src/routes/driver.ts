@@ -12,6 +12,7 @@ import {
   get_driver_by_user,
   update_driver_rating,
   update_driver_info,
+  get_driver_active_ride,
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
@@ -31,5 +32,6 @@ DriverRouter.patch("/license", update_driver_license);
 DriverRouter.patch("/online", set_driver_online_status);
 DriverRouter.patch("/rating", update_driver_rating);
 DriverRouter.patch("/info", update_driver_info);
+DriverRouter.get("/ride/active", get_driver_active_ride);
 
 export default DriverRouter;

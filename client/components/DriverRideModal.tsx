@@ -19,13 +19,14 @@ import {
 import { useDriverAuthContext } from "../context/DriverAuthContext";
 import { useDriverContext } from "../context/DriverContext";
 import { useNotificationContext } from "../context/NotificationContext";
-import { useMapContext } from "../context/MapContext";
 
 import RideRoute from "./RideRoute";
+import { useMapContext } from "../context/MapContext";
 
 const DriverRideModal = () => {
   const { getDriverProfile, driver, driverSocket } = useDriverAuthContext();
   const {
+    fetchActiveRide,
     setDriveStatus,
     driveStatus,
     fetchIncomingRideData,
@@ -34,7 +35,6 @@ const DriverRideModal = () => {
     ongoingRideData,
     setLocationModalOpen,
   } = useDriverContext();
-
   const { showNotification } = useNotificationContext();
 
   useEffect(() => {
@@ -74,6 +74,26 @@ const DriverRideModal = () => {
       setIncomingRideData(null);
     }
   }, [driver?.is_available]);
+
+  useEffect(() => {
+    // On mount, check for active ride
+    fetchActiveRide().then(() => {
+      if (ongoingRideData) {
+        // Set the drive status based on the ride's status
+        switch (ongoingRideData.status) {
+          case "accepted":
+            setDriveStatus("accepted");
+            break;
+          case "arrived":
+            setDriveStatus("arrived");
+            break;
+          case "ongoing":
+            setDriveStatus("ongoing");
+            break;
+        }
+      }
+    });
+  }, []);
 
   return (
     <View style={{ flex: 1, width: "100%", position: "absolute", bottom: 0 }}>
@@ -472,12 +492,23 @@ const CompletedModal = () => {
     setIncomingRideData,
   } = useDriverContext();
 
+  const { region, mapRef } = useMapContext();
+
   const start_searching = () => {
     setToDestinationRouteCoords([]);
     setToPickupRouteCoords([]);
     setDriveStatus("searching");
     setOngoingRideData(null);
     setIncomingRideData(null);
+
+    setTimeout(() => {
+      if (region && mapRef.current) {
+        mapRef.current.animateToRegion(
+          region,
+          1000 // duration in ms
+        );
+      }
+    }, 1000);
   };
   return (
     <View style={styles.navigationContainer}>

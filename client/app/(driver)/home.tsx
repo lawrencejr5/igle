@@ -28,6 +28,7 @@ import DriverRideModal from "../../components/DriverRideModal";
 const HomePage = () => {
   const { notification } = useNotificationContext();
   const { getDriverProfile } = useDriverAuthContext();
+  const { driveStatus } = useDriverContext();
   const {
     ongoingRideData,
     toPickupRouteCoords,
@@ -80,76 +81,78 @@ const HomePage = () => {
             customMapStyle={darkMapStyle}
           >
             <Marker
-              coordinate={{
-                latitude: region.latitude,
-                longitude: region.longitude,
-              }}
-              title="Your location"
+              coordinate={
+                driveStatus === "arrived" || driveStatus === "ongoing"
+                  ? {
+                      latitude: ongoingRideData.pickup.coordinates[0],
+                      longitude: ongoingRideData.pickup.coordinates[1],
+                    }
+                  : region
+              }
+              title="You are here!"
+              anchor={{ x: 0.2, y: 0.2 }}
             >
               <View style={styles.markerIcon}>
                 <Image
-                  source={require("../../assets/images/icons/keke-icon.png")}
+                  source={require("../../assets/images/icons/sedan-icon.png")}
                   style={styles.markerImage}
                 />
               </View>
             </Marker>
 
-            {ongoingRideData && memoizedPickupRouteCoords && (
-              <Marker
-                coordinate={{
-                  latitude: ongoingRideData.pickup.coordinates[0],
-                  longitude: ongoingRideData.pickup.coordinates[1],
-                }}
-                title="Pickup"
-              >
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    padding: 4,
-                    borderRadius: 2,
+            {ongoingRideData &&
+              ongoingRideData.pickup &&
+              driveStatus === "arriving" && (
+                <Marker
+                  coordinate={{
+                    latitude: ongoingRideData.pickup.coordinates[0],
+                    longitude: ongoingRideData.pickup.coordinates[1],
                   }}
+                  title="Pickup"
+                  anchor={{ x: 0.2, y: 0.2 }}
+                >
+                  <View style={styles.markerIcon}>
+                    <Image
+                      source={require("../../assets/images/user.png")}
+                      style={styles.markerImage}
+                    />
+                  </View>
+                </Marker>
+              )}
+            {ongoingRideData &&
+              ongoingRideData.destination &&
+              (driveStatus === "arrived" || driveStatus === "ongoing") && (
+                <Marker
+                  coordinate={{
+                    latitude: ongoingRideData.destination.coordinates[0],
+                    longitude: ongoingRideData.destination.coordinates[1],
+                  }}
+                  title="Destination"
+                  anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <View
                     style={{
-                      backgroundColor: "black",
+                      backgroundColor: "white",
                       padding: 4,
                       borderRadius: 2,
                     }}
-                  />
-                </View>
-              </Marker>
-            )}
-            {ongoingRideData && memoizedDestinationRouteCoords && (
-              <Marker
-                coordinate={{
-                  latitude: ongoingRideData.destination.coordinates[0],
-                  longitude: ongoingRideData.destination.coordinates[1],
-                }}
-                title="Destination"
-              >
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    padding: 4,
-                    borderRadius: 2,
-                  }}
-                >
-                  <View
-                    style={{
-                      backgroundColor: "black",
-                      padding: 4,
-                      borderRadius: 2,
-                    }}
-                  />
-                </View>
-              </Marker>
-            )}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 4,
+                        borderRadius: 2,
+                      }}
+                    />
+                  </View>
+                </Marker>
+              )}
 
             {toPickupRouteCoords && (
               <Polyline
                 coordinates={memoizedPickupRouteCoords}
                 strokeColor="#fff"
-                strokeWidth={4}
+                strokeWidth={2}
               />
             )}
 
@@ -157,7 +160,7 @@ const HomePage = () => {
               <Polyline
                 coordinates={memoizedDestinationRouteCoords}
                 strokeColor="#fff"
-                strokeWidth={4}
+                strokeWidth={3}
               />
             )}
           </MapView>
@@ -219,9 +222,9 @@ const styles = StyleSheet.create({
     height: 35,
   },
   markerImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "contain",
+    width: 35,
+    height: 35,
+    borderRadius: 50,
   },
   nav_container: {
     width: "100%",

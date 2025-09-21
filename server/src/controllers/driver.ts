@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import Driver from "../models/driver";
 import Wallet from "../models/wallet";
+import Ride from "../models/ride";
 
 import { get_driver_id } from "../utils/get_id";
 
@@ -138,6 +139,8 @@ export const get_driver = async (
     res.status(500).json({ msg: "Server error." });
   }
 };
+
+// Get driver active
 
 export const set_driver_availability = async (
   req: Request,
@@ -336,6 +339,38 @@ export const update_driver_info = async (
       msg: "Driver information updated successfully",
       driver,
     });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Get driver's active ride
+export const get_driver_active_ride = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    // Find the ride where driver is assigned and status is ongoing or accepted or arrived
+    const activeRide = await Ride.findOne({
+      driver: driver_id,
+      status: { $in: ["ongoing", "accepted", "arrived"] },
+    })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone",
+        },
+      })
+      .populate("rider", "name phone");
+    if (!activeRide) {
+      res.status(404).json({ msg: "No active ride found for this driver." });
+      return;
+    }
+    res.status(200).json({ msg: "success", ride: activeRide });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }
