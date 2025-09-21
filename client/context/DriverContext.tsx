@@ -43,6 +43,9 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [incomingRideData, setIncomingRideData] = useState<any>(null);
   const [ongoingRideData, setOngoingRideData] = useState<any>(null);
 
+  // Location update modal state
+  const [locationModalOpen, setLocationModalOpen] = useState<boolean>(false);
+
   const mapRef = useRef<MapView>(null);
   const [toPickupRouteCoords, setToPickupRouteCoords] = useState<
     { latitude: number; longitude: number }[]
@@ -273,6 +276,10 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       value={{
         setAvailability,
         updateLocation,
+
+        locationModalOpen,
+        setLocationModalOpen,
+
         driveStatus,
         setDriveStatus,
         fetchIncomingRideData,
@@ -308,6 +315,10 @@ export const useDriverContext = () => {
 interface DriverConextType {
   setAvailability: (status: boolean) => Promise<void>;
   updateLocation: (coordinates: [number, number]) => Promise<void>;
+
+  locationModalOpen: boolean;
+  setLocationModalOpen: Dispatch<SetStateAction<boolean>>;
+
   driveStatus: StatusType;
   setDriveStatus: Dispatch<SetStateAction<StatusType>>;
   incomingRideData: any;
