@@ -6,7 +6,7 @@ import {
   TouchableWithoutFeedback,
   Image,
 } from "react-native";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 
 import * as Linking from "expo-linking";
 
@@ -24,27 +24,18 @@ import { useMapContext } from "../context/MapContext";
 import RideRoute from "./RideRoute";
 
 const DriverRideModal = () => {
-  const { showNotification } = useNotificationContext();
   const { getDriverProfile, driver, driverSocket } = useDriverAuthContext();
   const {
-    setAvailability,
     setDriveStatus,
     driveStatus,
     fetchIncomingRideData,
     incomingRideData,
     setIncomingRideData,
-    acceptRideRequest,
     ongoingRideData,
-    setOngoingRideData,
-    toPickupRouteCoords,
-    setToPickupRouteCoords,
-    toDestinationRouteCoords,
-    setToDestinationRouteCoords,
-    mapRef,
-    updateRideStatus,
     setLocationModalOpen,
   } = useDriverContext();
-  const { region } = useMapContext();
+
+  const { showNotification } = useNotificationContext();
 
   useEffect(() => {
     getDriverProfile();
@@ -60,6 +51,7 @@ const DriverRideModal = () => {
       const ride_taken_func = (data: any) => {
         setIncomingRideData((prev: any) => {
           if (prev?._id === data.ride_id) {
+            showNotification("Ride has been claimed", "error");
             return null;
           }
           return prev;
@@ -83,7 +75,104 @@ const DriverRideModal = () => {
     }
   }, [driver?.is_available]);
 
+  return (
+    <View style={{ flex: 1, width: "100%", position: "absolute", bottom: 0 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "flex-end",
+          padding: 20,
+        }}
+      >
+        <TouchableWithoutFeedback onPress={() => setLocationModalOpen(true)}>
+          <View style={styles.locationButton}>
+            <Ionicons name="location" size={24} color="#fff" />
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+      <View style={styles.main_modal_container}>
+        {driver?.is_available && (
+          <View style={styles.availableContainer}>
+            {driveStatus === "searching" && <SearchingModal />}
+            {/*  */}
+            {driveStatus === "incoming" && incomingRideData && (
+              <IncomingModal />
+            )}
+            {/*  */}
+            {driveStatus === "accepted" && ongoingRideData && <AcceptedModal />}
+            {/*  */}
+            {driveStatus === "arriving" && <ArrivingModal />}
+            {/*  */}
+            {driveStatus === "arrived" && <ArrivedModal />}
+            {/*  */}
+            {driveStatus === "ongoing" && <OngoingModal />}
+            {/*  */}
+            {driveStatus === "completed" && <CompletedModal />}
+          </View>
+        )}
+
+        {/* Offline mode */}
+        <OfflineMode />
+      </View>
+    </View>
+  );
+};
+
+const OfflineMode = () => {
+  const { driver } = useDriverAuthContext();
+  const { setAvailability } = useDriverContext();
+
+  return (
+    <View style={styles.main_modal}>
+      <Image
+        source={require("../assets/images/user.png")}
+        style={styles.profileImage}
+      />
+      {driver?.is_available ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={async () => await setAvailability()}
+          style={[styles.status, { backgroundColor: "#40863a4f" }]}
+        >
+          <Text style={[styles.status_text, { color: "#33b735ff" }]}>
+            You're online
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={async () => await setAvailability()}
+          style={styles.status}
+        >
+          <Text style={styles.status_text}>You're offline</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity activeOpacity={20}>
+        <Ionicons name="wallet" size={30} color="#d7d7d7" />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const SearchingModal = () => {
+  return (
+    <View>
+      <Text style={styles.searchingText}>Searching for new ride offers...</Text>
+    </View>
+  );
+};
+
+const IncomingModal = () => {
+  const {
+    incomingRideData,
+    driveStatus,
+    setDriveStatus,
+    setIncomingRideData,
+    acceptRideRequest,
+  } = useDriverContext();
+
   const [countDown, setCountDown] = useState<number>(90);
+  const [accepting, setAccepting] = useState<boolean>(false);
 
   useEffect(() => {
     if (driveStatus !== "incoming") {
@@ -105,15 +194,6 @@ const DriverRideModal = () => {
     return () => clearInterval(timer);
   }, [driveStatus]);
 
-  const setAvailableFunc = async () => {
-    try {
-      await setAvailability(!driver?.is_available);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const [accepting, setAccepting] = useState<boolean>(false);
   const accept_incoming_ride = async () => {
     setAccepting(true);
     try {
@@ -126,6 +206,156 @@ const DriverRideModal = () => {
     }
   };
 
+  const reject_incoming_ride = () => {
+    setDriveStatus("searching");
+    setIncomingRideData(null);
+  };
+
+  return (
+    <>
+      <Text style={styles.rideStatusText}>Incoming ride request</Text>
+
+      {/* Ride request card */}
+      <View style={styles.rideRequestCard}>
+        {/* Header */}
+        <View style={styles.rideRequestHeader}>
+          {/* User */}
+          <View style={styles.userInfo}>
+            <Image
+              source={require("../assets/images/black-profile.jpeg")}
+              style={styles.userImage}
+            />
+            <View>
+              <Text style={styles.userName}>{incomingRideData.rider.name}</Text>
+              <Text style={styles.userRides}>No rides completed</Text>
+            </View>
+          </View>
+
+          {/* Timeout or call */}
+          <Text style={styles.timeoutText}>{countDown}s</Text>
+        </View>
+
+        {/* Estimated time and duration */}
+        <View style={styles.timeRow}>
+          <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
+          <Text style={styles.timeText}>
+            {incomingRideData.duration_mins} mins (
+            {incomingRideData.distance_km} km)
+          </Text>
+        </View>
+
+        {/* Ride route card */}
+        <RideRoute
+          from={incomingRideData.pickup.address}
+          to={incomingRideData.destination.address}
+        />
+
+        {/* Price */}
+        <Text style={styles.priceText}>
+          NGN {incomingRideData.fare.toLocaleString()}
+        </Text>
+
+        {/* Action btns */}
+        <View style={styles.actionBtnsRow}>
+          <TouchableWithoutFeedback
+            onPress={accept_incoming_ride}
+            disabled={accepting}
+          >
+            <View style={[styles.acceptBtn, { opacity: accepting ? 0.5 : 1 }]}>
+              <Text style={styles.acceptBtnText}>
+                {accepting ? "Accepting" : "Accept"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+
+          <TouchableWithoutFeedback onPress={reject_incoming_ride}>
+            <View style={styles.cancelBtn}>
+              <Text style={styles.cancelBtnText}>Reject</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </View>
+    </>
+  );
+};
+
+const AcceptedModal = () => {
+  const { ongoingRideData, setDriveStatus } = useDriverContext();
+
+  return (
+    <>
+      <Text style={styles.rideStatusText}>Ongoing ride</Text>
+
+      {/* Ride request card */}
+      <View style={styles.rideRequestCard}>
+        {/* Header */}
+        <View style={styles.rideRequestHeader}>
+          {/* User */}
+          <View style={styles.userInfo}>
+            <Image
+              source={require("../assets/images/black-profile.jpeg")}
+              style={styles.userImage}
+            />
+            <View>
+              <Text style={styles.userName}>{ongoingRideData.rider.name}</Text>
+              <Text style={styles.userRides}>No rides completed</Text>
+            </View>
+          </View>
+
+          {/* Call btn */}
+          <TouchableWithoutFeedback
+            onPress={() =>
+              Linking.openURL(`tel:${ongoingRideData.rider.phone}`)
+            }
+          >
+            <View style={styles.callBtn}>
+              <FontAwesome name="phone" color={"#121212"} size={20} />
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+
+        {/* Estimated time and duration */}
+        <View style={styles.timeRow}>
+          <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
+          <Text style={styles.timeText}>
+            {ongoingRideData.duration_mins} mins ({ongoingRideData.distance_km}{" "}
+            km)
+          </Text>
+        </View>
+
+        {/* Ride route card */}
+        <RideRoute
+          from={ongoingRideData.pickup.address}
+          to={ongoingRideData.destination.address}
+        />
+
+        {/* Price */}
+        <Text style={styles.priceText}>
+          {ongoingRideData.fare.toLocaleString()} NGN
+        </Text>
+
+        {/* Action btns */}
+
+        <View style={styles.navigateBtnRow}>
+          <TouchableWithoutFeedback onPress={() => setDriveStatus("arriving")}>
+            <View style={styles.navigateBtn}>
+              <Text style={styles.navigateBtnText}>Navigate to pickup</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </View>
+    </>
+  );
+};
+
+const ArrivingModal = () => {
+  const {
+    ongoingRideData,
+    updateRideStatus,
+    setDriveStatus,
+    setToPickupRouteCoords,
+  } = useDriverContext();
+
   const [arriving, setArriving] = useState<boolean>(false);
   const set_arrived = async () => {
     setArriving(true);
@@ -136,9 +366,32 @@ const DriverRideModal = () => {
     } catch (error) {
       console.log(error);
     } finally {
-      setAccepting(false);
+      setArriving(false);
     }
   };
+
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <FontAwesome5 name="directions" color={"#fff"} size={30} />
+        <Text style={styles.directionsText}>
+          {`Alright quickly head to ${ongoingRideData.pickup.address}, it should take about ${ongoingRideData.duration_mins} mins`}
+        </Text>
+      </View>
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback onPress={set_arrived} disabled={arriving}>
+          <View style={[styles.arrivedBtn, { opacity: arriving ? 0.5 : 1 }]}>
+            <Text style={styles.arrivedBtnText}>I have arrived at pickup</Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
+  );
+};
+
+const ArrivedModal = () => {
+  const { updateRideStatus, setDriveStatus } = useDriverContext();
+  const { showNotification } = useNotificationContext();
 
   const [starting, setStarting] = useState<boolean>(false);
   const start_ride = async () => {
@@ -154,6 +407,29 @@ const DriverRideModal = () => {
     }
   };
 
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <Text style={styles.directionsText}>
+          When payment is confirmed, you can start the trip
+        </Text>
+      </View>
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback onPress={start_ride} disabled={starting}>
+          <View style={[styles.arrivedBtn, { opacity: starting ? 0.5 : 1 }]}>
+            <Text style={styles.arrivedBtnText}>Start trip</Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
+  );
+};
+
+const OngoingModal = () => {
+  const { ongoingRideData, updateRideStatus, setDriveStatus } =
+    useDriverContext();
+  const { showNotification } = useNotificationContext();
+
   const [completing, setCompleting] = useState<boolean>(false);
   const complete_ride = async () => {
     setCompleting(true);
@@ -168,6 +444,34 @@ const DriverRideModal = () => {
     }
   };
 
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <FontAwesome5 name="directions" color={"#fff"} size={30} />
+        <Text style={styles.directionsText}>
+          {`Aright, let's head to ${ongoingRideData.destination.address}`}
+        </Text>
+      </View>
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback onPress={complete_ride} disabled={completing}>
+          <View style={[styles.arrivedBtn, { opacity: completing ? 0.5 : 1 }]}>
+            <Text style={styles.arrivedBtnText}>Finish ride</Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
+  );
+};
+
+const CompletedModal = () => {
+  const {
+    setToDestinationRouteCoords,
+    setToPickupRouteCoords,
+    setDriveStatus,
+    setOngoingRideData,
+    setIncomingRideData,
+  } = useDriverContext();
+
   const start_searching = () => {
     setToDestinationRouteCoords([]);
     setToPickupRouteCoords([]);
@@ -175,315 +479,18 @@ const DriverRideModal = () => {
     setOngoingRideData(null);
     setIncomingRideData(null);
   };
-
-  const reject_incoming_ride = () => {
-    setDriveStatus("searching");
-    setIncomingRideData(null);
-  };
-
   return (
-    <View style={{ flex: 1, width: "100%", position: "absolute", bottom: 0 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          padding: 20,
-        }}
-      >
-        <TouchableWithoutFeedback onPress={() => setLocationModalOpen(true)}>
-          <View style={styles.locationButton}>
-            <Ionicons name="location" size={24} color="#fff" />
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <MaterialIcons name="celebration" color={"#fff"} size={24} />
+        <Text style={styles.directionsText}>You have finished this ride</Text>
+      </View>
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback onPress={start_searching}>
+          <View style={styles.arrivedBtn}>
+            <Text style={styles.arrivedBtnText}>Search for another ride</Text>
           </View>
         </TouchableWithoutFeedback>
-      </View>
-      <View style={styles.main_modal_container}>
-        {driver?.is_available && (
-          <View style={styles.availableContainer}>
-            {driveStatus === "searching" && (
-              <View>
-                <Text style={styles.searchingText}>
-                  Searching for new ride offers...
-                </Text>
-              </View>
-            )}
-            {driveStatus === "incoming" && incomingRideData && (
-              <>
-                <Text style={styles.rideStatusText}>Incoming ride request</Text>
-
-                {/* Ride request card */}
-                <View style={styles.rideRequestCard}>
-                  {/* Header */}
-                  <View style={styles.rideRequestHeader}>
-                    {/* User */}
-                    <View style={styles.userInfo}>
-                      <Image
-                        source={require("../assets/images/black-profile.jpeg")}
-                        style={styles.userImage}
-                      />
-                      <View>
-                        <Text style={styles.userName}>
-                          {incomingRideData.rider.name}
-                        </Text>
-                        <Text style={styles.userRides}>No rides completed</Text>
-                      </View>
-                    </View>
-
-                    {/* Timeout or call */}
-                    <Text style={styles.timeoutText}>{countDown}s</Text>
-                  </View>
-
-                  {/* Estimated time and duration */}
-                  <View style={styles.timeRow}>
-                    <MaterialIcons
-                      name="access-time"
-                      color={"#d7d7d7"}
-                      size={16}
-                    />
-                    <Text style={styles.timeText}>
-                      {incomingRideData.duration_mins} mins (
-                      {incomingRideData.distance_km} km)
-                    </Text>
-                  </View>
-
-                  {/* Ride route card */}
-                  <RideRoute
-                    from={incomingRideData.pickup.address}
-                    to={incomingRideData.destination.address}
-                  />
-
-                  {/* Price */}
-                  <Text style={styles.priceText}>
-                    NGN {incomingRideData.fare.toLocaleString()}
-                  </Text>
-
-                  {/* Action btns */}
-                  <View style={styles.actionBtnsRow}>
-                    <TouchableWithoutFeedback
-                      onPress={accept_incoming_ride}
-                      disabled={accepting}
-                    >
-                      <View
-                        style={[
-                          styles.acceptBtn,
-                          { opacity: accepting ? 0.5 : 1 },
-                        ]}
-                      >
-                        <Text style={styles.acceptBtnText}>
-                          {accepting ? "Accepting" : "Accept"}
-                        </Text>
-                      </View>
-                    </TouchableWithoutFeedback>
-
-                    <TouchableWithoutFeedback onPress={reject_incoming_ride}>
-                      <View style={styles.cancelBtn}>
-                        <Text style={styles.cancelBtnText}>Reject</Text>
-                      </View>
-                    </TouchableWithoutFeedback>
-                  </View>
-                </View>
-              </>
-            )}
-            {driveStatus === "accepted" && ongoingRideData && (
-              <>
-                <Text style={styles.rideStatusText}>Ongoing ride</Text>
-
-                {/* Ride request card */}
-                <View style={styles.rideRequestCard}>
-                  {/* Header */}
-                  <View style={styles.rideRequestHeader}>
-                    {/* User */}
-                    <View style={styles.userInfo}>
-                      <Image
-                        source={require("../assets/images/black-profile.jpeg")}
-                        style={styles.userImage}
-                      />
-                      <View>
-                        <Text style={styles.userName}>
-                          {ongoingRideData.rider.name}
-                        </Text>
-                        <Text style={styles.userRides}>No rides completed</Text>
-                      </View>
-                    </View>
-
-                    {/* Call btn */}
-                    <TouchableWithoutFeedback
-                      onPress={() =>
-                        Linking.openURL(`tel:${ongoingRideData.rider.phone}`)
-                      }
-                    >
-                      <View style={styles.callBtn}>
-                        <FontAwesome name="phone" color={"#121212"} size={20} />
-                      </View>
-                    </TouchableWithoutFeedback>
-                  </View>
-
-                  {/* Estimated time and duration */}
-                  <View style={styles.timeRow}>
-                    <MaterialIcons
-                      name="access-time"
-                      color={"#d7d7d7"}
-                      size={16}
-                    />
-                    <Text style={styles.timeText}>
-                      {ongoingRideData.duration_mins} mins (
-                      {ongoingRideData.distance_km} km)
-                    </Text>
-                  </View>
-
-                  {/* Ride route card */}
-                  <RideRoute
-                    from={ongoingRideData.pickup.address}
-                    to={ongoingRideData.destination.address}
-                  />
-
-                  {/* Price */}
-                  <Text style={styles.priceText}>
-                    {ongoingRideData.fare.toLocaleString()} NGN
-                  </Text>
-
-                  {/* Action btns */}
-
-                  <View style={styles.navigateBtnRow}>
-                    <TouchableWithoutFeedback
-                      onPress={() => setDriveStatus("arriving")}
-                    >
-                      <View style={styles.navigateBtn}>
-                        <Text style={styles.navigateBtnText}>
-                          Navigate to pickup
-                        </Text>
-                      </View>
-                    </TouchableWithoutFeedback>
-                  </View>
-                </View>
-              </>
-            )}
-            {driveStatus === "arriving" && (
-              <View style={styles.navigationContainer}>
-                <View style={styles.directionsRow}>
-                  <FontAwesome5 name="directions" color={"#fff"} size={30} />
-                  <Text style={styles.directionsText}>
-                    {`Alright quickly head to ${ongoingRideData.pickup.address}, it should take about ${ongoingRideData.duration_mins} mins`}
-                  </Text>
-                </View>
-                <View style={styles.arrivedBtnRow}>
-                  <TouchableWithoutFeedback
-                    onPress={set_arrived}
-                    disabled={arriving}
-                  >
-                    <View
-                      style={[
-                        styles.arrivedBtn,
-                        { opacity: arriving ? 0.5 : 1 },
-                      ]}
-                    >
-                      <Text style={styles.arrivedBtnText}>
-                        I have arrived at pickup
-                      </Text>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </View>
-            )}
-            {driveStatus === "arrived" && (
-              <View style={styles.navigationContainer}>
-                <View style={styles.directionsRow}>
-                  <Text style={styles.directionsText}>
-                    When payment is confirmed, you can start the trip
-                  </Text>
-                </View>
-                <View style={styles.arrivedBtnRow}>
-                  <TouchableWithoutFeedback
-                    onPress={start_ride}
-                    disabled={starting}
-                  >
-                    <View
-                      style={[
-                        styles.arrivedBtn,
-                        { opacity: starting ? 0.5 : 1 },
-                      ]}
-                    >
-                      <Text style={styles.arrivedBtnText}>Start trip</Text>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </View>
-            )}
-            {driveStatus === "ongoing" && (
-              <View style={styles.navigationContainer}>
-                <View style={styles.directionsRow}>
-                  <FontAwesome5 name="directions" color={"#fff"} size={30} />
-                  <Text style={styles.directionsText}>
-                    {`Aright, let's head to ${ongoingRideData.destination.address}`}
-                  </Text>
-                </View>
-                <View style={styles.arrivedBtnRow}>
-                  <TouchableWithoutFeedback
-                    onPress={complete_ride}
-                    disabled={completing}
-                  >
-                    <View
-                      style={[
-                        styles.arrivedBtn,
-                        { opacity: completing ? 0.5 : 1 },
-                      ]}
-                    >
-                      <Text style={styles.arrivedBtnText}>Finish ride</Text>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </View>
-            )}
-            {driveStatus === "completed" && (
-              <View style={styles.navigationContainer}>
-                <View style={styles.directionsRow}>
-                  <MaterialIcons name="celebration" color={"#fff"} size={24} />
-                  <Text style={styles.directionsText}>
-                    You have finished this ride
-                  </Text>
-                </View>
-                <View style={styles.arrivedBtnRow}>
-                  <TouchableWithoutFeedback onPress={start_searching}>
-                    <View style={styles.arrivedBtn}>
-                      <Text style={styles.arrivedBtnText}>
-                        Search for another ride
-                      </Text>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Offline mode */}
-        <View style={styles.main_modal}>
-          <Image
-            source={require("../assets/images/user.png")}
-            style={styles.profileImage}
-          />
-          {driver?.is_available ? (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={setAvailableFunc}
-              style={[styles.status, { backgroundColor: "#40863a4f" }]}
-            >
-              <Text style={[styles.status_text, { color: "#33b735ff" }]}>
-                You're online
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={setAvailableFunc}
-              style={styles.status}
-            >
-              <Text style={styles.status_text}>You're offline</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity activeOpacity={20}>
-            <Ionicons name="wallet" size={30} color="#d7d7d7" />
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );

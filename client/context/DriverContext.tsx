@@ -35,7 +35,7 @@ const DriverContext = createContext<DriverConextType | null>(null);
 
 const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext();
-  const { setDriver } = useDriverAuthContext();
+  const { driver, setDriver } = useDriverAuthContext();
   const { getRoute, region } = useMapContext();
 
   const [driveStatus, setDriveStatus] = useState<StatusType>("searching");
@@ -98,13 +98,13 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   const API_URL = API_URLS.drivers;
 
   // Driver status functions
-  const setAvailability = async (status: boolean): Promise<void> => {
+  const setAvailability = async (): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
       await axios.patch(
         `${API_URL}/available`,
         {
-          status,
+          status: !driver?.is_available,
         },
         {
           headers: {
@@ -114,11 +114,11 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       );
 
       setDriver((prev: any) => {
-        return { ...prev, is_available: status };
+        return { ...prev, is_available: !prev?.is_available };
       });
       showNotification(
-        `Availability toggled ${status ? "on" : "off"}`,
-        `${status ? "success" : "error"}`
+        `Availability toggled ${!driver?.is_available ? "on" : "off"}`,
+        `${!driver?.is_available ? "success" : "error"}`
       );
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
@@ -313,7 +313,7 @@ export const useDriverContext = () => {
 };
 
 interface DriverConextType {
-  setAvailability: (status: boolean) => Promise<void>;
+  setAvailability: () => Promise<void>;
   updateLocation: (coordinates: [number, number]) => Promise<void>;
 
   locationModalOpen: boolean;
