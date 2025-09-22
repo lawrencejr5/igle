@@ -51,10 +51,7 @@ const HomePage = () => {
 
   useEffect(() => {
     if (region && mapRef.current) {
-      mapRef.current.animateToRegion(
-        region,
-        1000 // duration in ms
-      );
+      mapRef.current.animateToRegion(region, 1000);
     }
   }, [region]);
 

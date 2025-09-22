@@ -5,8 +5,17 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Image,
+  Modal,
+  Pressable,
+  FlatList,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  FC,
+} from "react";
 
 import * as Linking from "expo-linking";
 
@@ -23,8 +32,10 @@ import { useNotificationContext } from "../context/NotificationContext";
 import RideRoute from "./RideRoute";
 import { useMapContext } from "../context/MapContext";
 
+import EarningsModal from "./screens/DriverEarnings";
+
 const DriverRideModal = () => {
-  const { getDriverProfile, driver, driverSocket } = useDriverAuthContext();
+  const { driver, driverSocket } = useDriverAuthContext();
   const {
     fetchActiveRide,
     setDriveStatus,
@@ -37,9 +48,7 @@ const DriverRideModal = () => {
   } = useDriverContext();
   const { showNotification } = useNotificationContext();
 
-  useEffect(() => {
-    getDriverProfile();
-  }, []);
+  const [openEarnings, setOpenEarnings] = useState(false);
 
   useEffect(() => {
     if (driver?.is_available && driveStatus === "searching" && driverSocket) {
@@ -130,15 +139,25 @@ const DriverRideModal = () => {
             {driveStatus === "completed" && <CompletedModal />}
           </View>
         )}
-
+        <>
+          <EarningsModal
+            visible={openEarnings}
+            onClose={() => setOpenEarnings(false)}
+          />
+        </>
         {/* Offline mode */}
-        <OfflineMode />
+        <OfflineMode setOpen={setOpenEarnings} />
       </View>
     </View>
   );
 };
 
-const OfflineMode = () => {
+// Modify OfflineMode to accept openEarnings
+const OfflineMode = ({
+  setOpen,
+}: {
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}) => {
   const { driver } = useDriverAuthContext();
   const { setAvailability } = useDriverContext();
 
@@ -152,9 +171,9 @@ const OfflineMode = () => {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={async () => await setAvailability()}
-          style={[styles.status, { backgroundColor: "#40863a4f" }]}
+          style={[styles.status, { backgroundColor: "#40863456" }]}
         >
-          <Text style={[styles.status_text, { color: "#33b735ff" }]}>
+          <Text style={[styles.status_text, { color: "#33b735" }]}>
             You're online
           </Text>
         </TouchableOpacity>
@@ -167,7 +186,8 @@ const OfflineMode = () => {
           <Text style={styles.status_text}>You're offline</Text>
         </TouchableOpacity>
       )}
-      <TouchableOpacity activeOpacity={20}>
+
+      <TouchableOpacity activeOpacity={0.7} onPress={() => setOpen(true)}>
         <Ionicons name="wallet" size={30} color="#d7d7d7" />
       </TouchableOpacity>
     </View>
@@ -503,10 +523,7 @@ const CompletedModal = () => {
 
     setTimeout(() => {
       if (region && mapRef.current) {
-        mapRef.current.animateToRegion(
-          region,
-          1000 // duration in ms
-        );
+        mapRef.current.animateToRegion(region, 1000);
       }
     }, 1000);
   };
@@ -721,5 +738,75 @@ const styles = StyleSheet.create({
     height: 50,
     alignItems: "center",
     justifyContent: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#1e1e1e",
+    borderRadius: 10,
+    padding: 20,
+    width: "100%",
+    flex: 1,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalTitle: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+  },
+  totalEarnings: {
+    color: "#fff",
+    fontFamily: "poppins-bold",
+    fontSize: 24,
+    marginTop: 10,
+  },
+  filtersContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: 15,
+  },
+  filterTab: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#3b3b3b",
+  },
+  activeFilterTab: {
+    backgroundColor: "#fff",
+  },
+  filterText: {
+    color: "#fff",
+    fontFamily: "raleway-regular",
+  },
+  activeFilterText: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+  },
+  breakdownContainer: {
+    marginVertical: 15,
+  },
+  breakdownText: {
+    color: "#fff",
+    fontFamily: "raleway-regular",
+    marginBottom: 5,
+  },
+  sectionTitle: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    marginTop: 20,
+  },
+  tripItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#3b3b3b",
+  },
+  tripText: {
+    color: "#fff",
+    fontFamily: "raleway-regular",
   },
 });
