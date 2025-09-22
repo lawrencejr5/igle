@@ -42,7 +42,7 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
             <View style={styles.profileSection}>
               <Image
                 source={
-                  driver?.user
+                  driver
                     ? { uri: driver.profile_pic }
                     : require("../../assets/images/user.png")
                 }

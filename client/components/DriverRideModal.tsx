@@ -179,7 +179,11 @@ const OfflineMode = ({
         onPress={() => setAccountOpen(true)}
       >
         <Image
-          source={require("../assets/images/user.png")}
+          source={
+            driver?.profile_pic
+              ? { uri: driver?.profile_pic } // remote image from backend
+              : require("../assets/images/user.png") // fallback local asset
+          }
           style={styles.profileImage}
         />
       </TouchableOpacity>
