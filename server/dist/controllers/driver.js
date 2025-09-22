@@ -12,9 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver = exports.update_location = exports.save_bank_info = exports.create_driver = void 0;
+exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.create_driver = void 0;
 const driver_1 = __importDefault(require("../models/driver"));
 const wallet_1 = __importDefault(require("../models/wallet"));
+const ride_1 = __importDefault(require("../models/ride"));
+const transaction_1 = __importDefault(require("../models/transaction"));
 const get_id_1 = require("../utils/get_id");
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -51,42 +53,6 @@ const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.create_driver = create_driver;
-const save_bank_info = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    try {
-        const { account_name, account_number, bank_code, bank_name } = req.body;
-        // Call Paystack to create transfer recipient
-        const { data } = yield axios_1.default.post("https://api.paystack.co/transferrecipient", {
-            type: "nuban",
-            name: account_name,
-            account_number,
-            bank_code,
-            currency: "NGN",
-        }, {
-            headers: {
-                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            },
-        });
-        const recipient_code = data.data.recipient_code;
-        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        // Save to driver schema
-        yield driver_1.default.findByIdAndUpdate(driver_id, {
-            bank: {
-                account_name,
-                account_number,
-                bank_code,
-                bank_name,
-                recipient_code,
-            },
-        });
-        res.json({ msg: "Bank info saved successfully" });
-    }
-    catch (err) {
-        console.log(err);
-        res.status(500).json({ msg: "Bank info is incorrect", err });
-    }
-});
-exports.save_bank_info = save_bank_info;
 // Update driver's current location
 const update_location = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -126,6 +92,79 @@ const get_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.get_driver = get_driver;
+// Get driver's active ride
+const get_driver_active_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        // Find the ride where driver is assigned and status is ongoing or accepted or arrived
+        const activeRide = yield ride_1.default.findOne({
+            driver: driver_id,
+            status: { $in: ["ongoing", "accepted", "arrived"] },
+        })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone",
+            },
+        })
+            .populate("rider", "name phone");
+        if (!activeRide) {
+            res.status(404).json({ msg: "No active ride found for this driver." });
+            return;
+        }
+        res.status(200).json({ msg: "success", ride: activeRide });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_active_ride = get_driver_active_ride;
+// Get driver transactions
+const get_driver_transactions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const wallet = yield wallet_1.default.findOne({
+            owner_id: driver_id,
+            owner_type: "Driver",
+        });
+        if (!wallet) {
+            res.status(404).json({ msg: "Driver wallet not found." });
+            return;
+        }
+        const { limit = 20, skip = 0, type } = req.query;
+        // Build query
+        const query = { wallet_id: wallet._id };
+        if (type) {
+            query.type = type;
+        }
+        const transactions = yield transaction_1.default.find(query)
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .skip(Number(skip))
+            .populate("ride_id");
+        // Get total count for pagination
+        const total = yield transaction_1.default.countDocuments(query);
+        res.status(200).json({
+            msg: "success",
+            transactions,
+            pagination: {
+                total,
+                limit: Number(limit),
+                skip: Number(skip),
+            },
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_transactions = get_driver_transactions;
+// Set driver availability
 const set_driver_availability = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -278,3 +317,39 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.update_driver_info = update_driver_info;
+const save_bank_info = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { account_name, account_number, bank_code, bank_name } = req.body;
+        // Call Paystack to create transfer recipient
+        const { data } = yield axios_1.default.post("https://api.paystack.co/transferrecipient", {
+            type: "nuban",
+            name: account_name,
+            account_number,
+            bank_code,
+            currency: "NGN",
+        }, {
+            headers: {
+                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+            },
+        });
+        const recipient_code = data.data.recipient_code;
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        // Save to driver schema
+        yield driver_1.default.findByIdAndUpdate(driver_id, {
+            bank: {
+                account_name,
+                account_number,
+                bank_code,
+                bank_name,
+                recipient_code,
+            },
+        });
+        res.json({ msg: "Bank info saved successfully" });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ msg: "Bank info is incorrect", err });
+    }
+});
+exports.save_bank_info = save_bank_info;

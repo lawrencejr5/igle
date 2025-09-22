@@ -13,6 +13,7 @@ import {
   update_driver_rating,
   update_driver_info,
   get_driver_active_ride,
+  get_driver_transactions,
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
@@ -33,5 +34,6 @@ DriverRouter.patch("/online", set_driver_online_status);
 DriverRouter.patch("/rating", update_driver_rating);
 DriverRouter.patch("/info", update_driver_info);
 DriverRouter.get("/ride/active", get_driver_active_ride);
+DriverRouter.get("/transactions", get_driver_transactions);
 
 export default DriverRouter;

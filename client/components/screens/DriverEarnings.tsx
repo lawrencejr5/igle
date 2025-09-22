@@ -1,5 +1,5 @@
 import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Modal,
   View,
@@ -11,59 +11,19 @@ import {
   TextInput,
   Pressable,
 } from "react-native";
-
-type Transaction = {
-  id: string;
-  type: "earning" | "withdrawal";
-  amount: number;
-  date: string;
-  time: string;
-};
+import { useWalletContext } from "../../context/WalletContext";
+import { useTransactionContext } from "../../context/TransactionContext";
+import { useDriverAuthContext } from "../../context/DriverAuthContext";
 
 type EarningsModalProps = {
   visible: boolean;
   onClose: () => void;
 };
 
-const generateDummyData = (
-  startIndex: number,
-  count: number
-): Transaction[] => {
-  const data: Transaction[] = [];
-  const now = new Date("2025-09-22");
+const TransactionItem: React.FC<{ item: any }> = ({ item }) => {
+  const isEarning = item.type === "payment";
+  const date = new Date(item.createdAt);
 
-  for (let i = 0; i < count; i++) {
-    const date = new Date(now);
-    date.setHours(date.getHours() - (startIndex + i));
-
-    const isEarning = Math.random() > 0.3; // 70% chance of being an earning
-    const amount = isEarning
-      ? Math.floor(Math.random() * 5000) + 1000
-      : Math.floor(Math.random() * 15000) + 5000;
-
-    data.push({
-      id: `transaction_${date.getTime()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`,
-      type: isEarning ? "earning" : "withdrawal",
-      amount: amount,
-      date: date.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }),
-      time: date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      }),
-    });
-  }
-  return data;
-};
-
-const TransactionItem: React.FC<{ item: Transaction }> = ({ item }) => {
-  const isEarning = item.type === "earning";
   return (
     <View style={styles.transactionItem}>
       <View style={styles.transactionLeft}>
@@ -81,19 +41,24 @@ const TransactionItem: React.FC<{ item: Transaction }> = ({ item }) => {
         </View>
         <View>
           <Text style={styles.transactionTitle}>
-            {isEarning ? "Ride Earning" : "Withdrawal"}
+            {isEarning ? "Ride Payment" : "Withdrawal"}
           </Text>
           <Text style={styles.transactionDate}>
-            {item.date} • {item.time}
+            {date.toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}{" "}
+            •{" "}
+            {date.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}
           </Text>
         </View>
       </View>
-      <Text
-        style={[
-          styles.transactionAmount,
-          { color: isEarning ? "#4CAF50" : "#F44336" },
-        ]}
-      >
+      <Text style={[styles.transactionAmount, { color: "#ffffffff" }]}>
         {isEarning ? "+" : "-"}₦{item.amount.toLocaleString()}
       </Text>
     </View>
@@ -171,26 +136,37 @@ const WithdrawModal: React.FC<{
 };
 
 const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    generateDummyData(0, 5)
-  );
-  const [loading, setLoading] = useState(false);
+  const { driverWalletBal, getWalletBalance } = useWalletContext();
+  const {
+    transactions,
+    loading,
+    fetchTransactions,
+    loadMoreTransactions,
+    initiateWithdrawal,
+    fetchEarningsStats,
+    stats,
+  } = useTransactionContext();
+  const { driver } = useDriverAuthContext();
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
 
-  const handleWithdraw = (amount: number) => {
-    // Here you would typically make an API call to process the withdrawal
-    console.log(`Withdrawing ₦${amount}`);
-  };
+  useEffect(() => {
+    if (visible) {
+      getWalletBalance("Driver");
+      fetchTransactions();
+      fetchEarningsStats();
+    }
+  }, [visible]);
 
-  const loadMoreTransactions = useCallback(() => {
-    setLoading(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      const newTransactions = generateDummyData(transactions.length, 10);
-      setTransactions((prev) => [...prev, ...newTransactions]);
-      setLoading(false);
-    }, 1000);
-  }, [transactions.length]);
+  const handleWithdraw = async (amount: number) => {
+    try {
+      await initiateWithdrawal(amount);
+      setWithdrawModalVisible(false);
+      // Refresh wallet balance after successful withdrawal
+      getWalletBalance("Driver");
+    } catch (error) {
+      console.error("Withdrawal failed:", error);
+    }
+  };
   return (
     <Modal transparent visible={visible} animationType="slide">
       <View style={styles.backdrop}>
@@ -200,7 +176,7 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
             visible={withdrawModalVisible}
             onClose={() => setWithdrawModalVisible(false)}
             onWithdraw={handleWithdraw}
-            balance={120500}
+            balance={driverWalletBal}
           />
 
           <View style={styles.header}>
@@ -216,7 +192,7 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
 
           <FlatList
             data={transactions}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             renderItem={({ item }) => <TransactionItem item={item} />}
             onEndReached={loadMoreTransactions}
             onEndReachedThreshold={0.5}
@@ -226,7 +202,9 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
                 {/* Total earnings */}
                 <View style={styles.totalBox}>
                   <Text style={styles.totalLabel}>Total Earnings</Text>
-                  <Text style={styles.totalAmount}>₦120,500</Text>
+                  <Text style={styles.totalAmount}>
+                    ₦{driverWalletBal.toLocaleString()}
+                  </Text>
                   <TouchableOpacity
                     style={{
                       backgroundColor: "#fff",
@@ -257,15 +235,21 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
                 <View style={styles.row}>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>Today</Text>
-                    <Text style={styles.statValue}>₦5,200</Text>
+                    <Text style={styles.statValue}>
+                      ₦{stats?.todayEarnings?.toLocaleString() || "0"}
+                    </Text>
                   </View>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>This Week</Text>
-                    <Text style={styles.statValue}>₦25,800</Text>
+                    <Text style={styles.statValue}>
+                      ₦{stats?.weekEarnings?.toLocaleString() || "0"}
+                    </Text>
                   </View>
                   <View style={styles.statBox}>
                     <Text style={styles.statLabel}>Trips</Text>
-                    <Text style={styles.statValue}>45</Text>
+                    <Text style={styles.statValue}>
+                      {driver?.total_trips || 0}
+                    </Text>
                   </View>
                 </View>
 
@@ -466,7 +450,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   transactionIcon: {
-    // backgroundColor: "#ffffffff",
     borderWidth: 1,
     borderColor: "#F44336",
     width: 32,
@@ -476,7 +459,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   transactionTitle: {
-    color: "#fff",
+    color: "#dadadaff",
     fontSize: 15,
     fontFamily: "raleway-bold",
     marginBottom: 4,

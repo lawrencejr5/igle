@@ -24,7 +24,7 @@ const handle_socket_events = (io, socket) => {
     (0, location_1.location_socket_events)(io, socket);
     socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
         yield user_1.default.findOneAndUpdate({ socket_id: socket.id }, { socket_id: null, is_online: false });
-        yield driver_1.default.findOneAndUpdate({ socket_id: socket.id }, { socket_id: null, is_online: false, is_available: false });
+        yield driver_1.default.findOneAndUpdate({ socket_id: socket.id }, { socket_id: null, is_online: false });
     }));
 };
 exports.handle_socket_events = handle_socket_events;

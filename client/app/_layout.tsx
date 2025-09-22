@@ -20,6 +20,7 @@ import ActivityProvider from "../context/ActivityContext";
 import RatingProvider from "../context/RatingContext";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import TransactionContextProvider from "../context/TransactionContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -45,27 +46,29 @@ const RootLayout = () => {
         <NotificationProvider>
           <ActivityProvider>
             <WalletProvider>
-              <MapContextProvider>
-                <SavedPlaceProvider>
-                  <HistoryProvider>
-                    <RatingProvider>
-                      <DriverAuthProvider>
-                        <AuthProvider>
-                          <DriverContextPrvider>
-                            <RideContextProvider>
-                              <Stack
-                                screenOptions={{
-                                  headerShown: false,
-                                }}
-                              />
-                            </RideContextProvider>
-                          </DriverContextPrvider>
-                        </AuthProvider>
-                      </DriverAuthProvider>
-                    </RatingProvider>
-                  </HistoryProvider>
-                </SavedPlaceProvider>
-              </MapContextProvider>
+              <TransactionContextProvider>
+                <MapContextProvider>
+                  <SavedPlaceProvider>
+                    <HistoryProvider>
+                      <RatingProvider>
+                        <DriverAuthProvider>
+                          <AuthProvider>
+                            <DriverContextPrvider>
+                              <RideContextProvider>
+                                <Stack
+                                  screenOptions={{
+                                    headerShown: false,
+                                  }}
+                                />
+                              </RideContextProvider>
+                            </DriverContextPrvider>
+                          </AuthProvider>
+                        </DriverAuthProvider>
+                      </RatingProvider>
+                    </HistoryProvider>
+                  </SavedPlaceProvider>
+                </MapContextProvider>
+              </TransactionContextProvider>
             </WalletProvider>
           </ActivityProvider>
         </NotificationProvider>

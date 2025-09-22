@@ -16,4 +16,6 @@ DriverRouter.patch("/license", driver_1.update_driver_license);
 DriverRouter.patch("/online", driver_1.set_driver_online_status);
 DriverRouter.patch("/rating", driver_1.update_driver_rating);
 DriverRouter.patch("/info", driver_1.update_driver_info);
+DriverRouter.get("/ride/active", driver_1.get_driver_active_ride);
+DriverRouter.get("/transactions", driver_1.get_driver_transactions);
 exports.default = DriverRouter;
