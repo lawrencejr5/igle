@@ -137,8 +137,6 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
     } catch (error: any) {
       const errMsg = error.response?.data?.msg || "Withdrawal failed";
       showNotification(errMsg, "error");
-      console.error(errMsg);
-      throw new Error(errMsg);
     } finally {
       setLoading(false);
     }

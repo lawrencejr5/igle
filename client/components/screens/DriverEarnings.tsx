@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   withdrawButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#fff",
     width: "100%",
     height: 45,
     borderRadius: 10,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   withdrawButtonText: {
-    color: "#fff",
+    color: "#121212",
     fontSize: 16,
     fontFamily: "raleway-bold",
   },
