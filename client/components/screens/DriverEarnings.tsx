@@ -6,9 +6,10 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   FlatList,
   ActivityIndicator,
+  TextInput,
+  Pressable,
 } from "react-native";
 
 type Transaction = {
@@ -99,11 +100,87 @@ const TransactionItem: React.FC<{ item: Transaction }> = ({ item }) => {
   );
 };
 
+const WithdrawModal: React.FC<{
+  visible: boolean;
+  onClose: () => void;
+  onWithdraw: (amount: number) => void;
+  balance: number;
+}> = ({ visible, onClose, onWithdraw, balance }) => {
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState("");
+
+  const handleWithdraw = () => {
+    const withdrawAmount = Number(amount);
+    if (!amount || withdrawAmount <= 0) {
+      setError("Please enter a valid amount");
+      return;
+    }
+    if (withdrawAmount > balance) {
+      setError("Insufficient balance");
+      return;
+    }
+    onWithdraw(withdrawAmount);
+    setAmount("");
+    setError("");
+    onClose();
+  };
+
+  return (
+    <Modal transparent visible={visible} animationType="fade">
+      <Pressable style={styles.withdrawBackdrop} onPress={onClose}>
+        <Pressable
+          style={[styles.withdrawModal, { marginBottom: 20 }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <Text style={styles.withdrawTitle}>Withdraw Funds</Text>
+          <Text style={styles.withdrawBalance}>
+            Available Balance: ₦{balance.toLocaleString()}
+          </Text>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.nairaSymbol}>₦</Text>
+            <TextInput
+              value={amount}
+              onChangeText={(text) => {
+                setAmount(text.replace(/[^0-9]/g, ""));
+                setError("");
+              }}
+              placeholder="Enter amount"
+              placeholderTextColor="#666"
+              keyboardType="numeric"
+              style={styles.amountInput}
+            />
+          </View>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={[
+              styles.withdrawButton,
+              !amount && styles.withdrawButtonDisabled,
+            ]}
+            onPress={handleWithdraw}
+            disabled={!amount}
+          >
+            <Text style={styles.withdrawButtonText}>Withdraw</Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
+
 const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
   const [transactions, setTransactions] = useState<Transaction[]>(() =>
     generateDummyData(0, 5)
   );
   const [loading, setLoading] = useState(false);
+  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
+
+  const handleWithdraw = (amount: number) => {
+    // Here you would typically make an API call to process the withdrawal
+    console.log(`Withdrawing ₦${amount}`);
+  };
 
   const loadMoreTransactions = useCallback(() => {
     setLoading(true);
@@ -118,6 +195,14 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
     <Modal transparent visible={visible} animationType="slide">
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
+          {/* Withdraw Modal - Moved outside FlatList */}
+          <WithdrawModal
+            visible={withdrawModalVisible}
+            onClose={() => setWithdrawModalVisible(false)}
+            onWithdraw={handleWithdraw}
+            balance={120500}
+          />
+
           <View style={styles.header}>
             <Text style={styles.headerText}>Earnings</Text>
             <TouchableOpacity
@@ -142,6 +227,30 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
                 <View style={styles.totalBox}>
                   <Text style={styles.totalLabel}>Total Earnings</Text>
                   <Text style={styles.totalAmount}>₦120,500</Text>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "#fff",
+                      paddingHorizontal: 20,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      marginTop: 15,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                    onPress={() => setWithdrawModalVisible(true)}
+                  >
+                    <FontAwesome name="bank" size={14} color="#121212" />
+                    <Text
+                      style={{
+                        color: "#121212",
+                        fontFamily: "raleway-bold",
+                        fontSize: 12,
+                      }}
+                    >
+                      Withdraw Funds
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Summary */}
@@ -191,6 +300,78 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
 };
 
 const styles = StyleSheet.create({
+  // Withdraw Modal Styles
+  withdrawBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  withdrawModal: {
+    backgroundColor: "#1e1e1e",
+    width: "85%",
+    borderRadius: 15,
+    padding: 20,
+    alignItems: "center",
+  },
+  withdrawTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "raleway-bold",
+    marginBottom: 10,
+  },
+  withdrawBalance: {
+    color: "#aaa",
+    fontSize: 14,
+    fontFamily: "raleway-regular",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2d2d2d",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    width: "100%",
+    height: 50,
+  },
+  nairaSymbol: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "poppins-bold",
+    marginRight: 10,
+  },
+  amountInput: {
+    flex: 1,
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "poppins-bold",
+    padding: 0,
+  },
+  errorText: {
+    color: "#F44336",
+    fontSize: 14,
+    fontFamily: "raleway-regular",
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  withdrawButton: {
+    backgroundColor: "#4CAF50",
+    width: "100%",
+    height: 45,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  withdrawButtonDisabled: {
+    opacity: 0.6,
+  },
+  withdrawButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "raleway-bold",
+  },
   loaderContainer: {
     padding: 20,
     alignItems: "center",
