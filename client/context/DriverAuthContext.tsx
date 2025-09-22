@@ -53,6 +53,8 @@ interface CurrentLocation {
 interface DriverType {
   driver_id: string;
   user?: string;
+  profile_pic: string;
+  createdAt: Date;
   name?: string;
   email?: string;
   phone?: string;
@@ -63,6 +65,7 @@ interface DriverType {
   vehicle_type?: string;
   vehicle?: Vehicle;
   driver_licence?: DriverLicence;
+  driver_licence_number?: number;
   date_of_birth?: string;
   driver_license_image?: string;
   is_online?: boolean;
@@ -154,8 +157,10 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           socket_id,
           total_trips,
           is_available,
-          user: { name, email, phone },
+          rating,
+          user: { name, email, phone, createdAt, profile_pic },
           vehicle: { brand, model, color, plate_number },
+          driver_licence: { number: driver_licence_number },
         } = data.driver;
 
         const driverInfo = {
@@ -170,7 +175,11 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           vehicle_model: model,
           vehicle_color: color,
           plate_number,
+          driver_licence_number,
           is_available,
+          rating,
+          profile_pic,
+          createdAt,
         };
         return driverInfo;
       } else {

@@ -33,6 +33,7 @@ import RideRoute from "./RideRoute";
 import { useMapContext } from "../context/MapContext";
 
 import EarningsModal from "./screens/DriverEarnings";
+import UserAccountModal from "./screens/UserAccountModal";
 
 const DriverRideModal = () => {
   const { driver, driverSocket } = useDriverAuthContext();
@@ -49,6 +50,7 @@ const DriverRideModal = () => {
   const { showNotification } = useNotificationContext();
 
   const [openEarnings, setOpenEarnings] = useState(false);
+  const [openAccount, setOpenAccount] = useState(false);
 
   useEffect(() => {
     if (driver?.is_available && driveStatus === "searching" && driverSocket) {
@@ -144,9 +146,16 @@ const DriverRideModal = () => {
             visible={openEarnings}
             onClose={() => setOpenEarnings(false)}
           />
+          <UserAccountModal
+            visible={openAccount}
+            onClose={() => setOpenAccount(false)}
+          />
         </>
         {/* Offline mode */}
-        <OfflineMode setOpen={setOpenEarnings} />
+        <OfflineMode
+          setEarningsOpen={setOpenEarnings}
+          setAccountOpen={setOpenAccount}
+        />
       </View>
     </View>
   );
@@ -154,19 +163,26 @@ const DriverRideModal = () => {
 
 // Modify OfflineMode to accept openEarnings
 const OfflineMode = ({
-  setOpen,
+  setEarningsOpen,
+  setAccountOpen,
 }: {
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  setEarningsOpen: Dispatch<SetStateAction<boolean>>;
+  setAccountOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const { driver } = useDriverAuthContext();
   const { setAvailability } = useDriverContext();
 
   return (
     <View style={styles.main_modal}>
-      <Image
-        source={require("../assets/images/user.png")}
-        style={styles.profileImage}
-      />
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setAccountOpen(true)}
+      >
+        <Image
+          source={require("../assets/images/user.png")}
+          style={styles.profileImage}
+        />
+      </TouchableOpacity>
       {driver?.is_available ? (
         <TouchableOpacity
           activeOpacity={0.7}
@@ -187,7 +203,10 @@ const OfflineMode = ({
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity activeOpacity={0.7} onPress={() => setOpen(true)}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setEarningsOpen(true)}
+      >
         <Ionicons name="wallet" size={30} color="#d7d7d7" />
       </TouchableOpacity>
     </View>
