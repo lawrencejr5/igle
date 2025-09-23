@@ -8,8 +8,10 @@ import {
   ScrollView,
   Pressable,
   TouchableOpacity,
+  RefreshControl,
+  FlatList,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 
 import { router } from "expo-router";
 
@@ -42,8 +44,14 @@ const Rides = () => {
     "ongoing" | "completed" | "cancelled"
   >("ongoing");
 
-  const { ongoingRideData, userCompletedRides, userCancelledRides } =
-    useRideContext();
+  const {
+    ongoingRideData,
+    userCompletedRides,
+    userCancelledRides,
+    getActiveRide,
+    getUserCancelledRides,
+    getUserCompletedRides,
+  } = useRideContext();
 
   return (
     <>
@@ -199,6 +207,7 @@ const OngoingRide = ({ data }: { data: any }) => {
     retrying,
     retryRideRequest,
     setRideStatus,
+    getActiveRide,
   } = useRideContext();
   const { region, mapRef } = useMapContext();
 
@@ -264,174 +273,283 @@ const OngoingRide = ({ data }: { data: any }) => {
     }, 1000);
   };
 
-  return (
-    <View style={styles.ride_card}>
-      <View style={styles.ride_header}>
-        <Text style={styles.ride_header_text}>
-          {new Date(data.createdAt).toLocaleDateString("en-US", {
-            weekday: "short",
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </Text>
-        {data.status === "expired" && (
-          <View
-            style={{
-              backgroundColor: "#ff00003a",
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              borderRadius: 20,
-            }}
-          >
-            <Text
-              style={{
-                color: "#ff0000",
-                fontFamily: "raleway-bold",
-                fontSize: 10,
-              }}
-            >
-              Expired
-            </Text>
-          </View>
-        )}
-        {data.scheduled_time && (
-          <View
-            style={{
-              backgroundColor: "#ff9d003a",
-              paddingVertical: 5,
-              paddingHorizontal: 10,
-              borderRadius: 20,
-            }}
-          >
-            <Text
-              style={{
-                color: "#ff9d00",
-                fontFamily: "raleway-bold",
-                fontSize: 10,
-              }}
-            >
-              Scheduled
-            </Text>
-          </View>
-        )}
-      </View>
-      {data.scheduled_time && (
-        <Text
-          style={{
-            color: "#fff",
-            fontFamily: "poppins-regular",
-            fontSize: 11,
-            marginTop: 10,
-          }}
-        >
-          **Ride scheduled for{" "}
-          {new Date(data.scheduled_time).toLocaleString("en-US")}
-        </Text>
-      )}
-      {/* Driver details */}
-      {data.driver && (
-        <>
-          <DriverCard
-            name={data.driver.user.name}
-            id={data.driver._id}
-            rating={data.driver.rating}
-            total_trips={data.driver.total_trips}
-            num_of_reviews={data.driver.num_of_reviews}
-          />
+  const [refreshing, setRefreshing] = useState(false);
 
-          <View
-            style={{
-              marginTop: 10,
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <Image
-              source={vehicleIcons[data.driver.vehicle_type]}
-              style={{ height: 50, width: 50 }}
-            />
-            <View>
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await getActiveRide();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  return (
+    <ScrollView
+      style={{ flex: 1 }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      <View style={styles.ride_card}>
+        <View style={styles.ride_header}>
+          <Text style={styles.ride_header_text}>
+            {new Date(data.createdAt).toLocaleDateString("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
+          </Text>
+          {data.status === "expired" && (
+            <View
+              style={{
+                backgroundColor: "#ff00003a",
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 20,
+              }}
+            >
               <Text
                 style={{
-                  color: "#fff",
+                  color: "#ff0000",
                   fontFamily: "raleway-bold",
-                  fontSize: 12,
-                  textTransform: "capitalize",
-                  width: "100%",
+                  fontSize: 10,
                 }}
               >
-                {data.driver.vehicle_type} ride
+                Expired
               </Text>
-              <View
+            </View>
+          )}
+          {data.scheduled_time && (
+            <View
+              style={{
+                backgroundColor: "#ff9d003a",
+                paddingVertical: 5,
+                paddingHorizontal: 10,
+                borderRadius: 20,
+              }}
+            >
+              <Text
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "flex-start",
-                  alignItems: "flex-start",
-                  gap: 5,
+                  color: "#ff9d00",
+                  fontFamily: "raleway-bold",
+                  fontSize: 10,
                 }}
               >
-                <FontAwesome5
-                  name="car"
-                  size={14}
-                  color="#c6c6c6"
-                  style={{ marginTop: 3 }}
-                />
+                Scheduled
+              </Text>
+            </View>
+          )}
+        </View>
+        {data.scheduled_time && (
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "poppins-regular",
+              fontSize: 11,
+              marginTop: 10,
+            }}
+          >
+            **Ride scheduled for{" "}
+            {new Date(data.scheduled_time).toLocaleString("en-US")}
+          </Text>
+        )}
+        {/* Driver details */}
+        {data.driver && (
+          <>
+            <DriverCard
+              name={data.driver.user.name}
+              id={data.driver._id}
+              rating={data.driver.rating}
+              total_trips={data.driver.total_trips}
+              num_of_reviews={data.driver.num_of_reviews}
+            />
+
+            <View
+              style={{
+                marginTop: 10,
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <Image
+                source={vehicleIcons[data.driver.vehicle_type]}
+                style={{ height: 50, width: 50 }}
+              />
+              <View>
                 <Text
                   style={{
-                    color: "#c6c6c6",
-                    fontFamily: "raleway-semibold",
+                    color: "#fff",
+                    fontFamily: "raleway-bold",
                     fontSize: 12,
+                    textTransform: "capitalize",
+                    width: "100%",
                   }}
                 >
-                  {data.driver.vehicle.color} {data.driver.vehicle.brand}{" "}
-                  {data.driver.vehicle.model}
+                  {data.driver.vehicle_type} ride
                 </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-start",
+                    alignItems: "flex-start",
+                    gap: 5,
+                  }}
+                >
+                  <FontAwesome5
+                    name="car"
+                    size={14}
+                    color="#c6c6c6"
+                    style={{ marginTop: 3 }}
+                  />
+                  <Text
+                    style={{
+                      color: "#c6c6c6",
+                      fontFamily: "raleway-semibold",
+                      fontSize: 12,
+                    }}
+                  >
+                    {data.driver.vehicle.color} {data.driver.vehicle.brand}{" "}
+                    {data.driver.vehicle.model}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        </>
-      )}
-      {/* Ride route */}
+          </>
+        )}
+        {/* Ride route */}
 
-      <View style={{ marginTop: 10 }}>
-        <RideRoute from={data.pickup.address} to={data.destination.address} />
-      </View>
+        <View style={{ marginTop: 10 }}>
+          <RideRoute from={data.pickup.address} to={data.destination.address} />
+        </View>
 
-      {/* Pay */}
-      {data.driver ? (
-        data.payment_status === "paid" ? (
-          <>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => makeCall(data.driver.user.phone)}
-            >
-              <View
+        {/* Pay */}
+        {data.driver ? (
+          data.payment_status === "paid" ? (
+            <>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => makeCall(data.driver.user.phone)}
+              >
+                <View
+                  style={[
+                    styles.pay_btn,
+                    {
+                      backgroundColor: "transparent",
+                      borderColor: "white",
+                      borderWidth: 1,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
+                    Call Driver &nbsp;&nbsp;
+                    <FontAwesome5 name="phone-alt" color="#fff" size={14} />
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={track_ride}
+                style={styles.pay_btn}
+              >
+                <Text style={styles.pay_btn_text}>Track</Text>
+              </TouchableOpacity>
+              <TouchableWithoutFeedback
+                onPress={cancel_ride}
+                disabled={cancelling}
+              >
+                <Text
+                  style={{
+                    color: cancelling ? "#ff000080" : "#ff0000",
+                    fontFamily: "raleway-bold",
+                    textAlign: "center",
+                    marginTop: 15,
+                  }}
+                >
+                  {cancelling ? "Cancelling..." : "Cancel ride"}
+                </Text>
+              </TouchableWithoutFeedback>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={pay_func}
+                disabled={paying}
+                style={styles.pay_btn}
+              >
+                <Text style={styles.pay_btn_text}>
+                  {paying
+                    ? "Paying..."
+                    : `Pay ${data.fare.toLocaleString()} NGN`}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={cancel_ride}
+                disabled={cancelling}
                 style={[
                   styles.pay_btn,
                   {
                     backgroundColor: "transparent",
                     borderColor: "white",
                     borderWidth: 1,
+                    opacity: cancelling ? 0.5 : 1,
                   },
                 ]}
               >
                 <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
-                  Call Driver &nbsp;&nbsp;
-                  <FontAwesome5 name="phone-alt" color="#fff" size={14} />
+                  {cancelling ? "Cancelling..." : "Cancel ride"}
                 </Text>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </>
+          )
+        ) : data.status === "expired" ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={retry_ride}
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            {retrying ? (
+              <Text style={{ color: "#9e9d9d", fontFamily: "raleway-bold" }}>
+                Retrying...
+              </Text>
+            ) : (
+              <>
+                <Text style={{ color: "#d2d2d2", fontFamily: "raleway-bold" }}>
+                  Retry&nbsp;
+                </Text>
+                <FontAwesome6
+                  name="rotate-right"
+                  color="#fff"
+                  size={10}
+                  style={{ marginTop: 4 }}
+                />
+              </>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-regular",
+                textAlign: "center",
+              }}
+            >
+              Still searching for driver...
+            </Text>
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={track_ride}
-              style={styles.pay_btn}
-            >
-              <Text style={styles.pay_btn_text}>Track</Text>
-            </TouchableOpacity>
-            <TouchableWithoutFeedback
               onPress={cancel_ride}
               disabled={cancelling}
             >
@@ -445,216 +563,164 @@ const OngoingRide = ({ data }: { data: any }) => {
               >
                 {cancelling ? "Cancelling..." : "Cancel ride"}
               </Text>
-            </TouchableWithoutFeedback>
-          </>
-        ) : (
-          <>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={pay_func}
-              disabled={paying}
-              style={styles.pay_btn}
-            >
-              <Text style={styles.pay_btn_text}>
-                {paying ? "Paying..." : `Pay ${data.fare.toLocaleString()} NGN`}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={cancel_ride}
-              disabled={cancelling}
-              style={[
-                styles.pay_btn,
-                {
-                  backgroundColor: "transparent",
-                  borderColor: "white",
-                  borderWidth: 1,
-                  opacity: cancelling ? 0.5 : 1,
-                },
-              ]}
-            >
-              <Text style={[styles.pay_btn_text, { color: "#fff" }]}>
-                {cancelling ? "Cancelling..." : "Cancel ride"}
-              </Text>
             </TouchableOpacity>
           </>
-        )
-      ) : data.status === "expired" ? (
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={retry_ride}
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          {retrying ? (
-            <Text style={{ color: "#9e9d9d", fontFamily: "raleway-bold" }}>
-              Retrying...
-            </Text>
-          ) : (
-            <>
-              <Text style={{ color: "#d2d2d2", fontFamily: "raleway-bold" }}>
-                Retry&nbsp;
-              </Text>
-              <FontAwesome6
-                name="rotate-right"
-                color="#fff"
-                size={10}
-                style={{ marginTop: 4 }}
+        )}
+      </View>
+    </ScrollView>
+  );
+};
+
+const CompletedRides = ({ data }: { data: any }) => {
+  const { getUserCompletedRides } = useRideContext();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await getUserCompletedRides();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <FlatList
+        data={data}
+        keyExtractor={(ride) => ride._id}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        renderItem={({ item: ride }: any) => (
+          <View>
+            <View style={styles.ride_card}>
+              <View
+                style={{
+                  backgroundColor: "#4cd90635",
+                  marginBottom: 15,
+                  alignSelf: "flex-start",
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 15,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#4cd906ff",
+                    fontFamily: "raleway-bold",
+                    fontSize: 10,
+                  }}
+                >
+                  Completed
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-start",
+                  gap: 12,
+                }}
+              >
+                <Image
+                  source={vehicleIcons[ride.driver.vehicle_type]}
+                  style={{ width: 30, height: 30 }}
+                />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    flex: 1,
+                    paddingBottom: 10,
+                  }}
+                >
+                  <View style={{ width: 200, paddingHorizontal: 10 }}>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-bold",
+                        color: "#fff",
+                        flexShrink: 1,
+                      }}
+                    >
+                      {ride.destination.address}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-semibold",
+                        color: "grey",
+                        fontSize: 11,
+                      }}
+                    >
+                      {new Date(ride.createdAt).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "poppins-bold",
+                        fontSize: 12,
+                      }}
+                    >
+                      {ride.fare.toLocaleString() ?? ""} NGN
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "raleway-semibold",
+                        color: "grey",
+                        fontSize: 11,
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {ride.payment_method}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              {/* Ride route */}
+              <RideRoute
+                from={ride.pickup.address}
+                to={ride.destination.address}
               />
-            </>
-          )}
-        </TouchableOpacity>
-      ) : (
-        <>
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: "raleway-regular",
-              textAlign: "center",
-            }}
-          >
-            Still searching for driver...
-          </Text>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={cancel_ride}
-            disabled={cancelling}
-          >
-            <Text
-              style={{
-                color: cancelling ? "#ff000080" : "#ff0000",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
-                marginTop: 15,
-              }}
-            >
-              {cancelling ? "Cancelling..." : "Cancel ride"}
-            </Text>
-          </TouchableOpacity>
-        </>
-      )}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
+                style={styles.pay_btn}
+              >
+                <Text style={styles.pay_btn_text}>View ride details</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      />
     </View>
   );
 };
 
-const CompletedRides = ({ data }: { data: any }) => (
-  <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-    {data.map((ride: any, i: number) => {
-      return (
-        <View key={i}>
-          <View style={styles.ride_card}>
-            <View
-              style={{
-                backgroundColor: "#4cd90635",
-                marginBottom: 15,
-                alignSelf: "flex-start",
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 15,
-              }}
-            >
-              <Text
-                style={{
-                  color: "#4cd906ff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 10,
-                }}
-              >
-                Completed
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-start",
-                gap: 12,
-              }}
-            >
-              <Image
-                source={vehicleIcons[ride.driver.vehicle_type]}
-                style={{ width: 30, height: 30 }}
-              />
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  flex: 1,
-                  paddingBottom: 10,
-                }}
-              >
-                <View style={{ width: 200, paddingHorizontal: 10 }}>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-bold",
-                      color: "#fff",
-                      flexShrink: 1,
-                    }}
-                  >
-                    {ride.destination.address}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-semibold",
-                      color: "grey",
-                      fontSize: 11,
-                    }}
-                  >
-                    {new Date(ride.createdAt).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </Text>
-                </View>
-                <View>
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontFamily: "poppins-bold",
-                      fontSize: 12,
-                    }}
-                  >
-                    {ride.fare.toLocaleString() ?? ""} NGN
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "raleway-semibold",
-                      color: "grey",
-                      fontSize: 11,
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {ride.payment_method}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            {/* Ride route */}
-            <RideRoute
-              from={ride.pickup.address}
-              to={ride.destination.address}
-            />
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
-              style={styles.pay_btn}
-            >
-              <Text style={styles.pay_btn_text}>View ride details</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
-    })}
-  </ScrollView>
-);
-
 const CancelledRides = ({ data }: { data: any }) => {
-  const { rebookRideRequest, rebooking } = useRideContext();
+  const { rebookRideRequest, getUserCancelledRides } = useRideContext();
   const [rebookingId, setRebookingId] = React.useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await getUserCancelledRides();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   const rebook_ride = async (ride_id: string) => {
     setRebookingId(ride_id);
@@ -664,13 +730,20 @@ const CancelledRides = ({ data }: { data: any }) => {
     } catch (error: any) {
       console.log(error.message);
     } finally {
-      setRebookingId(null); // reset after done
+      setRebookingId(null);
     }
   };
+
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-      {data.map((ride: any, i: number) => (
-        <View key={i}>
+    <View style={{ flex: 1 }}>
+      <FlatList
+        data={data}
+        keyExtractor={(ride) => ride._id}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        renderItem={({ item: ride }) => (
           <View style={styles.ride_card}>
             <View
               style={{
@@ -768,9 +841,9 @@ const CancelledRides = ({ data }: { data: any }) => {
               </View>
             </View>
           </View>
-        </View>
-      ))}
-    </ScrollView>
+        )}
+      />
+    </View>
   );
 };
 

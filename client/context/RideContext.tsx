@@ -103,7 +103,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setRideDetails,
     mapRef,
     region,
-    set_user_location,
     getPlaceCoords,
     pickupCoords,
     setUserAddress,
@@ -122,7 +121,6 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { getDriverData } = useDriverAuthContext();
   const { setLoadingState, setRideDetailsLoading } = useLoading();
   const { fetchActivities } = useActivityContext();
-  const { fetchRoute } = useMapContext();
 
   const { userSocket, signedIn } = useAuthContext();
 
@@ -641,6 +639,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         setDateTimeModal,
         set_destination_func,
         set_pickup_func,
+        getActiveRide,
         ongoingRideData,
         setOngoingRideData,
         resetRide,
@@ -698,6 +697,7 @@ export interface RideContextType {
   setModalUp: Dispatch<SetStateAction<boolean>>;
   routeModalRef: any;
 
+  getActiveRide: () => Promise<void>;
   rideData: Ride | null;
   ongoingRideData: Ride | null;
   setOngoingRideData: Dispatch<SetStateAction<Ride | null>>;
