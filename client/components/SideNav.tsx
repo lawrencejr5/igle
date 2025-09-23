@@ -201,10 +201,14 @@ const SideNav: React.FC<{
 
               {/* Side bar values */}
               <View>
-                <View style={styles.sidenav_content_box}>
-                  <FontAwesome name="car" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Rides</Text>
-                </View>
+                <TouchableWithoutFeedback
+                  onPress={() => router.push("/(driver)/rides")}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <FontAwesome name="car" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Rides</Text>
+                  </View>
+                </TouchableWithoutFeedback>
                 <View style={styles.sidenav_content_box}>
                   <Entypo name="wallet" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Earnings</Text>
