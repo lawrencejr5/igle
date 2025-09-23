@@ -47,10 +47,10 @@ const SecuritySettings = () => {
           onPress={() => setPasswordModalOpen(true)}
           style={{
             marginTop: 30,
-            borderColor: "#656565",
-            borderWidth: 0.5,
+            backgroundColor: "#242424",
             borderRadius: 10,
-            padding: 10,
+            paddingHorizontal: 15,
+            paddingVertical: 12,
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",

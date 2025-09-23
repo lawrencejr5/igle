@@ -54,11 +54,11 @@ const PersonalDetails = () => {
           </Text>
         </View>
         <View style={{ marginTop: 50 }}>
-          <Pressable
-            onPress={() => setOpenProfilePicModal(true)}
-            style={{ alignSelf: "center" }}
-          >
-            <View style={{ justifyContent: "center", alignItems: "center" }}>
+          <View style={{ alignSelf: "center" }}>
+            <Pressable
+              onPress={() => setOpenProfilePicModal(true)}
+              style={{ justifyContent: "center", alignItems: "center" }}
+            >
               <Image
                 source={
                   signedIn?.profile_pic
@@ -70,6 +70,8 @@ const PersonalDetails = () => {
                   width: 120,
                   borderRadius: 60,
                   opacity: uploadingPic ? 0.4 : 1,
+                  borderWidth: 1,
+                  borderColor: "#fff",
                 }}
               />
               {(uploadingPic || removingPic) && (
@@ -87,8 +89,28 @@ const PersonalDetails = () => {
                   <ActivityIndicator size="large" color="#fff" />
                 </View>
               )}
-            </View>
-          </Pressable>
+            </Pressable>
+
+            {/* Edit pencil button overlapping bottom-right */}
+            <Pressable
+              onPress={() => setOpenProfilePicModal(true)}
+              style={{
+                position: "absolute",
+                right: 4,
+                bottom: 4,
+                width: 24,
+                height: 24,
+                borderRadius: 18,
+                backgroundColor: "#fff",
+                justifyContent: "center",
+                alignItems: "center",
+                borderWidth: 1,
+                borderColor: "#ccc",
+              }}
+            >
+              <Feather name="edit-2" size={12} color="#121212" />
+            </Pressable>
+          </View>
 
           <View style={{ marginTop: 50 }}>
             <Pressable
@@ -418,10 +440,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderColor: "#656565ff",
-    borderBottomWidth: 0.5,
-    padding: 10,
-    paddingLeft: 0,
+    backgroundColor: "#242424",
+    borderRadius: 7,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     marginBottom: 20,
   },
   item_header_text: {
