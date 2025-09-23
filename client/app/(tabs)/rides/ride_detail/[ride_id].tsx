@@ -170,7 +170,7 @@ const RideDetails = () => {
                       hour: "numeric", // 5
                       minute: "2-digit", // 18
                       hour12: true, // PM
-                    }).format(new Date(rideData.createdAt))}
+                    }).format(new Date(rideData?.createdAt || Date.now()))}
                   </Text>
                 </View>
               </View>

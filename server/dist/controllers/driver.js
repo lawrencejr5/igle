@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.create_driver = void 0;
+exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.create_driver = void 0;
 const driver_1 = __importDefault(require("../models/driver"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const ride_1 = __importDefault(require("../models/ride"));
@@ -353,3 +353,122 @@ const save_bank_info = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.save_bank_info = save_bank_info;
+// Get driver's completed rides
+const get_driver_completed_rides = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const { limit = 20, skip = 0 } = req.query;
+        const completedRides = yield ride_1.default.find({
+            driver: driver_id,
+            status: "completed",
+        })
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .skip(Number(skip))
+            .populate({ path: "rider", select: "name phone" })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle rating",
+            populate: { path: "user", select: "name phone" },
+        });
+        // Get total count for pagination
+        const total = yield ride_1.default.countDocuments({
+            driver: driver_id,
+            status: "completed",
+        });
+        res.status(200).json({
+            msg: "success",
+            rides: completedRides,
+            pagination: {
+                total,
+                limit: Number(limit),
+                skip: Number(skip),
+            },
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_completed_rides = get_driver_completed_rides;
+// Get driver's cancelled rides
+const get_driver_cancelled_rides = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const { limit = 20, skip = 0 } = req.query;
+        const cancelledRides = yield ride_1.default.find({
+            driver: driver_id,
+            status: "cancelled",
+        })
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .skip(Number(skip))
+            .populate({ path: "rider", select: "name phone" })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle rating",
+            populate: { path: "user", select: "name phone" },
+        });
+        // Get total count for pagination
+        const total = yield ride_1.default.countDocuments({
+            driver: driver_id,
+            status: "cancelled",
+        });
+        res.status(200).json({
+            msg: "success",
+            rides: cancelledRides,
+            pagination: {
+                total,
+                limit: Number(limit),
+                skip: Number(skip),
+            },
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_cancelled_rides = get_driver_cancelled_rides;
+// Get all driver's rides (completed and cancelled)
+const get_driver_rides_history = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const { limit = 20, skip = 0, status } = req.query;
+        // Build query
+        const query = {
+            driver: driver_id,
+            status: status || { $in: ["completed", "cancelled"] },
+        };
+        const rides = yield ride_1.default.find(query)
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .skip(Number(skip))
+            .populate({ path: "rider", select: "name phone" })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle rating",
+            populate: { path: "user", select: "name phone" },
+        });
+        // Get total count for pagination
+        const total = yield ride_1.default.countDocuments(query);
+        res.status(200).json({
+            msg: "success",
+            rides,
+            pagination: {
+                total,
+                limit: Number(limit),
+                skip: Number(skip),
+            },
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_rides_history = get_driver_rides_history;

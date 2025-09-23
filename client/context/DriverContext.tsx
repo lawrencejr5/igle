@@ -31,6 +31,52 @@ type StatusType =
   | "completed"
   | "";
 
+type RideStatus =
+  | "pending"
+  | "scheduled"
+  | "accepted"
+  | "arrived"
+  | "ongoing"
+  | "completed"
+  | "cancelled"
+  | "expired";
+
+interface Ride {
+  _id: string;
+  duration_mins: string;
+  distance_km: string;
+  pickup: { address: string; coordinates: [number, number] };
+  destination: { address: string; coordinates: [number, number] };
+  status: RideStatus;
+  fare: number;
+  payment_status: string;
+  scheduled_time?: Date;
+  driver: {
+    _id: string;
+    vehicle_type: string;
+    vehicle: {
+      model: string;
+      brand: string;
+      color: string;
+    };
+    current_location: { coordinates: [number, number] };
+    total_trips: number;
+    rating: number;
+    num_of_reviews: number;
+    user: {
+      _id: string;
+      name: string;
+      email: string;
+      phone: string;
+    };
+  };
+  rider: {
+    _id: string;
+    name: string;
+    phone: string;
+  };
+}
+
 const DriverContext = createContext<DriverConextType | null>(null);
 
 const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
@@ -40,8 +86,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [driveStatus, setDriveStatus] = useState<StatusType>("searching");
 
-  const [incomingRideData, setIncomingRideData] = useState<any>(null);
-  const [ongoingRideData, setOngoingRideData] = useState<any>(null);
+  const [incomingRideData, setIncomingRideData] = useState<Ride | null>(null);
+  const [ongoingRideData, setOngoingRideData] = useState<Ride | null>(null);
 
   // Location update modal state
   const [locationModalOpen, setLocationModalOpen] = useState<boolean>(false);
@@ -59,7 +105,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       console.log("fetching...");
       const { coords } = await getRoute(
         [region.latitude, region.longitude],
-        ongoingRideData.pickup.coordinates
+        ongoingRideData?.pickup.coordinates!
       );
       if (coords) {
         setToPickupRouteCoords(coords);
@@ -74,8 +120,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       console.log("fetching...");
 
       const { coords } = await getRoute(
-        ongoingRideData.pickup.coordinates,
-        ongoingRideData.destination.coordinates
+        ongoingRideData?.pickup.coordinates!,
+        ongoingRideData?.destination.coordinates!
       );
       if (coords) {
         setToDestinationRouteCoords(coords);
@@ -224,7 +270,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const acceptRideRequest = async () => {
     const token = await AsyncStorage.getItem("token");
-    const ride_id = incomingRideData._id;
+    const ride_id = incomingRideData?._id;
 
     if (!ride_id) {
       showNotification("Incoming ride not found", "error");
@@ -252,7 +298,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     status: "arrived" | "ongoing" | "completed"
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
-    const ride_id = ongoingRideData._id;
+    const ride_id = ongoingRideData?._id;
 
     if (!ride_id) {
       showNotification("Ride id was not found", "error");
@@ -294,6 +340,128 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Completed rides with pagination (limit 5 per page)
+  const [driverCompletedRides, setDriverCompletedRides] = useState<
+    Ride[] | null
+  >(null);
+  const [completedPagination, setCompletedPagination] = useState({
+    total: 0,
+    limit: 5,
+    skip: 0,
+  });
+  const [completedLoadingMore, setCompletedLoadingMore] = useState(false);
+
+  const fetchCompletedRides = async (reset = true): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const limit = completedPagination.limit;
+      const skip = reset ? 0 : completedPagination.skip;
+
+      const { data } = await axios.get(
+        `${API_URL}/rides/completed?limit=${limit}&skip=${skip}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data.rides) {
+        if (reset) setDriverCompletedRides(data.rides);
+        else
+          setDriverCompletedRides((prev) =>
+            prev ? [...prev, ...data.rides] : data.rides
+          );
+
+        const newSkip =
+          (reset ? 0 : completedPagination.skip) + data.rides.length;
+        setCompletedPagination({
+          total: data.pagination?.total || 0,
+          limit: Number(limit),
+          skip: Number(newSkip),
+        });
+      }
+    } catch (error: any) {
+      console.log(error);
+    }
+  };
+
+  const fetchMoreCompletedRides = async (): Promise<void> => {
+    if (completedLoadingMore) return;
+    if (
+      completedPagination.total &&
+      completedPagination.skip >= completedPagination.total
+    )
+      return;
+    try {
+      setCompletedLoadingMore(true);
+      await fetchCompletedRides(false);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setCompletedLoadingMore(false);
+    }
+  };
+
+  // Cancelled rides with pagination (limit 5 per page)
+  const [driverCancelledRides, setDriverCancelledRides] = useState<
+    Ride[] | null
+  >(null);
+  const [cancelledPagination, setCancelledPagination] = useState({
+    total: 0,
+    limit: 5,
+    skip: 0,
+  });
+  const [cancelledLoadingMore, setCancelledLoadingMore] = useState(false);
+
+  const fetchCancelledRides = async (reset = true): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const limit = cancelledPagination.limit;
+      const skip = reset ? 0 : cancelledPagination.skip;
+
+      const { data } = await axios.get(
+        `${API_URL}/rides/cancelled?limit=${limit}&skip=${skip}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (data.rides) {
+        if (reset) setDriverCancelledRides(data.rides);
+        else
+          setDriverCancelledRides((prev) =>
+            prev ? [...prev, ...data.rides] : data.rides
+          );
+
+        const newSkip =
+          (reset ? 0 : cancelledPagination.skip) + data.rides.length;
+        setCancelledPagination({
+          total: data.pagination?.total || 0,
+          limit: Number(limit),
+          skip: Number(newSkip),
+        });
+      }
+    } catch (error: any) {
+      showNotification("Error fetching cancelled rides", "error");
+      console.log(error);
+    }
+  };
+
+  const fetchMoreCancelledRides = async (): Promise<void> => {
+    if (cancelledLoadingMore) return;
+    if (
+      cancelledPagination.total &&
+      cancelledPagination.skip >= cancelledPagination.total
+    )
+      return;
+    try {
+      setCancelledLoadingMore(true);
+      await fetchCancelledRides(false);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setCancelledLoadingMore(false);
+    }
+  };
+
   return (
     <DriverContext.Provider
       value={{
@@ -321,6 +489,14 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         setToDestinationRouteCoords,
 
         fetchActiveRide,
+        driverCompletedRides,
+        fetchCompletedRides,
+        fetchMoreCompletedRides,
+        completedLoadingMore,
+        driverCancelledRides,
+        fetchCancelledRides,
+        fetchMoreCancelledRides,
+        cancelledLoadingMore,
       }}
     >
       {children}
@@ -346,13 +522,13 @@ interface DriverConextType {
 
   driveStatus: StatusType;
   setDriveStatus: Dispatch<SetStateAction<StatusType>>;
-  incomingRideData: any;
-  setIncomingRideData: Dispatch<SetStateAction<any>>;
+  incomingRideData: Ride | null;
+  setIncomingRideData: Dispatch<SetStateAction<Ride | null>>;
   fetchIncomingRideData: (ride_id: string) => Promise<void>;
 
   acceptRideRequest: () => Promise<void>;
-  ongoingRideData: any;
-  setOngoingRideData: Dispatch<SetStateAction<any>>;
+  ongoingRideData: Ride | null;
+  setOngoingRideData: Dispatch<SetStateAction<Ride | null>>;
   updateRideStatus: (
     status: "arrived" | "ongoing" | "completed"
   ) => Promise<void>;
@@ -368,6 +544,14 @@ interface DriverConextType {
   >;
 
   fetchActiveRide: () => Promise<void>;
+  driverCompletedRides: Ride[] | null;
+  fetchCompletedRides: (reset?: boolean) => Promise<void>;
+  fetchMoreCompletedRides: () => Promise<void>;
+  completedLoadingMore: boolean;
+  driverCancelledRides: Ride[] | null;
+  fetchCancelledRides: (reset?: boolean) => Promise<void>;
+  fetchMoreCancelledRides: () => Promise<void>;
+  cancelledLoadingMore: boolean;
 }
 
 export default DriverContextPrvider;

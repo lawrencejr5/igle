@@ -7,58 +7,82 @@ import {
   Image,
   RefreshControl,
 } from "react-native";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import RideRoute from "../../components/RideRoute";
+import { useDriverContext } from "../../context/DriverContext";
 
 const RidesPage = () => {
   const [activeTab, setActiveTab] = useState("ongoing");
   const [refreshing, setRefreshing] = useState(false);
 
-  // Temporary sample data - replace with real data from your context/API
-  const sampleRides = {
-    ongoing: [
-      {
-        id: "1",
-        customer: "John Doe",
-        pickup: "123 Main St",
-        destination: "456 Oak Ave",
-        amount: "₦2,500",
-        time: new Date(2025, 8, 23, 14, 30),
-        status: "ongoing",
-      },
-    ],
-    completed: [
-      {
-        id: "2",
-        customer: "Jane Smith",
-        pickup: "789 Pine St",
-        destination: "321 Elm St",
-        amount: "₦3,200",
-        time: new Date(2025, 8, 23, 10, 15),
-        status: "completed",
-      },
-    ],
-    cancelled: [
-      {
-        id: "3",
-        customer: "Mike Johnson",
-        pickup: "555 Cedar St",
-        destination: "Konwea shopping plaza",
-        amount: "₦0",
-        time: new Date(2025, 8, 22, 18, 45),
-        status: "cancelled",
-      },
-    ],
+  const {
+    ongoingRideData,
+    driverCompletedRides,
+    driverCancelledRides,
+    fetchActiveRide,
+    fetchCompletedRides,
+    fetchMoreCompletedRides,
+    completedLoadingMore,
+    fetchCancelledRides,
+    fetchMoreCancelledRides,
+    cancelledLoadingMore,
+  } = useDriverContext();
+
+  // Load data when component mounts
+  useEffect(() => {
+    const loadData = async () => {
+      await fetchActiveRide();
+      await fetchCompletedRides(true);
+      await fetchCancelledRides(true);
+    };
+    loadData();
+  }, []);
+
+  // Get the appropriate data based on active tab
+  const getCurrentTabData = () => {
+    switch (activeTab) {
+      case "ongoing":
+        return ongoingRideData ? [ongoingRideData] : [];
+      case "completed":
+        return driverCompletedRides || [];
+      case "cancelled":
+        return driverCancelledRides || [];
+      default:
+        return [];
+    }
   };
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Add your refresh logic here
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    try {
+      switch (activeTab) {
+        case "ongoing":
+          await fetchActiveRide();
+          break;
+        case "completed":
+          await fetchCompletedRides(true);
+          break;
+        case "cancelled":
+          await fetchCancelledRides(true);
+          break;
+      }
+    } catch (error) {
+      console.log("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [activeTab]);
+
+  const onEndReached = async () => {
+    if (activeTab === "completed") {
+      await fetchMoreCompletedRides();
+    } else if (activeTab === "cancelled") {
+      await fetchMoreCancelledRides();
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -81,7 +105,9 @@ const RidesPage = () => {
             source={require("../../assets/images/user.png")}
             style={styles.customerImage}
           />
-          <Text style={styles.customerName}>{item.customer}</Text>
+          <Text style={styles.customerName}>
+            {item.rider?.name || "Unknown"}
+          </Text>
         </View>
         <Text
           style={[styles.rideStatus, { color: getStatusColor(item.status) }]}
@@ -94,29 +120,41 @@ const RidesPage = () => {
         {item.status === "cancelled" ? (
           <View style={styles.cancelledDestination}>
             <Ionicons name="location" size={20} color="#fff" />
-            <Text style={styles.destinationText}>{item.destination}</Text>
+            <Text style={styles.destinationText}>
+              {item.destination?.address}
+            </Text>
           </View>
         ) : item.status === "completed" ? (
           <View
             style={{
               paddingHorizontal: 10,
               borderRadius: 5,
-              backgroundColor: "#4b4b4bff",
+              backgroundColor: "#313131",
             }}
           >
-            <RideRoute from={item.pickup} to={item.destination} />
+            <RideRoute
+              from={item.pickup?.address}
+              to={item.destination?.address}
+            />
           </View>
         ) : (
-          <RideRoute from={item.pickup} to={item.destination} />
+          <RideRoute
+            from={item.pickup?.address}
+            to={item.destination?.address}
+          />
         )}
       </View>
 
       <View style={styles.rideFooter}>
         {item.status !== "cancelled" && (
-          <Text style={styles.amount}>{item.amount}</Text>
+          <Text style={styles.amount}>
+            ₦{item.fare?.toLocaleString() || "0"}
+          </Text>
         )}
 
-        <Text style={styles.time}>{new Date(item.time).toLocaleString()}</Text>
+        <Text style={styles.time}>
+          {new Date(item.createdAt || item.updatedAt).toLocaleString()}
+        </Text>
       </View>
     </View>
   );
@@ -166,19 +204,29 @@ const RidesPage = () => {
       </View>
 
       <FlatList
-        data={sampleRides[activeTab as keyof typeof sampleRides]}
+        data={getCurrentTabData()}
         renderItem={renderRideCard}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.ridesList}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.6}
         ListEmptyComponent={() => (
           <View style={styles.emptyState}>
             <Ionicons name="car-outline" size={64} color="#757575" />
             <Text style={styles.emptyStateText}>No {activeTab} rides</Text>
           </View>
         )}
+        ListFooterComponent={() =>
+          (activeTab === "completed" && completedLoadingMore) ||
+          (activeTab === "cancelled" && cancelledLoadingMore) ? (
+            <View style={{ padding: 12, alignItems: "center" }}>
+              <Text style={{ color: "#757575" }}>Loading...</Text>
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );
@@ -193,7 +241,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    marginBottom: 15,
+    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 28,
@@ -202,11 +250,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 48,
-    height: 48,
+    height: 35,
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 10,
+    marginTop: 10,
   },
   tabsContainer: {
     flexDirection: "row",
@@ -235,6 +284,7 @@ const styles = StyleSheet.create({
   },
   ridesList: {
     padding: 20,
+    paddingTop: 5,
   },
   rideCard: {
     backgroundColor: "#242424",
@@ -277,7 +327,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 10,
     borderRadius: 5,
-    backgroundColor: "#4b4b4bff",
+    backgroundColor: "#313131",
   },
   destinationText: {
     fontFamily: "raleway-bold",

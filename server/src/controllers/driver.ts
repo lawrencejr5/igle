@@ -427,3 +427,135 @@ export const save_bank_info = async (
     res.status(500).json({ msg: "Bank info is incorrect", err });
   }
 };
+
+// Get driver's completed rides
+export const get_driver_completed_rides = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const { limit = 20, skip = 0 } = req.query;
+
+    const completedRides = await Ride.find({
+      driver: driver_id,
+      status: "completed",
+    })
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(skip))
+      .populate({ path: "rider", select: "name phone" })
+      .populate({
+        path: "driver",
+        select: "user vehicle_type vehicle rating",
+        populate: { path: "user", select: "name phone" },
+      });
+
+    // Get total count for pagination
+    const total = await Ride.countDocuments({
+      driver: driver_id,
+      status: "completed",
+    });
+
+    res.status(200).json({
+      msg: "success",
+      rides: completedRides,
+      pagination: {
+        total,
+        limit: Number(limit),
+        skip: Number(skip),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Get driver's cancelled rides
+export const get_driver_cancelled_rides = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const { limit = 20, skip = 0 } = req.query;
+
+    const cancelledRides = await Ride.find({
+      driver: driver_id,
+      status: "cancelled",
+    })
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(skip))
+      .populate({ path: "rider", select: "name phone" })
+      .populate({
+        path: "driver",
+        select: "user vehicle_type vehicle rating",
+        populate: { path: "user", select: "name phone" },
+      });
+
+    // Get total count for pagination
+    const total = await Ride.countDocuments({
+      driver: driver_id,
+      status: "cancelled",
+    });
+
+    res.status(200).json({
+      msg: "success",
+      rides: cancelledRides,
+      pagination: {
+        total,
+        limit: Number(limit),
+        skip: Number(skip),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Get all driver's rides (completed and cancelled)
+export const get_driver_rides_history = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const { limit = 20, skip = 0, status } = req.query;
+
+    // Build query
+    const query: any = {
+      driver: driver_id,
+      status: status || { $in: ["completed", "cancelled"] },
+    };
+
+    const rides = await Ride.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(skip))
+      .populate({ path: "rider", select: "name phone" })
+      .populate({
+        path: "driver",
+        select: "user vehicle_type vehicle rating",
+        populate: { path: "user", select: "name phone" },
+      });
+
+    // Get total count for pagination
+    const total = await Ride.countDocuments(query);
+
+    res.status(200).json({
+      msg: "success",
+      rides,
+      pagination: {
+        total,
+        limit: Number(limit),
+        skip: Number(skip),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error." });
+  }
+};

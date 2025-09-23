@@ -90,8 +90,8 @@ const HomePage = () => {
               coordinate={
                 driveStatus === "arrived" || driveStatus === "ongoing"
                   ? {
-                      latitude: ongoingRideData.pickup.coordinates[0],
-                      longitude: ongoingRideData.pickup.coordinates[1],
+                      latitude: ongoingRideData?.pickup.coordinates[0],
+                      longitude: ongoingRideData?.pickup.coordinates[1],
                     }
                   : region
               }

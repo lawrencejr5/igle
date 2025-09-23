@@ -64,7 +64,7 @@ const StartScreen = () => {
     const loadTimeout = setTimeout(() => {
       setLoading(false);
       if (isAuthenticated) {
-        if (signedIn.is_driver) {
+        if (signedIn?.is_driver) {
           router.replace("/(driver)/home");
         } else {
           router.replace("/(tabs)/home");

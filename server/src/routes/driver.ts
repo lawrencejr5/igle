@@ -14,6 +14,9 @@ import {
   update_driver_info,
   get_driver_active_ride,
   get_driver_transactions,
+  get_driver_completed_rides,
+  get_driver_cancelled_rides,
+  get_driver_rides_history,
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
@@ -34,6 +37,9 @@ DriverRouter.patch("/online", set_driver_online_status);
 DriverRouter.patch("/rating", update_driver_rating);
 DriverRouter.patch("/info", update_driver_info);
 DriverRouter.get("/ride/active", get_driver_active_ride);
+DriverRouter.get("/rides/completed", get_driver_completed_rides);
+DriverRouter.get("/rides/cancelled", get_driver_cancelled_rides);
+DriverRouter.get("/rides/history", get_driver_rides_history);
 DriverRouter.get("/transactions", get_driver_transactions);
 
 export default DriverRouter;

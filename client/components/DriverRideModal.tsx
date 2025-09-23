@@ -289,7 +289,9 @@ const IncomingModal = () => {
               style={styles.userImage}
             />
             <View>
-              <Text style={styles.userName}>{incomingRideData.rider.name}</Text>
+              <Text style={styles.userName}>
+                {incomingRideData?.rider.name}
+              </Text>
               <Text style={styles.userRides}>No rides completed</Text>
             </View>
           </View>
@@ -302,20 +304,22 @@ const IncomingModal = () => {
         <View style={styles.timeRow}>
           <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
           <Text style={styles.timeText}>
-            {incomingRideData.duration_mins} mins (
-            {incomingRideData.distance_km} km)
+            {incomingRideData?.duration_mins} mins (
+            {incomingRideData?.distance_km} km)
           </Text>
         </View>
 
         {/* Ride route card */}
-        <RideRoute
-          from={incomingRideData.pickup.address}
-          to={incomingRideData.destination.address}
-        />
+        {incomingRideData && (
+          <RideRoute
+            from={incomingRideData?.pickup.address}
+            to={incomingRideData?.destination.address}
+          />
+        )}
 
         {/* Price */}
         <Text style={styles.priceText}>
-          NGN {incomingRideData.fare.toLocaleString()}
+          NGN {incomingRideData?.fare.toLocaleString()}
         </Text>
 
         {/* Action btns */}
@@ -360,7 +364,7 @@ const AcceptedModal = () => {
               style={styles.userImage}
             />
             <View>
-              <Text style={styles.userName}>{ongoingRideData.rider.name}</Text>
+              <Text style={styles.userName}>{ongoingRideData?.rider.name}</Text>
               <Text style={styles.userRides}>No rides completed</Text>
             </View>
           </View>
@@ -368,7 +372,7 @@ const AcceptedModal = () => {
           {/* Call btn */}
           <TouchableWithoutFeedback
             onPress={() =>
-              Linking.openURL(`tel:${ongoingRideData.rider.phone}`)
+              Linking.openURL(`tel:${ongoingRideData?.rider.phone}`)
             }
           >
             <View style={styles.callBtn}>
@@ -381,20 +385,22 @@ const AcceptedModal = () => {
         <View style={styles.timeRow}>
           <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
           <Text style={styles.timeText}>
-            {ongoingRideData.duration_mins} mins ({ongoingRideData.distance_km}{" "}
-            km)
+            {ongoingRideData?.duration_mins} mins (
+            {ongoingRideData?.distance_km} km)
           </Text>
         </View>
 
         {/* Ride route card */}
-        <RideRoute
-          from={ongoingRideData.pickup.address}
-          to={ongoingRideData.destination.address}
-        />
+        {ongoingRideData && (
+          <RideRoute
+            from={ongoingRideData.pickup.address}
+            to={ongoingRideData.destination.address}
+          />
+        )}
 
         {/* Price */}
         <Text style={styles.priceText}>
-          {ongoingRideData.fare.toLocaleString()} NGN
+          {ongoingRideData?.fare.toLocaleString()} NGN
         </Text>
 
         {/* Action btns */}
@@ -438,7 +444,7 @@ const ArrivingModal = () => {
       <View style={styles.directionsRow}>
         <FontAwesome5 name="directions" color={"#fff"} size={30} />
         <Text style={styles.directionsText}>
-          {`Alright quickly head to ${ongoingRideData.pickup.address}, it should take about ${ongoingRideData.duration_mins} mins`}
+          {`Alright quickly head to ${ongoingRideData?.pickup.address}, it should take about ${ongoingRideData?.duration_mins} mins`}
         </Text>
       </View>
       <View style={styles.arrivedBtnRow}>
@@ -512,7 +518,7 @@ const OngoingModal = () => {
       <View style={styles.directionsRow}>
         <FontAwesome5 name="directions" color={"#fff"} size={30} />
         <Text style={styles.directionsText}>
-          {`Aright, let's head to ${ongoingRideData.destination.address}`}
+          {`Aright, let's head to ${ongoingRideData?.destination.address}`}
         </Text>
       </View>
       <View style={styles.arrivedBtnRow}>
