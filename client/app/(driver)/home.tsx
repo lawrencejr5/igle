@@ -64,6 +64,13 @@ const HomePage = () => {
     [toDestinationRouteCoords]
   );
 
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  // Stop tracking changes after the marker has loaded
+  const loadMap = () => {
+    setTracksViewChanges(false);
+  };
+
   return (
     <>
       {notification.visible && <Notification notification={notification} />}
@@ -76,8 +83,10 @@ const HomePage = () => {
             ref={mapRef}
             initialRegion={region}
             customMapStyle={darkMapStyle}
+            onMapLoaded={loadMap}
           >
             <Marker
+              tracksViewChanges={tracksViewChanges}
               coordinate={
                 driveStatus === "arrived" || driveStatus === "ongoing"
                   ? {
@@ -101,6 +110,7 @@ const HomePage = () => {
               ongoingRideData.pickup &&
               driveStatus === "arriving" && (
                 <Marker
+                  // tracksViewChanges={tracksViewChanges}
                   coordinate={{
                     latitude: ongoingRideData.pickup.coordinates[0],
                     longitude: ongoingRideData.pickup.coordinates[1],
@@ -120,6 +130,7 @@ const HomePage = () => {
               ongoingRideData.destination &&
               (driveStatus === "arrived" || driveStatus === "ongoing") && (
                 <Marker
+                  // tracksViewChanges={tracksViewChanges}
                   coordinate={{
                     latitude: ongoingRideData.destination.coordinates[0],
                     longitude: ongoingRideData.destination.coordinates[1],

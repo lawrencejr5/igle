@@ -58,12 +58,23 @@ const Home = () => {
   }, [region]);
 
   useEffect(() => {
-    if (region && mapRef.current) {
-      setTimeout(() => {
+    if (!region) return;
+
+    const timer = setTimeout(() => {
+      if (mapRef.current) {
         mapRef.current.animateToRegion(region, 1000);
-      }, 500);
-    }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [region, mapRef.current]);
+
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  // Stop tracking changes after the marker has loaded
+  const loadMap = () => {
+    setTracksViewChanges(false);
+  };
 
   return (
     <>
@@ -77,6 +88,7 @@ const Home = () => {
             {region && (
               <MapView
                 ref={mapRef}
+                onMapLoaded={loadMap}
                 style={{ ...StyleSheet.absoluteFillObject }}
                 provider={PROVIDER_GOOGLE}
                 initialRegion={region}
@@ -86,6 +98,7 @@ const Home = () => {
                 {rideStatus !== "track_driver" &&
                 rideStatus !== "track_ride" ? (
                   <Marker
+                    tracksViewChanges={tracksViewChanges}
                     coordinate={
                       routeCoords.length > 0 ? routeCoords[0] : region
                     }
