@@ -1,5 +1,5 @@
-import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
-import React, { useState, useCallback, useEffect } from "react";
+import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
