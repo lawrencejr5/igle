@@ -1,64 +1,18 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
-
-import * as Linking from "expo-linking";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import { API_URLS } from "../data/constants";
 
 import SplashScreen from "./splash_screen";
 import { router } from "expo-router";
 
 import { useAuthContext } from "../context/AuthContext";
+import * as Google from "expo-auth-session/providers/google";
+import Constants from "expo-constants";
 
 const StartScreen = () => {
   const { isAuthenticated, signedIn } = useAuthContext()!;
+  const { googleLogin } = useAuthContext()!;
 
   const [loading, setLoading] = useState(true);
-
-  // useEffect(() => {
-  //   console.log("use effect is working");
-
-  //   const subscription = Linking.addEventListener("url", async (event) => {
-  //     const url = event.url;
-  //     const { path, queryParams } = Linking.parse(url); // Destructure 'path' as well
-
-  //     // Check if the URL's path is 'payment-status'
-  //     if (path === "paystack-redirect") {
-  //       console.log("reached paystack redirect");
-
-  //       // queryParams.reference comes from Paystack redirect
-  //       if (queryParams?.reference) {
-  //         console.log("Payment reference:", queryParams.reference);
-  //         // Call your backend to verify
-  //         const verify_payment = async (): Promise<void> => {
-  //           const token = await AsyncStorage.getItem("token");
-  //           try {
-  //             const { data } = await axios.post(
-  //               `${API_URLS.wallet}/verify?reference=${queryParams.reference}`,
-  //               {},
-  //               { headers: { Authorization: `Bearer ${token}` } }
-  //             );
-  //             console.log(data.msg, "success");
-  //             router.push("/tabs/account");
-  //           } catch (error: any) {
-  //             const errMsg = error.response.data.message;
-  //             console.log(errMsg, "error");
-  //           }
-  //         };
-  //         verify_payment();
-  //       }
-  //     }
-  //   });
-
-  //   return () => subscription.remove();
-  // }, []);
 
   useEffect(() => {
     const loadTimeout = setTimeout(() => {
@@ -78,6 +32,33 @@ const StartScreen = () => {
   if (loading) {
     return <SplashScreen />;
   }
+
+  // Configure Google auth request - expects client IDs in app config extras
+  let expoClientId: string | undefined;
+  let webClientId: string | undefined;
+
+  expoClientId = process.env.GOOGLE_EXPO_CLIENT_ID;
+  webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: webClientId || expoClientId || undefined,
+    responseType: "id_token",
+    scopes: ["profile", "email"],
+  });
+
+  React.useEffect(() => {
+    if (response?.type === "success") {
+      // id token might be in response.params.id_token or response.authentication.idToken
+      const idToken =
+        (response as any)?.params?.id_token ||
+        (response as any)?.authentication?.idToken;
+      if (idToken) {
+        googleLogin(idToken).catch((e: unknown) =>
+          console.log("googleLogin error", e)
+        );
+      }
+    }
+  }, [response]);
 
   return (
     <View
@@ -121,7 +102,7 @@ const StartScreen = () => {
           marginBottom: 40,
         }}
       >
-        <TouchableWithoutFeedback onPress={() => router.push("/(driver)/maps")}>
+        <TouchableOpacity activeOpacity={0.7}>
           <View style={styles.sign_btn}>
             <Image
               source={require("../assets/images/icons/apple-logo.png")}
@@ -129,8 +110,18 @@ const StartScreen = () => {
             />
             <Text style={styles.sign_text}>Continue with Apple</Text>
           </View>
-        </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback onPress={() => router.push("/(tabs)/home")}>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={!request}
+          onPress={() => {
+            try {
+              promptAsync();
+            } catch (err) {
+              console.log("promptAsync error", err);
+            }
+          }}
+        >
           <View style={styles.sign_btn}>
             <Image
               source={require("../assets/images/icons/google-logo.png")}
@@ -138,16 +129,18 @@ const StartScreen = () => {
             />
             <Text style={styles.sign_text}>Continue with Google</Text>
           </View>
-        </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback onPress={() => router.push("/(auth)/signin")}>
-          <View style={styles.sign_btn}>
-            <Image
-              source={require("../assets/images/icons/mail.png")}
-              style={styles.sign_image}
-            />
-            <Text style={styles.sign_text}>Continue with Email</Text>
-          </View>
-        </TouchableWithoutFeedback>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.sign_btn}
+          onPress={() => router.push("/(auth)/signin")}
+        >
+          <Image
+            source={require("../assets/images/icons/mail.png")}
+            style={styles.sign_image}
+          />
+          <Text style={styles.sign_text}>Continue with Email</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

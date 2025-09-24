@@ -5,14 +5,13 @@ import {
   TouchableWithoutFeedback,
   View,
   Image,
-  GestureResponderEvent,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
 
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-import { Checkbox } from "react-native-paper";
 import { Link, router } from "expo-router";
 
 import { auth_styles } from "../../styles/auth.styles";
@@ -60,12 +59,13 @@ const Signup = () => {
       <Notification notification={notification} />
       <ScrollView>
         {/* Back button */}
-        <TouchableWithoutFeedback
+        <TouchableOpacity
+          activeOpacity={0.7}
           onPress={() => router.back()}
           style={{ padding: 10 }}
         >
           <Feather name="chevron-left" size={40} color="#d3d0d0ff" />
-        </TouchableWithoutFeedback>
+        </TouchableOpacity>
 
         {/* Header texts... */}
         <View style={{ marginTop: 5, paddingHorizontal: 10 }}>
@@ -175,13 +175,16 @@ const Signup = () => {
           </View>
 
           {/* Submit button */}
-          <TouchableWithoutFeedback onPress={handleRegister} disabled={loading}>
-            <View style={[styles.sign_btn, { opacity: loading ? 0.5 : 1 }]}>
-              <Text style={styles.sign_btn_text}>
-                {loading ? "Saving..." : "Save"}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={[styles.sign_btn, { opacity: loading ? 0.5 : 1 }]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            <Text style={styles.sign_btn_text}>
+              {loading ? "Saving..." : "Save"}
+            </Text>
+          </TouchableOpacity>
 
           {/* ----- OR ----- */}
           <View style={styles.or_container}>
@@ -203,22 +206,22 @@ const Signup = () => {
             }}
           >
             {/* Sign with google */}
-            <View style={styles.oauth_btn}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.oauth_btn}>
               <Image
                 source={require("../../assets/images/icons/google-logo.png")}
                 style={styles.oauth_img}
               />
               <Text style={styles.oauth_text}>Google</Text>
-            </View>
+            </TouchableOpacity>
 
             {/* Sign with apple */}
-            <View style={styles.oauth_btn}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.oauth_btn}>
               <Image
                 source={require("../../assets/images/icons/apple-logo-white.png")}
                 style={styles.oauth_img}
               />
               <Text style={styles.oauth_text}>Apple</Text>
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* Don't or already have an account */}

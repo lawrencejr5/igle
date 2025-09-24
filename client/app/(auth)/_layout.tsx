@@ -5,11 +5,13 @@ import { Stack } from "expo-router";
 
 const AuthLayout = () => {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    />
+    <View style={{ flex: 1, backgroundColor: "#121212" }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
+    </View>
   );
 };
 

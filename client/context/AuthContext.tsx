@@ -301,6 +301,40 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Google login (backend verifies tokenId and returns jwt + user)
+  const googleLogin = async (tokenId: string): Promise<void> => {
+    try {
+      const { data } = await axios.post(`${API_URL}/google_auth`, { tokenId });
+
+      if (data?.token && data?.user) {
+        await AsyncStorage.setItem("token", data.token);
+        const userId = data.user._id || data.user.id || data.user.user_id;
+        if (userId) await AsyncStorage.setItem("user_id", String(userId));
+        await AsyncStorage.setItem(
+          "is_driver",
+          JSON.stringify(data.user.is_driver || false)
+        );
+
+        await getUserData();
+        await getWalletBalance("User");
+        showNotification("Login successful.", "success");
+      } else {
+        showNotification("Google login failed.", "error");
+        throw new Error("Invalid google auth response");
+      }
+    } catch (err: any) {
+      console.log(
+        "Google login error:",
+        err?.response?.data || err?.message || err
+      );
+      showNotification(
+        err?.response?.data?.msg || "Google login failed.",
+        "error"
+      );
+      throw err;
+    }
+  };
+
   const [userSocket, setUserSocket] = useState<any>(null);
   const getUserData = async (): Promise<void> => {
     setAppLoading(true);
@@ -416,6 +450,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         updateEmail,
         updateName,
         updatePassword,
+        googleLogin,
         getUserData,
         signedIn,
         isAuthenticated,
@@ -479,6 +514,9 @@ export interface AuthContextType {
   updateDriverApplication: (
     status: "none" | "approved" | "submitted" | "rejected"
   ) => Promise<void>;
+
+  // Google login helper - accepts id token from client and exchanges with backend
+  googleLogin: (tokenId: string) => Promise<void>;
 
   userSocket: any;
 }
