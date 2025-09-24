@@ -98,7 +98,7 @@ const Home = () => {
                 {rideStatus !== "track_driver" &&
                 rideStatus !== "track_ride" ? (
                   <Marker
-                    tracksViewChanges={tracksViewChanges}
+                    // tracksViewChanges={tracksViewChanges}
                     coordinate={
                       routeCoords.length > 0 ? routeCoords[0] : region
                     }

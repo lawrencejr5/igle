@@ -7,6 +7,9 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  Modal,
+  TextInput,
+  Pressable,
 } from "react-native";
 import { useWalletContext } from "../../context/WalletContext";
 import { useTransactionContext } from "../../context/TransactionContext";
@@ -71,6 +74,7 @@ const EarningsPage: React.FC = () => {
     stats,
   } = useTransactionContext();
   const { driver } = useDriverAuthContext();
+  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
 
   useEffect(() => {
     getWalletBalance("Driver");
@@ -83,6 +87,7 @@ const EarningsPage: React.FC = () => {
       await initiateWithdrawal(amount);
       // Refresh wallet balance after successful withdrawal
       getWalletBalance("Driver");
+      setWithdrawModalVisible(false);
     } catch (error) {
       console.error("Withdrawal failed:", error);
     }
@@ -100,6 +105,13 @@ const EarningsPage: React.FC = () => {
           <Feather name="x" size={30} color={"#fff"} />
         </TouchableOpacity>
       </View>
+
+      <WithdrawModal
+        visible={withdrawModalVisible}
+        onClose={() => setWithdrawModalVisible(false)}
+        onWithdraw={handleWithdraw}
+        balance={driverWalletBal}
+      />
 
       <FlatList
         data={transactions}
@@ -126,7 +138,7 @@ const EarningsPage: React.FC = () => {
                   alignItems: "center",
                   gap: 8,
                 }}
-                onPress={() => router.push("/(driver)/earnings?withdraw=true")}
+                onPress={() => setWithdrawModalVisible(true)}
               >
                 <FontAwesome name="bank" size={14} color="#121212" />
                 <Text
@@ -174,6 +186,76 @@ const EarningsPage: React.FC = () => {
         }
       />
     </SafeAreaView>
+  );
+};
+
+const WithdrawModal: React.FC<{
+  visible: boolean;
+  onClose: () => void;
+  onWithdraw: (amount: number) => void;
+  balance: number;
+}> = ({ visible, onClose, onWithdraw, balance }) => {
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState("");
+
+  const handleWithdrawLocal = () => {
+    const withdrawAmount = Number(amount);
+    if (!amount || withdrawAmount <= 0) {
+      setError("Please enter a valid amount");
+      return;
+    }
+    if (withdrawAmount > balance) {
+      setError("Insufficient balance");
+      return;
+    }
+    onWithdraw(withdrawAmount);
+    setAmount("");
+    setError("");
+    onClose();
+  };
+
+  return (
+    <Modal transparent visible={visible} animationType="fade">
+      <Pressable style={styles.withdrawBackdrop} onPress={onClose}>
+        <Pressable
+          style={[styles.withdrawModal, { marginBottom: 20 }]}
+          onPress={(e) => e.stopPropagation()}
+        >
+          <Text style={styles.withdrawTitle}>Withdraw Funds</Text>
+          <Text style={styles.withdrawBalance}>
+            Available Balance: ₦{balance.toLocaleString()}
+          </Text>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.nairaSymbol}>₦</Text>
+            <TextInput
+              value={amount}
+              onChangeText={(text) => {
+                setAmount(text.replace(/[^0-9]/g, ""));
+                setError("");
+              }}
+              placeholder="Enter amount"
+              placeholderTextColor="#666"
+              keyboardType="numeric"
+              style={styles.amountInput}
+            />
+          </View>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          <TouchableOpacity
+            style={[
+              styles.withdrawButton,
+              !amount && styles.withdrawButtonDisabled,
+            ]}
+            onPress={handleWithdrawLocal}
+            disabled={!amount}
+          >
+            <Text style={styles.withdrawButtonText}>Withdraw</Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 };
 
@@ -280,6 +362,78 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
     fontSize: 16,
     fontFamily: "poppins-bold",
+  },
+  // Withdraw modal styles
+  withdrawBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  withdrawModal: {
+    backgroundColor: "#1e1e1e",
+    width: "85%",
+    borderRadius: 15,
+    padding: 20,
+    alignItems: "center",
+  },
+  withdrawTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "raleway-bold",
+    marginBottom: 10,
+  },
+  withdrawBalance: {
+    color: "#aaa",
+    fontSize: 14,
+    fontFamily: "raleway-regular",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2d2d2d",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    width: "100%",
+    height: 50,
+  },
+  nairaSymbol: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "poppins-bold",
+    marginRight: 10,
+  },
+  amountInput: {
+    flex: 1,
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "poppins-bold",
+    padding: 0,
+  },
+  errorText: {
+    color: "#F44336",
+    fontSize: 14,
+    fontFamily: "raleway-regular",
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  withdrawButton: {
+    backgroundColor: "#fff",
+    width: "100%",
+    height: 45,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  withdrawButtonDisabled: {
+    opacity: 0.6,
+  },
+  withdrawButtonText: {
+    color: "#121212",
+    fontSize: 16,
+    fontFamily: "raleway-bold",
   },
 });
 

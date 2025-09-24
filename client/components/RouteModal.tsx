@@ -276,7 +276,7 @@ const StartModal = () => {
       {/* Saved places scroll view */}
       <SavedPlaces />
 
-      {rideHistory?.length && (
+      {rideHistory && rideHistory.length > 0 && (
         <TouchableOpacity
           style={{
             flexDirection: "row",
