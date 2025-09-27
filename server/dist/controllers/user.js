@@ -21,6 +21,7 @@ const google_auth_library_1 = require("google-auth-library");
 const user_1 = __importDefault(require("../models/user"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const upload_1 = require("../middleware/upload");
+const axios_1 = __importDefault(require("axios"));
 const jwt_secret = process.env.JWT_SECRET;
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -95,6 +96,25 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.login = login;
 const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// Heuristic: fetch the image and check if it looks like a real photo.
+// Returns true if content-type starts with image/ and size is > 2KB.
+const imageLooksLikePhoto = (url) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!url)
+        return false;
+    try {
+        const resp = yield axios_1.default.get(url, { responseType: "arraybuffer" });
+        const contentType = resp.headers["content-type"] || "";
+        const size = resp.data ? resp.data.byteLength || resp.data.length || 0 : 0;
+        // If it's an image and reasonably sized (>2KB), treat as a photo
+        return contentType.startsWith("image/") && size > 2048;
+    }
+    catch (err) {
+        const m = (err === null || err === void 0 ? void 0 : err.message) || JSON.stringify(err);
+        console.warn("imageLooksLikePhoto fetch failed:", m);
+        // Be conservative: if we can't fetch, don't set the profile pic to avoid placeholders
+        return false;
+    }
+});
 const google_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { tokenId } = req.body;
     try {
@@ -118,10 +138,11 @@ const google_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (!user) {
             isNew = true;
             // create a new user and set profile picture from Google
+            const shouldSetPic = yield imageLooksLikePhoto(picture);
             user = yield user_1.default.create({
                 name,
                 email,
-                profile_pic: picture || null,
+                profile_pic: shouldSetPic ? picture : null,
                 provider: "google",
                 google_id: sub,
             });
@@ -141,7 +162,9 @@ const google_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             // existing user: if profile_pic is null/empty, set it from Google's picture
             // Do not overwrite an existing custom profile picture.
             if ((!user.profile_pic || user.profile_pic === null) && picture) {
-                user.profile_pic = picture;
+                const shouldSetPic = yield imageLooksLikePhoto(picture);
+                if (shouldSetPic)
+                    user.profile_pic = picture;
             }
             user.google_id = sub || user.google_id;
             yield user.save();

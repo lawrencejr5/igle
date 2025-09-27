@@ -12,6 +12,7 @@ import User, { UserType } from "../models/user";
 import Wallet from "../models/wallet";
 
 import { cloudinary } from "../middleware/upload";
+import axios from "axios";
 
 const jwt_secret = process.env.JWT_SECRET;
 
@@ -96,6 +97,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Heuristic: fetch the image and check if it looks like a real photo.
+// Returns true if content-type starts with image/ and size is > 2KB.
+const imageLooksLikePhoto = async (url?: string | undefined) => {
+  if (!url) return false;
+  try {
+    const resp = await axios.get(url, { responseType: "arraybuffer" });
+    const contentType = resp.headers["content-type"] || "";
+    const size = resp.data ? resp.data.byteLength || resp.data.length || 0 : 0;
+    // If it's an image and reasonably sized (>2KB), treat as a photo
+    return contentType.startsWith("image/") && size > 2048;
+  } catch (err) {
+    const m = (err as any)?.message || JSON.stringify(err);
+    console.warn("imageLooksLikePhoto fetch failed:", m);
+    // Be conservative: if we can't fetch, don't set the profile pic to avoid placeholders
+    return false;
+  }
+};
 export const google_auth = async (
   req: Request,
   res: Response
@@ -126,10 +145,11 @@ export const google_auth = async (
     if (!user) {
       isNew = true;
       // create a new user and set profile picture from Google
+      const shouldSetPic = await imageLooksLikePhoto(picture);
       user = await User.create({
         name,
         email,
-        profile_pic: picture || null,
+        profile_pic: shouldSetPic ? picture : null,
         provider: "google",
         google_id: sub,
       });
@@ -147,7 +167,8 @@ export const google_auth = async (
       // existing user: if profile_pic is null/empty, set it from Google's picture
       // Do not overwrite an existing custom profile picture.
       if ((!user.profile_pic || user.profile_pic === null) && picture) {
-        user.profile_pic = picture;
+        const shouldSetPic = await imageLooksLikePhoto(picture);
+        if (shouldSetPic) user.profile_pic = picture;
       }
       user.google_id = sub || user.google_id;
       await user.save();
