@@ -9,10 +9,13 @@ import { router } from "expo-router";
 
 import { useAuthContext } from "../context/AuthContext";
 import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
+
+import { useNotificationContext } from "../context/NotificationContext";
 
 const StartScreen = () => {
   const { isAuthenticated, signedIn, googleLogin } = useAuthContext()!;
-
+  const { showNotification } = useNotificationContext();
   const [loading, setLoading] = useState(true);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -23,17 +26,21 @@ const StartScreen = () => {
     iosClientId:
       "560986315925-l1fa67ik629n47t903oaaiogta3us7nt.apps.googleusercontent.com",
     scopes: ["profile", "email"],
+    redirectUri: makeRedirectUri({ path: "", scheme: "com.lawrencejr.igle" }),
   });
+
+  const [googleAuthLoading, setGoogleAuthLoading] = useState<boolean>(false);
 
   React.useEffect(() => {
     if (response?.type === "success") {
-      const idToken =
-        (response as any)?.params?.id_token ||
-        (response as any)?.authentication?.idToken;
+      setGoogleAuthLoading(true);
+      const idToken = response.params?.id_token;
       if (idToken) {
-        googleLogin(idToken).catch((e: unknown) =>
-          console.log("googleLogin error", e)
-        );
+        googleLogin(idToken)
+          .catch((e: unknown) =>
+            showNotification("Signin failed, try again", "error")
+          )
+          .finally(() => setGoogleAuthLoading(false));
       }
     }
   }, [response]);
@@ -111,21 +118,25 @@ const StartScreen = () => {
         <TouchableOpacity
           activeOpacity={0.7}
           disabled={!request}
+          style={styles.sign_btn}
           onPress={() => {
             try {
+              setGoogleAuthLoading(true);
               promptAsync();
             } catch (err) {
               console.log("promptAsync error", err);
             }
           }}
         >
-          <View style={styles.sign_btn}>
-            <Image
-              source={require("../assets/images/icons/google-logo.png")}
-              style={styles.sign_image}
-            />
-            <Text style={styles.sign_text}>Continue with Google</Text>
-          </View>
+          <Image
+            source={require("../assets/images/icons/google-logo.png")}
+            style={styles.sign_image}
+          />
+          <Text style={styles.sign_text}>
+            {googleAuthLoading
+              ? "Signing with google..."
+              : "Continue with Google"}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={0.7}

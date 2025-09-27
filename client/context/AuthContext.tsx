@@ -308,7 +308,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       if (data?.token && data?.user) {
         await AsyncStorage.setItem("token", data.token);
-        const userId = data.user._id || data.user.id || data.user.user_id;
+
+        const userId = data.user._id;
+        const is_driver = data.user.is_driver;
+
         if (userId) await AsyncStorage.setItem("user_id", String(userId));
         await AsyncStorage.setItem(
           "is_driver",
@@ -317,7 +320,12 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
         await getUserData();
         await getWalletBalance("User");
-        router.push("../home");
+
+        if (is_driver) {
+          router.push("/(driver)/home");
+        } else {
+          router.push("/(tabs)/home");
+        }
         showNotification("Login successful.", "success");
       } else {
         showNotification("Google login failed.", "error");
