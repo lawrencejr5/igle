@@ -317,6 +317,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
         await getUserData();
         await getWalletBalance("User");
+        router.push("../home");
         showNotification("Login successful.", "success");
       } else {
         showNotification("Google login failed.", "error");

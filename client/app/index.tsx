@@ -1,3 +1,6 @@
+import * as WebBrowser from "expo-web-browser";
+WebBrowser.maybeCompleteAuthSession();
+
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
 
@@ -6,13 +9,34 @@ import { router } from "expo-router";
 
 import { useAuthContext } from "../context/AuthContext";
 import * as Google from "expo-auth-session/providers/google";
-import Constants from "expo-constants";
 
 const StartScreen = () => {
-  const { isAuthenticated, signedIn } = useAuthContext()!;
-  const { googleLogin } = useAuthContext()!;
+  const { isAuthenticated, signedIn, googleLogin } = useAuthContext()!;
 
   const [loading, setLoading] = useState(true);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId:
+      "560986315925-9qjotrnukbgrjgr38tov6qlnnnb22e9l.apps.googleusercontent.com",
+    androidClientId:
+      "560986315925-jp1mifmadqaali679m5kjvca78i4k4im.apps.googleusercontent.com",
+    iosClientId:
+      "560986315925-l1fa67ik629n47t903oaaiogta3us7nt.apps.googleusercontent.com",
+    scopes: ["profile", "email"],
+  });
+
+  React.useEffect(() => {
+    if (response?.type === "success") {
+      const idToken =
+        (response as any)?.params?.id_token ||
+        (response as any)?.authentication?.idToken;
+      if (idToken) {
+        googleLogin(idToken).catch((e: unknown) =>
+          console.log("googleLogin error", e)
+        );
+      }
+    }
+  }, [response]);
 
   useEffect(() => {
     const loadTimeout = setTimeout(() => {
@@ -32,33 +56,6 @@ const StartScreen = () => {
   if (loading) {
     return <SplashScreen />;
   }
-
-  // Configure Google auth request - expects client IDs in app config extras
-  let expoClientId: string | undefined;
-  let webClientId: string | undefined;
-
-  expoClientId = process.env.GOOGLE_EXPO_CLIENT_ID;
-  webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: webClientId || expoClientId || undefined,
-    responseType: "id_token",
-    scopes: ["profile", "email"],
-  });
-
-  React.useEffect(() => {
-    if (response?.type === "success") {
-      // id token might be in response.params.id_token or response.authentication.idToken
-      const idToken =
-        (response as any)?.params?.id_token ||
-        (response as any)?.authentication?.idToken;
-      if (idToken) {
-        googleLogin(idToken).catch((e: unknown) =>
-          console.log("googleLogin error", e)
-        );
-      }
-    }
-  }, [response]);
 
   return (
     <View
