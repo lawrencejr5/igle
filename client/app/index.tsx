@@ -33,7 +33,6 @@ const StartScreen = () => {
 
   React.useEffect(() => {
     if (response?.type === "success") {
-      setGoogleAuthLoading(true);
       const idToken = response.params?.id_token;
       if (idToken) {
         googleLogin(idToken)
@@ -118,7 +117,7 @@ const StartScreen = () => {
         <TouchableOpacity
           activeOpacity={0.7}
           disabled={!request}
-          style={styles.sign_btn}
+          style={[styles.sign_btn, { opacity: googleAuthLoading ? 0.8 : 1 }]}
           onPress={() => {
             try {
               setGoogleAuthLoading(true);

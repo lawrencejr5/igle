@@ -121,21 +121,42 @@ export const google_auth = async (
 
     const { email, name, picture, sub } = payload;
 
-    let user = await User.findOne({ email });
+    let user: any = await User.findOne({ email });
+    let isNew = false;
     if (!user) {
+      isNew = true;
+      // create a new user and set profile picture from Google
       user = await User.create({
         name,
         email,
-        avatar: picture,
+        profile_pic: picture || null,
         provider: "google",
         google_id: sub,
       });
+      // create a wallet for the new user (register flow creates a wallet)
+      try {
+        await Wallet.create({
+          owner_id: user._id,
+          owner_type: "User",
+          balance: 0,
+        });
+      } catch (walletErr) {
+        console.error("Failed to create wallet for google user:", walletErr);
+      }
+    } else {
+      // existing user: if profile_pic is null/empty, set it from Google's picture
+      // Do not overwrite an existing custom profile picture.
+      if ((!user.profile_pic || user.profile_pic === null) && picture) {
+        user.profile_pic = picture;
+      }
+      user.google_id = sub || user.google_id;
+      await user.save();
     }
 
     const token = jwt.sign({ id: user._id }, jwt_secret as string, {
       expiresIn: "7d",
     });
-    res.status(200).json({ user, token });
+    res.status(200).json({ user, token, isNew });
   } catch (error: any) {
     console.error("Google Auth Error:", error);
     res.status(500).json({

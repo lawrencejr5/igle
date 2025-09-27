@@ -320,25 +320,32 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
         await getUserData();
         await getWalletBalance("User");
-
-        if (is_driver) {
-          router.push("/(driver)/home");
+        // If this is a newly created user via Google, navigate to phone update flow
+        if (data.isNew) {
+          router.push("/(auth)/phone");
         } else {
-          router.push("/(tabs)/home");
+          if (is_driver) {
+            router.push("/(driver)/home");
+          } else {
+            router.push("/(tabs)/home");
+          }
         }
-        showNotification("Login successful.", "success");
+        showNotification(
+          data.isNew ? "Account created" : "Login successful.",
+          "success"
+        );
       } else {
         showNotification("Google login failed.", "error");
         throw new Error("Invalid google auth response");
       }
     } catch (err: any) {
-      console.log(
-        "Google login error:",
-        err?.response?.data || err?.message || err
-      );
       showNotification(
         err?.response?.data?.msg || "Google login failed.",
         "error"
+      );
+      console.log(
+        "Google login error:",
+        err?.response?.data || err?.message || err
       );
       throw err;
     }
