@@ -1,5 +1,4 @@
-import * as WebBrowser from "expo-web-browser";
-WebBrowser.maybeCompleteAuthSession();
+// moved global auth session completion to root layout
 
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";

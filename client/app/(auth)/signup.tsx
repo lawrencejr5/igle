@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
+import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
 
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -23,6 +25,7 @@ const Signup = () => {
   const styles = auth_styles();
 
   const { register } = useAuthContext()!;
+  const { googleLogin } = useAuthContext()!;
   const { showNotification, notification } = useNotificationContext();
 
   const [checked, setChecked] = useState(false);
@@ -34,6 +37,30 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId:
+      "560986315925-9qjotrnukbgrjgr38tov6qlnnnb22e9l.apps.googleusercontent.com",
+    androidClientId:
+      "560986315925-jp1mifmadqaali679m5kjvca78i4k4im.apps.googleusercontent.com",
+    iosClientId:
+      "560986315925-l1fa67ik629n47t903oaaiogta3us7nt.apps.googleusercontent.com",
+    scopes: ["profile", "email"],
+    redirectUri: makeRedirectUri({ path: "", scheme: "com.lawrencejr.igle" }),
+  });
+
+  React.useEffect(() => {
+    if (response?.type === "success") {
+      const idToken = response.params?.id_token;
+      if (idToken) {
+        setGoogleLoading(false);
+        googleLogin(idToken).catch((e: unknown) =>
+          showNotification("Signin failed, try again", "error")
+        );
+      }
+    }
+  }, [response]);
 
   // Handle registration
   const handleRegister = async () => {
@@ -206,12 +233,27 @@ const Signup = () => {
             }}
           >
             {/* Sign with google */}
-            <TouchableOpacity activeOpacity={0.7} style={styles.oauth_btn}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[styles.oauth_btn, { opacity: googleLoading ? 0.7 : 1 }]}
+              disabled={!request}
+              onPress={() => {
+                try {
+                  setGoogleLoading(true);
+                  promptAsync();
+                } catch (err) {
+                  console.log("promptAsync error", err);
+                  setGoogleLoading(false);
+                }
+              }}
+            >
               <Image
                 source={require("../../assets/images/icons/google-logo.png")}
                 style={styles.oauth_img}
               />
-              <Text style={styles.oauth_text}>Google</Text>
+              <Text style={styles.oauth_text}>
+                {googleLoading ? "Signing in..." : "Google"}
+              </Text>
             </TouchableOpacity>
 
             {/* Sign with apple */}
