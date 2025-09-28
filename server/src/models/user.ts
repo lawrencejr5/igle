@@ -20,6 +20,7 @@ export interface UserType extends Document {
   driver_application: "none" | "rejected" | "submitted" | "approved";
   is_driver: boolean;
   is_verified: boolean;
+  expo_push_tokens?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,6 +60,8 @@ const UserSchema = new Schema<UserType>(
     },
     is_driver: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },
+    // Expo push tokens (multiple devices per user)
+    expo_push_tokens: { type: [String], default: [] },
   },
   { timestamps: true }
 );

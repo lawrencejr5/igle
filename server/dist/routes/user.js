@@ -15,6 +15,7 @@ UserRouter.patch("/location", auth_1.auth, user_1.update_location);
 UserRouter.patch("/profile_pic", [auth_1.auth, upload_1.upload.single("profile_pic")], user_1.upload_profile_pic);
 UserRouter.patch("/remove_pic", auth_1.auth, user_1.remove_profile_pic);
 UserRouter.patch("/phone", auth_1.auth, user_1.update_phone);
+UserRouter.patch("/push_token", auth_1.auth, user_1.set_push_token);
 UserRouter.patch("/name", auth_1.auth, user_1.update_name);
 UserRouter.patch("/email", auth_1.auth, user_1.update_email);
 UserRouter.patch("/password", auth_1.auth, user_1.update_password);

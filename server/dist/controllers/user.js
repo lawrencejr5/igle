@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.remove_profile_pic = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
+exports.set_push_token = exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.remove_profile_pic = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -386,3 +386,35 @@ const update_driver_application = (req, res) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.update_driver_application = update_driver_application;
+// Register or remove an Expo push token for the authenticated user
+const set_push_token = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const { token, action } = req.body; // action: 'add' | 'remove' (default: add)
+        if (!token)
+            return res.status(400).json({ msg: "No token provided." });
+        const user = yield user_1.default.findById(user_id);
+        if (!user)
+            return res.status(404).json({ msg: "User not found." });
+        // ensure array exists
+        if (!Array.isArray(user.expo_push_tokens))
+            user.expo_push_tokens = [];
+        if (action === "remove") {
+            user.expo_push_tokens = user.expo_push_tokens.filter((t) => t !== token);
+            yield user.save();
+            return res.json({ msg: "Push token removed." });
+        }
+        // default: add
+        if (!user.expo_push_tokens.includes(token)) {
+            user.expo_push_tokens.push(token);
+            yield user.save();
+        }
+        return res.json({ msg: "Push token saved." });
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.set_push_token = set_push_token;

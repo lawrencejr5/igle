@@ -443,3 +443,36 @@ export const update_driver_application = async (
     res.status(500).json({ msg: "Server error." });
   }
 };
+
+// Register or remove an Expo push token for the authenticated user
+export const set_push_token = async (req: Request, res: Response) => {
+  try {
+    const user_id = req.user?.id;
+    const { token, action } = req.body; // action: 'add' | 'remove' (default: add)
+
+    if (!token) return res.status(400).json({ msg: "No token provided." });
+
+    const user = await User.findById(user_id);
+    if (!user) return res.status(404).json({ msg: "User not found." });
+
+    // ensure array exists
+    if (!Array.isArray(user.expo_push_tokens)) user.expo_push_tokens = [];
+
+    if (action === "remove") {
+      user.expo_push_tokens = user.expo_push_tokens.filter((t) => t !== token);
+      await user.save();
+      return res.json({ msg: "Push token removed." });
+    }
+
+    // default: add
+    if (!user.expo_push_tokens.includes(token)) {
+      user.expo_push_tokens.push(token);
+      await user.save();
+    }
+
+    return res.json({ msg: "Push token saved." });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};

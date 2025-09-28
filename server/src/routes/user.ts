@@ -14,6 +14,7 @@ import {
   update_driver_application,
   upload_profile_pic,
   remove_profile_pic,
+  set_push_token,
 } from "../controllers/user";
 
 import { auth } from "../middleware/auth";
@@ -31,6 +32,7 @@ UserRouter.patch(
 );
 UserRouter.patch("/remove_pic", auth, remove_profile_pic);
 UserRouter.patch("/phone", auth, update_phone);
+UserRouter.patch("/push_token", auth, set_push_token);
 UserRouter.patch("/name", auth, update_name);
 UserRouter.patch("/email", auth, update_email);
 UserRouter.patch("/password", auth, update_password);

@@ -69,6 +69,8 @@ const UserSchema = new mongoose_1.Schema({
     },
     is_driver: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },
+    // Expo push tokens (multiple devices per user)
+    expo_push_tokens: { type: [String], default: [] },
 }, { timestamps: true });
 UserSchema.index({ location: "2dsphere" });
 exports.default = mongoose_1.default.model("User", UserSchema);
