@@ -8,7 +8,11 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "plugins": ["expo-dev-client", "expo-web-browser"],
+    "plugins": [
+      "expo-dev-client",
+      "expo-web-browser",
+      "expo-router"
+    ],
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -40,11 +44,6 @@
     "extra": {
       "eas": {
         "projectId": "19685ce9-a6ad-485b-bc81-e4654431869e"
-      }
-    },
-    "experiments": {
-      "router": {
-        "ignorePaths": ["oauthredirect"]
       }
     }
   }
