@@ -21,6 +21,7 @@ const get_id_1 = require("../utils/get_id");
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+const upload_file_1 = require("../utils/upload_file");
 // Create a new driver
 const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -32,15 +33,23 @@ const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             res.status(409).json({ msg: "Driver already exists for this user." });
             return;
         }
-        const driver = yield driver_1.default.create({
+        let profileImgUrl = profile_img || null;
+        const uploadedFile = req.file;
+        if (uploadedFile && uploadedFile.path) {
+            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(uploadedFile.path, "igle_images/driver_profile");
+            if (uploaded && uploaded.url)
+                profileImgUrl = uploaded.url;
+        }
+        const driverData = {
             user,
             vehicle_type,
-            profile_img,
+            profile_img: profileImgUrl,
             current_location: {
                 type: "Point",
                 coordinates: [0, 0],
             },
-        });
+        };
+        const driver = yield driver_1.default.create(driverData);
         yield wallet_1.default.create({
             owner_id: driver === null || driver === void 0 ? void 0 : driver._id,
             owner_type: "Driver",
@@ -191,9 +200,39 @@ exports.set_driver_availability = set_driver_availability;
 const update_vehicle_info = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const { vehicle } = req.body;
+        const { exterior_image, interior_image, brand, model, color, year, plate_number, } = req.body;
+        if (!brand || !model || !color || !year || !plate_number) {
+            res.status(400).json({ msg: "All vehicle fields are required." });
+            return;
+        }
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        const driver = yield driver_1.default.findByIdAndUpdate(driver_id, { vehicle }, { new: true });
+        const files = req.files || {};
+        // Start with values from body (may be null/undefined)
+        let exterior_image_url = exterior_image || null;
+        let interior_image_url = interior_image || null;
+        // Upload exterior if file provided
+        if (files.vehicle_exterior[0].path) {
+            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.vehicle_exterior[0].path, "igle_images/vehicle");
+            if (uploaded && uploaded.url)
+                exterior_image_url = uploaded.url;
+        }
+        // Upload interior if file provided
+        if (files.vehicle_interior[0].path) {
+            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.vehicle_interior[0].path, "igle_images/vehicle");
+            if (uploaded && uploaded.url)
+                interior_image_url = uploaded.url;
+        }
+        const driver = yield driver_1.default.findByIdAndUpdate(driver_id, {
+            vehicle: {
+                exterior_image: exterior_image_url,
+                interior_image: interior_image_url,
+                brand,
+                model,
+                color,
+                year,
+                plate_number,
+            },
+        }, { new: true });
         if (!driver) {
             res.status(404).json({ msg: "Driver not found." });
             return;
@@ -212,9 +251,52 @@ exports.update_vehicle_info = update_vehicle_info;
 const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const { driver_licence } = req.body;
+        // extract individual driver licence fields from body
+        const { number, expiry_date, front_image, back_image, selfie_with_licence, } = req.body;
+        if (!number || !expiry_date) {
+            res
+                .status(400)
+                .json({ msg: "Driver licence number and expiry date are required." });
+            return;
+        }
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        const driver = yield driver_1.default.findByIdAndUpdate(driver_id, { driver_licence }, { new: true });
+        const files = req.files || {};
+        // start with provided values (may be null)
+        let front_image_url = front_image || null;
+        let back_image_url = back_image || null;
+        let selfie_image_url = selfie_with_licence || null;
+        // upload front image if provided
+        if (files.license_front &&
+            files.license_front[0] &&
+            files.license_front[0].path) {
+            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.license_front[0].path, "igle_images/driver_license");
+            if (uploaded && uploaded.url)
+                front_image_url = uploaded.url;
+        }
+        // upload back image if provided
+        if (files.license_back &&
+            files.license_back[0] &&
+            files.license_back[0].path) {
+            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.license_back[0].path, "igle_images/driver_license");
+            if (uploaded && uploaded.url)
+                back_image_url = uploaded.url;
+        }
+        // upload selfie with licence if provided (accept either field name variant)
+        const selfieFile = files.selfie_with_license && files.selfie_with_license[0];
+        if (selfieFile && selfieFile.path) {
+            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(selfieFile.path, "igle_images/driver_license");
+            if (uploaded && uploaded.url)
+                selfie_image_url = uploaded.url;
+        }
+        const driver = yield driver_1.default.findByIdAndUpdate(driver_id, {
+            driver_licence: {
+                number,
+                expiry_date,
+                front_image: front_image_url,
+                back_image: back_image_url,
+                selfie_with_licence: selfie_image_url,
+            },
+        }, { new: true });
         if (!driver) {
             res.status(404).json({ msg: "Driver not found." });
             return;
@@ -225,7 +307,8 @@ const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, fu
         });
     }
     catch (err) {
-        res.status(500).json({ msg: "Server error." });
+        res.status(500).json({ msg: "Server error.", err });
+        console.log(err);
     }
 });
 exports.update_driver_license = update_driver_license;

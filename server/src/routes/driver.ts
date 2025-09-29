@@ -20,6 +20,7 @@ import {
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
+import { upload } from "../middleware/upload";
 
 const DriverRouter = Router();
 
@@ -27,12 +28,27 @@ DriverRouter.use(auth);
 
 DriverRouter.get("/data", get_driver);
 DriverRouter.get("/profile/me", get_driver_by_user);
-DriverRouter.post("/create", create_driver);
+DriverRouter.post("/create", upload.single("profile_img"), create_driver);
 DriverRouter.patch("/location", update_location);
 DriverRouter.patch("/bank", save_bank_info);
 DriverRouter.patch("/available", set_driver_availability);
-DriverRouter.patch("/vehicle", update_vehicle_info);
-DriverRouter.patch("/license", update_driver_license);
+DriverRouter.patch(
+  "/vehicle",
+  upload.fields([
+    { name: "vehicle_exterior", maxCount: 1 },
+    { name: "vehicle_interior", maxCount: 1 },
+  ]),
+  update_vehicle_info
+);
+DriverRouter.patch(
+  "/license",
+  upload.fields([
+    { name: "license_front", maxCount: 1 },
+    { name: "license_back", maxCount: 1 },
+    { name: "selfie_with_license", maxCount: 1 },
+  ]),
+  update_driver_license
+);
 DriverRouter.patch("/online", set_driver_online_status);
 DriverRouter.patch("/rating", update_driver_rating);
 DriverRouter.patch("/info", update_driver_info);

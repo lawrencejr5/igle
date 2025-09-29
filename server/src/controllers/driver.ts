@@ -11,6 +11,7 @@ import axios from "axios";
 
 import dotenv from "dotenv";
 dotenv.config();
+import { uploadToCloudinary } from "../utils/upload_file";
 
 // Create a new driver
 export const create_driver = async (
@@ -27,15 +28,27 @@ export const create_driver = async (
       return;
     }
 
-    const driver = await Driver.create({
+    let profileImgUrl: string | null = profile_img || null;
+    const uploadedFile = req.file;
+    if (uploadedFile && uploadedFile.path) {
+      const uploaded = await uploadToCloudinary(
+        uploadedFile.path,
+        "igle_images/driver_profile"
+      );
+      if (uploaded && uploaded.url) profileImgUrl = uploaded.url;
+    }
+
+    const driverData: any = {
       user,
       vehicle_type,
-      profile_img,
+      profile_img: profileImgUrl,
       current_location: {
         type: "Point",
         coordinates: [0, 0],
       },
-    });
+    };
+
+    const driver = await Driver.create(driverData);
 
     await Wallet.create({
       owner_id: driver?._id,
@@ -214,12 +227,60 @@ export const update_vehicle_info = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { vehicle } = req.body;
+    const {
+      exterior_image,
+      interior_image,
+      brand,
+      model,
+      color,
+      year,
+      plate_number,
+    } = req.body as any;
+
+    if (!brand || !model || !color || !year || !plate_number) {
+      res.status(400).json({ msg: "All vehicle fields are required." });
+      return;
+    }
+
     const driver_id = await get_driver_id(req.user?.id!);
+
+    const files: any = (req as any).files || {};
+
+    // Start with values from body (may be null/undefined)
+    let exterior_image_url: string | null = exterior_image || null;
+    let interior_image_url: string | null = interior_image || null;
+
+    // Upload exterior if file provided
+    if (files.vehicle_exterior[0].path) {
+      const uploaded = await uploadToCloudinary(
+        files.vehicle_exterior[0].path,
+        "igle_images/vehicle"
+      );
+      if (uploaded && uploaded.url) exterior_image_url = uploaded.url;
+    }
+
+    // Upload interior if file provided
+    if (files.vehicle_interior[0].path) {
+      const uploaded = await uploadToCloudinary(
+        files.vehicle_interior[0].path,
+        "igle_images/vehicle"
+      );
+      if (uploaded && uploaded.url) interior_image_url = uploaded.url;
+    }
 
     const driver = await Driver.findByIdAndUpdate(
       driver_id,
-      { vehicle },
+      {
+        vehicle: {
+          exterior_image: exterior_image_url,
+          interior_image: interior_image_url,
+          brand,
+          model,
+          color,
+          year,
+          plate_number,
+        },
+      },
       { new: true }
     );
 
@@ -243,12 +304,79 @@ export const update_driver_license = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { driver_licence } = req.body;
+    // extract individual driver licence fields from body
+    const {
+      number,
+      expiry_date,
+      front_image,
+      back_image,
+      selfie_with_licence,
+    } = req.body as any;
+
+    if (!number || !expiry_date) {
+      res
+        .status(400)
+        .json({ msg: "Driver licence number and expiry date are required." });
+      return;
+    }
+
     const driver_id = await get_driver_id(req.user?.id!);
+
+    const files: any = (req as any).files || {};
+
+    // start with provided values (may be null)
+    let front_image_url: string | null = front_image || null;
+    let back_image_url: string | null = back_image || null;
+    let selfie_image_url: string | null = selfie_with_licence || null;
+
+    // upload front image if provided
+    if (
+      files.license_front &&
+      files.license_front[0] &&
+      files.license_front[0].path
+    ) {
+      const uploaded = await uploadToCloudinary(
+        files.license_front[0].path,
+        "igle_images/driver_license"
+      );
+      if (uploaded && uploaded.url) front_image_url = uploaded.url;
+    }
+
+    // upload back image if provided
+    if (
+      files.license_back &&
+      files.license_back[0] &&
+      files.license_back[0].path
+    ) {
+      const uploaded = await uploadToCloudinary(
+        files.license_back[0].path,
+        "igle_images/driver_license"
+      );
+      if (uploaded && uploaded.url) back_image_url = uploaded.url;
+    }
+
+    // upload selfie with licence if provided (accept either field name variant)
+    const selfieFile =
+      files.selfie_with_license && files.selfie_with_license[0];
+    if (selfieFile && selfieFile.path) {
+      const uploaded = await uploadToCloudinary(
+        selfieFile.path,
+        "igle_images/driver_license"
+      );
+      if (uploaded && uploaded.url) selfie_image_url = uploaded.url;
+    }
 
     const driver = await Driver.findByIdAndUpdate(
       driver_id,
-      { driver_licence },
+      {
+        driver_licence: {
+          number,
+          expiry_date,
+          front_image: front_image_url,
+          back_image: back_image_url,
+          selfie_with_licence: selfie_image_url,
+        },
+      },
       { new: true }
     );
 
@@ -262,7 +390,8 @@ export const update_driver_license = async (
       driver_licence: driver.driver_licence,
     });
   } catch (err) {
-    res.status(500).json({ msg: "Server error." });
+    res.status(500).json({ msg: "Server error.", err });
+    console.log(err);
   }
 };
 

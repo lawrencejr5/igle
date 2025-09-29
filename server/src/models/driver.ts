@@ -22,7 +22,6 @@ export interface DriverType extends Document {
     selfie_with_licence: string;
   };
   date_of_birth: string;
-  driver_license_image?: string;
   is_online: boolean;
   is_available: boolean;
   current_location: {
@@ -38,7 +37,7 @@ export interface DriverType extends Document {
   };
   rating?: number;
   total_trips: number;
-  num_of_reviews: number
+  num_of_reviews: number;
 }
 
 const DriverSchema = new Schema<DriverType>({
