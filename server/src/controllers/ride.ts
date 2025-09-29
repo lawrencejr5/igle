@@ -5,12 +5,14 @@ import Ride from "../models/ride";
 import Wallet from "../models/wallet";
 import Activity from "../models/activity";
 import Driver from "../models/driver";
+import User from "../models/user";
 
 import {
   get_driver_id,
   get_user_socket_id,
   get_driver_socket_id,
 } from "../utils/get_id";
+import { get_user_push_tokens, get_driver_push_tokens } from "../utils/get_id";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 import { debit_wallet } from "../utils/wallet";
 import { calculate_fare } from "../utils/calc_fare";
@@ -18,6 +20,7 @@ import { calculate_commission } from "../utils/calc_commision";
 import { complete_ride } from "../utils/complete_ride";
 
 import { io } from "../server";
+import { sendExpoPush } from "../utils/expo_push";
 
 // 🔄 Helper: Expire a ride
 const expire_ride = async (ride_id: string, user_id?: string) => {
@@ -340,6 +343,25 @@ export const accept_ride = async (
         rider_socket_id,
       });
     } else {
+      // Rider is not connected via socket — send push notification
+      try {
+        if (ride && ride.rider) {
+          const tokens = await get_user_push_tokens(ride.rider);
+          if (tokens.length) {
+            await sendExpoPush(
+              tokens,
+              "Driver on the way",
+              "A driver has accepted your ride",
+              {
+                type: "ride_accepted",
+                rideId: ride._id,
+              }
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Failed to get/send rider push tokens on accept:", e);
+      }
       console.log("socket not found");
     }
 
@@ -409,6 +431,43 @@ export const cancel_ride = async (
     if (reason) ride.cancelled.reason = reason;
 
     await ride.save();
+    // Send push notifications to rider and driver if not connected via socket
+    try {
+      const riderTokens = ride?.rider
+        ? await get_user_push_tokens(ride.rider)
+        : [];
+      const driverTokens = ride?.driver
+        ? await get_driver_push_tokens(ride.driver)
+        : [];
+
+      if (riderTokens.length) {
+        await sendExpoPush(
+          riderTokens,
+          "Ride cancelled",
+          reason || "Ride was cancelled",
+          {
+            type: "ride_cancelled",
+            rideId: ride._id,
+            by,
+          }
+        );
+      }
+
+      if (driverTokens.length) {
+        await sendExpoPush(
+          driverTokens,
+          "Ride cancelled",
+          reason || "Ride was cancelled",
+          {
+            type: "ride_cancelled",
+            rideId: ride._id,
+            by,
+          }
+        );
+      }
+    } catch (e) {
+      console.error("Failed to send cancel push notifications:", e);
+    }
 
     res.status(200).json({ msg: "Ride cancelled successfully.", ride });
   } catch (err) {
@@ -464,6 +523,26 @@ export const update_ride_status = async (
           io.to(user_socket).emit("ride_arrival", {
             msg: "Your ride has arrived",
           });
+        else {
+          try {
+            const tokens = ride?.rider
+              ? await get_user_push_tokens(ride.rider)
+              : [];
+            if (tokens.length) {
+              await sendExpoPush(
+                tokens,
+                "Your ride has arrived",
+                "Your driver has arrived at pickup.",
+                {
+                  type: "ride_arrived",
+                  rideId: ride._id,
+                }
+              );
+            }
+          } catch (e) {
+            console.error("Failed to send arrived push to rider:", e);
+          }
+        }
         if (driver_socket)
           io.to(driver_socket).emit("ride_arrival", {
             msg: "You have arrived",
@@ -521,6 +600,26 @@ export const update_ride_status = async (
           io.to(user_socket).emit("ride_completed", {
             msg: "Your ride has been completed",
           });
+        else {
+          try {
+            const tokens = ride?.rider
+              ? await get_user_push_tokens(ride.rider)
+              : [];
+            if (tokens.length) {
+              await sendExpoPush(
+                tokens,
+                "Ride completed",
+                `Your ride to ${ride.destination.address} has been completed`,
+                {
+                  type: "ride_completed",
+                  rideId: ride._id,
+                }
+              );
+            }
+          } catch (e) {
+            console.error("Failed to send completed push to rider:", e);
+          }
+        }
         if (driver_socket)
           io.to(driver_socket).emit("ride_completed", {
             msg: "You have finished the ride",
@@ -580,6 +679,26 @@ export const pay_for_ride = async (req: Request, res: Response) => {
     ride.payment_status = "paid";
     ride.payment_method = "wallet";
     await ride.save();
+
+    // Notify driver about payment
+    try {
+      const driverTokens = ride?.driver
+        ? await get_driver_push_tokens(ride.driver)
+        : [];
+      if (driverTokens.length) {
+        await sendExpoPush(
+          driverTokens,
+          "Ride paid",
+          `Rider has paid for ride ${ride._id}`,
+          {
+            type: "ride_paid",
+            rideId: ride._id,
+          }
+        );
+      }
+    } catch (e) {
+      console.error("Failed to send payment push to driver:", e);
+    }
 
     res.status(200).json({ msg: "Payment successful", transaction });
   } catch (err: any) {

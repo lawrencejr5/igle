@@ -15,6 +15,8 @@ import {
   initialize_paystack_transaction,
   verify_paystack_transaction,
 } from "../utils/paystack";
+import { sendExpoPush } from "../utils/expo_push";
+import { get_user_push_tokens, get_driver_push_tokens } from "../utils/get_id";
 
 export const fund_wallet = async (req: Request, res: Response) => {
   try {
@@ -92,10 +94,45 @@ export const verify_payment = async (req: any, res: any) => {
       return res.status(400).json({ msg: "Payment not successful" });
     }
 
-    // Credit the user’s wallet
-    const tx = await credit_wallet(reference);
+    // Credit the wallet (returns { balance, transaction })
+    const txResult = await credit_wallet(reference);
 
-    res.status(200).json({ msg: "Wallet funded", transaction: tx });
+    // Determine wallet owner from the credited transaction
+    try {
+      const transaction = txResult.transaction as any;
+      const walletId = transaction?.wallet_id;
+      if (walletId) {
+        const wallet = await Wallet.findById(walletId).select(
+          "owner_id owner_type"
+        );
+        if (wallet) {
+          const ownerId = wallet.owner_id;
+          const ownerType = wallet.owner_type;
+          let tokens: string[] = [];
+          if (ownerType === "User") {
+            tokens = await get_user_push_tokens(ownerId as any);
+          } else if (ownerType === "Driver") {
+            tokens = await get_driver_push_tokens(ownerId as any);
+          }
+
+          if (tokens.length) {
+            await sendExpoPush(
+              tokens,
+              "Wallet funded",
+              `Your wallet was credited with ${transaction.amount}`,
+              {
+                type: "wallet_funded",
+                reference: transaction.reference,
+              }
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to send wallet funded push:", e);
+    }
+
+    res.status(200).json({ msg: "Wallet funded", transaction: txResult });
   } catch (err: any) {
     console.error(err);
     const msg = err.message || "Verification failed";
@@ -149,7 +186,7 @@ export const request_withdrawal = async (req: any, res: any) => {
       wallet_id: wallet._id,
       reference: transfer.data.data.reference,
       type: "payout",
-      status: "success", // or "pending" if you want to verify later
+      status: "success",
       amount,
       channel: "bank",
       metadata: {
@@ -157,6 +194,23 @@ export const request_withdrawal = async (req: any, res: any) => {
         driver_id: req.user.id,
       },
     });
+
+    // Notify driver about successful withdrawal
+    try {
+      const tokens = await get_user_push_tokens(req.user?.id);
+      if (tokens.length) {
+        await sendExpoPush(
+          tokens,
+          "Withdrawal successful",
+          `You have withdrawn ${amount} from your wallet`,
+          {
+            type: "withdrawal_success",
+          }
+        );
+      }
+    } catch (e) {
+      console.error("Failed to send withdrawal push:", e);
+    }
 
     res.json({ msg: "Withdrawal successful", transfer: transfer.data.data });
   } catch (err: any) {

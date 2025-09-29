@@ -22,6 +22,8 @@ const get_id_1 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const axios_1 = __importDefault(require("axios"));
 const paystack_1 = require("../utils/paystack");
+const expo_push_1 = require("../utils/expo_push");
+const get_id_2 = require("../utils/get_id");
 const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -92,9 +94,37 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (result.status !== "success") {
             return res.status(400).json({ msg: "Payment not successful" });
         }
-        // Credit the user’s wallet
-        const tx = yield (0, wallet_2.credit_wallet)(reference);
-        res.status(200).json({ msg: "Wallet funded", transaction: tx });
+        // Credit the wallet (returns { balance, transaction })
+        const txResult = yield (0, wallet_2.credit_wallet)(reference);
+        // Determine wallet owner from the credited transaction
+        try {
+            const transaction = txResult.transaction;
+            const walletId = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
+            if (walletId) {
+                const wallet = yield wallet_1.default.findById(walletId).select("owner_id owner_type");
+                if (wallet) {
+                    const ownerId = wallet.owner_id;
+                    const ownerType = wallet.owner_type;
+                    let tokens = [];
+                    if (ownerType === "User") {
+                        tokens = yield (0, get_id_2.get_user_push_tokens)(ownerId);
+                    }
+                    else if (ownerType === "Driver") {
+                        tokens = yield (0, get_id_2.get_driver_push_tokens)(ownerId);
+                    }
+                    if (tokens.length) {
+                        yield (0, expo_push_1.sendExpoPush)(tokens, "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
+                            type: "wallet_funded",
+                            reference: transaction.reference,
+                        });
+                    }
+                }
+            }
+        }
+        catch (e) {
+            console.error("Failed to send wallet funded push:", e);
+        }
+        res.status(200).json({ msg: "Wallet funded", transaction: txResult });
     }
     catch (err) {
         console.error(err);
@@ -104,7 +134,7 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.verify_payment = verify_payment;
 const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     try {
         const amount = Number(req.body.amount);
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
@@ -140,7 +170,7 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
             wallet_id: wallet._id,
             reference: transfer.data.data.reference,
             type: "payout",
-            status: "success", // or "pending" if you want to verify later
+            status: "success",
             amount,
             channel: "bank",
             metadata: {
@@ -148,10 +178,22 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 driver_id: req.user.id,
             },
         });
+        // Notify driver about successful withdrawal
+        try {
+            const tokens = yield (0, get_id_2.get_user_push_tokens)((_c = req.user) === null || _c === void 0 ? void 0 : _c.id);
+            if (tokens.length) {
+                yield (0, expo_push_1.sendExpoPush)(tokens, "Withdrawal successful", `You have withdrawn ${amount} from your wallet`, {
+                    type: "withdrawal_success",
+                });
+            }
+        }
+        catch (e) {
+            console.error("Failed to send withdrawal push:", e);
+        }
         res.json({ msg: "Withdrawal successful", transfer: transfer.data.data });
     }
     catch (err) {
-        console.error(((_c = err.response) === null || _c === void 0 ? void 0 : _c.data) || err.message);
+        console.error(((_d = err.response) === null || _d === void 0 ? void 0 : _d.data) || err.message);
         res.status(500).json({ msg: "Withdrawal failed", error: err.message });
     }
 });

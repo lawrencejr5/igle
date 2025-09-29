@@ -12,6 +12,8 @@ import React, {
 import axios from "axios";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
 
 import { jwtDecode } from "jwt-decode";
 
@@ -289,6 +291,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         JSON.stringify(data.user.is_driver)
       );
       await getUserData();
+      // Register this device's push token with the server
+      await registerPushToken();
       await getWalletBalance("User");
       await getRideHistory();
       await fetchActivities();
@@ -319,6 +323,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         );
 
         await getUserData();
+        // Register push token for this device
+        await registerPushToken();
         await getWalletBalance("User");
         // If this is a newly created user via Google, navigate to phone update flow
         if (data.isNew) {
@@ -390,6 +396,77 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Push notification helpers -------------------------------------------------
+  const registerForPushNotificationsAsync = async (): Promise<
+    string | null
+  > => {
+    try {
+      if (!Device.isDevice) {
+        console.log("Must use physical device for Push Notifications");
+        return null;
+      }
+
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") {
+        console.log("Failed to get push token permission");
+        return null;
+      }
+
+      const tokenData = await Notifications.getExpoPushTokenAsync();
+      const token = tokenData.data;
+      return token;
+    } catch (err) {
+      console.log("Error getting push token:", err);
+      return null;
+    }
+  };
+
+  const registerPushToken = async () => {
+    try {
+      const pushToken = await registerForPushNotificationsAsync();
+      if (!pushToken) return;
+
+      await AsyncStorage.setItem("expoPushToken", pushToken);
+
+      const authToken = await AsyncStorage.getItem("token");
+      if (!authToken) return;
+
+      await axios.patch(
+        `${API_URL}/push_token`,
+        { token: pushToken },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+    } catch (err) {
+      console.log("Failed to register push token:", err);
+    }
+  };
+
+  const unregisterPushToken = async () => {
+    try {
+      const pushToken = await AsyncStorage.getItem("expoPushToken");
+      if (!pushToken) return;
+
+      const authToken = await AsyncStorage.getItem("token");
+      if (!authToken) return;
+
+      await axios.patch(
+        `${API_URL}/push_token`,
+        { token: pushToken, action: "remove" },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      await AsyncStorage.removeItem("expoPushToken");
+    } catch (err) {
+      console.log("Failed to unregister push token:", err);
+    }
+  };
+
   // Check for user token
   const checkTokenValidity = async () => {
     const storedToken = await AsyncStorage.getItem("token");
@@ -437,6 +514,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const logout = async (): Promise<void> => {
+    // Unregister push token for this device (best-effort)
+    try {
+      await unregisterPushToken();
+    } catch (e) {
+      console.log("Error unregistering push token:", e);
+    }
+
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
     await AsyncStorage.removeItem("is_driver");
