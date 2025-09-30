@@ -19,7 +19,7 @@ export const create_driver = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { vehicle_type, profile_img } = req.body;
+    const { vehicle_type } = req.body;
     const user = req.user?.id;
 
     const existing_driver = await Driver.findOne({ user });
@@ -28,20 +28,9 @@ export const create_driver = async (
       return;
     }
 
-    let profileImgUrl: string | null = profile_img || null;
-    const uploadedFile = req.file;
-    if (uploadedFile && uploadedFile.path) {
-      const uploaded = await uploadToCloudinary(
-        uploadedFile.path,
-        "igle_images/driver_profile"
-      );
-      if (uploaded && uploaded.url) profileImgUrl = uploaded.url;
-    }
-
     const driverData: any = {
       user,
       vehicle_type,
-      profile_img: profileImgUrl,
       current_location: {
         type: "Point",
         coordinates: [0, 0],
@@ -58,6 +47,48 @@ export const create_driver = async (
 
     res.status(201).json({ msg: "Driver created successfully", driver });
   } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Upload or update driver's profile image
+export const upload_driver_profile_pic = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const file = (req as any).file;
+    if (!file || !file.path) {
+      res.status(400).json({ msg: "No file provided" });
+      return;
+    }
+
+    const uploaded = await uploadToCloudinary(
+      file.path,
+      "igle_images/driver_profile"
+    );
+
+    if (!uploaded || !uploaded.url) {
+      res.status(500).json({ msg: "Failed to upload image" });
+      return;
+    }
+
+    const driver = await Driver.findById(driver_id);
+    if (!driver) {
+      res.status(404).json({ msg: "Driver not found" });
+      return;
+    }
+
+    // Save new profile image URL
+    driver.profile_img = uploaded.url;
+    await driver.save();
+
+    res
+      .status(200)
+      .json({ msg: "Profile image uploaded", profile_img: driver.profile_img });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ msg: "Server error." });
   }
 };

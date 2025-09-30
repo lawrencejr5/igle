@@ -9,6 +9,8 @@ DriverRouter.use(auth_1.auth);
 DriverRouter.get("/data", driver_1.get_driver);
 DriverRouter.get("/profile/me", driver_1.get_driver_by_user);
 DriverRouter.post("/create", upload_1.upload.single("profile_img"), driver_1.create_driver);
+// Separate endpoint for updating driver profile image after creation
+DriverRouter.patch("/profile_pic", upload_1.upload.single("profile_img"), driver_1.upload_driver_profile_pic);
 DriverRouter.patch("/location", driver_1.update_location);
 DriverRouter.patch("/bank", driver_1.save_bank_info);
 DriverRouter.patch("/available", driver_1.set_driver_availability);

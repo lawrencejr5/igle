@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   create_driver,
+  upload_driver_profile_pic,
   update_location,
   get_driver,
   save_bank_info,
@@ -29,6 +30,12 @@ DriverRouter.use(auth);
 DriverRouter.get("/data", get_driver);
 DriverRouter.get("/profile/me", get_driver_by_user);
 DriverRouter.post("/create", upload.single("profile_img"), create_driver);
+// Separate endpoint for updating driver profile image after creation
+DriverRouter.patch(
+  "/profile_pic",
+  upload.single("profile_img"),
+  upload_driver_profile_pic
+);
 DriverRouter.patch("/location", update_location);
 DriverRouter.patch("/bank", save_bank_info);
 DriverRouter.patch("/available", set_driver_availability);

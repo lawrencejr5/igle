@@ -92,6 +92,12 @@ interface DriverAuthContextType {
   updateDriverLicense: (driver_licence: DriverLicence) => Promise<void>; // Updated to Promise<void>
   saveBankInfo: (bankInfo: Omit<BankInfo, "recipient_code">) => Promise<void>; // Updated to Promise<void>
 
+  // Profile picture helpers
+  uploadProfilePic: (formaData: any) => Promise<void>;
+  uploadingPic: boolean;
+  removeProfilePic: () => Promise<void>;
+  removingPic: boolean;
+
   // Profile retrieval functions
   getDriverProfile: () => Promise<void>;
   getDriverData: (driver_id: string) => Promise<void>;
@@ -206,6 +212,65 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       throw new Error(errMsg || "Error getting driver profile");
+    }
+  };
+
+  // Driver profile picture upload state and helpers
+  const [uploadingPic, setUploadingPic] = useState<boolean>(false);
+  const uploadProfilePic = async (formaData: any): Promise<void> => {
+    if (!formaData) {
+      showNotification("No image was selected", "error");
+      return;
+    }
+    const token = await AsyncStorage.getItem("token");
+
+    setUploadingPic(true);
+    try {
+      const { data } = await axios.patch(`${API_URL}/profile_pic`, formaData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      if (data) {
+        await getDriverProfile();
+        showNotification(data.msg || "Profile updated", "success");
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      showNotification(errMsg || "An error occured", "error");
+      throw new Error(errMsg || "Failed to upload profile pic");
+    } finally {
+      setUploadingPic(false);
+    }
+  };
+
+  const [removingPic, setRemovingPic] = useState<boolean>(false);
+  const removeProfilePic = async (): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+
+    setRemovingPic(true);
+    try {
+      // remove from users API
+      const { data } = await axios.patch(
+        `${API_URLS.users}/remove_pic`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (data) {
+        await getDriverProfile();
+        showNotification(data.msg || "Removed", "success");
+      }
+    } catch (error: any) {
+      const errMsg = error.response?.data?.msg;
+      showNotification(errMsg || "An error occured", "error");
+      throw new Error(errMsg || "Failed to remove profile pic");
+    } finally {
+      setRemovingPic(false);
     }
   };
 
@@ -376,6 +441,10 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     updateVehicleInfo,
     updateDriverLicense,
     saveBankInfo,
+    uploadProfilePic,
+    uploadingPic,
+    removeProfilePic,
+    removingPic,
     getDriverProfile,
     gettingDriverData,
     setGettingDriverData,

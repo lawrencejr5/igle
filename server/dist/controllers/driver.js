@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.create_driver = void 0;
+exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.upload_driver_profile_pic = exports.create_driver = void 0;
 const driver_1 = __importDefault(require("../models/driver"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const ride_1 = __importDefault(require("../models/ride"));
@@ -26,24 +26,16 @@ const upload_file_1 = require("../utils/upload_file");
 const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        const { vehicle_type, profile_img } = req.body;
+        const { vehicle_type } = req.body;
         const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const existing_driver = yield driver_1.default.findOne({ user });
         if (existing_driver) {
             res.status(409).json({ msg: "Driver already exists for this user." });
             return;
         }
-        let profileImgUrl = profile_img || null;
-        const uploadedFile = req.file;
-        if (uploadedFile && uploadedFile.path) {
-            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(uploadedFile.path, "igle_images/driver_profile");
-            if (uploaded && uploaded.url)
-                profileImgUrl = uploaded.url;
-        }
         const driverData = {
             user,
             vehicle_type,
-            profile_img: profileImgUrl,
             current_location: {
                 type: "Point",
                 coordinates: [0, 0],
@@ -62,6 +54,39 @@ const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.create_driver = create_driver;
+// Upload or update driver's profile image
+const upload_driver_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const file = req.file;
+        if (!file || !file.path) {
+            res.status(400).json({ msg: "No file provided" });
+            return;
+        }
+        const uploaded = yield (0, upload_file_1.uploadToCloudinary)(file.path, "igle_images/driver_profile");
+        if (!uploaded || !uploaded.url) {
+            res.status(500).json({ msg: "Failed to upload image" });
+            return;
+        }
+        const driver = yield driver_1.default.findById(driver_id);
+        if (!driver) {
+            res.status(404).json({ msg: "Driver not found" });
+            return;
+        }
+        // Save new profile image URL
+        driver.profile_img = uploaded.url;
+        yield driver.save();
+        res
+            .status(200)
+            .json({ msg: "Profile image uploaded", profile_img: driver.profile_img });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.upload_driver_profile_pic = upload_driver_profile_pic;
 // Update driver's current location
 const update_location = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
