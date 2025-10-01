@@ -88,7 +88,7 @@ interface DriverAuthContextType {
   // Core driver profile functions
   createDriver: (vehicle_type: string) => Promise<void>; // Updated to Promise<void>
   updateDriverInfo: (updateData: Partial<DriverType>) => Promise<void>; // Updated to Promise<void>
-  updateVehicleInfo: (vehicle: Vehicle) => Promise<void>; // Updated to Promise<void>
+  updateVehicleInfo: (vehicleOrForm: any) => Promise<any>; // Accept Vehicle object or FormData
   updateDriverLicense: (formdata: FormData) => Promise<any>; // Accept FormData only
   saveBankInfo: (bankInfo: Omit<BankInfo, "recipient_code">) => Promise<void>; // Updated to Promise<void>
 
@@ -232,7 +232,9 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           "Content-Type": "multipart/form-data",
         },
       });
-      if (data) showNotification(data.msg || "Profile updated", "success");
+      if (data) {
+        showNotification(data.msg || "Profile updated", "success");
+      }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       showNotification(errMsg || "An error occured", "error");
@@ -341,23 +343,24 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const updateVehicleInfo = async (vehicle: Vehicle): Promise<void> => {
+  const updateVehicleInfo = async (formdata: any): Promise<any> => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/vehicle`,
-        {
-          vehicle,
-        },
-        {
+
+      if (formdata) {
+        const { data } = await axios.patch(`${API_URL}/vehicle`, formdata, {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
+        });
+        if (data.vehicle) {
+          setDriver((prev) =>
+            prev ? { ...prev, vehicle: data.vehicle } : null
+          );
+          showNotification(data.msg || "Updated successfully", "success");
         }
-      );
-      if (data.vehicle) {
-        setDriver((prev) => (prev ? { ...prev, vehicle: data.vehicle } : null));
-        showNotification("Updated successfully", "success");
+        return data;
       }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;

@@ -140,7 +140,7 @@ const DriverIdentification = () => {
       appendAsset(backAsset, "license_back");
       appendAsset(selfieAsset, "selfie_with_license");
 
-      const res = await updateDriverLicense(formData);
+      await updateDriverLicense(formData);
       setSuccess(true);
       setTimeout(() => {
         router.push("/vehicle_information");
@@ -228,12 +228,7 @@ const DriverIdentification = () => {
               <View style={styles.inp_container}>
                 <Text style={styles.inp_label}>Driver's Licence front</Text>
                 <TouchableWithoutFeedback onPress={() => pickImage("front")}>
-                  <View
-                    style={[
-                      styles.img_input,
-                      frontImage && { borderColor: "#4CAF50", borderWidth: 2 },
-                    ]}
-                  >
+                  <View style={[styles.img_input]}>
                     {frontImage ? (
                       <Image
                         source={{ uri: frontImage }}
@@ -249,12 +244,7 @@ const DriverIdentification = () => {
               <View style={styles.inp_container}>
                 <Text style={styles.inp_label}>Driver's Licence back</Text>
                 <TouchableWithoutFeedback onPress={() => pickImage("back")}>
-                  <View
-                    style={[
-                      styles.img_input,
-                      backImage && { borderColor: "#4CAF50", borderWidth: 2 },
-                    ]}
-                  >
+                  <View style={[styles.img_input]}>
                     {backImage ? (
                       <Image
                         source={{ uri: backImage }}
@@ -271,12 +261,7 @@ const DriverIdentification = () => {
             <View style={styles.inp_container}>
               <Text style={styles.inp_label}>Selfie with Driver's License</Text>
               <TouchableWithoutFeedback onPress={() => pickImage("selfie")}>
-                <View
-                  style={[
-                    styles.img_input,
-                    selfieImage && { borderColor: "#4CAF50", borderWidth: 2 },
-                  ]}
-                >
+                <View style={[styles.img_input]}>
                   {selfieImage ? (
                     <Image
                       source={{ uri: selfieImage }}

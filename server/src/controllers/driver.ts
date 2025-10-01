@@ -303,7 +303,12 @@ export const update_vehicle_info = async (
     let interior_image_url: string | null = interior_image || null;
 
     // Upload exterior if file provided
-    if (files.vehicle_exterior[0].path) {
+    if (
+      files.vehicle_exterior &&
+      Array.isArray(files.vehicle_exterior) &&
+      files.vehicle_exterior[0] &&
+      files.vehicle_exterior[0].path
+    ) {
       const uploaded = await uploadToCloudinary(
         files.vehicle_exterior[0].path,
         "igle_images/vehicle"
@@ -312,7 +317,12 @@ export const update_vehicle_info = async (
     }
 
     // Upload interior if file provided
-    if (files.vehicle_interior[0].path) {
+    if (
+      files.vehicle_interior &&
+      Array.isArray(files.vehicle_interior) &&
+      files.vehicle_interior[0] &&
+      files.vehicle_interior[0].path
+    ) {
       const uploaded = await uploadToCloudinary(
         files.vehicle_interior[0].path,
         "igle_images/vehicle"

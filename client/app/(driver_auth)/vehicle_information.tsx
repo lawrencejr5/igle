@@ -6,8 +6,11 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Feather from "@expo/vector-icons/Feather";
@@ -28,6 +31,8 @@ const VehicleInformation = () => {
 
   const [exteriorImage, setExteriorImage] = useState<string>("");
   const [interiorImage, setInteriorImage] = useState<string>("");
+  const [exteriorAsset, setExteriorAsset] = useState<any>(null);
+  const [interiorAsset, setInteriorAsset] = useState<any>(null);
   const [brand, setBrand] = useState<string>("");
   const [model, setModel] = useState<string>("");
   const [color, setColor] = useState<string>("");
@@ -37,13 +42,62 @@ const VehicleInformation = () => {
   const [success, setSuccess] = useState(false);
 
   const pickImage = async (imageType: "exterior" | "interior") => {
-    // For now, just set placeholder images
-    const placeholderImage = "image.png";
+    try {
+      const camPerm = await ImagePicker.requestCameraPermissionsAsync();
+      const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (imageType === "exterior") {
-      setExteriorImage(placeholderImage);
-    } else {
-      setInteriorImage(placeholderImage);
+      if (camPerm.status !== "granted" && libPerm.status !== "granted") {
+        showNotification(
+          "Camera or media library permission is required",
+          "error"
+        );
+        return;
+      }
+
+      let result: any = { canceled: true };
+      try {
+        result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.8,
+        });
+      } catch (camErr) {
+        console.warn("Camera launch failed, falling back to library:", camErr);
+      }
+
+      if (!result || result.canceled) {
+        try {
+          result = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+          });
+        } catch (libErr) {
+          console.error("launchImageLibraryAsync failed:", libErr);
+          showNotification("Image picker failed", "error");
+          return;
+        }
+      }
+
+      if (
+        !result ||
+        result.canceled ||
+        !result.assets ||
+        result.assets.length === 0
+      )
+        return;
+
+      const asset = result.assets[0];
+      if (imageType === "exterior") {
+        setExteriorImage(asset.uri);
+        setExteriorAsset(asset);
+      } else {
+        setInteriorImage(asset.uri);
+        setInteriorAsset(asset);
+      }
+    } catch (err) {
+      console.error("pickImage error:", err);
+      showNotification("Failed to pick image", "error");
     }
   };
 
@@ -66,19 +120,30 @@ const VehicleInformation = () => {
 
     setLoading(true);
     try {
-      const vehicle = {
-        exterior_image: exteriorImage,
-        interior_image: interiorImage,
-        brand: brand.trim(),
-        model: model.trim(),
-        color: color.trim(),
-        year: year.trim(),
-        plate_number: plateNumber.trim(),
+      const formData = new FormData();
+      formData.append("brand", brand.trim());
+      formData.append("model", model.trim());
+      formData.append("color", color.trim());
+      formData.append("year", year.trim());
+      formData.append("plate_number", plateNumber.trim());
+
+      const appendAsset = (asset: any, fieldName: string) => {
+        if (!asset || !asset.uri) return;
+        const uri = asset.uri;
+        const parts = uri.split("/");
+        const name = parts[parts.length - 1];
+        const fileType = name.includes(".") ? name.split(".").pop() : "jpg";
+        const mimeType = `image/${fileType}`;
+        // @ts-ignore
+        formData.append(fieldName, { uri, name, type: mimeType } as any);
       };
 
-      await updateVehicleInfo(vehicle);
+      appendAsset(exteriorAsset, "vehicle_exterior");
+      appendAsset(interiorAsset, "vehicle_interior");
+
+      const res = await updateVehicleInfo(formData);
       setSuccess(true);
-      showNotification("Updated successfully", "success");
+      showNotification(res?.msg || "Updated successfully", "success");
       setTimeout(() => {
         router.push("/bank_details");
       }, 1500);
@@ -133,17 +198,13 @@ const VehicleInformation = () => {
               <View style={styles.inp_container}>
                 <Text style={styles.inp_label}>Vehicle exterior image</Text>
                 <TouchableWithoutFeedback onPress={() => pickImage("exterior")}>
-                  <View
-                    style={[
-                      styles.img_input,
-                      exteriorImage && {
-                        borderColor: "#4CAF50",
-                        borderWidth: 2,
-                      },
-                    ]}
-                  >
+                  <View style={[styles.img_input]}>
                     {exteriorImage ? (
-                      <Feather name="check" color={"#4CAF50"} size={30} />
+                      <Image
+                        source={{ uri: exteriorImage }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
                     ) : (
                       <Feather name="camera" color={"#fff"} size={30} />
                     )}
@@ -153,17 +214,13 @@ const VehicleInformation = () => {
               <View style={styles.inp_container}>
                 <Text style={styles.inp_label}>Vehicle interior image</Text>
                 <TouchableWithoutFeedback onPress={() => pickImage("interior")}>
-                  <View
-                    style={[
-                      styles.img_input,
-                      interiorImage && {
-                        borderColor: "#4CAF50",
-                        borderWidth: 2,
-                      },
-                    ]}
-                  >
+                  <View style={[styles.img_input]}>
                     {interiorImage ? (
-                      <Feather name="check" color={"#4CAF50"} size={30} />
+                      <Image
+                        source={{ uri: interiorImage }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
                     ) : (
                       <Feather name="camera" color={"#fff"} size={30} />
                     )}
