@@ -110,6 +110,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     setUploadingPic(true);
     try {
+      console.log(formaData);
       const { data } = await axios.patch(`${API_URL}/profile_pic`, formaData, {
         headers: {
           Authorization: `Bearer ${token}`,

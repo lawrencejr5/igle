@@ -513,19 +513,7 @@ export const update_driver_info = async (
     const driver_id = await get_driver_id(req.user?.id!);
     const updateData = req.body;
 
-    // Remove any undefined or null values
-    const cleanUpdateData = Object.fromEntries(
-      Object.entries(updateData).filter(
-        ([_, value]) => value !== undefined && value !== null
-      )
-    );
-
-    if (Object.keys(cleanUpdateData).length === 0) {
-      res.status(400).json({ msg: "No valid data provided for update." });
-      return;
-    }
-
-    const driver = await Driver.findByIdAndUpdate(driver_id, cleanUpdateData, {
+    const driver = await Driver.findByIdAndUpdate(driver_id, updateData, {
       new: true,
     });
 

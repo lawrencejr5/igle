@@ -61,6 +61,14 @@ const PersonalInformation = () => {
       if (!result.canceled) {
         if (result.assets && result.assets.length > 0) {
           const asset = result.assets[0];
+
+          // show preview immediately
+          try {
+            setImageUri(asset.uri);
+          } catch (e) {
+            console.warn("Failed to set image preview uri", e);
+          }
+
           const formData = new FormData();
           formData.append("profile_img", {
             uri: asset.uri,
@@ -68,7 +76,12 @@ const PersonalInformation = () => {
             name: asset.fileName,
           } as any);
 
-          await uploadProfilePic(formData);
+          try {
+            await uploadProfilePic(formData);
+          } catch (uploadErr) {
+            console.error("uploadProfilePic error:", uploadErr);
+            // keep preview so user can retry or remove
+          }
         }
       }
     } catch (error) {
@@ -155,7 +168,12 @@ const PersonalInformation = () => {
                     {imageUri ? (
                       <Image
                         source={{ uri: imageUri }}
-                        style={{ width: 70, height: 70, borderRadius: 35 }}
+                        style={{
+                          height: 100,
+                          width: 150,
+                          marginTop: 10,
+                          borderRadius: 10,
+                        }}
                       />
                     ) : (
                       <View

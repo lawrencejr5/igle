@@ -402,13 +402,7 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
     try {
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
         const updateData = req.body;
-        // Remove any undefined or null values
-        const cleanUpdateData = Object.fromEntries(Object.entries(updateData).filter(([_, value]) => value !== undefined && value !== null));
-        if (Object.keys(cleanUpdateData).length === 0) {
-            res.status(400).json({ msg: "No valid data provided for update." });
-            return;
-        }
-        const driver = yield driver_1.default.findByIdAndUpdate(driver_id, cleanUpdateData, {
+        const driver = yield driver_1.default.findByIdAndUpdate(driver_id, updateData, {
             new: true,
         });
         if (!driver) {

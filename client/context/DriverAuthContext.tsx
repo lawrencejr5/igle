@@ -232,10 +232,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           "Content-Type": "multipart/form-data",
         },
       });
-      if (data) {
-        await getDriverProfile();
-        showNotification(data.msg || "Profile updated", "success");
-      }
+      if (data) showNotification(data.msg || "Profile updated", "success");
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       showNotification(errMsg || "An error occured", "error");
@@ -253,18 +250,15 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       // remove from users API
       const { data } = await axios.patch(
-        `${API_URLS.users}/remove_pic`,
-        {},
+        `${API_URL}/info`,
+        { profile_img: null },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      if (data) {
-        await getDriverProfile();
-        showNotification(data.msg || "Removed", "success");
-      }
+      if (data) showNotification(data.msg || "Removed", "success");
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       showNotification(errMsg || "An error occured", "error");

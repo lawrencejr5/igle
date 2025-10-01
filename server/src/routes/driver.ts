@@ -30,7 +30,6 @@ DriverRouter.use(auth);
 DriverRouter.get("/data", get_driver);
 DriverRouter.get("/profile/me", get_driver_by_user);
 DriverRouter.post("/create", upload.single("profile_img"), create_driver);
-// Separate endpoint for updating driver profile image after creation
 DriverRouter.patch(
   "/profile_pic",
   upload.single("profile_img"),
