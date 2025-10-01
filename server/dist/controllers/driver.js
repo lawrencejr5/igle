@@ -254,13 +254,19 @@ const update_vehicle_info = (req, res) => __awaiter(void 0, void 0, void 0, func
         let exterior_image_url = exterior_image || null;
         let interior_image_url = interior_image || null;
         // Upload exterior if file provided
-        if (files.vehicle_exterior[0].path) {
+        if (files.vehicle_exterior &&
+            Array.isArray(files.vehicle_exterior) &&
+            files.vehicle_exterior[0] &&
+            files.vehicle_exterior[0].path) {
             const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.vehicle_exterior[0].path, "igle_images/vehicle");
             if (uploaded && uploaded.url)
                 exterior_image_url = uploaded.url;
         }
         // Upload interior if file provided
-        if (files.vehicle_interior[0].path) {
+        if (files.vehicle_interior &&
+            Array.isArray(files.vehicle_interior) &&
+            files.vehicle_interior[0] &&
+            files.vehicle_interior[0].path) {
             const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.vehicle_interior[0].path, "igle_images/vehicle");
             if (uploaded && uploaded.url)
                 interior_image_url = uploaded.url;

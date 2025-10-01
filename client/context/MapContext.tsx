@@ -74,6 +74,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     distanceKm: number;
     durationMins: number;
     amount: number;
+    cab: { amount: number };
+    keke: { amount: number };
+    suv: { amount: number };
   } | null>(null);
 
   const [routeCoords, setRouteCoords] = useState<CoordsType[]>([]);
@@ -106,8 +109,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         latitude: leg.end_location.lat,
         longitude: leg.end_location.lng,
       };
-
-      // console.log(coords, leg);
 
       return {
         coords,
@@ -280,15 +281,35 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         const PRICE_PER_KM = Number(process.env.EXPO_PUBLIC_PRICE_PER_KM);
         const PRICE_PER_MIN = Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN);
 
-        const fare =
-          BASE_FARE + distanceKm * PRICE_PER_KM + durationMins * PRICE_PER_MIN;
-        const amount = Math.ceil(fare / 10) * 10;
+        // multipliers for vehicle types — tweak as needed or replace with env vars
+        const MULT = {
+          cab: 1.0,
+          keke: 0.6,
+          suv: 1.4,
+        };
 
+        const computeAmount = (mult: number) => {
+          const raw =
+            BASE_FARE * mult +
+            distanceKm * PRICE_PER_KM * mult +
+            durationMins * PRICE_PER_MIN * mult;
+          return Math.ceil(raw / 10) * 10;
+        };
+
+        const cabAmount = computeAmount(MULT.cab);
+        const kekeAmount = computeAmount(MULT.keke);
+        const suvAmount = computeAmount(MULT.suv);
+
+        // keep top-level amount as cab for backward compatibility
         setRideDetails({
           distanceKm,
           durationMins,
-          amount,
+          amount: cabAmount,
+          cab: { amount: cabAmount },
+          keke: { amount: kekeAmount },
+          suv: { amount: suvAmount },
         });
+
         return {
           distanceKm: distanceMeters / 1000,
           durationMins: durationSeconds / 60,
@@ -397,12 +418,18 @@ export interface MapContextType {
     distanceKm: number;
     durationMins: number;
     amount: number;
+    cab: { amount: number };
+    keke: { amount: number };
+    suv: { amount: number };
   } | null;
   setRideDetails: Dispatch<
     SetStateAction<{
       distanceKm: number;
       durationMins: number;
       amount: number;
+      cab: { amount: number };
+      keke: { amount: number };
+      suv: { amount: number };
     } | null>
   >;
 

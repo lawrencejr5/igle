@@ -55,7 +55,7 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { km, min, scheduled_time } = req.query;
-        const { pickup, destination } = req.body;
+        const { pickup, destination, vehicle, fare } = req.body;
         if (!pickup ||
             !pickup.coordinates ||
             !destination ||
@@ -71,7 +71,6 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         const distance_km = Number(km);
         const duration_mins = Number(min);
-        const fare = (0, calc_fare_1.calculate_fare)(distance_km, duration_mins);
         const commission = (0, calc_commision_1.calculate_commission)(fare);
         const driver_earnings = fare - commission;
         const new_ride = yield ride_1.default.create({
@@ -79,6 +78,7 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             pickup,
             destination,
             fare,
+            vehicle,
             distance_km: Math.round(distance_km),
             duration_mins: Math.round(duration_mins),
             driver_earnings,
@@ -296,10 +296,12 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 if (ride && ride.rider) {
                     const tokens = yield (0, get_id_2.get_user_push_tokens)(ride.rider);
                     if (tokens.length) {
-                        yield (0, expo_push_1.sendExpoPush)(tokens, "Driver on the way", "A driver has accepted your ride", {
+                        console.log("Sending 'Driver on the way' push to tokens:", tokens);
+                        const res = yield (0, expo_push_1.sendExpoPush)(tokens, "Driver on the way", "A driver has accepted your ride", {
                             type: "ride_accepted",
                             rideId: ride._id,
                         });
+                        console.log("sendExpoPush result:", res);
                     }
                 }
             }
@@ -504,10 +506,12 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                             ? yield (0, get_id_2.get_user_push_tokens)(ride.rider)
                             : [];
                         if (tokens.length) {
-                            yield (0, expo_push_1.sendExpoPush)(tokens, "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
+                            console.log("Sending 'Ride completed' push to tokens:", tokens);
+                            const res = yield (0, expo_push_1.sendExpoPush)(tokens, "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
                                 type: "ride_completed",
                                 rideId: ride._id,
                             });
+                            console.log("sendExpoPush result:", res);
                         }
                     }
                     catch (e) {

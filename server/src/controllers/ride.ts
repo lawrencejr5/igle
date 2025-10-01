@@ -54,7 +54,7 @@ export const request_ride = async (
   try {
     const user_id = req.user?.id;
     const { km, min, scheduled_time } = req.query;
-    const { pickup, destination } = req.body;
+    const { pickup, destination, vehicle, fare } = req.body;
 
     if (
       !pickup ||
@@ -75,7 +75,6 @@ export const request_ride = async (
 
     const distance_km = Number(km);
     const duration_mins = Number(min);
-    const fare = calculate_fare(distance_km, duration_mins);
     const commission = calculate_commission(fare);
     const driver_earnings = fare - commission;
 
@@ -84,6 +83,7 @@ export const request_ride = async (
       pickup,
       destination,
       fare,
+      vehicle,
       distance_km: Math.round(distance_km),
       duration_mins: Math.round(duration_mins),
       driver_earnings,

@@ -60,6 +60,7 @@ const RideSchema = new mongoose_1.Schema({
         ],
         default: "pending",
     },
+    vehicle: { type: String, enum: ["cab", "keke", "suv"], required: true },
     fare: { type: Number, required: true },
     distance_km: { type: Number, required: true },
     duration_mins: { type: Number, required: true },

@@ -781,6 +781,7 @@ const RideTypeCard: FC<{
 const ChooseRideModal = () => {
   const {
     rideDetails,
+    setRideDetails,
     calculating,
     pickupCoords,
     destination,
@@ -812,6 +813,8 @@ const ChooseRideModal = () => {
             coordinates: pickupCoords || [region.latitude, region.longitude],
           },
           { address: destination, coordinates: destinationCoords! },
+          Number(rideDetails?.amount),
+          selectedRideType,
           scheduledTime
         );
       } else {
@@ -820,7 +823,9 @@ const ChooseRideModal = () => {
             address: userAddress,
             coordinates: pickupCoords || [region.latitude, region.longitude],
           },
-          { address: destination, coordinates: destinationCoords! }
+          { address: destination, coordinates: destinationCoords! },
+          Number(rideDetails?.amount),
+          selectedRideType
         );
       }
 
@@ -854,9 +859,15 @@ const ChooseRideModal = () => {
             icon={require("../assets/images/icons/sedan-icon.png")}
             distanceKm={rideDetails?.distanceKm}
             durationMins={rideDetails?.durationMins}
-            amount={rideDetails?.amount}
+            amount={rideDetails?.cab?.amount}
             selected={selectedRideType === "cab"}
-            onPress={() => setSelectedRideType("cab")}
+            onPress={() => {
+              setSelectedRideType("cab");
+              setRideDetails((prev: any) => ({
+                ...prev,
+                amount: rideDetails?.cab?.amount,
+              }));
+            }}
           />
 
           <RideTypeCard
@@ -865,9 +876,15 @@ const ChooseRideModal = () => {
             icon={require("../assets/images/icons/keke-icon.png")}
             distanceKm={rideDetails?.distanceKm}
             durationMins={rideDetails?.durationMins}
-            amount={rideDetails?.amount}
+            amount={rideDetails?.keke?.amount}
             selected={selectedRideType === "keke"}
-            onPress={() => setSelectedRideType("keke")}
+            onPress={() => {
+              setSelectedRideType("keke");
+              setRideDetails((prev: any) => ({
+                ...prev,
+                amount: rideDetails?.keke?.amount,
+              }));
+            }}
           />
 
           <RideTypeCard
@@ -876,9 +893,15 @@ const ChooseRideModal = () => {
             icon={require("../assets/images/icons/suv-icon.png")}
             distanceKm={rideDetails?.distanceKm}
             durationMins={rideDetails?.durationMins}
-            amount={rideDetails?.amount}
+            amount={rideDetails?.suv?.amount}
             selected={selectedRideType === "suv"}
-            onPress={() => setSelectedRideType("suv")}
+            onPress={() => {
+              setSelectedRideType("suv");
+              setRideDetails((prev: any) => ({
+                ...prev,
+                amount: rideDetails?.suv?.amount,
+              }));
+            }}
           />
         </ScrollView>
       </View>

@@ -344,6 +344,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const rideRequest = async (
     pickup: { address: string; coordinates: [number, number] },
     destination: { address: string; coordinates: [number, number] },
+    fare: number,
+    vehicle: "cab" | "keke" | "suv",
     scheduled_time?: Date
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
@@ -368,7 +370,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
       const { data } = await axios.post(
         url,
-        { pickup, destination },
+        { pickup, destination, fare, vehicle },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setOngoingRideData(data.ride);
@@ -672,6 +674,8 @@ export interface RideContextType {
   rideRequest: (
     pickup: { address: string; coordinates: [number, number] },
     destination: { address: string; coordinates: [number, number] },
+    fare: number,
+    vehicle: "cab" | "keke" | "suv",
     scheduled_time?: Date
   ) => Promise<void>;
 

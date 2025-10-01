@@ -35,6 +35,7 @@ export interface RideType extends Document {
     by?: "rider" | "driver";
     reason?: string;
   };
+  vehicle: "cab" | "keke" | "suv";
   payment_status: "unpaid" | "paid";
   payment_method: "cash" | "card" | "wallet";
   driver_earnings: number;
@@ -71,6 +72,7 @@ const RideSchema = new Schema<RideType>(
       ],
       default: "pending",
     },
+    vehicle: { type: String, enum: ["cab", "keke", "suv"], required: true },
     fare: { type: Number, required: true },
     distance_km: { type: Number, required: true },
     duration_mins: { type: Number, required: true },
