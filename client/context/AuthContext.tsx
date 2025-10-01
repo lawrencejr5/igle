@@ -7,6 +7,7 @@ import React, {
   ReactNode,
   Dispatch,
   SetStateAction,
+  useRef,
 } from "react";
 
 import axios from "axios";
@@ -70,6 +71,37 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [signedIn]);
 
+  // Dev-only: send a single test push after sign-in to help debug push flow
+  const testPushSentRef = useRef(false);
+  useEffect(() => {
+    if (!__DEV__) return; // only run in development
+    if (!signedIn?.user_id) return;
+    if (testPushSentRef.current) return;
+
+    (async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        if (!token) return;
+        console.log("[dev] sending test_push for user", signedIn.user_id);
+        const { data } = await axios.post(
+          `${API_URL}/test_push`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log("[dev] test_push response:", data);
+        showNotification("Test push sent (dev)", "success");
+      } catch (err: any) {
+        console.log(
+          "[dev] test_push failed:",
+          err?.response?.data || err?.message || err
+        );
+        showNotification("Test push failed (see console)", "error");
+      } finally {
+        testPushSentRef.current = true;
+      }
+    })();
+  }, [signedIn]);
+
   const API_URL = API_URLS.users;
 
   // Registration function
@@ -90,7 +122,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         password,
       });
       await AsyncStorage.setItem("token", data.token);
-      await AsyncStorage.setItem("user_id", data.user.id);
 
       await getUserData();
 
@@ -286,7 +317,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       });
 
       await AsyncStorage.setItem("token", data.token);
-      await AsyncStorage.setItem("user_id", data.user.id);
       await AsyncStorage.setItem(
         "is_driver",
         JSON.stringify(data.user.is_driver)
@@ -314,18 +344,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       if (data?.token && data?.user) {
         await AsyncStorage.setItem("token", data.token);
 
-        const userId = data.user._id;
         const is_driver = data.user.is_driver;
 
-        if (userId) await AsyncStorage.setItem("user_id", String(userId));
-        await AsyncStorage.setItem(
-          "is_driver",
-          JSON.stringify(data.user.is_driver || false)
-        );
-
         await getUserData();
-        // Register push token for this device
-        await registerPushToken();
         await getWalletBalance("User");
         // If this is a newly created user via Google, navigate to phone update flow
         if (data.isNew) {
@@ -337,6 +358,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
             router.push("/(tabs)/home");
           }
         }
+        // await registerPushToken();
         showNotification(
           data.isNew ? "Account created" : "Login successful.",
           "success"
@@ -516,11 +538,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     // Unregister push token for this device (best-effort)
-    try {
-      await unregisterPushToken();
-    } catch (e) {
-      console.log("Error unregistering push token:", e);
-    }
+    // try {
+    //   await unregisterPushToken();
+    // } catch (e) {
+    //   console.log("Error unregistering push token:", e);
+    // }
 
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");

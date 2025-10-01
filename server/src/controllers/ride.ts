@@ -348,7 +348,8 @@ export const accept_ride = async (
         if (ride && ride.rider) {
           const tokens = await get_user_push_tokens(ride.rider);
           if (tokens.length) {
-            await sendExpoPush(
+            console.log("Sending 'Driver on the way' push to tokens:", tokens);
+            const res = await sendExpoPush(
               tokens,
               "Driver on the way",
               "A driver has accepted your ride",
@@ -357,6 +358,7 @@ export const accept_ride = async (
                 rideId: ride._id,
               }
             );
+            console.log("sendExpoPush result:", res);
           }
         }
       } catch (e) {
@@ -606,7 +608,8 @@ export const update_ride_status = async (
               ? await get_user_push_tokens(ride.rider)
               : [];
             if (tokens.length) {
-              await sendExpoPush(
+              console.log("Sending 'Ride completed' push to tokens:", tokens);
+              const res = await sendExpoPush(
                 tokens,
                 "Ride completed",
                 `Your ride to ${ride.destination.address} has been completed`,
@@ -615,6 +618,7 @@ export const update_ride_status = async (
                   rideId: ride._id,
                 }
               );
+              console.log("sendExpoPush result:", res);
             }
           } catch (e) {
             console.error("Failed to send completed push to rider:", e);

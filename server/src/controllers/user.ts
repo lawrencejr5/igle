@@ -476,3 +476,35 @@ export const set_push_token = async (req: Request, res: Response) => {
     return res.status(500).json({ msg: "Server error." });
   }
 };
+
+// Send a test push to the authenticated user's registered Expo tokens
+export const send_test_push = async (req: Request, res: Response) => {
+  try {
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ msg: "Unauthorized" });
+
+    const { get_user_push_tokens } = await import("../utils/get_id");
+    const { sendExpoPush } = await import("../utils/expo_push");
+
+    const tokens = await get_user_push_tokens(user_id);
+    console.log("[test_push] tokens for user", user_id, tokens);
+
+    if (!tokens || tokens.length === 0)
+      return res
+        .status(400)
+        .json({ msg: "No push tokens registered for this user" });
+
+    const result = await sendExpoPush(
+      tokens,
+      "Test Notification",
+      "This is a test push from server",
+      { type: "test_push" }
+    );
+
+    console.log("[test_push] sendExpoPush result:", result);
+    return res.json({ msg: "Test push sent", result });
+  } catch (err) {
+    console.error("send_test_push error:", err);
+    return res.status(500).json({ msg: "Server error" });
+  }
+};

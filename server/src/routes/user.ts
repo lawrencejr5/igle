@@ -31,6 +31,11 @@ UserRouter.patch(
   upload_profile_pic
 );
 UserRouter.patch("/remove_pic", auth, remove_profile_pic);
+UserRouter.post("/test_push", auth, async (req, res, next) => {
+  // lazy import to avoid circular deps
+  const { send_test_push } = await import("../controllers/user");
+  return send_test_push(req, res as any);
+});
 UserRouter.patch("/phone", auth, update_phone);
 UserRouter.patch("/push_token", auth, set_push_token);
 UserRouter.patch("/name", auth, update_name);

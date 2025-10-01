@@ -5,10 +5,9 @@ const expo = new Expo();
 
 /**
  * Send Expo push notifications to a list of push tokens.
- * Filters invalid tokens, chunks messages, and attempts to fetch receipts to
- * detect and optionally prune bad tokens.
+ * Filters invalid tokens, chunks messages, sends them, logs ticket chunks,
+ * fetches receipts and prunes invalid tokens automatically.
  */
-
 export const sendExpoPush = async (
   tokens: string[],
   title: string,
@@ -18,9 +17,11 @@ export const sendExpoPush = async (
   if (!tokens || tokens.length === 0) return { success: 0, failed: 0 };
 
   const messages: any[] = [];
+  const tokenMap: string[] = []; // parallel to messages
+
   for (const pushToken of tokens) {
     if (!Expo.isExpoPushToken(pushToken)) {
-      console.warn("Skipping non-Expo token:", pushToken);
+      console.warn("[expo_push] Skipping non-Expo token:", pushToken);
       continue;
     }
     messages.push({
@@ -30,75 +31,99 @@ export const sendExpoPush = async (
       body,
       data,
     });
+    tokenMap.push(pushToken);
+  }
+
+  console.log(`[expo_push] Sending ${messages.length} messages`);
+
+  if (messages.length === 0) {
+    return { success: 0, failed: tokens.length };
   }
 
   const chunks = expo.chunkPushNotifications(messages);
-  let success = 0;
-  let failed = 0;
-
   const tickets: any[] = [];
+  const ticketToToken: Record<string, string> = {};
+  let tokenIndex = 0;
+
   for (const chunk of chunks) {
     try {
       const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-      tickets.push(...ticketChunk);
-      // count success/fail by status
-      for (const t of ticketChunk) {
-        if (t.status === "ok") success += 1;
-        else failed += 1;
-      }
+      console.log("[expo_push] Ticket chunk:", JSON.stringify(ticketChunk));
+      ticketChunk.forEach((ticket: any) => {
+        tickets.push(ticket);
+        if (ticket.id) {
+          // map ticket id to the original token (tokenMap order matches messages order)
+          ticketToToken[ticket.id] = tokenMap[tokenIndex] || "unknown";
+        }
+        tokenIndex++;
+      });
     } catch (err) {
-      console.error("Error sending push notifications chunk:", err);
-      failed += chunk.length;
+      console.error("[expo_push] Error sending push chunk:", err);
     }
   }
 
-  // Attempt to fetch receipts to identify invalid tokens and prune them
-  try {
-    const receiptIds = tickets.map((t) => t.id).filter((id) => !!id);
+  // Collect receipt ids
+  const receiptIds = tickets.filter((t) => t && t.id).map((t) => t.id);
+
+  if (receiptIds.length > 0) {
     const receiptIdChunks = expo.chunkPushNotificationReceiptIds(receiptIds);
-    for (const rchis of receiptIdChunks) {
+    for (const chunk of receiptIdChunks) {
       try {
-        const receipts = await expo.getPushNotificationReceiptsAsync(rchis);
-        for (const receiptId in receipts) {
-          const receipt = receipts[receiptId];
+        const receipts = await expo.getPushNotificationReceiptsAsync(chunk);
+        console.log("[expo_push] Receipts chunk:", JSON.stringify(receipts));
+        for (const receiptId of Object.keys(receipts)) {
+          const receipt = (receipts as any)[receiptId];
+          const token = ticketToToken[receiptId];
           if (receipt.status === "error") {
             console.error(
-              `Push error for receipt ${receiptId}:`,
-              receipt.message,
-              receipt.details
+              "[expo_push] Receipt error for token:",
+              token,
+              receipt
             );
-            // If details indicate an invalid token, attempt to remove it
-            const details = receipt.details || {};
+            const err = receipt.details?.error?.toString?.() || "";
+            const errLower = err.toLowerCase();
             if (
-              details.error === "DeviceNotRegistered" ||
-              details.error === "InvalidCredentials"
+              errLower.includes("device_not_registered") ||
+              errLower.includes("not_registered") ||
+              errLower.includes("invalid_credentials")
             ) {
-              // details may not include token; best-effort: log for manual pruning
-              console.warn("Receipt indicates unregistered/invalid token.");
+              console.log("[expo_push] Removing invalid token:", token);
+              try {
+                await cleanupInvalidToken(token);
+              } catch (e) {
+                console.error("[expo_push] Failed to cleanup token:", token, e);
+              }
             }
           }
         }
       } catch (err) {
-        console.error("Failed to get push receipts:", err);
+        console.error("[expo_push] Error fetching receipts:", err);
       }
     }
-  } catch (err) {
-    console.error("Error while processing push ticket receipts:", err);
   }
+
+  const success = tickets.filter((t) => t && t.status === "ok").length;
+  const failed = tickets.length - success;
+  console.log(
+    `[expo_push] Push send summary: success=${success}, failed=${failed}`
+  );
 
   return { success, failed };
 };
 
 /**
- * Helper to remove a specific token from all users.
- * Use when you discover an invalid token and want to cleanup.
+ * Remove a specific token from all users.
  */
 export const cleanupInvalidToken = async (token: string) => {
   try {
-    await User.updateMany({}, { $pull: { expo_push_tokens: token } });
-    return true;
+    const res = await User.updateMany(
+      { expo_push_tokens: token },
+      { $pull: { expo_push_tokens: token } }
+    );
+    console.log("[expo_push] cleanupInvalidToken result:", res);
+    return res;
   } catch (err) {
-    console.error("Failed to cleanup invalid token:", err);
-    return false;
+    console.error("[expo_push] cleanupInvalidToken error:", err);
+    throw err;
   }
 };
