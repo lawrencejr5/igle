@@ -11,8 +11,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import React, {
   useState,
@@ -23,17 +21,9 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-
-import * as Linking from "expo-linking";
-
-import BottomSheet, {
-  BottomSheetScrollView,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import { ScrollView } from "react-native-gesture-handler";
-
-import RideRoute from "./RideRoute";
 
 import {
   FontAwesome,
@@ -52,7 +42,9 @@ import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useWalletContext } from "../context/WalletContext";
 import { useHistoryContext } from "../context/HistoryContext";
+import * as Linking from "expo-linking";
 
+import RideRoute from "./RideRoute";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { router, useNavigation } from "expo-router";
@@ -728,6 +720,64 @@ const BookingModal: FC<{
   );
 };
 
+// Reusable ride type card used in ChooseRideModal
+const RideTypeCard: FC<{
+  id: "cab" | "keke" | "suv";
+  title: string;
+  icon: any;
+  distanceKm?: number;
+  durationMins?: number;
+  amount?: number;
+  selected?: boolean;
+  onPress?: () => void;
+}> = ({ title, icon, distanceKm, durationMins, amount, selected, onPress }) => {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
+      style={[styles.rideCard, selected ? styles.rideCardSelected : null]}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Image source={icon} style={{ height: 50, width: 50 }} />
+        <View style={{ width: "100%", flexShrink: 1 }}>
+          <Text
+            style={[
+              { color: "#fff", fontFamily: "raleway-semibold" },
+              selected && styles.select_ride_text_active,
+            ]}
+          >
+            {title} ride
+          </Text>
+          <Text
+            style={[
+              {
+                color: "#fff",
+                fontFamily: "poppins-regular",
+                fontSize: 12,
+              },
+              selected && styles.select_ride_text_active,
+            ]}
+          >
+            {distanceKm ?? "--"}km . {durationMins ?? "--"}mins
+          </Text>
+          <Text
+            style={[
+              {
+                color: selected ? "#121212" : "#fff",
+                textAlign: "right",
+                fontFamily: "poppins-bold",
+                fontSize: 16,
+              },
+            ]}
+          >
+            NGN {amount?.toLocaleString() ?? "----"}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 const ChooseRideModal = () => {
   const {
     rideDetails,
@@ -745,6 +795,9 @@ const ChooseRideModal = () => {
   const { showNotification } = useNotificationContext();
 
   const [booking, setBooking] = useState<boolean>(false);
+  const [selectedRideType, setSelectedRideType] = useState<
+    "cab" | "keke" | "suv"
+  >("cab");
   const book_ride = async () => {
     setBooking(true);
 
@@ -785,57 +838,49 @@ const ChooseRideModal = () => {
         Select Igle ride...
       </Text>
 
-      <View
-        style={{
-          borderColor: "#fff",
-          borderWidth: 3,
-          borderRadius: 10,
-          width: "100%",
-          paddingHorizontal: 20,
-          paddingVertical: 5,
-          marginTop: 20,
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-          <Image
-            source={require("../assets/images/icons/sedan-icon.png")}
-            style={{ height: 50, width: 50 }}
+      {/* Ride type selection - horizontally scrollable with snapping */}
+      <View style={{ marginTop: 20 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={240} // card width (220) + marginRight (20)
+          snapToAlignment="start"
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+        >
+          <RideTypeCard
+            id="cab"
+            title="Cab"
+            icon={require("../assets/images/icons/sedan-icon.png")}
+            distanceKm={rideDetails?.distanceKm}
+            durationMins={rideDetails?.durationMins}
+            amount={rideDetails?.amount}
+            selected={selectedRideType === "cab"}
+            onPress={() => setSelectedRideType("cab")}
           />
-          <View>
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-semibold",
-              }}
-            >
-              Cab ride
-            </Text>
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "poppins-regular",
-                fontSize: 12,
-              }}
-            >
-              {rideDetails?.distanceKm ?? "--"}km .{" "}
-              {rideDetails?.durationMins ?? "--"}mins
-            </Text>
-          </View>
-        </View>
-        <View>
-          <Text
-            style={{
-              color: "#fff",
-              alignSelf: "flex-end",
-              fontFamily: "poppins-bold",
-              fontSize: 16,
-            }}
-          >
-            NGN {rideDetails?.amount.toLocaleString() ?? "----"}
-          </Text>
-        </View>
+
+          <RideTypeCard
+            id="keke"
+            title="Keke"
+            icon={require("../assets/images/icons/keke-icon.png")}
+            distanceKm={rideDetails?.distanceKm}
+            durationMins={rideDetails?.durationMins}
+            amount={rideDetails?.amount}
+            selected={selectedRideType === "keke"}
+            onPress={() => setSelectedRideType("keke")}
+          />
+
+          <RideTypeCard
+            id="suv"
+            title="SUV"
+            icon={require("../assets/images/icons/suv-icon.png")}
+            distanceKm={rideDetails?.distanceKm}
+            durationMins={rideDetails?.durationMins}
+            amount={rideDetails?.amount}
+            selected={selectedRideType === "suv"}
+            onPress={() => setSelectedRideType("suv")}
+          />
+        </ScrollView>
       </View>
       <TouchableWithoutFeedback
         onPress={book_ride}
@@ -843,7 +888,7 @@ const ChooseRideModal = () => {
       >
         <View
           style={{
-            marginVertical: 20,
+            marginVertical: 40,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
@@ -2067,6 +2112,19 @@ const styles = StyleSheet.create({
     padding: 5,
     paddingHorizontal: 10,
     backgroundColor: "grey",
+  },
+  rideCard: {
+    width: 250,
+    marginRight: 20,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "grey",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  rideCardSelected: {
+    backgroundColor: "#fff",
   },
   select_ride_box_active: {
     backgroundColor: "#fff",

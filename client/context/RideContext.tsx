@@ -204,7 +204,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       routeModalRef.current?.snapToIndex(5);
     }
     if (rideStatus === "choosing_car") {
-      routeModalRef.current?.snapToIndex(1);
+      routeModalRef.current?.snapToIndex(2);
     }
     if (rideStatus === "searching") {
       routeModalRef.current?.snapToIndex(1);

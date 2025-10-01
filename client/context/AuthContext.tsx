@@ -71,37 +71,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [signedIn]);
 
-  // Dev-only: send a single test push after sign-in to help debug push flow
-  const testPushSentRef = useRef(false);
-  useEffect(() => {
-    if (!__DEV__) return; // only run in development
-    if (!signedIn?.user_id) return;
-    if (testPushSentRef.current) return;
-
-    (async () => {
-      try {
-        const token = await AsyncStorage.getItem("token");
-        if (!token) return;
-        console.log("[dev] sending test_push for user", signedIn.user_id);
-        const { data } = await axios.post(
-          `${API_URL}/test_push`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        console.log("[dev] test_push response:", data);
-        showNotification("Test push sent (dev)", "success");
-      } catch (err: any) {
-        console.log(
-          "[dev] test_push failed:",
-          err?.response?.data || err?.message || err
-        );
-        showNotification("Test push failed (see console)", "error");
-      } finally {
-        testPushSentRef.current = true;
-      }
-    })();
-  }, [signedIn]);
-
   const API_URL = API_URLS.users;
 
   // Registration function
