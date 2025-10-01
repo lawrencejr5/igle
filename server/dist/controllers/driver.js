@@ -29,10 +29,6 @@ const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const { vehicle_type } = req.body;
         const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const existing_driver = yield driver_1.default.findOne({ user });
-        if (existing_driver) {
-            res.status(409).json({ msg: "Driver already exists for this user." });
-            return;
-        }
         const driverData = {
             user,
             vehicle_type,
@@ -41,7 +37,29 @@ const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 coordinates: [0, 0],
             },
         };
-        const driver = yield driver_1.default.create(driverData);
+        let driver;
+        if (existing_driver) {
+            // Update the existing driver with provided data
+            driver = yield driver_1.default.findByIdAndUpdate(existing_driver._id, driverData, {
+                new: true,
+            });
+            // Ensure wallet exists (in case it was missing)
+            const wallet = yield wallet_1.default.findOne({
+                owner_id: driver === null || driver === void 0 ? void 0 : driver._id,
+                owner_type: "Driver",
+            });
+            if (!wallet) {
+                yield wallet_1.default.create({
+                    owner_id: driver === null || driver === void 0 ? void 0 : driver._id,
+                    owner_type: "Driver",
+                    balance: 0,
+                });
+            }
+            res.status(200).json({ msg: "Driver updated successfully", driver });
+            return;
+        }
+        // Create new driver
+        driver = yield driver_1.default.create(driverData);
         yield wallet_1.default.create({
             owner_id: driver === null || driver === void 0 ? void 0 : driver._id,
             owner_type: "Driver",

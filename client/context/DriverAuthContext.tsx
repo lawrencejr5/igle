@@ -89,7 +89,7 @@ interface DriverAuthContextType {
   createDriver: (vehicle_type: string) => Promise<void>; // Updated to Promise<void>
   updateDriverInfo: (updateData: Partial<DriverType>) => Promise<void>; // Updated to Promise<void>
   updateVehicleInfo: (vehicle: Vehicle) => Promise<void>; // Updated to Promise<void>
-  updateDriverLicense: (driver_licence: DriverLicence) => Promise<void>; // Updated to Promise<void>
+  updateDriverLicense: (formdata: FormData) => Promise<any>; // Accept FormData only
   saveBankInfo: (bankInfo: Omit<BankInfo, "recipient_code">) => Promise<void>; // Updated to Promise<void>
 
   // Profile picture helpers
@@ -366,28 +366,26 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const updateDriverLicense = async (
-    driver_licence: DriverLicence
-  ): Promise<void> => {
+  const updateDriverLicense = async (formdata: FormData): Promise<any> => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.patch(
-        `${API_URL}/license`,
-        {
-          driver_licence,
+
+      if (!formdata) throw new Error("No data provided");
+
+      const { data } = await axios.patch(`${API_URL}/license`, formdata, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      });
+
       if (data.driver_licence) {
         setDriver((prev) =>
           prev ? { ...prev, driver_licence: data.driver_licence } : null
         );
-        showNotification("Updated successfully", "success");
+        showNotification(data.msg || "Updated successfully", "success");
       }
+      return data;
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       console.log(errMsg || "Error updating driver license");

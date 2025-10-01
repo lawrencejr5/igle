@@ -23,10 +23,6 @@ export const create_driver = async (
     const user = req.user?.id;
 
     const existing_driver = await Driver.findOne({ user });
-    if (existing_driver) {
-      res.status(409).json({ msg: "Driver already exists for this user." });
-      return;
-    }
 
     const driverData: any = {
       user,
@@ -37,7 +33,32 @@ export const create_driver = async (
       },
     };
 
-    const driver = await Driver.create(driverData);
+    let driver;
+    if (existing_driver) {
+      // Update the existing driver with provided data
+      driver = await Driver.findByIdAndUpdate(existing_driver._id, driverData, {
+        new: true,
+      });
+
+      // Ensure wallet exists (in case it was missing)
+      const wallet = await Wallet.findOne({
+        owner_id: driver?._id,
+        owner_type: "Driver",
+      });
+      if (!wallet) {
+        await Wallet.create({
+          owner_id: driver?._id,
+          owner_type: "Driver",
+          balance: 0,
+        });
+      }
+
+      res.status(200).json({ msg: "Driver updated successfully", driver });
+      return;
+    }
+
+    // Create new driver
+    driver = await Driver.create(driverData);
 
     await Wallet.create({
       owner_id: driver?._id,

@@ -6,8 +6,11 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Feather from "@expo/vector-icons/Feather";
@@ -31,23 +34,73 @@ const DriverIdentification = () => {
   const [frontImage, setFrontImage] = useState<string>("");
   const [backImage, setBackImage] = useState<string>("");
   const [selfieImage, setSelfieImage] = useState<string>("");
+  const [frontAsset, setFrontAsset] = useState<any>(null);
+  const [backAsset, setBackAsset] = useState<any>(null);
+  const [selfieAsset, setSelfieAsset] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const pickImage = async (imageType: "front" | "back" | "selfie") => {
-    // For now, just set placeholder images
-    const placeholderImage = "image.png";
+    try {
+      const camPerm = await ImagePicker.requestCameraPermissionsAsync();
+      const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    switch (imageType) {
-      case "front":
-        setFrontImage(placeholderImage);
-        break;
-      case "back":
-        setBackImage(placeholderImage);
-        break;
-      case "selfie":
-        setSelfieImage(placeholderImage);
-        break;
+      if (camPerm.status !== "granted" && libPerm.status !== "granted") {
+        showNotification(
+          "Camera or media library permission is required",
+          "error"
+        );
+        return;
+      }
+
+      let result: any = { canceled: true };
+      try {
+        result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.8,
+        });
+      } catch (camErr) {
+        console.warn("Camera launch failed, falling back to library:", camErr);
+      }
+
+      if (!result || result.canceled) {
+        try {
+          result = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+          });
+        } catch (libErr) {
+          console.error("launchImageLibraryAsync failed:", libErr);
+          showNotification("Image picker failed", "error");
+          return;
+        }
+      }
+
+      if (
+        !result ||
+        result.canceled ||
+        !result.assets ||
+        result.assets.length === 0
+      ) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      if (imageType === "front") {
+        setFrontImage(asset.uri);
+        setFrontAsset(asset);
+      } else if (imageType === "back") {
+        setBackImage(asset.uri);
+        setBackAsset(asset);
+      } else {
+        setSelfieImage(asset.uri);
+        setSelfieAsset(asset);
+      }
+    } catch (err) {
+      console.error("pickImage error:", err);
+      showNotification("Failed to pick image", "error");
     }
   };
 
@@ -64,22 +117,38 @@ const DriverIdentification = () => {
 
     setLoading(true);
     try {
-      const driverLicence = {
-        number: licenseNumber,
-        expiry_date: expiryDate,
-        front_image: frontImage,
-        back_image: backImage,
-        selfie_with_licence: selfieImage,
+      const formData = new FormData();
+      formData.append("number", licenseNumber);
+      formData.append("expiry_date", expiryDate);
+
+      const appendAsset = (asset: any, fieldName: string) => {
+        if (!asset || !asset.uri) return;
+        const uri = asset.uri;
+        const parts = uri.split("/");
+        const name = parts[parts.length - 1];
+        const fileType = name.includes(".") ? name.split(".").pop() : "jpg";
+        const mimeType = `image/${fileType}`;
+        // @ts-ignore
+        formData.append(fieldName, {
+          uri,
+          name,
+          type: mimeType,
+        } as any);
       };
 
-      await updateDriverLicense(driverLicence);
+      appendAsset(frontAsset, "license_front");
+      appendAsset(backAsset, "license_back");
+      appendAsset(selfieAsset, "selfie_with_license");
+
+      const res = await updateDriverLicense(formData);
       setSuccess(true);
       setTimeout(() => {
         router.push("/vehicle_information");
       }, 1500);
     } catch (err: any) {
+      console.error("handleNext error:", err);
       showNotification(
-        err.message || "Failed to update driver license",
+        err?.message || "Failed to update driver license",
         "error"
       );
     } finally {
@@ -166,7 +235,11 @@ const DriverIdentification = () => {
                     ]}
                   >
                     {frontImage ? (
-                      <Feather name="check" color={"#4CAF50"} size={30} />
+                      <Image
+                        source={{ uri: frontImage }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
                     ) : (
                       <Feather name="camera" color={"#fff"} size={30} />
                     )}
@@ -183,7 +256,11 @@ const DriverIdentification = () => {
                     ]}
                   >
                     {backImage ? (
-                      <Feather name="check" color={"#4CAF50"} size={30} />
+                      <Image
+                        source={{ uri: backImage }}
+                        style={{ width: "100%", height: "100%" }}
+                        resizeMode="cover"
+                      />
                     ) : (
                       <Feather name="camera" color={"#fff"} size={30} />
                     )}
@@ -201,7 +278,11 @@ const DriverIdentification = () => {
                   ]}
                 >
                   {selfieImage ? (
-                    <Feather name="check" color={"#4CAF50"} size={30} />
+                    <Image
+                      source={{ uri: selfieImage }}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                    />
                   ) : (
                     <Feather name="camera" color={"#fff"} size={30} />
                   )}
