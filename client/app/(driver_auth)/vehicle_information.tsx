@@ -26,7 +26,7 @@ import Notification from "../../components/Notification";
 
 const VehicleInformation = () => {
   const styles = driver_reg_styles();
-  const { updateVehicleInfo } = useDriverAuthContext();
+  const { updateVehicleInfo, driver } = useDriverAuthContext();
   const { showNotification, notification } = useNotificationContext()!;
 
   const [exteriorImage, setExteriorImage] = useState<string>("");
@@ -121,7 +121,10 @@ const VehicleInformation = () => {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("brand", brand.trim());
+      formData.append(
+        "brand",
+        brand ? brand.trim() : driver?.vehicle_type ?? ""
+      );
       formData.append("model", model.trim());
       formData.append("color", color.trim());
       formData.append("year", year.trim());
@@ -228,35 +231,54 @@ const VehicleInformation = () => {
                 </TouchableWithoutFeedback>
               </View>
             </View>
-            <View style={styles.inp_container}>
-              <Text style={styles.inp_label}>Vehicle brand</Text>
-              <View style={styles.inp_holder}>
-                <FontAwesome name="car" size={20} color="white" />
-                <TextInput
-                  style={styles.text_input}
-                  autoCapitalize="words"
-                  placeholder="e.g. Toyota"
-                  placeholderTextColor="#c5c5c5"
-                  value={brand}
-                  onChangeText={setBrand}
-                />
+            {driver?.vehicle_type !== "keke" && (
+              <View style={styles.inp_container}>
+                <Text style={styles.inp_label}>Vehicle brand</Text>
+                <View style={styles.inp_holder}>
+                  <FontAwesome name="car" size={20} color="white" />
+                  <TextInput
+                    style={styles.text_input}
+                    autoCapitalize="words"
+                    placeholder="e.g. Toyota"
+                    placeholderTextColor="#c5c5c5"
+                    value={brand}
+                    onChangeText={setBrand}
+                  />
+                </View>
               </View>
-            </View>
+            )}
 
-            <View style={styles.inp_container}>
-              <Text style={styles.inp_label}>Vehicle model</Text>
-              <View style={styles.inp_holder}>
-                <FontAwesome name="bookmark-o" size={20} color="white" />
-                <TextInput
-                  style={styles.text_input}
-                  autoCapitalize="words"
-                  placeholder="e.g. Camry"
-                  placeholderTextColor="#c5c5c5"
-                  value={model}
-                  onChangeText={setModel}
-                />
+            {driver?.vehicle_type === "keke" ? (
+              <View style={styles.inp_container}>
+                <Text style={styles.inp_label}>Keke brand</Text>
+                <View style={styles.inp_holder}>
+                  <FontAwesome name="bookmark-o" size={20} color="white" />
+                  <TextInput
+                    style={styles.text_input}
+                    autoCapitalize="words"
+                    placeholder="e.g. Bajaj, TVS, Piaggo"
+                    placeholderTextColor="#c5c5c5"
+                    value={model}
+                    onChangeText={setModel}
+                  />
+                </View>
               </View>
-            </View>
+            ) : (
+              <View style={styles.inp_container}>
+                <Text style={styles.inp_label}>Vehicle model</Text>
+                <View style={styles.inp_holder}>
+                  <FontAwesome name="bookmark-o" size={20} color="white" />
+                  <TextInput
+                    style={styles.text_input}
+                    autoCapitalize="words"
+                    placeholder="e.g. Camry"
+                    placeholderTextColor="#c5c5c5"
+                    value={model}
+                    onChangeText={setModel}
+                  />
+                </View>
+              </View>
+            )}
 
             <View style={styles.inp_container}>
               <Text style={styles.inp_label}>Vehicle color</Text>
@@ -273,7 +295,7 @@ const VehicleInformation = () => {
               </View>
             </View>
             <View style={styles.inp_container}>
-              <Text style={styles.inp_label}>Vehicle year</Text>
+              <Text style={styles.inp_label}>Vehicle year (optional)</Text>
               <View style={styles.inp_holder}>
                 <FontAwesome name="calendar" size={20} color="white" />
                 <TextInput
@@ -302,18 +324,10 @@ const VehicleInformation = () => {
               </View>
             </View>
 
-            <TouchableWithoutFeedback
-              onPress={handleNext}
-              disabled={loading || success}
-            >
-              <View
-                style={[
-                  styles.sign_btn,
-                  (loading || success) && { opacity: 0.6 },
-                ]}
-              >
+            <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
+              <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
                 <Text style={styles.sign_btn_text}>
-                  {loading ? "Updating..." : success ? "Updated!" : "Next"}
+                  {loading ? "Updating..." : "Next"}
                 </Text>
               </View>
             </TouchableWithoutFeedback>

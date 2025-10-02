@@ -118,18 +118,10 @@ const ChooseCarType = () => {
             </TouchableWithoutFeedback>
           </View>
 
-          <TouchableWithoutFeedback
-            onPress={handleContinue}
-            disabled={loading || success}
-          >
-            <View
-              style={[
-                styles.continue_btn,
-                (loading || success) && { opacity: 0.6 },
-              ]}
-            >
+          <TouchableWithoutFeedback onPress={handleContinue} disabled={loading}>
+            <View style={[styles.continue_btn, loading && { opacity: 0.6 }]}>
               <Text style={styles.continue_btn_text}>
-                {loading ? "Creating..." : success ? "Created!" : "Continue"}
+                {loading ? "Creating..." : "Continue"}
               </Text>
             </View>
           </TouchableWithoutFeedback>

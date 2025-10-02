@@ -163,7 +163,7 @@ const BankDetails = () => {
                   style={styles.text_input}
                   autoCapitalize="none"
                   keyboardType="numeric"
-                  placeholder="e.g. 011, 044"
+                  placeholder="e.g. GTB - 058"
                   placeholderTextColor="#c5c5c5"
                   value={bankCode}
                   onChangeText={setBankCode}
@@ -172,18 +172,10 @@ const BankDetails = () => {
               </View>
             </View>
 
-            <TouchableWithoutFeedback
-              onPress={handleNext}
-              disabled={loading || success}
-            >
-              <View
-                style={[
-                  styles.sign_btn,
-                  (loading || success) && { opacity: 0.6 },
-                ]}
-              >
+            <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
+              <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
                 <Text style={styles.sign_btn_text}>
-                  {loading ? "Saving..." : success ? "Saved!" : "Submit"}
+                  {loading ? "Saving..." : "Submit"}
                 </Text>
               </View>
             </TouchableWithoutFeedback>

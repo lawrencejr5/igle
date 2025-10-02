@@ -313,18 +313,10 @@ const DriverIdentification = () => {
                 </View>
               </TouchableWithoutFeedback>
             </View>
-            <TouchableWithoutFeedback
-              onPress={handleNext}
-              disabled={loading || success}
-            >
-              <View
-                style={[
-                  styles.sign_btn,
-                  (loading || success) && { opacity: 0.6 },
-                ]}
-              >
+            <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
+              <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
                 <Text style={styles.sign_btn_text}>
-                  {loading ? "Updating..." : success ? "Updated!" : "Next"}
+                  {loading ? "Updating..." : "Next"}
                 </Text>
               </View>
             </TouchableWithoutFeedback>

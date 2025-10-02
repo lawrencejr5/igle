@@ -290,16 +290,16 @@ const PersonalInformation = () => {
 
               <TouchableWithoutFeedback
                 onPress={handleNext}
-                disabled={loading || success}
+                disabled={loading || uploadingPic}
               >
                 <View
                   style={[
                     styles.sign_btn,
-                    (loading || success) && { opacity: 0.6 },
+                    (loading || uploadingPic) && { opacity: 0.6 },
                   ]}
                 >
                   <Text style={styles.sign_btn_text}>
-                    {loading ? "Processing..." : success ? "Updated!" : "Next"}
+                    {loading ? "Processing..." : "Next"}
                   </Text>
                 </View>
               </TouchableWithoutFeedback>
