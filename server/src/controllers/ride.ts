@@ -95,8 +95,50 @@ export const request_ride = async (
         : null,
     });
 
-    // If it's an instant ride → emit immediately
-    io.emit("new_ride_request", { ride_id: new_ride._id });
+    // Notify only drivers of the requested vehicle type
+    try {
+      if (vehicle) {
+        // find drivers with the requested vehicle type
+        const drivers = await Driver.find({ vehicle_type: vehicle });
+
+        // notify connected drivers via sockets and offline via push
+        await Promise.all(
+          drivers.map(async (d) => {
+            try {
+              const driverId = String((d as any)._id);
+              const driverSocket = await get_driver_socket_id(driverId);
+              if (driverSocket) {
+                io.to(driverSocket).emit("new_ride_request", {
+                  ride_id: new_ride._id,
+                });
+              } else {
+                const tokens = await get_driver_push_tokens(driverId);
+                if (tokens.length) {
+                  await sendExpoPush(
+                    tokens,
+                    "New ride request",
+                    "A nearby rider needs a ride",
+                    {
+                      type: "new_ride_request",
+                      rideId: new_ride._id,
+                    }
+                  );
+                }
+              }
+            } catch (e) {
+              console.error("Failed to notify driver", d._id, e);
+            }
+          })
+        );
+      } else {
+        // fallback: notify all drivers
+        io.emit("new_ride_request", { ride_id: new_ride._id });
+      }
+    } catch (notifyErr) {
+      console.error("Error notifying drivers for ride request:", notifyErr);
+      // fallback to global emit
+      io.emit("new_ride_request", { ride_id: new_ride._id });
+    }
 
     // Start expiration timeout
     setTimeout(
@@ -142,7 +184,45 @@ export const retry_ride = async (
 
     await ride.save();
 
-    io.emit("new_ride_request", { ride_id: ride._id });
+    // Notify only drivers of the ride's vehicle type when retrying
+    try {
+      if (ride.vehicle) {
+        const drivers = await Driver.find({ vehicle_type: ride.vehicle });
+        await Promise.all(
+          drivers.map(async (d) => {
+            try {
+              const driverId = String((d as any)._id);
+              const driverSocket = await get_driver_socket_id(driverId);
+              if (driverSocket) {
+                io.to(driverSocket).emit("new_ride_request", {
+                  ride_id: ride._id,
+                });
+              } else {
+                const tokens = await get_driver_push_tokens(driverId);
+                if (tokens.length) {
+                  await sendExpoPush(
+                    tokens,
+                    "New ride request",
+                    "A nearby rider needs a ride",
+                    {
+                      type: "new_ride_request",
+                      rideId: ride._id,
+                    }
+                  );
+                }
+              }
+            } catch (e) {
+              console.error("Failed to notify driver", d._id, e);
+            }
+          })
+        );
+      } else {
+        io.emit("new_ride_request", { ride_id: ride._id });
+      }
+    } catch (e) {
+      console.error("Notify retry error:", e);
+      io.emit("new_ride_request", { ride_id: ride._id });
+    }
 
     res.status(200).json({
       msg: "Retrying ride request...",
@@ -200,7 +280,45 @@ export const rebook_ride = async (
       status: "pending",
     });
 
-    io.emit("new_ride_request", { ride_id: new_ride._id });
+    // Notify only drivers matching original ride vehicle type
+    try {
+      if (new_ride.vehicle) {
+        const drivers = await Driver.find({ vehicle_type: new_ride.vehicle });
+        await Promise.all(
+          drivers.map(async (d) => {
+            try {
+              const driverId = String((d as any)._id);
+              const driverSocket = await get_driver_socket_id(driverId);
+              if (driverSocket) {
+                io.to(driverSocket).emit("new_ride_request", {
+                  ride_id: new_ride._id,
+                });
+              } else {
+                const tokens = await get_driver_push_tokens(driverId);
+                if (tokens.length) {
+                  await sendExpoPush(
+                    tokens,
+                    "New ride request",
+                    "A nearby rider needs a ride",
+                    {
+                      type: "new_ride_request",
+                      rideId: new_ride._id,
+                    }
+                  );
+                }
+              }
+            } catch (e) {
+              console.error("Failed to notify driver", d._id, e);
+            }
+          })
+        );
+      } else {
+        io.emit("new_ride_request", { ride_id: new_ride._id });
+      }
+    } catch (e) {
+      console.error("Notify rebook error:", e);
+      io.emit("new_ride_request", { ride_id: new_ride._id });
+    }
 
     res.status(201).json({
       msg: "Ride has been rebooked",

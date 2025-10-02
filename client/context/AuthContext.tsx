@@ -310,32 +310,27 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     try {
       const { data } = await axios.post(`${API_URL}/google_auth`, { tokenId });
 
-      if (data?.token && data?.user) {
-        await AsyncStorage.setItem("token", data.token);
+      await AsyncStorage.setItem("token", data.token);
 
-        const is_driver = data.user.is_driver;
+      const is_driver = data.user.is_driver;
 
-        await getUserData();
-        await getWalletBalance("User");
-        // If this is a newly created user via Google, navigate to phone update flow
-        if (data.isNew) {
-          router.push("/(auth)/phone");
-        } else {
-          if (is_driver) {
-            router.push("/(driver)/home");
-          } else {
-            router.push("/(tabs)/home");
-          }
-        }
-        // await registerPushToken();
-        showNotification(
-          data.isNew ? "Account created" : "Login successful.",
-          "success"
-        );
+      await getUserData();
+      await getWalletBalance("User");
+      // If this is a newly created user via Google, navigate to phone update flow
+      if (data.isNew) {
+        router.push("/(auth)/phone");
       } else {
-        showNotification("Google login failed.", "error");
-        throw new Error("Invalid google auth response");
+        if (is_driver) {
+          router.push("/(driver)/home");
+        } else {
+          router.push("/(tabs)/home");
+        }
       }
+      // await registerPushToken();
+      showNotification(
+        data.isNew ? "Account created" : "Login successful.",
+        "success"
+      );
     } catch (err: any) {
       showNotification(
         err?.response?.data?.msg || "Google login failed.",

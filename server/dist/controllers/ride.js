@@ -89,8 +89,46 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 ? new Date(scheduled_time)
                 : null,
         });
-        // If it's an instant ride → emit immediately
-        server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+        // Notify only drivers of the requested vehicle type
+        try {
+            if (vehicle) {
+                // find drivers with the requested vehicle type
+                const drivers = yield driver_1.default.find({ vehicle_type: vehicle });
+                // notify connected drivers via sockets and offline via push
+                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                    try {
+                        const driverId = String(d._id);
+                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
+                        if (driverSocket) {
+                            server_1.io.to(driverSocket).emit("new_ride_request", {
+                                ride_id: new_ride._id,
+                            });
+                        }
+                        else {
+                            const tokens = yield (0, get_id_2.get_driver_push_tokens)(driverId);
+                            if (tokens.length) {
+                                yield (0, expo_push_1.sendExpoPush)(tokens, "New ride request", "A nearby rider needs a ride", {
+                                    type: "new_ride_request",
+                                    rideId: new_ride._id,
+                                });
+                            }
+                        }
+                    }
+                    catch (e) {
+                        console.error("Failed to notify driver", d._id, e);
+                    }
+                })));
+            }
+            else {
+                // fallback: notify all drivers
+                server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+            }
+        }
+        catch (notifyErr) {
+            console.error("Error notifying drivers for ride request:", notifyErr);
+            // fallback to global emit
+            server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+        }
         // Start expiration timeout
         setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 30000);
         res.status(201).json({
@@ -126,7 +164,42 @@ const retry_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         else
             ride.status = "pending";
         yield ride.save();
-        server_1.io.emit("new_ride_request", { ride_id: ride._id });
+        // Notify only drivers of the ride's vehicle type when retrying
+        try {
+            if (ride.vehicle) {
+                const drivers = yield driver_1.default.find({ vehicle_type: ride.vehicle });
+                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                    try {
+                        const driverId = String(d._id);
+                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
+                        if (driverSocket) {
+                            server_1.io.to(driverSocket).emit("new_ride_request", {
+                                ride_id: ride._id,
+                            });
+                        }
+                        else {
+                            const tokens = yield (0, get_id_2.get_driver_push_tokens)(driverId);
+                            if (tokens.length) {
+                                yield (0, expo_push_1.sendExpoPush)(tokens, "New ride request", "A nearby rider needs a ride", {
+                                    type: "new_ride_request",
+                                    rideId: ride._id,
+                                });
+                            }
+                        }
+                    }
+                    catch (e) {
+                        console.error("Failed to notify driver", d._id, e);
+                    }
+                })));
+            }
+            else {
+                server_1.io.emit("new_ride_request", { ride_id: ride._id });
+            }
+        }
+        catch (e) {
+            console.error("Notify retry error:", e);
+            server_1.io.emit("new_ride_request", { ride_id: ride._id });
+        }
         res.status(200).json({
             msg: "Retrying ride request...",
             ride,
@@ -171,7 +244,42 @@ const rebook_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             commission,
             status: "pending",
         });
-        server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+        // Notify only drivers matching original ride vehicle type
+        try {
+            if (new_ride.vehicle) {
+                const drivers = yield driver_1.default.find({ vehicle_type: new_ride.vehicle });
+                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                    try {
+                        const driverId = String(d._id);
+                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
+                        if (driverSocket) {
+                            server_1.io.to(driverSocket).emit("new_ride_request", {
+                                ride_id: new_ride._id,
+                            });
+                        }
+                        else {
+                            const tokens = yield (0, get_id_2.get_driver_push_tokens)(driverId);
+                            if (tokens.length) {
+                                yield (0, expo_push_1.sendExpoPush)(tokens, "New ride request", "A nearby rider needs a ride", {
+                                    type: "new_ride_request",
+                                    rideId: new_ride._id,
+                                });
+                            }
+                        }
+                    }
+                    catch (e) {
+                        console.error("Failed to notify driver", d._id, e);
+                    }
+                })));
+            }
+            else {
+                server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+            }
+        }
+        catch (e) {
+            console.error("Notify rebook error:", e);
+            server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+        }
         res.status(201).json({
             msg: "Ride has been rebooked",
             ride: new_ride,
