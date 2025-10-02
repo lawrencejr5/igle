@@ -53,7 +53,7 @@ interface CurrentLocation {
 interface DriverType {
   driver_id: string;
   user?: string;
-  profile_pic: string;
+  profile_img: string;
   createdAt: Date;
   name?: string;
   email?: string;
@@ -62,7 +62,7 @@ interface DriverType {
   vehicle_model: string;
   vehicle_color: string;
   socket_id?: string;
-  vehicle_type?: string;
+  vehicle_type?: "cab" | "keke" | "suv";
   vehicle?: Vehicle;
   driver_licence?: DriverLicence;
   driver_licence_number?: number;
@@ -164,7 +164,8 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           total_trips,
           is_available,
           rating,
-          user: { name, email, phone, createdAt, profile_pic },
+          profile_img,
+          user: { name, email, phone, createdAt },
           vehicle: { brand, model, color, plate_number },
           driver_licence: { number: driver_licence_number },
         } = data.driver;
@@ -173,6 +174,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           driver_id: _id,
           socket_id,
           vehicle_type,
+          profile_img,
           name,
           email,
           phone,
@@ -184,7 +186,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           driver_licence_number,
           is_available,
           rating,
-          profile_pic,
           createdAt,
         };
         return driverInfo;
@@ -223,7 +224,6 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const token = await AsyncStorage.getItem("token");
-
     setUploadingPic(true);
     try {
       const { data } = await axios.patch(`${API_URL}/profile_pic`, formaData, {
@@ -233,6 +233,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
         },
       });
       if (data) {
+        setDriver((prev: any) => ({ ...prev, profile_img: data.profile_img }));
         showNotification(data.msg || "Profile updated", "success");
       }
     } catch (error: any) {
@@ -260,7 +261,10 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           },
         }
       );
-      if (data) showNotification(data.msg || "Removed", "success");
+      if (data) {
+        setDriver((prev: any) => ({ ...prev, profile_img: null }));
+        showNotification(data.msg || "Removed", "success");
+      }
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       showNotification(errMsg || "An error occured", "error");

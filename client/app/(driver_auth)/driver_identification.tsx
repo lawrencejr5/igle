@@ -8,8 +8,10 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
-import React, { useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useCallback, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -31,6 +33,10 @@ const DriverIdentification = () => {
 
   const [licenseNumber, setLicenseNumber] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<string>("");
+  const [expiryDateObj, setExpiryDateObj] = useState<Date | undefined>(
+    undefined
+  );
+  const [showExpiryPicker, setShowExpiryPicker] = useState<boolean>(false);
   const [frontImage, setFrontImage] = useState<string>("");
   const [backImage, setBackImage] = useState<string>("");
   const [selfieImage, setSelfieImage] = useState<string>("");
@@ -156,6 +162,21 @@ const DriverIdentification = () => {
     }
   };
 
+  const onExpiryChange = useCallback(
+    (_: any, selected?: Date) => {
+      // Hide on Android after selection/dismiss
+      if (Platform.OS === "android") setShowExpiryPicker(false);
+      if (selected) {
+        setExpiryDateObj(selected);
+        const y = selected.getFullYear();
+        const m = String(selected.getMonth() + 1).padStart(2, "0");
+        const d = String(selected.getDate()).padStart(2, "0");
+        setExpiryDate(`${y}-${m}-${d}`);
+      }
+    },
+    [expiryDateObj]
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: "#121212", paddingBottom: 20 }}>
       <Notification notification={notification} />
@@ -214,15 +235,33 @@ const DriverIdentification = () => {
               </Text>
               <View style={styles.inp_holder}>
                 <FontAwesome name="calendar-o" size={20} color="white" />
-                <TextInput
-                  style={styles.text_input}
-                  placeholder="License card expiration date"
-                  placeholderTextColor={"#c5c5c5"}
-                  autoCapitalize="none"
-                  value={expiryDate}
-                  onChangeText={setExpiryDate}
-                />
+                <Pressable
+                  onPress={() => setShowExpiryPicker(true)}
+                  style={{ flex: 1 }}
+                >
+                  <Text
+                    style={[
+                      styles.text_input,
+                      {
+                        paddingVertical: 10,
+                        color: expiryDate ? "#fff" : "#c5c5c5",
+                      },
+                    ]}
+                  >
+                    {expiryDate || "License card expiration date"}
+                  </Text>
+                </Pressable>
               </View>
+
+              {showExpiryPicker && (
+                <DateTimePicker
+                  value={expiryDateObj || new Date()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                  minimumDate={new Date()}
+                  onChange={onExpiryChange}
+                />
+              )}
             </View>
             <View style={styles.two_column_conatainer}>
               <View style={styles.inp_container}>

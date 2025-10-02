@@ -7,7 +7,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import Feather from "@expo/vector-icons/Feather";
 import { FontAwesome } from "@expo/vector-icons";
@@ -32,12 +33,15 @@ const PersonalInformation = () => {
     uploadingPic,
     removeProfilePic,
     removingPic,
+    driver,
   } = useDriverAuthContext();
 
   const [imageUri, setImageUri] = useState<string>("");
   const [fullName, setFullName] = useState<string>("Oputa Lawrence");
   const [email, setEmail] = useState<string>("oputalawrence@gmail.com");
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
+  const [dateObj, setDateObj] = useState<Date | undefined>(undefined);
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -127,6 +131,22 @@ const PersonalInformation = () => {
       setLoading(false);
     }
   };
+
+  const onDateChange = useCallback(
+    (_: any, selectedDate?: Date) => {
+      // Android: onChange is called once and we should hide the picker
+      if (Platform.OS === "android") setShowDatePicker(false);
+      if (selectedDate) {
+        setDateObj(selectedDate);
+        // format as YYYY-MM-DD using local date parts (avoid timezone shift)
+        const y = selectedDate.getFullYear();
+        const m = String(selectedDate.getMonth() + 1).padStart(2, "0");
+        const d = String(selectedDate.getDate()).padStart(2, "0");
+        setDateOfBirth(`${y}-${m}-${d}`);
+      }
+    },
+    [dateObj]
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
@@ -239,15 +259,33 @@ const PersonalInformation = () => {
                 <Text style={styles.inp_label}>Date of birth</Text>
                 <View style={styles.inp_holder}>
                   <FontAwesome name="calendar-o" size={20} color="white" />
-                  <TextInput
-                    style={styles.text_input}
-                    placeholder="Date of birth (YYYY-MM-DD)"
-                    placeholderTextColor="#c5c5c5"
-                    value={dateOfBirth}
-                    onChangeText={setDateOfBirth}
-                    autoCapitalize="none"
-                  />
+                  <Pressable
+                    onPress={() => setShowDatePicker(true)}
+                    style={{ flex: 1 }}
+                  >
+                    <Text
+                      style={[
+                        styles.text_input,
+                        {
+                          paddingVertical: 10,
+                          color: dateOfBirth ? "#fff" : "#c5c5c5",
+                        },
+                      ]}
+                    >
+                      {dateOfBirth || "Date of birth (YYYY-MM-DD)"}
+                    </Text>
+                  </Pressable>
                 </View>
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={dateObj || new Date(1990, 0, 1)}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                    maximumDate={new Date()}
+                    onChange={onDateChange}
+                  />
+                )}
               </View>
 
               <TouchableWithoutFeedback
