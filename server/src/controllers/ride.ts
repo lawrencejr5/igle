@@ -366,10 +366,10 @@ export const get_ride_data = async (
           "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
-          select: "name email phone",
+          select: "name email phone profile_pic",
         },
       })
-      .populate("rider", "name phone");
+      .populate("rider", "name phone profile_pic");
     res.status(200).json({ msg: "success", ride });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
@@ -395,10 +395,10 @@ export const get_user_rides = async (
           "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
-          select: "name email phone",
+          select: "name email phone profile_pic",
         },
       })
-      .populate("rider", "name phone");
+      .populate("rider", "name phone profile_pic");
     res.status(200).json({ msg: "success", rowCount: rides.length, rides });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
@@ -422,10 +422,10 @@ export const get_user_active_ride = async (
           "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
-          select: "name email phone",
+          select: "name email phone profile_pic",
         },
       })
-      .populate("rider", "name phone");
+      .populate("rider", "name phone profile_pic");
     res.status(200).json({ msg: "success", ride });
   } catch (error) {
     res.status(500).json({ msg: "An error occurred while fetching ride" });

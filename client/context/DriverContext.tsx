@@ -74,6 +74,7 @@ interface Ride {
     _id: string;
     name: string;
     phone: string;
+    profile_pic: string;
   };
 }
 
@@ -288,9 +289,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       showNotification(data.msg, "success");
     } catch (error: any) {
       const errMsg = error.response.data.msg;
-      console.log(error.message);
-      console.log(errMsg);
       showNotification(errMsg, "error");
+      throw new Error(errMsg);
     }
   };
 

@@ -180,8 +180,8 @@ const OfflineMode = ({
       >
         <Image
           source={
-            driver?.profile_pic
-              ? { uri: driver?.profile_pic } // remote image from backend
+            driver?.profile_img
+              ? { uri: driver?.profile_img } // remote image from backend
               : require("../assets/images/user.png") // fallback local asset
           }
           style={styles.profileImage}
@@ -234,7 +234,7 @@ const IncomingModal = () => {
     acceptRideRequest,
   } = useDriverContext();
 
-  const [countDown, setCountDown] = useState<number>(90);
+  const [countDown, setCountDown] = useState<number>(900);
   const [accepting, setAccepting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -263,7 +263,7 @@ const IncomingModal = () => {
       await acceptRideRequest();
       setDriveStatus("accepted");
     } catch (error) {
-      console.log(error);
+      setDriveStatus("searching");
     } finally {
       setAccepting(false);
     }
@@ -281,18 +281,45 @@ const IncomingModal = () => {
       {/* Ride request card */}
       <View style={styles.rideRequestCard}>
         {/* Header */}
+        {incomingRideData?.scheduled_time && (
+          <View
+            style={{
+              backgroundColor: "#ffb53630",
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 20,
+              marginBottom: 10,
+              flexShrink: 1,
+              alignSelf: "flex-start",
+            }}
+          >
+            <Text
+              style={{
+                color: "#ffb536",
+                fontFamily: "raleway-semibold",
+                fontSize: 11,
+              }}
+            >
+              Scheduled ride!
+            </Text>
+          </View>
+        )}
         <View style={styles.rideRequestHeader}>
           {/* User */}
           <View style={styles.userInfo}>
             <Image
-              source={require("../assets/images/black-profile.jpeg")}
+              source={
+                incomingRideData?.rider?.profile_pic
+                  ? { uri: incomingRideData?.rider?.profile_pic } // remote image from backend
+                  : require("../assets/images/user.png")
+              }
               style={styles.userImage}
             />
             <View>
               <Text style={styles.userName}>
                 {incomingRideData?.rider.name}
               </Text>
-              <Text style={styles.userRides}>No rides completed</Text>
+              <Text style={styles.userRides}>Passenger</Text>
             </View>
           </View>
 
@@ -308,6 +335,30 @@ const IncomingModal = () => {
             {incomingRideData?.distance_km} km)
           </Text>
         </View>
+
+        {/* Scheduled time (if any) */}
+        {incomingRideData?.scheduled_time && (
+          <View style={styles.scheduledRow}>
+            <MaterialIcons name="event" color={"#ffb536"} size={16} />
+            <Text style={styles.scheduledText}>
+              {(() => {
+                try {
+                  const d = new Date(incomingRideData.scheduled_time as any);
+                  return d.toLocaleString(undefined, {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                } catch (e) {
+                  return String(incomingRideData.scheduled_time);
+                }
+              })()}
+            </Text>
+          </View>
+        )}
 
         {/* Ride route card */}
         {incomingRideData && (
@@ -618,6 +669,7 @@ const styles = StyleSheet.create({
   userImage: {
     width: 30,
     height: 30,
+    borderRadius: 15,
   },
   userName: {
     color: "#fff",
@@ -652,6 +704,18 @@ const styles = StyleSheet.create({
     fontFamily: "poppins-regular",
     fontSize: 12,
     marginTop: 3,
+  },
+  scheduledRow: {
+    marginTop: 6,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  scheduledText: {
+    color: "#ffb536",
+    fontFamily: "poppins-regular",
+    fontSize: 13,
   },
   priceText: {
     color: "#10b804ff",
