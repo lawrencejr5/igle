@@ -14,6 +14,7 @@ import {
   get_user_active_ride,
   rebook_ride,
   retry_ride,
+  get_user_scheduled_rides,
 } from "../controllers/ride";
 
 const RideRouter = Router();
@@ -21,6 +22,7 @@ const RideRouter = Router();
 RideRouter.use(auth);
 
 RideRouter.get("/active", get_user_active_ride);
+RideRouter.get("/scheduled", get_user_scheduled_rides);
 RideRouter.post("/request", request_ride);
 RideRouter.patch("/retry", retry_ride);
 RideRouter.post("/rebook", rebook_ride);

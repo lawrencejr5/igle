@@ -11,7 +11,7 @@ import {
   RefreshControl,
   FlatList,
 } from "react-native";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 import { router } from "expo-router";
 
@@ -41,16 +41,14 @@ const Rides = () => {
   const { appLoading, loadingState } = useLoading();
 
   const [category, setCategory] = useState<
-    "ongoing" | "completed" | "cancelled"
+    "ongoing" | "scheduled" | "completed" | "cancelled"
   >("ongoing");
 
   const {
     ongoingRideData,
     userCompletedRides,
     userCancelledRides,
-    getActiveRide,
-    getUserCancelledRides,
-    getUserCompletedRides,
+    scheduledRides,
   } = useRideContext();
 
   return (
@@ -70,6 +68,13 @@ const Rides = () => {
             {category === "ongoing" &&
               (ongoingRideData ? (
                 <OngoingRide data={ongoingRideData} />
+              ) : (
+                <EmptyState message="You don't have any ongoing rides currently" />
+              ))}
+
+            {category === "scheduled" &&
+              (scheduledRides ? (
+                <ScheduledRides data={scheduledRides} />
               ) : (
                 <EmptyState message="You don't have any ongoing rides currently" />
               ))}
@@ -104,33 +109,42 @@ const CategoryTabs = ({
   category,
   setCategory,
 }: {
-  category: "ongoing" | "completed" | "cancelled";
-  setCategory: (cat: "ongoing" | "completed" | "cancelled") => void;
+  category: "ongoing" | "scheduled" | "completed" | "cancelled";
+  setCategory: (
+    cat: "ongoing" | "scheduled" | "completed" | "cancelled"
+  ) => void;
 }) => {
-  const tabs: Array<"ongoing" | "completed" | "cancelled"> = [
+  const tabs: Array<"ongoing" | "scheduled" | "completed" | "cancelled"> = [
     "ongoing",
+    "scheduled",
     "completed",
     "cancelled",
   ];
 
   return (
-    <View style={styles.nav_container}>
-      {tabs.map((tab) => (
-        <Pressable
-          key={tab}
-          onPress={() => setCategory(tab)}
-          style={[styles.nav_box, category === tab && styles.nav_box_active]}
-        >
-          <Text
-            style={[
-              styles.nav_text,
-              category === tab && styles.nav_text_active,
-            ]}
+    <View>
+      <ScrollView
+        contentContainerStyle={styles.nav_container}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+      >
+        {tabs.map((tab) => (
+          <Pressable
+            key={tab}
+            onPress={() => setCategory(tab)}
+            style={[styles.nav_box, category === tab && styles.nav_box_active]}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </Text>
-        </Pressable>
-      ))}
+            <Text
+              style={[
+                styles.nav_text,
+                category === tab && styles.nav_text_active,
+              ]}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 };
@@ -570,6 +584,307 @@ const OngoingRide = ({ data }: { data: any }) => {
     </ScrollView>
   );
 };
+const ScheduledRides = ({ data }: { data: any }) => {
+  const { showNotification } = useNotificationContext();
+
+  const {
+    cancelRideRequest,
+    cancelling,
+    ongoingRideData,
+    setRideStatus,
+    getActiveRide,
+  } = useRideContext();
+  const { region, mapRef } = useMapContext();
+
+  const cancel_ride = async () => {
+    const reason = "No reason";
+    const by = "rider";
+    const ride_id = ongoingRideData?._id;
+
+    try {
+      ride_id && (await cancelRideRequest(ride_id, by, reason));
+      if (region) mapRef.current.animateToRegion(region, 1000);
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await getActiveRide();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Banner that shows countdown to earliest scheduled ride
+  const ScheduledBanner = ({ rides }: { rides: any[] }) => {
+    // compute earliest future scheduled time once per rides change
+    const earliest = React.useMemo(() => {
+      if (!rides || rides.length === 0) return null;
+      const future = rides
+        .map((r) => (r.scheduled_time ? new Date(r.scheduled_time) : null))
+        .filter((d) => d && d.getTime() > Date.now()) as Date[];
+      if (future.length === 0) return null;
+      return new Date(Math.min(...future.map((d) => d.getTime())));
+    }, [rides]);
+
+    const [countdown, setCountdown] = useState<string | null>(() => {
+      if (!earliest) return null;
+      const now = new Date();
+      const diffMs = earliest.getTime() - now.getTime();
+      if (diffMs <= 0) return "Due now";
+      const diffSec = Math.floor(diffMs / 1000);
+      const days = Math.floor(diffSec / 86400);
+      const hours = Math.floor((diffSec % 86400) / 3600);
+      const mins = Math.floor((diffSec % 3600) / 60);
+      const secs = diffSec % 60;
+      if (days > 0) return `${days}d ${hours}h ${mins}m ${secs}s`;
+      if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+      if (mins > 0) return `${mins}m ${secs}s`;
+      return `${secs}s`;
+    });
+
+    useEffect(() => {
+      if (!earliest) {
+        setCountdown(null);
+        return;
+      }
+
+      // update every second so seconds are shown live
+      const update = () => {
+        const now = new Date();
+        const diffMs = earliest.getTime() - now.getTime();
+        if (diffMs <= 0) {
+          setCountdown("Due now");
+          return;
+        }
+        const diffSec = Math.floor(diffMs / 1000);
+        const days = Math.floor(diffSec / 86400);
+        const hours = Math.floor((diffSec % 86400) / 3600);
+        const mins = Math.floor((diffSec % 3600) / 60);
+        const secs = diffSec % 60;
+        if (days > 0) setCountdown(`${days}d ${hours}h ${mins}m ${secs}s`);
+        else if (hours > 0) setCountdown(`${hours}h ${mins}m ${secs}s`);
+        else if (mins > 0) setCountdown(`${mins}m ${secs}s`);
+        else setCountdown(`${secs}s`);
+      };
+
+      // run immediately then every 1s; keep the component mounted
+      update();
+      const timer = setInterval(update, 1000);
+      return () => clearInterval(timer);
+    }, [earliest]);
+
+    if (!countdown) return null;
+    return (
+      <View style={styles.banner}>
+        <Text style={styles.bannerText}>
+          Next scheduled ride in {countdown}
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    <>
+      <ScheduledBanner rides={data} />
+      <FlatList
+        data={data}
+        keyExtractor={(ride) => ride._id}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        renderItem={({ item: ride }: any) => (
+          <View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.ride_card}>
+                <View style={styles.ride_header}>
+                  <Text style={styles.ride_header_text}>
+                    {new Date(ride.createdAt).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </Text>
+                  {ride.status === "expired" ? (
+                    <View
+                      style={{
+                        backgroundColor: "#ff00003a",
+                        paddingVertical: 5,
+                        paddingHorizontal: 10,
+                        borderRadius: 20,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#ff0000",
+                          fontFamily: "raleway-bold",
+                          fontSize: 10,
+                        }}
+                      >
+                        Expired
+                      </Text>
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        backgroundColor: "#ff9d003a",
+                        paddingVertical: 5,
+                        paddingHorizontal: 10,
+                        borderRadius: 20,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#ff9d00",
+                          fontFamily: "raleway-bold",
+                          fontSize: 10,
+                        }}
+                      >
+                        Scheduled
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                {ride.scheduled_time && (
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "poppins-regular",
+                      fontSize: 11,
+                      marginTop: 10,
+                    }}
+                  >
+                    **Ride scheduled for{" "}
+                    {new Date(ride.scheduled_time).toLocaleString("en-US")}
+                  </Text>
+                )}
+                {/* Driver details */}
+                {ride.driver && (
+                  <>
+                    <DriverCard
+                      name={ride.driver.user.name}
+                      id={ride.driver._id}
+                      rating={ride.driver.rating}
+                      total_trips={ride.driver.total_trips}
+                      num_of_reviews={ride.driver.num_of_reviews}
+                    />
+
+                    <View
+                      style={{
+                        marginTop: 10,
+                        flexDirection: "row",
+                        justifyContent: "flex-start",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
+                    >
+                      <Image
+                        source={vehicleIcons[ride.driver.vehicle_type]}
+                        style={{ height: 50, width: 50 }}
+                      />
+                      <View>
+                        <Text
+                          style={{
+                            color: "#fff",
+                            fontFamily: "raleway-bold",
+                            fontSize: 12,
+                            textTransform: "capitalize",
+                            width: "100%",
+                          }}
+                        >
+                          {ride.driver.vehicle_type} ride
+                        </Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "flex-start",
+                            alignItems: "flex-start",
+                            gap: 5,
+                          }}
+                        >
+                          <FontAwesome5
+                            name="car"
+                            size={14}
+                            color="#c6c6c6"
+                            style={{ marginTop: 3 }}
+                          />
+                          <Text
+                            style={{
+                              color: "#c6c6c6",
+                              fontFamily: "raleway-semibold",
+                              fontSize: 12,
+                            }}
+                          >
+                            {ride.driver.vehicle.color}{" "}
+                            {ride.driver.vehicle.brand}{" "}
+                            {ride.driver.vehicle.model}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                )}
+                {/* Ride route */}
+
+                <View style={{ marginTop: 10 }}>
+                  <RideRoute
+                    from={ride.pickup.address}
+                    to={ride.destination.address}
+                  />
+                </View>
+
+                {ride.status === "expired" ? (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={cancel_ride}
+                    disabled={cancelling}
+                  >
+                    <Text
+                      style={{
+                        color: cancelling ? "#c1c1c180" : "#c1c1c1",
+                        fontFamily: "raleway-bold",
+                        textAlign: "center",
+                        marginTop: 15,
+                      }}
+                    >
+                      {cancelling ? "Deleting..." : "Delete this ride"}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={cancel_ride}
+                    disabled={cancelling}
+                  >
+                    <Text
+                      style={{
+                        color: cancelling ? "#ff000080" : "#ff0000",
+                        fontFamily: "raleway-bold",
+                        textAlign: "center",
+                        marginTop: 15,
+                      }}
+                    >
+                      {cancelling ? "Cancelling..." : "Cancel this ride"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+        )}
+      />
+    </>
+  );
+};
 
 const CompletedRides = ({ data }: { data: any }) => {
   const { getUserCompletedRides } = useRideContext();
@@ -863,11 +1178,10 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   nav_container: {
-    width: "100%",
     flexDirection: "row",
     justifyContent: "flex-start",
-    gap: 20,
-    marginVertical: 20,
+    alignItems: "center",
+    marginVertical: 12,
     zIndex: 500,
   },
   nav_box: {
@@ -876,6 +1190,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 10,
     borderRadius: 20,
+    marginRight: 16,
   },
   nav_text: {
     color: "#fff",
@@ -936,6 +1251,19 @@ const styles = StyleSheet.create({
   amount_text: {
     fontFamily: "poppins-bold",
     color: "#5ffd7f",
+  },
+  banner: {
+    backgroundColor: "#3f3f3fff",
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 20,
+    alignSelf: "stretch",
+  },
+  bannerText: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    textAlign: "center",
   },
   pay_btn: {
     backgroundColor: "#fff",

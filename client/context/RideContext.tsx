@@ -128,6 +128,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   useEffect(() => {
     getUserCompletedRides();
     getUserCancelledRides();
+    getScheduledRides();
     getRideHistory();
   }, [signedIn]);
 
@@ -500,6 +501,20 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const [scheduledRides, setScheduledRides] = useState<Ride[] | null>(null);
+  const getScheduledRides = async (): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.get(`${API_URL}/scheduled`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setScheduledRides(data.rides);
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    }
+  };
+
   const payForRide = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     try {
@@ -651,6 +666,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         userCancelledRides,
         userCompletedRides,
         setUserCancelledRides,
+        scheduledRides,
+        setScheduledRides,
+        getScheduledRides,
         setUserCompletedRides,
         getUserCompletedRides,
         getUserCancelledRides,
@@ -720,6 +738,9 @@ export interface RideContextType {
   ) => Promise<void>;
   set_pickup_func: (place_id: string, place_name: string) => Promise<void>;
 
+  scheduledRides: Ride[] | null;
+  setScheduledRides: Dispatch<SetStateAction<Ride[] | null>>;
+  getScheduledRides: () => Promise<void>;
   userCompletedRides: Ride[] | null;
   setUserCompletedRides: Dispatch<SetStateAction<Ride[] | null>>;
   getUserCompletedRides: () => Promise<void>;
