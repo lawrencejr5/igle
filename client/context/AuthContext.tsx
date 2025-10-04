@@ -5,9 +5,6 @@ import React, {
   useContext,
   createContext,
   ReactNode,
-  Dispatch,
-  SetStateAction,
-  useRef,
 } from "react";
 
 import axios from "axios";
@@ -291,8 +288,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         JSON.stringify(data.user.is_driver)
       );
       await getUserData();
-      // Register this device's push token with the server
-      await registerPushToken();
       await getWalletBalance("User");
       await getRideHistory();
       await fetchActivities();
@@ -326,6 +321,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
           router.push("/(tabs)/home");
         }
       }
+      await getRideHistory();
+      await fetchActivities();
+      await getSavedPlaces();
       // await registerPushToken();
       showNotification(
         data.isNew ? "Account created" : "Login successful.",
