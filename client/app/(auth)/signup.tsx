@@ -83,7 +83,7 @@ const Signup = () => {
 
   return (
     <View style={styles.container}>
-      <Notification notification={notification} />
+      {notification.visible && <Notification notification={notification} />}
       <ScrollView>
         {/* Back button */}
         <TouchableOpacity

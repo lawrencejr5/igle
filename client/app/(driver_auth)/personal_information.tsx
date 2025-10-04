@@ -150,7 +150,7 @@ const PersonalInformation = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
-      <Notification notification={notification} />
+      {notification.visible && <Notification notification={notification} />}
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
         behavior="padding"

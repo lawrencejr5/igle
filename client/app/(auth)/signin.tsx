@@ -89,7 +89,7 @@ const Signin = () => {
 
   return (
     <>
-      <Notification notification={notification} />
+      {notification.visible && <Notification notification={notification} />}
       <ScrollView style={styles.container}>
         {/* Back button */}
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 10 }}>

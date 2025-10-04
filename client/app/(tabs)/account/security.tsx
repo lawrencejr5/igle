@@ -22,7 +22,7 @@ const SecuritySettings = () => {
   const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);
   return (
     <>
-      <Notification notification={notification} />
+      {notification.visible && <Notification notification={notification} />}
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
       >

@@ -50,7 +50,7 @@ const AddPhone = () => {
 
   return (
     <>
-      <Notification notification={notification} />
+      {notification.visible && <Notification notification={notification} />}
       <ScrollView style={styles.container}>
         {/* Back button */}
         <TouchableWithoutFeedback

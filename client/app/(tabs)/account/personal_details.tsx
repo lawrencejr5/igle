@@ -32,7 +32,7 @@ const PersonalDetails = () => {
   const { signedIn, uploadingPic, removingPic } = useAuthContext();
   return (
     <>
-      <Notification notification={notification} />
+      {notification.visible && <Notification notification={notification} />}
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
       >

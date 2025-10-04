@@ -57,7 +57,8 @@ const Rides = () => {
         <AppLoading />
       ) : (
         <>
-          <Notification notification={notification} />
+          {notification.visible && <Notification notification={notification} />}
+
           <View style={styles.container}>
             <Text style={styles.header_text}>Rides</Text>
 
@@ -69,14 +70,20 @@ const Rides = () => {
               (ongoingRideData ? (
                 <OngoingRide data={ongoingRideData} />
               ) : (
-                <EmptyState message="You don't have any ongoing rides currently" />
+                <EmptyState
+                  message="You don't have any ongoing rides currently"
+                  tab="ongoing"
+                />
               ))}
 
             {category === "scheduled" &&
-              (scheduledRides ? (
+              (scheduledRides && scheduledRides.length > 0 ? (
                 <ScheduledRides data={scheduledRides} />
               ) : (
-                <EmptyState message="You don't have any ongoing rides currently" />
+                <EmptyState
+                  message="You don't have any scheduled rides currently"
+                  tab="scheduled"
+                />
               ))}
 
             {/* Completed data */}
@@ -84,7 +91,10 @@ const Rides = () => {
               (loadingState.completedRides ? (
                 <RideLoading />
               ) : userCompletedRides?.length === 0 ? (
-                <EmptyState message="You haven't completed any rides yet" />
+                <EmptyState
+                  message="You haven't completed any rides yet"
+                  tab="completed"
+                />
               ) : (
                 <CompletedRides data={userCompletedRides} />
               ))}
@@ -94,7 +104,10 @@ const Rides = () => {
               (loadingState.cancelledRides ? (
                 <RideLoading />
               ) : userCancelledRides?.length === 0 ? (
-                <EmptyState message="You haven't cancelled any rides yet" />
+                <EmptyState
+                  message="You haven't cancelled any rides yet"
+                  tab="cancelled"
+                />
               ) : (
                 <CancelledRides data={userCancelledRides} />
               ))}
@@ -149,7 +162,13 @@ const CategoryTabs = ({
   );
 };
 
-const EmptyState = ({ message }: { message: string }) => {
+const EmptyState = ({
+  message,
+  tab,
+}: {
+  message: string;
+  tab: "ongoing" | "scheduled" | "cancelled" | "completed";
+}) => {
   const { setRideStatus, setModalUp, setPickupTime } = useRideContext();
 
   return (
@@ -186,25 +205,45 @@ const EmptyState = ({ message }: { message: string }) => {
           flex: 1,
         }}
       >
-        <Pressable
-          style={{
-            backgroundColor: "#fff",
-            width: 320,
-            padding: 10,
-            borderRadius: 20,
-            marginTop: 10,
-          }}
-          onPress={() => {
-            router.push("../home");
-            setRideStatus("booking");
-            setModalUp(true);
-            setPickupTime("later");
-          }}
-        >
-          <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
-            Schedule ride
-          </Text>
-        </Pressable>
+        {tab === "scheduled" ? (
+          <Pressable
+            style={{
+              backgroundColor: "#fff",
+              width: 320,
+              padding: 10,
+              borderRadius: 20,
+              marginTop: 10,
+            }}
+            onPress={() => {
+              router.push("../home");
+              setRideStatus("booking");
+              setPickupTime("later");
+            }}
+          >
+            <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
+              Schedule ride
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={{
+              backgroundColor: "#fff",
+              width: 320,
+              padding: 10,
+              borderRadius: 20,
+              marginTop: 10,
+            }}
+            onPress={() => {
+              router.push("../home");
+              setRideStatus("booking");
+              setPickupTime("now");
+            }}
+          >
+            <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
+              Book ride
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -1182,10 +1221,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     marginVertical: 12,
-    zIndex: 500,
   },
   nav_box: {
     backgroundColor: "grey",
+    zIndex: 500,
     paddingVertical: 7,
     paddingHorizontal: 12,
     paddingBottom: 10,

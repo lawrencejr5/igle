@@ -102,13 +102,13 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   // Notification listeners (foreground receive + response)
   useEffect(() => {
     // Prevent the system from showing a native notification when app is foregrounded
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: false,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      }),
-    });
+    // Notifications.setNotificationHandler({
+    //   handleNotification: async () => ({
+    //     shouldShowAlert: false,
+    //     shouldPlaySound: false,
+    //     shouldSetBadge: false,
+    //   }),
+    // });
 
     const receivedListener = Notifications.addNotificationReceivedListener(
       (notification) => {

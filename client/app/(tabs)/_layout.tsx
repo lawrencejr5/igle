@@ -1,11 +1,15 @@
 import { Image, View, Animated } from "react-native";
 import React, { useMemo } from "react";
 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { useSegments } from "expo-router";
 
 import { Tabs } from "expo-router";
 
 const TabsLayout = () => {
+  const insets = useSafeAreaInsets();
+
   const segments = useSegments() as string[];
 
   const hideTabs =
@@ -27,13 +31,18 @@ const TabsLayout = () => {
   }, [hideTabs]);
 
   return (
-    <View style={{ backgroundColor: "#121212", flex: 1 }}>
+    <View
+      style={{
+        backgroundColor: "#121212",
+        flex: 1,
+        paddingBottom: insets.bottom,
+      }}
+    >
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            paddingTop: 10,
-            height: 80,
+            height: 70,
             borderTopWidth: 0,
             elevation: 0,
             display: hideTabs ? "none" : undefined,

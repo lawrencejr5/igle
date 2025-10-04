@@ -37,7 +37,7 @@ const Account = () => {
         <AppLoading />
       ) : (
         <>
-          <Notification notification={notification} />
+          {notification.visible && <Notification notification={notification} />}
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={{

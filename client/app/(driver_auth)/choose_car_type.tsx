@@ -45,7 +45,7 @@ const ChooseCarType = () => {
 
   return (
     <>
-      <Notification notification={notification} />
+      {notification.visible && <Notification notification={notification} />}
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         <Header />
 
