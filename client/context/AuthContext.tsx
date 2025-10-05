@@ -68,6 +68,20 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [signedIn]);
 
+  useEffect(() => {
+    if (!signedIn?.user_id) return;
+
+    const load = async () => {
+      await Promise.all([
+        getRideHistory(),
+        fetchActivities(),
+        getSavedPlaces(),
+      ]);
+    };
+
+    load();
+  }, [signedIn?.user_id]);
+
   const API_URL = API_URLS.users;
 
   // Registration function
@@ -288,10 +302,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         JSON.stringify(data.user.is_driver)
       );
       await getUserData();
-      await getWalletBalance("User");
-      await getRideHistory();
-      await fetchActivities();
-      await getSavedPlaces();
 
       showNotification("Login successful.", "success");
     } catch (err: any) {
@@ -321,10 +331,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
           router.push("/(tabs)/home");
         }
       }
-      await getRideHistory();
-      await fetchActivities();
-      await getSavedPlaces();
-      // await registerPushToken();
       showNotification(
         data.isNew ? "Account created" : "Login successful.",
         "success"

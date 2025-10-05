@@ -6,6 +6,7 @@ const ride_1 = require("../controllers/ride");
 const RideRouter = (0, express_1.Router)();
 RideRouter.use(auth_1.auth);
 RideRouter.get("/active", ride_1.get_user_active_ride);
+RideRouter.get("/scheduled", ride_1.get_user_scheduled_rides);
 RideRouter.post("/request", ride_1.request_ride);
 RideRouter.patch("/retry", ride_1.retry_ride);
 RideRouter.post("/rebook", ride_1.rebook_ride);
