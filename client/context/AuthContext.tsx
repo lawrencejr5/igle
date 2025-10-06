@@ -320,7 +320,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const is_driver = data.user.is_driver;
 
       await getUserData();
-      await getWalletBalance("User");
       // If this is a newly created user via Google, navigate to phone update flow
       if (data.isNew) {
         router.push("/(auth)/phone");
