@@ -53,7 +53,7 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
       });
       setActivities(data.activities || null);
     } catch (error: any) {
-      showNotification("Failed to fetch activities", "error");
+      console.log("Failed to fetch activities");
     } finally {
       setActivityLoading(false);
     }
@@ -136,10 +136,6 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const diffYears = Math.floor(diffMonths / 12);
     return `${diffYears} year${diffYears !== 1 ? "s" : ""} ago`;
   };
-
-  useEffect(() => {
-    fetchActivities();
-  }, []);
 
   return (
     <ActivityContext.Provider

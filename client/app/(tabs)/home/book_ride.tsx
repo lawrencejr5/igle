@@ -11,22 +11,22 @@ import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Feather from "@expo/vector-icons/Feather";
 
-import { darkMapStyle } from "../../data/map.dark";
+import { darkMapStyle } from "../../../data/map.dark";
 
-import SideNav from "../../components/SideNav";
-import NotificationScreen from "../../components/screens/NotificationScreen";
+import SideNav from "../../../components/SideNav";
+import NotificationScreen from "../../../components/screens/NotificationScreen";
 
-import RouteModal from "../../components/RouteModal";
-import Notification from "../../components/Notification";
+import RouteModal from "../../../components/RouteModal";
+import Notification from "../../../components/Notification";
 
-import { useNotificationContext } from "../../context/NotificationContext";
-import { useMapContext } from "../../context/MapContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
+import { useMapContext } from "../../../context/MapContext";
 
-import { useLoading } from "../../context/LoadingContext";
-import AppLoading from "../../loadings/AppLoading";
-import { useRideContext } from "../../context/RideContext";
-import DriverMarker from "../../components/DriverMarker";
-import { useAuthContext } from "../../context/AuthContext";
+import { useLoading } from "../../../context/LoadingContext";
+import AppLoading from "../../../loadings/AppLoading";
+import { useRideContext } from "../../../context/RideContext";
+import DriverMarker from "../../../components/DriverMarker";
+import { useAuthContext } from "../../../context/AuthContext";
 
 const Home = () => {
   // Side nav state
@@ -137,7 +137,7 @@ const Home = () => {
                         anchor={{ x: 0.2, y: 0.2 }}
                       >
                         <Image
-                          source={require("../../assets/images/user.png")}
+                          source={require("../../../assets/images/user.png")}
                           style={{ height: 35, width: 35, borderRadius: 50 }}
                         />
                       </Marker>
@@ -155,7 +155,7 @@ const Home = () => {
                           source={
                             signedIn?.profile_pic
                               ? { uri: signedIn.profile_pic }
-                              : require("../../assets/images/black-profile.jpeg")
+                              : require("../../../assets/images/black-profile.jpeg")
                           }
                           style={{
                             height: 35,

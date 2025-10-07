@@ -183,8 +183,8 @@ const SideNav: React.FC<{
                 <View style={styles.user_card}>
                   <Image
                     source={
-                      driver?.profile_pic
-                        ? { uri: driver?.profile_pic } // remote image from backend
+                      driver?.profile_img
+                        ? { uri: driver?.profile_img } // remote image from backend
                         : require("../assets/images/user.png") // fallback local asset
                     }
                     style={styles.user_img}
