@@ -11,13 +11,10 @@ export interface DeliveryType extends Document {
     address: string;
     coordinates: [number, number];
   };
-  from?: {
-    contact_name?: string;
-    contact_phone?: string;
-  };
+
   to?: {
-    contact_name?: string;
-    contact_phone?: string;
+    name?: string;
+    phone?: string;
   };
   package: {
     description?: string;
@@ -72,13 +69,9 @@ const DeliverySchema = new Schema<DeliveryType>(
       address: String,
       coordinates: [Number],
     },
-    from: {
-      contact_name: String,
-      contact_phone: String,
-    },
     to: {
-      contact_name: String,
-      contact_phone: String,
+      name: String,
+      phone: String,
     },
     package: {
       description: String,

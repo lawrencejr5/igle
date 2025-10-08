@@ -76,7 +76,7 @@ const request_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { km, min, scheduled_time } = req.query;
         // accept package info and optional from/to contact objects in the body
-        const { pickup, dropoff, vehicle, fare, package_data, from, to } = req.body;
+        const { pickup, dropoff, vehicle, fare, package_data, to } = req.body;
         if (!pickup || !pickup.coordinates || !dropoff || !dropoff.coordinates)
             return res
                 .status(400)
@@ -94,7 +94,6 @@ const request_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
             sender: user_id,
             pickup,
             dropoff,
-            from: from || undefined,
             to: to || undefined,
             package: package_data,
             fare: fareNum,
@@ -166,7 +165,6 @@ const rebook_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
             sender: delivery.sender,
             pickup: delivery.pickup,
             dropoff: delivery.dropoff,
-            from: delivery.from || undefined,
             to: delivery.to || undefined,
             package: delivery.package,
             fare: delivery.fare,
@@ -399,4 +397,3 @@ const pay_for_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.pay_for_delivery = pay_for_delivery;
-exports.default = {};

@@ -45,13 +45,9 @@ const DeliverySchema = new mongoose_1.Schema({
         address: String,
         coordinates: [Number],
     },
-    from: {
-        contact_name: String,
-        contact_phone: String,
-    },
     to: {
-        contact_name: String,
-        contact_phone: String,
+        name: String,
+        phone: String,
     },
     package: {
         description: String,

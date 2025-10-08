@@ -38,7 +38,7 @@ export const request_delivery = async (
     const user_id = req.user?.id;
     const { km, min, scheduled_time } = req.query;
     // accept package info and optional from/to contact objects in the body
-    const { pickup, dropoff, vehicle, fare, package_data, from, to } =
+    const { pickup, dropoff, vehicle, fare, package_data, to } =
       req.body as any;
 
     if (!pickup || !pickup.coordinates || !dropoff || !dropoff.coordinates)
@@ -63,7 +63,6 @@ export const request_delivery = async (
       sender: user_id,
       pickup,
       dropoff,
-      from: from || undefined,
       to: to || undefined,
       package: package_data,
       fare: fareNum,
@@ -158,7 +157,6 @@ export const rebook_delivery = async (
       sender: delivery.sender,
       pickup: delivery.pickup,
       dropoff: delivery.dropoff,
-      from: delivery.from || undefined,
       to: delivery.to || undefined,
       package: delivery.package,
       fare: delivery.fare,
@@ -440,5 +438,3 @@ export const pay_for_delivery = async (
       .json({ msg: "Failed to pay for delivery", err: err.message });
   }
 };
-
-export default {};
