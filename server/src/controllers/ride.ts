@@ -5,7 +5,6 @@ import Ride from "../models/ride";
 import Wallet from "../models/wallet";
 import Activity from "../models/activity";
 import Driver from "../models/driver";
-import User from "../models/user";
 
 import {
   get_driver_id,
