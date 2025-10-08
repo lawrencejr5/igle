@@ -4,6 +4,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Image,
+  Pressable,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
@@ -11,24 +12,24 @@ import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Feather from "@expo/vector-icons/Feather";
 
-import { darkMapStyle } from "../../../data/map.dark";
+import { darkMapStyle } from "../../data/map.dark";
 
-import SideNav from "../../../components/SideNav";
-import NotificationScreen from "../../../components/screens/NotificationScreen";
+import SideNav from "../../components/SideNav";
+import NotificationScreen from "../../components/screens/NotificationScreen";
 
-import RouteModal from "../../../components/RouteModal";
-import Notification from "../../../components/Notification";
+import RouteModal from "../../components/RouteModal";
+import Notification from "../../components/Notification";
 
-import { useNotificationContext } from "../../../context/NotificationContext";
-import { useMapContext } from "../../../context/MapContext";
+import { useNotificationContext } from "../../context/NotificationContext";
+import { useMapContext } from "../../context/MapContext";
 
-import { useLoading } from "../../../context/LoadingContext";
-import AppLoading from "../../../loadings/AppLoading";
-import { useRideContext } from "../../../context/RideContext";
-import DriverMarker from "../../../components/DriverMarker";
-import { useAuthContext } from "../../../context/AuthContext";
+import { useLoading } from "../../context/LoadingContext";
+import AppLoading from "../../loadings/AppLoading";
+import { useRideContext } from "../../context/RideContext";
+import { useAuthContext } from "../../context/AuthContext";
+import { router } from "expo-router";
 
-const Home = () => {
+const BookRide = () => {
   // Side nav state
   const [sideNavOpen, setSideNavOpen] = useState<boolean>(false);
 
@@ -49,7 +50,8 @@ const Home = () => {
     locationLoading,
   } = useMapContext();
   const { signedIn } = useAuthContext();
-  const { rideStatus, ongoingRideData } = useRideContext();
+  const { rideStatus, setRideStatus, ongoingRideData, resetRide } =
+    useRideContext();
 
   const { appLoading } = useLoading();
 
@@ -68,6 +70,10 @@ const Home = () => {
 
     return () => clearTimeout(timer);
   }, [region, mapRef.current]);
+
+  useEffect(() => {
+    setRideStatus("booking");
+  }, []);
 
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
 
@@ -137,7 +143,7 @@ const Home = () => {
                         anchor={{ x: 0.2, y: 0.2 }}
                       >
                         <Image
-                          source={require("../../../assets/images/user.png")}
+                          source={require("../../assets/images/user.png")}
                           style={{ height: 35, width: 35, borderRadius: 50 }}
                         />
                       </Marker>
@@ -155,7 +161,7 @@ const Home = () => {
                           source={
                             signedIn?.profile_pic
                               ? { uri: signedIn.profile_pic }
-                              : require("../../../assets/images/black-profile.jpeg")
+                              : require("../../assets/images/black-profile.jpeg")
                           }
                           style={{
                             height: 35,
@@ -213,32 +219,59 @@ const Home = () => {
 
             {/* Nav */}
             <View style={styles.nav_container}>
-              <TouchableWithoutFeedback onPress={() => setSideNavOpen(true)}>
-                <View style={styles.nav_box}>
-                  <Feather name="menu" size={22} color="white" />
-                </View>
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback
-                onPress={() => setOpenNotification(true)}
-              >
-                <View style={styles.nav_box}>
-                  <Feather name="bell" size={22} color="white" />
-                </View>
-              </TouchableWithoutFeedback>
+              {(() => {
+                const hiddenStatuses = [
+                  "searching",
+                  "accepted",
+                  "pay",
+                  "paid",
+                  "rating",
+                ];
+                if (hiddenStatuses.includes(rideStatus as any)) return null;
+
+                return (
+                  <Pressable
+                    onPress={() => {
+                      // ordered modal flow - used for stepping back through statuses
+                      const modalOrder = [
+                        "",
+                        "booking",
+                        "choosing_car",
+                        "searching",
+                        "accepted",
+                        "track_driver",
+                        "pay",
+                        "paying",
+                        "paid",
+                        "track_ride",
+                        "rating",
+                      ];
+
+                      if (rideStatus === undefined || rideStatus === "") {
+                        // no previous modal status - go to home
+                        router.push("../(tabs)/home");
+                        return;
+                      }
+
+                      const idx = modalOrder.indexOf(rideStatus as any);
+                      if (idx > 0) {
+                        const prev = modalOrder[idx - 1];
+                        setRideStatus(prev as any);
+                        if (prev === "") {
+                          // moving back to start - reset ride state
+                          resetRide();
+                        }
+                      } else {
+                        router.push("../(tabs)/home");
+                      }
+                    }}
+                    style={styles.nav_box}
+                  >
+                    <Feather name="arrow-left" size={22} color="white" />
+                  </Pressable>
+                );
+              })()}
             </View>
-
-            {/* Side nav */}
-            <SideNav
-              open={sideNavOpen}
-              setSideNavOpen={setSideNavOpen}
-              mode="rider"
-            />
-
-            {/* Notification screen */}
-            <NotificationScreen
-              open={openNotification}
-              setOpen={setOpenNotification}
-            />
 
             {/* Choose route Modal */}
             <RouteModal />
@@ -249,15 +282,12 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default BookRide;
 
 const styles = StyleSheet.create({
   nav_container: {
     width: "100%",
-    flexDirection: "row",
     paddingHorizontal: 20,
-    justifyContent: "space-between",
-    alignItems: "center",
     position: "absolute",
     top: 50,
   },

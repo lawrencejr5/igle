@@ -136,7 +136,7 @@ const RouteModal = () => {
   const windowHeight = Dimensions.get("window").height;
 
   const snapPoints = useMemo(
-    () => ["22%", "32%", "40%", "60%", "80%", "93%"],
+    () => ["25%", "32%", "40%", "60%", "80%", "94%"],
     []
   );
 
@@ -166,7 +166,7 @@ const RouteModal = () => {
 
   return (
     <BottomSheet
-      index={1}
+      index={5}
       snapPoints={snapPoints}
       ref={routeModalRef}
       onChange={handleSheetChange}
@@ -270,7 +270,7 @@ const StartModal = () => {
           style={{
             flexDirection: "row",
             gap: 10,
-            marginTop: 30,
+            marginTop: 20,
             alignItems: "center",
           }}
           onPress={() =>
@@ -988,7 +988,7 @@ const AcceptedModal = () => {
             textAlign: "center",
           }}
         >
-          {cancelling ? "Cancelling..." : "Canel this ride"}
+          {cancelling ? "Cancelling..." : "Cancel this ride"}
         </Text>
       </TouchableWithoutFeedback>
     </>
@@ -1437,7 +1437,6 @@ const RateModal = () => {
       <View
         style={{
           flex: 1,
-          justifyContent: "space-between",
           paddingBottom: 20,
         }}
       >
@@ -1498,7 +1497,7 @@ const RateModal = () => {
           </View>
         </View>
 
-        <View>
+        <View style={{ marginTop: 30 }}>
           <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
             Ride summary
           </Text>
@@ -1547,7 +1546,7 @@ const RateModal = () => {
             flexDirection: "row",
             justifyContent: "center",
             gap: 20,
-            marginTop: 20,
+            marginTop: 50,
           }}
         >
           <TouchableOpacity

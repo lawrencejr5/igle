@@ -131,10 +131,7 @@ const Home = () => {
                 <Pressable
                   style={styles.bannerCard}
                   onPress={() => {
-                    // open booking modal
-                    setRideStatus("booking");
-                    setModalUp(true);
-                    router.push("./home/book_ride");
+                    router.push("../(book)/book_ride");
                   }}
                 >
                   <Text style={styles.bannerTitle}>Need a ride</Text>
@@ -146,7 +143,7 @@ const Home = () => {
                     onPress={() => {
                       setRideStatus("booking");
                       setModalUp(true);
-                      router.push("./home/book_ride");
+                      router.push("../(book)/book_ride");
                     }}
                   >
                     <Text style={styles.bannerBtnText}>Book ride</Text>
@@ -226,8 +223,7 @@ const Home = () => {
                 <Pressable
                   style={styles.serviceCard}
                   onPress={() => {
-                    setRideStatus("booking");
-                    router.push("./home/book_ride");
+                    router.push("../(book)/book_ride");
                   }}
                 >
                   <View style={styles.serviceIconBox}>

@@ -245,6 +245,18 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       setRideStatus("booking");
       return true;
     }
+    if (rideStatus === "track_driver") {
+      setRideStatus("accepted");
+      return true;
+    }
+    if (rideStatus === "paying") {
+      setRideStatus("pay");
+      return true;
+    }
+    if (rideStatus === "track_ride") {
+      setRideStatus("paid");
+      return true;
+    }
     return false;
   };
 

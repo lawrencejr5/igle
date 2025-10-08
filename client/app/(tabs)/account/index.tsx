@@ -156,10 +156,7 @@ const Account = () => {
                 <Feather name="bell" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Notifications</Text>
               </Pressable>
-              <View style={styles.setting_box}>
-                <Feather name="settings" size={20} color="#c6c6c6" />
-                <Text style={styles.setting_text}>App preferences</Text>
-              </View>
+
               <Pressable
                 onPress={() => router.push("./account/security")}
                 style={styles.setting_box}
