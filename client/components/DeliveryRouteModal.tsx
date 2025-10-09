@@ -6,11 +6,17 @@ import {
   FlatList,
   StyleSheet,
   Dimensions,
+  PixelRatio,
+  TextInput,
+  Image,
+  Pressable,
 } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useDeliverContext, Delivery } from "../context/DeliverConrtext";
 import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
+import { useAuthContext } from "../context/AuthContext";
+import { Feather } from "@expo/vector-icons";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -22,6 +28,8 @@ const DeliveryRouteModal: FC = () => {
     cancelDelivery,
   } = useDeliverContext();
 
+  const { signedIn } = useAuthContext();
+
   const { setDestinationCoords, setDestination, setMapPadding } =
     useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
@@ -29,10 +37,25 @@ const DeliveryRouteModal: FC = () => {
   const deliveryRouteModalRef = useRef<BottomSheet | null>(null);
 
   const windowHeight = Dimensions.get("window").height;
-  const snapPoints = useMemo(
-    () => ["25%", "32%", "40%", "60%", "80%", "94%"],
-    []
-  );
+  const fontScale = PixelRatio.getFontScale();
+  const snapPoints = useMemo(() => {
+    // base snap percents (same as before)
+    const base = [25, 32, 40, 60, 75, 94];
+
+    // Determine adjustment factor from fontScale:
+    // - fontScale <= 1 => no change
+    // - larger fontScale increases sheet sizes up to a reasonable cap
+    const factor =
+      fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
+
+    // apply factor and clamp each percent between 20 and 98
+    const adjusted = base.map((p) => {
+      const v = Math.round(p * factor);
+      return `${Math.min(94, Math.max(20, v))}%`;
+    });
+
+    return adjusted;
+  }, [fontScale]);
 
   const handleSheetChange = (index: number) => {
     const snapValue = snapPoints[index];
@@ -46,90 +69,12 @@ const DeliveryRouteModal: FC = () => {
     }
 
     if (index < 4)
-      setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight }));
+      setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 20 }));
   };
-
-  const onPay = async (id: string) => {
-    try {
-      await payForDelivery(id);
-      showNotification("Payment successful", "success");
-    } catch (err: any) {
-      showNotification(
-        err?.response?.data?.msg || err.message || "Payment failed",
-        "error"
-      );
-    }
-  };
-
-  const onTrack = (d: Delivery) => {
-    if (d && d.dropoff && d.dropoff.coordinates) {
-      setDestination(d.dropoff.address || "");
-      setDestinationCoords(d.dropoff.coordinates);
-    }
-  };
-
-  const onCancel = async (id: string) => {
-    try {
-      await cancelDelivery(id, "sender", "User cancelled");
-      showNotification("Delivery cancelled", "success");
-    } catch (err: any) {
-      showNotification(err?.response?.data?.msg || "Cancel failed", "error");
-    }
-  };
-
-  const onRebook = async (id: string) => {
-    try {
-      await rebookDelivery(id);
-      showNotification("Rebooked delivery", "success");
-    } catch (err: any) {
-      showNotification(err?.response?.data?.msg || "Rebook failed", "error");
-    }
-  };
-
-  const renderItem = ({ item }: { item: Delivery }) => (
-    <View style={styles.card}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>
-          To: {item.to?.name || item.dropoff?.address}
-        </Text>
-        <Text style={styles.sub}>{item.dropoff?.address}</Text>
-        <Text style={styles.sub}>Status: {item.status}</Text>
-        <Text style={styles.price}>
-          ₦{item.fare?.toFixed?.(0) ?? item.fare}
-        </Text>
-      </View>
-      <View style={styles.actions}>
-        {item.payment_status !== "paid" && (
-          <TouchableOpacity style={styles.btn} onPress={() => onPay(item._id)}>
-            <Text style={styles.btnText}>Pay</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity style={styles.btn} onPress={() => onTrack(item)}>
-          <Text style={styles.btnText}>Track</Text>
-        </TouchableOpacity>
-        {item.status === "expired" && (
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => onRebook(item._id)}
-          >
-            <Text style={styles.btnText}>Rebook</Text>
-          </TouchableOpacity>
-        )}
-        {(item.status === "pending" || item.status === "scheduled") && (
-          <TouchableOpacity
-            style={[styles.btn, styles.cancelBtn]}
-            onPress={() => onCancel(item._id)}
-          >
-            <Text style={[styles.btnText, { color: "#fff" }]}>Cancel</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
 
   return (
     <BottomSheet
-      index={5}
+      index={0}
       snapPoints={snapPoints}
       ref={deliveryRouteModalRef}
       onChange={handleSheetChange}
@@ -153,17 +98,25 @@ const DeliveryRouteModal: FC = () => {
     >
       <BottomSheetView style={styles.modal}>
         <View style={styles.container}>
-          <Text style={styles.header}>Active Deliveries</Text>
-          {!activeDeliveries || activeDeliveries.length === 0 ? (
-            <Text style={styles.empty}>You have no active deliveries.</Text>
-          ) : (
-            <FlatList
-              data={activeDeliveries}
-              keyExtractor={(i) => i._id}
-              renderItem={renderItem}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            />
-          )}
+          <Text style={styles.header}>
+            {signedIn?.name.split(" ")[1] || signedIn?.name.split(" ")[0]}, got
+            something to deliver?
+          </Text>
+
+          <Pressable style={styles.form}>
+            <View style={styles.text_inp_container}>
+              <Feather name="truck" size={25} color="#8d8d8d" />
+
+              <TextInput
+                placeholder="Wetin we dey deliver?"
+                value=""
+                selection={{ start: 0, end: 0 }}
+                placeholderTextColor={"#8d8d8d"}
+                editable={false}
+                style={[styles.text_input, { color: "#8d8d8d" }]}
+              />
+            </View>
+          </Pressable>
         </View>
       </BottomSheetView>
     </BottomSheet>
@@ -176,13 +129,13 @@ const styles = StyleSheet.create({
     height: "100%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: 10,
-    paddingHorizontal: 20,
+    paddingTop: 5,
+    paddingHorizontal: 15,
   },
-  container: { padding: 12, backgroundColor: "#121212" },
+  container: { paddingHorizontal: 5, backgroundColor: "#121212" },
   header: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: "raleway-bold",
     marginBottom: 8,
   },
@@ -205,6 +158,30 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { backgroundColor: "#ff4d4f" },
   btnText: { color: "#121212", fontFamily: "raleway-bold" },
+
+  form: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 20,
+  },
+  text_inp_container: {
+    flexDirection: "row",
+    flex: 1,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 15,
+    backgroundColor: "#3f3f3f",
+    marginTop: 10,
+    borderRadius: 7,
+  },
+  text_input: {
+    backgroundColor: "transparent",
+    flex: 1,
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    color: "#fff",
+  },
 });
 
 export default DeliveryRouteModal;

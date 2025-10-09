@@ -89,6 +89,19 @@ const BookDelivery = () => {
           </MapView>
         )}
 
+        <View style={styles.nav_container}>
+          <Pressable
+            onPress={() => {
+              // ordered modal flow - used for stepping back through statuses
+
+              router.push("../(tabs)/home");
+            }}
+            style={styles.nav_box}
+          >
+            <Feather name="arrow-left" size={22} color="white" />
+          </Pressable>
+        </View>
+
         <DeliveryRouteModal />
       </View>
     </>
@@ -97,4 +110,19 @@ const BookDelivery = () => {
 
 export default BookDelivery;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  nav_container: {
+    width: "100%",
+    paddingHorizontal: 20,
+    position: "absolute",
+    top: 50,
+  },
+  nav_box: {
+    width: 45,
+    height: 45,
+    backgroundColor: "#121212",
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

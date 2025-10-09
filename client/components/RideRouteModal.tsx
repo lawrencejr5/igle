@@ -137,11 +137,6 @@ const RideRouteModal = () => {
   const windowHeight = Dimensions.get("window").height;
 
   const fontScale = PixelRatio.getFontScale();
-
-  useEffect(() => {
-    console.log(fontScale);
-  }, []);
-
   const snapPoints = useMemo(() => {
     // base snap percents (same as before)
     const base = [25, 32, 40, 60, 75, 94];
@@ -173,7 +168,8 @@ const RideRouteModal = () => {
     }
 
     // always update padding
-    if (index < 4) setMapPadding((prev) => ({ ...prev, bottom: sheetHeight }));
+    if (index < 4)
+      setMapPadding((prev) => ({ ...prev, bottom: sheetHeight + 20 }));
 
     // your ride logic
     if ((index === 0 || index === 1) && rideStatus === "booking") {

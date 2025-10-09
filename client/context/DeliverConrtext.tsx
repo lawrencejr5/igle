@@ -35,6 +35,8 @@ export type DeliveryPackageType =
   | "furniture"
   | "other";
 
+export type DeliveryModalStatus = "";
+
 export interface Delivery {
   _id: string;
   sender: string | { _id?: string; name?: string; phone?: string };
