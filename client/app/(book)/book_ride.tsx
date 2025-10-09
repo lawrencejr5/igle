@@ -14,10 +14,7 @@ import Feather from "@expo/vector-icons/Feather";
 
 import { darkMapStyle } from "../../data/map.dark";
 
-import SideNav from "../../components/SideNav";
-import NotificationScreen from "../../components/screens/NotificationScreen";
-
-import RouteModal from "../../components/RouteModal";
+import RideRouteModal from "../../components/RideRouteModal";
 import Notification from "../../components/Notification";
 
 import { useNotificationContext } from "../../context/NotificationContext";
@@ -30,12 +27,6 @@ import { useAuthContext } from "../../context/AuthContext";
 import { router } from "expo-router";
 
 const BookRide = () => {
-  // Side nav state
-  const [sideNavOpen, setSideNavOpen] = useState<boolean>(false);
-
-  // Notification screen state
-  const [openNotification, setOpenNotification] = useState<boolean>(false);
-
   const { notification } = useNotificationContext();
   const {
     region,
@@ -274,7 +265,7 @@ const BookRide = () => {
             </View>
 
             {/* Choose route Modal */}
-            <RouteModal />
+            <RideRouteModal />
           </View>
         </>
       )}

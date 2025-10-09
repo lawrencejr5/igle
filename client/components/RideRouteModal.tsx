@@ -52,7 +52,7 @@ import { useSavedPlaceContext } from "../context/SavedPlaceContext";
 import { useRatingContext } from "../context/RatingContext";
 import DriverCard, { DriverDetailsModal } from "./DriverCard";
 
-const RouteModal = () => {
+const RideRouteModal = () => {
   const {
     userAddress,
     getPickupSuggestions,
@@ -1888,7 +1888,7 @@ const RideRequestCard = () => {
   );
 };
 
-export default RouteModal;
+export default RideRouteModal;
 
 const styles = StyleSheet.create({
   modal: {

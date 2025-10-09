@@ -152,7 +152,7 @@ const Home = () => {
 
                 <Pressable
                   style={[styles.bannerCard, styles.bannerCardAlt]}
-                  onPress={() => router.push("../deliver")}
+                  onPress={() => router.push("../(book)/book_delivery")}
                 >
                   <Text style={styles.bannerTitle}>Send a package</Text>
                   <Text style={styles.bannerSubtitle}>
@@ -164,7 +164,7 @@ const Home = () => {
                       styles.bannerBtnAlt,
                       { alignSelf: "flex-end" },
                     ]}
-                    onPress={() => router.push("../deliver")}
+                    onPress={() => router.push("../(book)/book_delivery")}
                   >
                     <Text
                       style={[styles.bannerBtnText, styles.bannerBtnTextAlt]}
@@ -239,7 +239,7 @@ const Home = () => {
 
                 <Pressable
                   style={styles.serviceCard}
-                  onPress={() => router.push("../deliver")}
+                  onPress={() => router.push("../(book)/book_delivery")}
                 >
                   <View style={styles.serviceIconBox}>
                     <Feather name="truck" size={16} color="#fff" />
@@ -252,6 +252,21 @@ const Home = () => {
                   </View>
                 </Pressable>
               </View>
+            </View>
+
+            {/* Ongoing ride/package card (dummy data) */}
+            <View style={{ marginTop: 22 }}>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-bold",
+                  fontSize: 18,
+                  marginBottom: 12,
+                }}
+              >
+                Ongoing
+              </Text>
+              <OngoingCard />
             </View>
 
             {/* Saved places (like RouteModal) */}
@@ -267,20 +282,6 @@ const Home = () => {
                 Saved places
               </Text>
               <SavedPlaces />
-            </View>
-            {/* Ongoing ride/package card (dummy data) */}
-            <View style={{ marginTop: 22 }}>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 18,
-                  marginBottom: 12,
-                }}
-              >
-                Ongoing
-              </Text>
-              <OngoingCard />
             </View>
           </View>
           {/* Recent activities (3 items) */}
