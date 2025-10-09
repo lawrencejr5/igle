@@ -8,6 +8,7 @@ export const API_URLS = {
   activity: "http://192.168.143.123:5000/api/v1/activity",
   rating: "http://192.168.143.123:5000/api/v1/rating",
   transactions: "http://192.168.143.123:5000/api/v1/transactions",
+  deliveries: "http://192.168.143.123:5000/api/v1/delivery",
 };
 
 export const SOCKET_URL = "http://192.168.143.123:5000";
@@ -22,6 +23,7 @@ export const SOCKET_URL = "http://192.168.143.123:5000";
 //   activity: "https://igleapi.onrender.com/api/v1/activity",
 //   rating: "https://igleapi.onrender.com/api/v1/rating",
 //   transactions: "https://igleapi.onrender.com/api/v1/transactions",
+//   deliveries: "https://igleapi.onrender.com/api/v1/delivery",
 // };
 
 // export const SOCKET_URL = "https://igleapi.onrender.com";
