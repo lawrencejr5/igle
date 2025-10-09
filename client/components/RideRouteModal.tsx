@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  PixelRatio,
 } from "react-native";
 import React, {
   useState,
@@ -135,10 +136,30 @@ const RideRouteModal = () => {
 
   const windowHeight = Dimensions.get("window").height;
 
-  const snapPoints = useMemo(
-    () => ["25%", "32%", "40%", "60%", "80%", "94%"],
-    []
-  );
+  const fontScale = PixelRatio.getFontScale();
+
+  useEffect(() => {
+    console.log(fontScale);
+  }, []);
+
+  const snapPoints = useMemo(() => {
+    // base snap percents (same as before)
+    const base = [25, 32, 40, 60, 75, 94];
+
+    // Determine adjustment factor from fontScale:
+    // - fontScale <= 1 => no change
+    // - larger fontScale increases sheet sizes up to a reasonable cap
+    const factor =
+      fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
+
+    // apply factor and clamp each percent between 20 and 98
+    const adjusted = base.map((p) => {
+      const v = Math.round(p * factor);
+      return `${Math.min(94, Math.max(20, v))}%`;
+    });
+
+    return adjusted;
+  }, [fontScale]);
 
   const handleSheetChange = (index: number) => {
     const snapValue = snapPoints[index];
