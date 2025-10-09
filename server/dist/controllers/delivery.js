@@ -334,18 +334,52 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
         const sender_socket = yield (0, get_id_1.get_user_socket_id)(delivery.sender.toString());
         switch (status) {
             case "picked_up":
+                // Only allow marking as picked_up when delivery was accepted
+                if (delivery.status !== "accepted") {
+                    return res
+                        .status(400)
+                        .json({
+                        msg: "Delivery must be 'accepted' before it can be picked up",
+                    });
+                }
                 delivery.status = "picked_up";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { picked_up_at: new Date() });
                 if (sender_socket)
                     server_1.io.to(sender_socket).emit("delivery_picked_up", { delivery_id });
                 break;
             case "in_transit":
+                // Only allow starting transit when package was picked up
+                if (delivery.status !== "picked_up") {
+                    return res
+                        .status(400)
+                        .json({
+                        msg: "Delivery must be 'picked_up' before starting transit",
+                    });
+                }
+                // Prevent transit start if payment not completed
+                if (delivery.payment_status !== "paid") {
+                    return res
+                        .status(400)
+                        .json({
+                        msg: "Payment must be completed before transit can start",
+                    });
+                }
                 delivery.status = "in_transit";
+                delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { in_transit_at: new Date() });
                 if (sender_socket)
                     server_1.io.to(sender_socket).emit("delivery_in_transit", { delivery_id });
                 break;
             case "delivered":
+                // Only allow delivered when currently in transit
+                if (delivery.status !== "in_transit") {
+                    return res
+                        .status(400)
+                        .json({
+                        msg: "Delivery must be 'in_transit' before it can be marked delivered",
+                    });
+                }
                 delivery.status = "delivered";
+                delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { delivered_at: new Date() });
                 if (sender_socket)
                     server_1.io.to(sender_socket).emit("delivery_completed", { delivery_id });
                 break;
