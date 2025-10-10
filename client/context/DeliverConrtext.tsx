@@ -4,6 +4,9 @@ import React, {
   useEffect,
   useState,
   ReactNode,
+  Dispatch,
+  SetStateAction,
+  useRef,
 } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -11,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URLS } from "../data/constants";
 import { useNotificationContext } from "./NotificationContext";
 import { useAuthContext } from "./AuthContext";
+import BottomSheet from "@gorhom/bottom-sheet";
 
 export const DeliverContext = createContext<DeliverContextType | null>(null);
 
@@ -35,7 +39,18 @@ export type DeliveryPackageType =
   | "furniture"
   | "other";
 
-export type DeliveryModalStatus = "";
+export type DeliveryModalStatus =
+  | ""
+  | "details"
+  | "choosing_car"
+  | "searching"
+  | "accepted"
+  | "track_driver"
+  | "track_ride"
+  | "pay"
+  | "paying"
+  | "paid"
+  | "rating";
 
 export interface Delivery {
   _id: string;
@@ -96,6 +111,17 @@ const API_URL = API_URLS.deliveries;
 const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext() as any;
   const { userSocket } = useAuthContext() as any;
+
+  const deliveryModalRef = useRef<BottomSheet>(null);
+  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryModalStatus>("");
+  useEffect(() => {
+    if (deliveryStatus === "") {
+      deliveryModalRef.current?.snapToIndex(0);
+    }
+    if (deliveryStatus === "details") {
+      deliveryModalRef.current?.snapToIndex(5);
+    }
+  }, [deliveryStatus]);
 
   const [userDeliveries, setUserDeliveries] = useState<Delivery[] | null>(null);
   const [activeDeliveries, setActiveDeliveries] = useState<Delivery[] | null>(
@@ -330,6 +356,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <DeliverContext.Provider
       value={{
+        deliveryStatus,
+        deliveryModalRef,
+        setDeliveryStatus,
         requestDelivery,
         retryDelivery,
         rebookDelivery,
@@ -355,6 +384,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export interface DeliverContextType {
+  deliveryStatus: DeliveryModalStatus;
+  deliveryModalRef: any;
+  setDeliveryStatus: Dispatch<SetStateAction<DeliveryModalStatus>>;
   requestDelivery: (
     pickup: any,
     dropoff: any,

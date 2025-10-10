@@ -1,4 +1,4 @@
-import React, { FC, useRef, useMemo } from "react";
+import React, { FC, useRef, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -11,12 +11,13 @@ import {
   Image,
   Pressable,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useDeliverContext, Delivery } from "../context/DeliverConrtext";
 import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthContext } from "../context/AuthContext";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome6 } from "@expo/vector-icons";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -26,15 +27,14 @@ const DeliveryRouteModal: FC = () => {
     updateDeliveryStatus,
     rebookDelivery,
     cancelDelivery,
+    deliveryStatus,
+    setDeliveryStatus,
+    deliveryModalRef,
   } = useDeliverContext();
-
-  const { signedIn } = useAuthContext();
 
   const { setDestinationCoords, setDestination, setMapPadding } =
     useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
-
-  const deliveryRouteModalRef = useRef<BottomSheet | null>(null);
 
   const windowHeight = Dimensions.get("window").height;
   const fontScale = PixelRatio.getFontScale();
@@ -61,6 +61,11 @@ const DeliveryRouteModal: FC = () => {
     const snapValue = snapPoints[index];
     let sheetHeight = 0;
 
+    // your ride logic
+    if (index === 0 && deliveryStatus === "details") {
+      setDeliveryStatus("");
+    }
+
     if (typeof snapValue === "string" && snapValue.includes("%")) {
       const percent = parseFloat(snapValue) / 100;
       sheetHeight = windowHeight * percent;
@@ -76,7 +81,7 @@ const DeliveryRouteModal: FC = () => {
     <BottomSheet
       index={0}
       snapPoints={snapPoints}
-      ref={deliveryRouteModalRef}
+      ref={deliveryModalRef}
       onChange={handleSheetChange}
       enableContentPanningGesture={true}
       enableHandlePanningGesture={true}
@@ -97,29 +102,222 @@ const DeliveryRouteModal: FC = () => {
       }}
     >
       <BottomSheetView style={styles.modal}>
-        <View style={styles.container}>
-          <Text style={styles.header}>
-            {signedIn?.name.split(" ")[1] || signedIn?.name.split(" ")[0]}, got
-            something to deliver?
-          </Text>
-
-          <Pressable style={styles.form}>
-            <View style={styles.text_inp_container}>
-              <Feather name="truck" size={25} color="#8d8d8d" />
-
-              <TextInput
-                placeholder="Wetin we dey deliver?"
-                value=""
-                selection={{ start: 0, end: 0 }}
-                placeholderTextColor={"#8d8d8d"}
-                editable={false}
-                style={[styles.text_input, { color: "#8d8d8d" }]}
-              />
-            </View>
-          </Pressable>
-        </View>
+        {deliveryStatus === "" && <StartModal />}
+        {deliveryStatus === "details" && <DetailsModal />}
       </BottomSheetView>
     </BottomSheet>
+  );
+};
+
+const StartModal = () => {
+  const { signedIn } = useAuthContext();
+  const { setDeliveryStatus } = useDeliverContext();
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>
+        {signedIn?.name.split(" ")[1] || signedIn?.name.split(" ")[0]}, got
+        something to deliver?
+      </Text>
+
+      <Pressable
+        style={styles.form}
+        onPress={() => setDeliveryStatus("details")}
+      >
+        <View style={styles.text_inp_container}>
+          <FontAwesome6 name="truck" size={22} color="#8d8d8d" />
+
+          <TextInput
+            placeholder="Wetin we dey deliver?"
+            value=""
+            selection={{ start: 0, end: 0 }}
+            placeholderTextColor={"#8d8d8d"}
+            editable={false}
+            style={[
+              styles.text_input,
+              { color: "#bfbfbf", backgroundColor: "#3f3f3f" },
+            ]}
+          />
+        </View>
+      </Pressable>
+    </View>
+  );
+};
+
+const DetailsModal = () => {
+  const { setDeliveryStatus } = useDeliverContext();
+  const { showNotification } = useNotificationContext() as any;
+
+  const [recipientName, setRecipientName] = useState<string>("");
+  const [recipientPhone, setRecipientPhone] = useState<string>("");
+
+  const [description, setDescription] = useState<string>("");
+  const [pkgType, setPkgType] = useState<string>("document");
+  const [fragile, setFragile] = useState<boolean>(false);
+  const [value, setValue] = useState<string>("");
+
+  const submit = () => {
+    if (!recipientName.trim()) {
+      showNotification("Please enter recipient name", "error");
+      return;
+    }
+    if (!recipientPhone.trim()) {
+      showNotification("Please enter recipient phone", "error");
+      return;
+    }
+
+    // For now just close modal and show success. Integration with requestDelivery
+    // (and persisting these details) can be wired later to DeliverContext.
+    showNotification("Delivery details saved", "success");
+    setDeliveryStatus("");
+  };
+
+  return (
+    <View style={[styles.container, { paddingTop: 12 }]}>
+      <Text style={[styles.header, { marginBottom: 12 }]}>Recipient info</Text>
+
+      <View style={{ marginBottom: 14 }}>
+        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Name</Text>
+        <TextInput
+          placeholder="Recipient full name"
+          placeholderTextColor="#b0b0b0"
+          value={recipientName}
+          onChangeText={setRecipientName}
+          style={styles.text_input}
+          selectionColor="#fff"
+        />
+      </View>
+
+      <View style={{ marginBottom: 18 }}>
+        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Phone</Text>
+        <TextInput
+          placeholder="Recipient phone number"
+          placeholderTextColor="#b0b0b0"
+          value={recipientPhone}
+          onChangeText={setRecipientPhone}
+          keyboardType="phone-pad"
+          style={styles.text_input}
+          selectionColor="#fff"
+        />
+      </View>
+
+      <View
+        style={{ height: 1, backgroundColor: "#2a2a2a", marginVertical: 8 }}
+      />
+
+      <Text style={[styles.header, { marginVertical: 12 }]}>
+        Package details
+      </Text>
+
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Description</Text>
+        <TextInput
+          placeholder="Short description (e.g. smartphone, documents)"
+          placeholderTextColor="#b0b0b0"
+          value={description}
+          onChangeText={setDescription}
+          style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
+          multiline
+          selectionColor="#fff"
+        />
+      </View>
+
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Type</Text>
+        <View style={{ backgroundColor: "#2a2a2a", borderRadius: 8 }}>
+          <Picker
+            selectedValue={pkgType}
+            onValueChange={(v) => setPkgType(v)}
+            style={{ color: "#fff" }}
+            itemStyle={{ color: "#fff" }}
+          >
+            <Picker.Item label="Document" value="document" />
+            <Picker.Item label="Electronics" value="electronics" />
+            <Picker.Item label="Clothing" value="clothing" />
+            <Picker.Item label="Food" value="food" />
+            <Picker.Item label="Furniture" value="furniture" />
+            <Picker.Item label="Other" value="other" />
+          </Picker>
+        </View>
+      </View>
+
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Fragile?</Text>
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <Pressable
+            onPress={() => setFragile(true)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+          >
+            <View
+              style={{
+                height: 18,
+                width: 18,
+                borderRadius: 9,
+                borderWidth: 1,
+                borderColor: fragile ? "#fff" : "#8d8d8d",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: fragile ? "#fff" : "transparent",
+              }}
+            />
+            <Text style={{ color: "#fff" }}>Yes</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setFragile(false)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+          >
+            <View
+              style={{
+                height: 18,
+                width: 18,
+                borderRadius: 9,
+                borderWidth: 1,
+                borderColor: !fragile ? "#fff" : "#8d8d8d",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: !fragile ? "#fff" : "transparent",
+              }}
+            />
+            <Text style={{ color: "#fff" }}>No</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={{ marginBottom: 18 }}>
+        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>
+          Estimated value (NGN)
+        </Text>
+        <TextInput
+          placeholder="0"
+          placeholderTextColor="#b0b0b0"
+          value={value}
+          onChangeText={(t) => setValue(t.replace(/[^0-9]/g, ""))}
+          keyboardType="numeric"
+          style={styles.text_input}
+          selectionColor="#fff"
+        />
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 6 }}>
+        <TouchableOpacity
+          style={[styles.btn, { flex: 1, backgroundColor: "#ff4d4f" }]}
+          onPress={() => setDeliveryStatus("")}
+        >
+          <Text
+            style={[styles.btnText, { color: "#fff", textAlign: "center" }]}
+          >
+            Cancel
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={submit}>
+          <Text style={[styles.btnText, { textAlign: "center" }]}>
+            Continue
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 
@@ -176,11 +374,13 @@ const styles = StyleSheet.create({
     borderRadius: 7,
   },
   text_input: {
-    backgroundColor: "transparent",
-    flex: 1,
-    fontFamily: "raleway-bold",
-    fontSize: 16,
-    color: "#fff",
+    backgroundColor: "#515151",
+    borderRadius: 5,
+    marginTop: 5,
+    width: "95%",
+    color: "#ffffff",
+    paddingHorizontal: 20,
+    fontFamily: "raleway-semibold",
   },
 });
 
