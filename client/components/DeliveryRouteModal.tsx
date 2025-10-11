@@ -12,12 +12,16 @@ import {
   Pressable,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetView,
+  TouchableWithoutFeedback,
+} from "@gorhom/bottom-sheet";
 import { useDeliverContext, Delivery } from "../context/DeliverConrtext";
 import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthContext } from "../context/AuthContext";
 import { Feather, FontAwesome6 } from "@expo/vector-icons";
+import { ScrollView } from "react-native-gesture-handler";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -104,6 +108,7 @@ const DeliveryRouteModal: FC = () => {
       <BottomSheetView style={styles.modal}>
         {deliveryStatus === "" && <StartModal />}
         {deliveryStatus === "details" && <DetailsModal />}
+        {deliveryStatus === "vehicle" && <ChooseVehicleModal />}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -330,8 +335,11 @@ const DetailsModal = () => {
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", gap: 12, marginTop: 15 }}>
-        <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={submit}>
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 25 }}>
+        <TouchableOpacity
+          style={[styles.btn, { flex: 1 }]}
+          onPress={() => setDeliveryStatus("vehicle")}
+        >
           <Text style={[styles.btnText, { textAlign: "center" }]}>
             Continue
           </Text>
@@ -352,6 +360,155 @@ const DetailsModal = () => {
         </TouchableOpacity>
       </View>
     </View>
+  );
+};
+
+const ChooseVehicleModal = () => {
+  const [selectedRideType, setSelectedRideType] = useState<
+    "bike" | "cab" | "van" | "truck"
+  >("bike");
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Select Igle ride...
+      </Text>
+
+      {/* Ride type selection - horizontally scrollable with snapping */}
+      <View style={{ marginTop: 20 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={240} // card width (220) + marginRight (20)
+          snapToAlignment="start"
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+        >
+          <RideTypeCard
+            id="bike"
+            title="Motorcycle"
+            icon={require("../assets/images/icons/motorcycle-icon.png")}
+            subtext="For small and light items"
+            amount={5000}
+            selected={selectedRideType === "bike"}
+            onPress={() => {
+              setSelectedRideType("bike");
+            }}
+          />
+
+          <RideTypeCard
+            id="cab"
+            title="Cab"
+            icon={require("../assets/images/icons/sedan-icon.png")}
+            subtext="For medium-sized packages"
+            amount={5000}
+            selected={selectedRideType === "cab"}
+            onPress={() => {
+              setSelectedRideType("cab");
+            }}
+          />
+
+          <RideTypeCard
+            id="van"
+            title="Van"
+            icon={require("../assets/images/icons/van-icon.png")}
+            subtext="For large or multiple packages"
+            amount={5000}
+            selected={selectedRideType === "van"}
+            onPress={() => {
+              setSelectedRideType("van");
+            }}
+          />
+          <RideTypeCard
+            id="truck"
+            title="Truck"
+            icon={require("../assets/images/icons/truck-icon.png")}
+            subtext="For heavy-duty deliveries"
+            amount={5000}
+            selected={selectedRideType === "truck"}
+            onPress={() => {
+              setSelectedRideType("truck");
+            }}
+          />
+        </ScrollView>
+      </View>
+      <TouchableWithoutFeedback>
+        <View
+          style={{
+            marginVertical: 40,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            Search for dispatch rider
+          </Text>
+        </View>
+      </TouchableWithoutFeedback>
+    </>
+  );
+};
+
+// Reusable ride type card used in ChooseRideModal
+const RideTypeCard: FC<{
+  id: "bike" | "cab" | "van" | "truck";
+  title: string;
+  icon: any;
+  subtext?: string;
+  amount?: number;
+  selected?: boolean;
+  onPress?: () => void;
+}> = ({ title, icon, subtext, amount, selected, onPress }) => {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
+      style={[styles.rideCard, selected ? styles.rideCardSelected : null]}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Image source={icon} style={{ height: 50, width: 50 }} />
+        <View style={{ width: "100%", flexShrink: 1 }}>
+          <Text
+            style={[
+              { color: "#fff", fontFamily: "raleway-semibold" },
+              selected && styles.select_ride_text_active,
+            ]}
+          >
+            {title}
+          </Text>
+          <Text
+            style={[
+              {
+                color: "#fff",
+                fontFamily: "poppins-regular",
+                fontSize: 10,
+              },
+              selected && styles.select_ride_text_active,
+            ]}
+          >
+            {subtext}
+          </Text>
+          <Text
+            style={[
+              {
+                color: selected ? "#121212" : "#fff",
+                textAlign: "right",
+                fontFamily: "poppins-bold",
+                fontSize: 16,
+              },
+            ]}
+          >
+            NGN {amount?.toLocaleString() ?? "----"}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -449,6 +606,55 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     paddingHorizontal: 15,
     fontFamily: "raleway-semibold",
+  },
+
+  header_text: {
+    fontFamily: "raleway-bold",
+    color: "#fff",
+    fontSize: 20,
+  },
+  select_ride_container: {
+    marginBottom: 20,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#515151",
+    borderStyle: "solid",
+    paddingBottom: 20,
+  },
+  select_ride_box: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 7,
+    borderColor: "grey",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "grey",
+  },
+  rideCard: {
+    width: 250,
+    marginRight: 20,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "grey",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  rideCardSelected: {
+    backgroundColor: "#fff",
+  },
+  select_ride_box_active: {
+    backgroundColor: "#fff",
+  },
+  select_ride_text_active: {
+    color: "#121212",
   },
 });
 

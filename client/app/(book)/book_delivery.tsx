@@ -25,6 +25,7 @@ import { darkMapStyle } from "../../data/map.dark";
 
 import Feather from "@expo/vector-icons/Feather";
 import DeliveryRouteModal from "../../components/DeliveryRouteModal";
+import { useDeliverContext } from "../../context/DeliverConrtext";
 
 const BookDelivery = () => {
   const { notification } = useNotificationContext();
@@ -41,6 +42,7 @@ const BookDelivery = () => {
     locationLoading,
   } = useMapContext();
   const { signedIn } = useAuthContext();
+  const { deliveryStatus, setDeliveryStatus } = useDeliverContext();
 
   useEffect(() => {
     if (!region) return;
@@ -94,7 +96,21 @@ const BookDelivery = () => {
             onPress={() => {
               // ordered modal flow - used for stepping back through statuses
 
-              router.push("../(tabs)/home");
+              const modalOrder = ["", "details", "vehicle", "searching"];
+
+              if (deliveryStatus === undefined || deliveryStatus === "") {
+                // no previous modal status - go to home
+                router.push("../(tabs)/home");
+                return;
+              }
+
+              const idx = modalOrder.indexOf(deliveryStatus as any);
+              if (idx > 0) {
+                const prev = modalOrder[idx - 1];
+                setDeliveryStatus(prev as any);
+              } else {
+                router.push("../(tabs)/home");
+              }
             }}
             style={styles.nav_box}
           >

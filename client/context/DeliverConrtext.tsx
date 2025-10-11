@@ -15,6 +15,8 @@ import { API_URLS } from "../data/constants";
 import { useNotificationContext } from "./NotificationContext";
 import { useAuthContext } from "./AuthContext";
 import BottomSheet from "@gorhom/bottom-sheet";
+import { BackHandler, Platform } from "react-native";
+import { useNavigation } from "expo-router";
 
 export const DeliverContext = createContext<DeliverContextType | null>(null);
 
@@ -42,7 +44,7 @@ export type DeliveryPackageType =
 export type DeliveryModalStatus =
   | ""
   | "details"
-  | "choosing_car"
+  | "vehicle"
   | "searching"
   | "accepted"
   | "track_driver"
@@ -121,7 +123,41 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (deliveryStatus === "details") {
       deliveryModalRef.current?.snapToIndex(5);
     }
+    if (deliveryStatus === "vehicle") {
+      deliveryModalRef.current?.snapToIndex(2);
+    }
   }, [deliveryStatus]);
+
+  const navigation = useNavigation();
+  const handleBackAction = (e?: any) => {
+    if (e) e.preventDefault();
+    if (deliveryStatus === "details") {
+      setDeliveryStatus("");
+      return true;
+    }
+    if (deliveryStatus === "vehicle") {
+      setDeliveryStatus("details");
+      return true;
+    }
+
+    return false;
+  };
+
+  useEffect(() => {
+    // Handles navigation back (iOS + Android header back + swipe)
+    const subNav = navigation.addListener("beforeRemove", handleBackAction);
+
+    // Handles hardware back (Android only)
+    const subHW =
+      Platform.OS === "android"
+        ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
+        : null;
+
+    return () => {
+      subNav();
+      if (subHW) subHW.remove();
+    };
+  }, [navigation, deliveryStatus]);
 
   const [userDeliveries, setUserDeliveries] = useState<Delivery[] | null>(null);
   const [activeDeliveries, setActiveDeliveries] = useState<Delivery[] | null>(
