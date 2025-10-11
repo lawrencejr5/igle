@@ -10,6 +10,7 @@ import {
   TextInput,
   Image,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import BottomSheet, {
@@ -20,6 +21,7 @@ import { useDeliverContext, Delivery } from "../context/DeliverConrtext";
 import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthContext } from "../context/AuthContext";
+import { useWalletContext } from "../context/WalletContext";
 import { Feather, FontAwesome6 } from "@expo/vector-icons";
 import { ScrollView } from "react-native-gesture-handler";
 
@@ -81,6 +83,20 @@ const DeliveryRouteModal: FC = () => {
       setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 20 }));
   };
 
+  React.useEffect(() => {
+    if (deliveryStatus !== "accepted") return;
+    const t = setTimeout(() => {
+      setDeliveryStatus("arrived");
+      try {
+        showNotification("Dispatch rider has arrived (demo)", "success");
+      } catch (e) {
+        // ignore if notification context isn't available
+      }
+    }, 5000);
+
+    return () => clearTimeout(t);
+  }, [deliveryStatus]);
+
   return (
     <BottomSheet
       index={0}
@@ -109,6 +125,11 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "" && <StartModal />}
         {deliveryStatus === "details" && <DetailsModal />}
         {deliveryStatus === "vehicle" && <ChooseVehicleModal />}
+        {deliveryStatus === "searching" && <SearchingModal />}
+        {deliveryStatus === "accepted" && <AcceptedModal />}
+        {deliveryStatus === "track_driver" && <TrackDriver />}
+        {deliveryStatus === "arrived" && <ArrivedModal />}
+        {deliveryStatus === "pay" && <PayingModal />}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -171,8 +192,6 @@ const DetailsModal = () => {
       return;
     }
 
-    // For now just close modal and show success. Integration with requestDelivery
-    // (and persisting these details) can be wired later to DeliverContext.
     showNotification("Delivery details saved", "success");
     setDeliveryStatus("");
   };
@@ -259,7 +278,6 @@ const DetailsModal = () => {
             />
             <Text style={{ color: "#fff" }}>Yes</Text>
           </Pressable>
-
           <Pressable
             onPress={() => setFragile(false)}
             style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
@@ -367,6 +385,7 @@ const ChooseVehicleModal = () => {
   const [selectedRideType, setSelectedRideType] = useState<
     "bike" | "cab" | "van" | "truck"
   >("bike");
+  const { setDeliveryStatus } = useDeliverContext();
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -432,7 +451,8 @@ const ChooseVehicleModal = () => {
         </ScrollView>
       </View>
       <TouchableWithoutFeedback>
-        <View
+        <TouchableOpacity
+          onPress={() => setDeliveryStatus("searching")}
           style={{
             marginVertical: 40,
             padding: 10,
@@ -449,8 +469,501 @@ const ChooseVehicleModal = () => {
           >
             Search for dispatch rider
           </Text>
-        </View>
+        </TouchableOpacity>
       </TouchableWithoutFeedback>
+    </>
+  );
+};
+
+const SearchingModal = () => {
+  const { deliveryStatus, setDeliveryStatus } = useDeliverContext();
+  const { region, mapRef } = useMapContext() as any;
+  const { showNotification } = useNotificationContext() as any;
+
+  const [searchText, setSearchText] = useState<string>(
+    "Searching for dispatch riders..."
+  );
+
+  React.useEffect(() => {
+    // only run the dummy flow when the sheet is in searching state
+    if (deliveryStatus !== "searching") return;
+
+    setSearchText("Searching for dispatch riders...");
+    const id = setTimeout(() => {
+      setSearchText("Dispatch rider found!");
+      // advance to accepted state (dummy)
+      setDeliveryStatus("accepted");
+      showNotification("Dispatch rider assigned (demo)", "success");
+    }, 3000);
+
+    return () => clearTimeout(id);
+  }, [deliveryStatus]);
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Searching
+      </Text>
+
+      <View style={{ marginTop: 20 }}>
+        {deliveryStatus === "searching" && (
+          <ActivityIndicator
+            size={"large"}
+            color={"#fff"}
+            style={{ marginBottom: 20, marginTop: 10 }}
+          />
+        )}
+        <Text
+          style={{
+            fontFamily: "raleway-regular",
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
+          {searchText}
+        </Text>
+      </View>
+
+      {/* Simple cancel action while searching */}
+      <View style={{ marginTop: 30 }}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setDeliveryStatus("")}
+          style={{
+            width: "100%",
+            padding: 10,
+            borderRadius: 50,
+            backgroundColor: "transparent",
+            borderWidth: 1,
+            borderColor: "#fff",
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "raleway-bold",
+              color: "#fff",
+              textAlign: "center",
+            }}
+          >
+            Cancel
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+};
+
+const AcceptedModal = () => {
+  const { deliveryStatus, setDeliveryStatus } = useDeliverContext();
+  const { region, mapRef } = useMapContext() as any;
+  const { showNotification } = useNotificationContext() as any;
+
+  // Demo: once a dispatch rider is assigned (accepted), auto-transition to "arrived"
+  // after ~5 seconds to simulate the rider reaching the pickup.
+  React.useEffect(() => {
+    if (deliveryStatus !== "accepted") return;
+    const t = setTimeout(() => {
+      setDeliveryStatus("arrived");
+      try {
+        showNotification("Dispatch rider has arrived (demo)", "success");
+      } catch (e) {
+        // ignore if notification context isn't available
+      }
+    }, 5000);
+
+    return () => clearTimeout(t);
+  }, [deliveryStatus]);
+
+  const track_rider = () => {
+    setDeliveryStatus("track_driver");
+    // demo: animate to a mocked location if mapRef available
+    setTimeout(() => {
+      try {
+        if (mapRef?.current) {
+          // fall back to region or a small offset
+          const target = region
+            ? {
+                latitude: region.latitude || 6.5244,
+                longitude: region.longitude || 3.3792,
+                latitudeDelta: 0.02,
+                longitudeDelta: 0.02,
+              }
+            : {
+                latitude: 6.5244,
+                longitude: 3.3792,
+                latitudeDelta: 0.02,
+                longitudeDelta: 0.02,
+              };
+          mapRef.current.animateToRegion(target, 1000);
+        }
+      } catch (e) {
+        // ignore in demo
+      }
+    }, 800);
+  };
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Dispatch rider found
+      </Text>
+
+      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+        This rider is on the way...
+      </Text>
+
+      {/* Minimal driver card (demo data) */}
+      <View
+        style={{
+          marginTop: 12,
+          padding: 12,
+          borderRadius: 10,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Image
+            source={require("../assets/images/black-profile.jpeg")}
+            style={{ width: 50, height: 50, borderRadius: 25 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
+              John Doe
+            </Text>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 12,
+              }}
+            >
+              Bike • 4.9 ★ • 120 trips
+            </Text>
+          </View>
+          <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
+            NGN 1,200
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 50,
+          backgroundColor: "#fff",
+          marginTop: 20,
+        }}
+        onPress={track_rider}
+      >
+        <Text
+          style={{
+            fontFamily: "raleway-bold",
+            color: "#121212",
+            textAlign: "center",
+          }}
+        >
+          Track rider
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => setDeliveryStatus("")}
+        style={{ marginTop: 18 }}
+        activeOpacity={0.8}
+      >
+        <Text
+          style={{
+            color: "#ff4d4f",
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+          }}
+        >
+          Cancel this delivery
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+};
+
+const TrackDriver = () => {
+  const { setDeliveryStatus } = useDeliverContext();
+  const { mapRef } = useMapContext() as any;
+
+  // Local demo delivery for tracking UI (no real API calls)
+  const delivery: any = {
+    driver: {
+      user: { name: "John Doe" },
+      vehicle: { brand: "Yamaha", model: "- MT-15" },
+      current_location: { coordinates: [6.5244, 3.3792] },
+    },
+    pickup: { coordinates: [6.523, 3.38] },
+  };
+
+  const see_delivery_info = () => {
+    if (mapRef?.current && delivery?.driver?.current_location) {
+      const coords = delivery.driver.current_location.coordinates;
+      try {
+        mapRef.current.fitToCoordinates(
+          [
+            { latitude: coords[0], longitude: coords[1] },
+            ...(delivery.pickup?.coordinates
+              ? [
+                  {
+                    latitude: delivery.pickup.coordinates[0],
+                    longitude: delivery.pickup.coordinates[1],
+                  },
+                ]
+              : []),
+          ],
+          {
+            edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
+            animated: true,
+          }
+        );
+      } catch (e) {
+        // ignore in demo
+      }
+    }
+    setDeliveryStatus("accepted");
+  };
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
+        Tracking rider...
+      </Text>
+
+      <View style={{ marginTop: 20 }}>
+        <View style={{ alignItems: "center" }}>
+          <Image
+            source={require("../assets/images/black-profile.jpeg")}
+            style={{ width: 70, height: 70, borderRadius: 40, marginTop: 10 }}
+          />
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "raleway-semibold",
+              marginTop: 10,
+            }}
+          >
+            {delivery.driver.user.name}
+          </Text>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              fontFamily: "poppins-regular",
+              fontSize: 12,
+            }}
+          >
+            {delivery.driver.vehicle.brand} {delivery.driver.vehicle.model}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={see_delivery_info}
+          style={{
+            marginVertical: 30,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            See delivery info
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+};
+
+const ArrivedModal = () => {
+  const { setDeliveryStatus } = useDeliverContext();
+
+  // Dummy delivery for demo
+  const delivery: any = {
+    fare: 1200,
+    driver: {
+      user: { name: "John Doe" },
+      vehicle: { brand: "Yamaha", model: "MT-15" },
+      rating: 4.9,
+      trips: 120,
+    },
+  };
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Dispatch Rider arrived
+      </Text>
+
+      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+        Your rider has arrived!
+      </Text>
+      {/* Driver card (same layout as AcceptedModal) */}
+      <View
+        style={{
+          marginTop: 12,
+          padding: 12,
+          borderRadius: 10,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Image
+            source={require("../assets/images/black-profile.jpeg")}
+            style={{ width: 50, height: 50, borderRadius: 25 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
+              {delivery.driver.user.name}
+            </Text>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 12,
+              }}
+            >
+              {delivery.driver.vehicle.brand} • {delivery.driver.rating} ★ •{" "}
+              {delivery.driver.trips} trips
+            </Text>
+          </View>
+          <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
+            NGN {delivery.fare.toLocaleString()}
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 50,
+          backgroundColor: "#fff",
+          marginTop: 30,
+        }}
+        onPress={() => setDeliveryStatus("paying")}
+      >
+        <Text
+          style={{
+            fontFamily: "raleway-bold",
+            color: "#121212",
+            textAlign: "center",
+          }}
+        >
+          Pay NGN {delivery.fare.toLocaleString()}
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+};
+
+const PayingModal = () => {
+  const { setDeliveryStatus } = useDeliverContext();
+  const { showNotification } = useNotificationContext() as any;
+
+  const [paying, setPaying] = useState<boolean>(false);
+
+  // Dummy delivery & wallet for demo
+  const delivery: any = { fare: 1200, _id: "demo-delivery-1" };
+  const userWalletBal = 5000;
+
+  const pay_func = async () => {
+    setPaying(true);
+    // simulate payment delay
+    setTimeout(() => {
+      setPaying(false);
+      showNotification("Payment successful (demo)", "success");
+      setDeliveryStatus("paid");
+    }, 1200);
+  };
+
+  return (
+    <>
+      <Text
+        style={[
+          styles.header_text,
+          { textAlign: "center", fontFamily: "poppins-bold" },
+        ]}
+      >
+        Confirm payment (NGN {delivery.fare.toLocaleString()})
+      </Text>
+
+      <View style={{ marginTop: 25 }}>
+        <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
+          Wallet balance: {userWalletBal.toLocaleString()} NGN
+        </Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 20,
+            marginTop: 25,
+          }}
+        >
+          <TouchableOpacity
+            onPress={pay_func}
+            disabled={paying}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              paddingHorizontal: 30,
+              paddingVertical: 10,
+              flex: 1,
+              opacity: paying ? 0.5 : 1,
+            }}
+          >
+            <Text
+              style={{
+                color: "#121212",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              {paying ? "Confirming..." : "Confirm"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setDeliveryStatus("pay")}
+            style={{
+              borderRadius: 20,
+              paddingHorizontal: 30,
+              paddingVertical: 10,
+              borderStyle: "solid",
+              borderWidth: 1,
+              borderColor: "#fff",
+              flex: 1,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Cancel
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </>
   );
 };
@@ -612,6 +1125,12 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-bold",
     color: "#fff",
     fontSize: 20,
+  },
+  rideStatusText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "raleway-bold",
+    marginBottom: 10,
   },
   select_ride_container: {
     marginBottom: 20,

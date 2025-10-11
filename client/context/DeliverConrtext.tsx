@@ -48,6 +48,7 @@ export type DeliveryModalStatus =
   | "searching"
   | "accepted"
   | "track_driver"
+  | "arrived"
   | "track_ride"
   | "pay"
   | "paying"
@@ -126,6 +127,18 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (deliveryStatus === "vehicle") {
       deliveryModalRef.current?.snapToIndex(2);
     }
+    if (deliveryStatus === "searching") {
+      deliveryModalRef.current?.snapToIndex(2);
+    }
+    if (deliveryStatus === "accepted") {
+      deliveryModalRef.current?.snapToIndex(3);
+    }
+    if (deliveryStatus === "track_driver") {
+      deliveryModalRef.current?.snapToIndex(2);
+    }
+    if (deliveryStatus === "accepted") {
+      deliveryModalRef.current?.snapToIndex(2);
+    }
   }, [deliveryStatus]);
 
   const navigation = useNavigation();
@@ -137,6 +150,18 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "vehicle") {
       setDeliveryStatus("details");
+      return true;
+    }
+    if (deliveryStatus === "accepted") {
+      setDeliveryStatus("searching");
+      return true;
+    }
+    if (deliveryStatus === "track_driver") {
+      setDeliveryStatus("accepted");
+      return true;
+    }
+    if (deliveryStatus === "arrived") {
+      setDeliveryStatus("track_driver");
       return true;
     }
 
