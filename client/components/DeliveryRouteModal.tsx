@@ -134,7 +134,7 @@ const StartModal = () => {
             placeholderTextColor={"#8d8d8d"}
             editable={false}
             style={[
-              styles.text_input,
+              styles.start_text_input,
               { color: "#bfbfbf", backgroundColor: "#3f3f3f" },
             ]}
           />
@@ -177,7 +177,15 @@ const DetailsModal = () => {
       <Text style={[styles.header, { marginBottom: 12 }]}>Recipient info</Text>
 
       <View style={{ marginBottom: 14 }}>
-        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Name</Text>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginBottom: 6,
+            fontFamily: "raleway-semibold",
+          }}
+        >
+          Name
+        </Text>
         <TextInput
           placeholder="Recipient full name"
           placeholderTextColor="#b0b0b0"
@@ -189,7 +197,15 @@ const DetailsModal = () => {
       </View>
 
       <View style={{ marginBottom: 18 }}>
-        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Phone</Text>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginBottom: 6,
+            fontFamily: "raleway-semibold",
+          }}
+        >
+          Phone
+        </Text>
         <TextInput
           placeholder="Recipient phone number"
           placeholderTextColor="#b0b0b0"
@@ -209,40 +225,16 @@ const DetailsModal = () => {
         Package details
       </Text>
 
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Description</Text>
-        <TextInput
-          placeholder="Short description (e.g. smartphone, documents)"
-          placeholderTextColor="#b0b0b0"
-          value={description}
-          onChangeText={setDescription}
-          style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
-          multiline
-          selectionColor="#fff"
-        />
-      </View>
-
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Type</Text>
-        <View style={{ backgroundColor: "#2a2a2a", borderRadius: 8 }}>
-          <Picker
-            selectedValue={pkgType}
-            onValueChange={(v) => setPkgType(v)}
-            style={{ color: "#fff" }}
-            itemStyle={{ color: "#fff" }}
-          >
-            <Picker.Item label="Document" value="document" />
-            <Picker.Item label="Electronics" value="electronics" />
-            <Picker.Item label="Clothing" value="clothing" />
-            <Picker.Item label="Food" value="food" />
-            <Picker.Item label="Furniture" value="furniture" />
-            <Picker.Item label="Other" value="other" />
-          </Picker>
-        </View>
-      </View>
-
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>Fragile?</Text>
+      <View style={{ marginVertical: 12 }}>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginBottom: 6,
+            fontFamily: "raleway-bold",
+          }}
+        >
+          Fragile?
+        </Text>
         <View style={{ flexDirection: "row", gap: 12 }}>
           <Pressable
             onPress={() => setFragile(true)}
@@ -284,37 +276,79 @@ const DetailsModal = () => {
         </View>
       </View>
 
-      <View style={{ marginBottom: 18 }}>
-        <Text style={{ color: "#cfcfcf", marginBottom: 6 }}>
-          Estimated value (NGN)
+      <View style={{ marginBottom: 12 }}>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginBottom: 6,
+            fontFamily: "raleway-semibold",
+          }}
+        >
+          Description
         </Text>
         <TextInput
-          placeholder="0"
+          placeholder=" e.g. iPhone XR, Bag of oranges"
           placeholderTextColor="#b0b0b0"
-          value={value}
-          onChangeText={(t) => setValue(t.replace(/[^0-9]/g, ""))}
-          keyboardType="numeric"
-          style={styles.text_input}
+          value={description}
+          onChangeText={setDescription}
+          style={[styles.text_input]}
+          multiline
           selectionColor="#fff"
         />
       </View>
 
-      <View style={{ flexDirection: "row", gap: 12, marginTop: 6 }}>
-        <TouchableOpacity
-          style={[styles.btn, { flex: 1, backgroundColor: "#ff4d4f" }]}
-          onPress={() => setDeliveryStatus("")}
+      <View style={{ marginBottom: 12 }}>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginBottom: 6,
+            fontFamily: "raleway-semibold",
+          }}
         >
-          <Text
-            style={[styles.btnText, { color: "#fff", textAlign: "center" }]}
+          Type
+        </Text>
+        <View
+          style={{
+            backgroundColor: "#2a2a2a",
+            borderRadius: 8,
+            paddingHorizontal: 8,
+          }}
+        >
+          <Picker
+            selectedValue={pkgType}
+            onValueChange={(v) => setPkgType(v)}
+            style={{ color: "#fff" }}
+            itemStyle={{ color: "#fff" }}
           >
-            Cancel
-          </Text>
-        </TouchableOpacity>
+            <Picker.Item label="Document" value="document" />
+            <Picker.Item label="Electronics" value="electronics" />
+            <Picker.Item label="Clothing" value="clothing" />
+            <Picker.Item label="Food" value="food" />
+            <Picker.Item label="Furniture" value="furniture" />
+            <Picker.Item label="Other" value="other" />
+          </Picker>
+        </View>
+      </View>
 
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 15 }}>
         <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={submit}>
           <Text style={[styles.btnText, { textAlign: "center" }]}>
             Continue
           </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.btn,
+            {
+              paddingHorizontal: 20,
+              backgroundColor: "transparent",
+              borderColor: "#fff",
+              borderWidth: 1,
+            },
+          ]}
+          onPress={() => setDeliveryStatus("")}
+        >
+          <Feather name="x" size={20} color={"#fff"} />
         </TouchableOpacity>
       </View>
     </View>
@@ -330,32 +364,56 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     paddingHorizontal: 15,
   },
-  container: { paddingHorizontal: 5, backgroundColor: "#121212" },
+  container: {
+    paddingHorizontal: 5,
+    backgroundColor: "#121212",
+  },
   header: {
     color: "#fff",
     fontSize: 16,
     fontFamily: "raleway-bold",
     marginBottom: 8,
   },
-  empty: { color: "#b0b0b0" },
+  empty: {
+    color: "#b0b0b0",
+  },
   card: {
     flexDirection: "row",
     padding: 12,
     backgroundColor: "#1e1e1e",
     borderRadius: 8,
   },
-  title: { color: "#fff", fontFamily: "raleway-semibold" },
-  sub: { color: "#cfcfcf", fontSize: 12 },
-  price: { color: "#fff", marginTop: 8, fontFamily: "poppins-bold" },
-  actions: { justifyContent: "space-around", alignItems: "flex-end" },
+  title: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+  },
+  sub: {
+    color: "#cfcfcf",
+    fontSize: 12,
+  },
+  price: {
+    color: "#fff",
+    marginTop: 8,
+    fontFamily: "poppins-bold",
+  },
+  actions: {
+    justifyContent: "space-around",
+    alignItems: "flex-end",
+  },
   btn: {
     padding: 6,
+    paddingVertical: 10,
     borderRadius: 6,
     backgroundColor: "#fff",
     marginBottom: 6,
   },
-  cancelBtn: { backgroundColor: "#ff4d4f" },
-  btnText: { color: "#121212", fontFamily: "raleway-bold" },
+  cancelBtn: {
+    backgroundColor: "#ff4d4f",
+  },
+  btnText: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+  },
 
   form: {
     flexDirection: "row",
@@ -373,13 +431,23 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 7,
   },
+  start_text_input: {
+    backgroundColor: "#2a2a2a",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    flex: 1,
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+    color: "#fff",
+  },
   text_input: {
     backgroundColor: "#515151",
     borderRadius: 5,
     marginTop: 5,
-    width: "95%",
+    width: "100%",
     color: "#ffffff",
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     fontFamily: "raleway-semibold",
   },
 });
