@@ -49,7 +49,7 @@ export type DeliveryModalStatus =
   | "accepted"
   | "track_driver"
   | "arrived"
-  | "track_ride"
+  | "track_delivery"
   | "paying"
   | "paid"
   | "rating";
@@ -144,6 +144,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (deliveryStatus === "paid") {
       deliveryModalRef.current?.snapToIndex(1);
     }
+    if (deliveryStatus === "track_delivery") {
+      deliveryModalRef.current?.snapToIndex(3);
+    }
   }, [deliveryStatus]);
 
   const navigation = useNavigation();
@@ -175,6 +178,10 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "paid") {
       setDeliveryStatus("paying");
+      return true;
+    }
+    if (deliveryStatus === "track_delivery") {
+      setDeliveryStatus("paid");
       return true;
     }
 

@@ -11,6 +11,7 @@ import {
   Image,
   Pressable,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import BottomSheet, {
@@ -131,6 +132,7 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "arrived" && <ArrivedModal />}
         {deliveryStatus === "paying" && <PayingModal />}
         {deliveryStatus === "paid" && <PaidModal />}
+        {deliveryStatus === "track_delivery" && <TrackDelivery />}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -1010,10 +1012,9 @@ const PaidModal = () => {
       <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
         Thanks — your delivery has been paid (demo)
       </Text>
-
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => setDeliveryStatus("")}
+        onPress={() => setDeliveryStatus("track_delivery")}
         style={{
           marginTop: 30,
           padding: 12,
@@ -1028,7 +1029,226 @@ const PaidModal = () => {
             color: "#121212",
           }}
         >
-          Done
+          Track delivery
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+};
+
+const TrackDelivery = () => {
+  const { setDeliveryStatus } = useDeliverContext();
+  const { mapRef } = useMapContext() as any;
+  const { showNotification } = useNotificationContext() as any;
+
+  // Dummy delivery data for demo
+  const delivery: any = {
+    id: "demo-delivery-1",
+    status: "en_route",
+    eta: "5 mins",
+    progress: 0.45,
+    driver: {
+      name: "Jane Rider",
+      phone: "+2348012345678",
+      vehicle: "Yamaha MT-15",
+      rating: 4.9,
+      avatar: require("../assets/images/black-profile.jpeg"),
+    },
+    pickup: { latitude: 6.523, longitude: 3.38 },
+    current_location: { latitude: 6.5244, longitude: 3.3792 },
+  };
+
+  const [progress, setProgress] = React.useState<number>(delivery.progress);
+
+  // Simulate progress while modal is open
+  React.useEffect(() => {
+    let id: any;
+    id = setInterval(() => {
+      setProgress((p) => {
+        const next = Math.min(0.98, +(p + Math.random() * 0.06).toFixed(2));
+        return next;
+      });
+    }, 2500);
+
+    return () => clearInterval(id);
+  }, []);
+
+  const focusOnRider = () => {
+    try {
+      if (mapRef?.current) {
+        mapRef.current.animateToRegion(
+          {
+            latitude: delivery.current_location.latitude,
+            longitude: delivery.current_location.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          800
+        );
+        showNotification("Focusing on rider (demo)", "info");
+      }
+    } catch (e) {
+      // ignore in demo
+    }
+  };
+
+  const callRider = async () => {
+    try {
+      const url = `tel:${delivery.driver.phone}`;
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        showNotification("Cannot open dialer on this device", "error");
+      }
+    } catch (e) {
+      showNotification("Failed to initiate call (demo)", "error");
+    }
+  };
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Delivery in transit
+      </Text>
+
+      <Text style={[styles.rideStatusText, { marginTop: 12, fontSize: 13 }]}>
+        ETA • {delivery.eta}
+      </Text>
+
+      <View style={{ marginTop: 12 }}>
+        <View
+          style={{
+            height: 10,
+            backgroundColor: "#2a2a2a",
+            borderRadius: 6,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              width: `${Math.round(progress * 100)}%`,
+              height: 10,
+              backgroundColor: "#fff",
+            }}
+          />
+        </View>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginTop: 8,
+            fontFamily: "poppins-regular",
+            fontSize: 12,
+          }}
+        >
+          {Math.round(progress * 100)}% completed
+        </Text>
+      </View>
+
+      {/* Driver card */}
+      <View
+        style={{
+          marginTop: 18,
+          padding: 14,
+          borderRadius: 12,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <Image
+          source={delivery.driver.avatar}
+          style={{ width: 58, height: 58, borderRadius: 30 }}
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
+            {delivery.driver.name}
+          </Text>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              fontFamily: "poppins-regular",
+              fontSize: 12,
+            }}
+          >
+            {delivery.driver.vehicle}
+          </Text>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              fontFamily: "poppins-regular",
+              fontSize: 12,
+            }}
+          >
+            {delivery.driver.rating} ★
+          </Text>
+        </View>
+        <TouchableOpacity onPress={callRider} style={{ padding: 8 }}>
+          <Feather name="phone" size={18} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 18 }}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={focusOnRider}
+          style={{
+            flex: 1,
+            padding: 12,
+            borderRadius: 10,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            Focus on rider
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={callRider}
+          style={{
+            flex: 1,
+            padding: 12,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: "#fff",
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#fff",
+            }}
+          >
+            Call rider
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        onPress={() => setDeliveryStatus("")}
+        style={{ marginTop: 16 }}
+        activeOpacity={0.8}
+      >
+        <Text
+          style={{
+            color: "#ff4d4f",
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+          }}
+        >
+          Close
         </Text>
       </TouchableOpacity>
     </>
