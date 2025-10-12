@@ -50,7 +50,6 @@ export type DeliveryModalStatus =
   | "track_driver"
   | "arrived"
   | "track_ride"
-  | "pay"
   | "paying"
   | "paid"
   | "rating";
@@ -136,8 +135,14 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (deliveryStatus === "track_driver") {
       deliveryModalRef.current?.snapToIndex(2);
     }
-    if (deliveryStatus === "accepted") {
+    if (deliveryStatus === "arrived") {
       deliveryModalRef.current?.snapToIndex(2);
+    }
+    if (deliveryStatus === "paying") {
+      deliveryModalRef.current?.snapToIndex(1);
+    }
+    if (deliveryStatus === "paid") {
+      deliveryModalRef.current?.snapToIndex(1);
     }
   }, [deliveryStatus]);
 
@@ -162,6 +167,14 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "arrived") {
       setDeliveryStatus("track_driver");
+      return true;
+    }
+    if (deliveryStatus === "paying") {
+      setDeliveryStatus("arrived");
+      return true;
+    }
+    if (deliveryStatus === "paid") {
+      setDeliveryStatus("paying");
       return true;
     }
 

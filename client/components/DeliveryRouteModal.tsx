@@ -129,7 +129,8 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "accepted" && <AcceptedModal />}
         {deliveryStatus === "track_driver" && <TrackDriver />}
         {deliveryStatus === "arrived" && <ArrivedModal />}
-        {deliveryStatus === "pay" && <PayingModal />}
+        {deliveryStatus === "paying" && <PayingModal />}
+        {deliveryStatus === "paid" && <PaidModal />}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -885,12 +886,12 @@ const PayingModal = () => {
 
   const pay_func = async () => {
     setPaying(true);
-    // simulate payment delay
+    // simulate initiating real payment then move to processing screen
     setTimeout(() => {
       setPaying(false);
-      showNotification("Payment successful (demo)", "success");
+      // move to processing state which will itself simulate completion
       setDeliveryStatus("paid");
-    }, 1200);
+    }, 600);
   };
 
   return (
@@ -904,7 +905,7 @@ const PayingModal = () => {
         Confirm payment (NGN {delivery.fare.toLocaleString()})
       </Text>
 
-      <View style={{ marginTop: 25 }}>
+      <View style={{ marginTop: 25, paddingHorizontal: 10 }}>
         <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
           Wallet balance: {userWalletBal.toLocaleString()} NGN
         </Text>
@@ -941,7 +942,7 @@ const PayingModal = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => setDeliveryStatus("pay")}
+            onPress={() => setDeliveryStatus("paid")}
             style={{
               borderRadius: 20,
               paddingHorizontal: 30,
@@ -964,6 +965,72 @@ const PayingModal = () => {
           </TouchableOpacity>
         </View>
       </View>
+    </>
+  );
+};
+
+const ProcessingPaymentModal = () => {
+  const { setDeliveryStatus } = useDeliverContext();
+  const { showNotification } = useNotificationContext() as any;
+
+  React.useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        showNotification("Payment processed (demo)", "success");
+      } catch (e) {}
+      setDeliveryStatus("paid");
+    }, 1500);
+
+    return () => clearTimeout(id);
+  }, []);
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Processing payment
+      </Text>
+      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+        Please wait while we confirm your payment...
+      </Text>
+      <View style={{ marginTop: 30, alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    </>
+  );
+};
+
+const PaidModal = () => {
+  const { setDeliveryStatus } = useDeliverContext();
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Payment successful
+      </Text>
+      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+        Thanks — your delivery has been paid (demo)
+      </Text>
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => setDeliveryStatus("")}
+        style={{
+          marginTop: 30,
+          padding: 12,
+          borderRadius: 30,
+          backgroundColor: "#fff",
+        }}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+            color: "#121212",
+          }}
+        >
+          Done
+        </Text>
+      </TouchableOpacity>
     </>
   );
 };
