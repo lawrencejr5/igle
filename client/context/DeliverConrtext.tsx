@@ -44,14 +44,15 @@ export type DeliveryPackageType =
 export type DeliveryModalStatus =
   | ""
   | "details"
+  | "route"
   | "vehicle"
   | "searching"
   | "accepted"
   | "track_driver"
   | "arrived"
-  | "track_delivery"
   | "paying"
   | "paid"
+  | "track_delivery"
   | "rating";
 
 export interface Delivery {
@@ -82,7 +83,7 @@ export interface Delivery {
   package?: {
     description?: string;
     fragile?: boolean;
-    value?: number;
+    amount?: number;
     type?: DeliveryPackageType;
   };
   status: DeliveryStatus;
@@ -123,6 +124,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (deliveryStatus === "details") {
       deliveryModalRef.current?.snapToIndex(5);
     }
+    if (deliveryStatus === "route") {
+      deliveryModalRef.current?.snapToIndex(5);
+    }
     if (deliveryStatus === "vehicle") {
       deliveryModalRef.current?.snapToIndex(2);
     }
@@ -156,12 +160,16 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setDeliveryStatus("");
       return true;
     }
-    if (deliveryStatus === "vehicle") {
+    if (deliveryStatus === "route") {
       setDeliveryStatus("details");
       return true;
     }
+    if (deliveryStatus === "vehicle") {
+      setDeliveryStatus("route");
+      return true;
+    }
     if (deliveryStatus === "accepted") {
-      setDeliveryStatus("searching");
+      setDeliveryStatus("vehicle");
       return true;
     }
     if (deliveryStatus === "track_driver") {

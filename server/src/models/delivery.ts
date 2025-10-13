@@ -19,7 +19,7 @@ export interface DeliveryType extends Document {
   package: {
     description?: string;
     fragile?: boolean;
-    value?: number;
+    amount?: number;
     type?:
       | "document"
       | "electronics"
@@ -76,7 +76,7 @@ const DeliverySchema = new Schema<DeliveryType>(
     package: {
       description: String,
       fragile: { type: Boolean, default: false },
-      value: Number,
+      amount: Number,
       type: {
         type: String,
         enum: [
