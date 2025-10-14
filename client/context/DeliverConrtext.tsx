@@ -275,19 +275,59 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const requestDelivery = async (
-    pickup: any,
-    dropoff: any,
-    package_data: any,
-    fare: number,
-    vehicle: string,
-    to?: Contact,
-    km?: number,
-    min?: number,
+    vehicleDetails?: { type: string; amount: number },
     scheduled_time?: Date
   ) => {
     try {
+      if (!deliveryData) {
+        showNotification("No delivery data available", "error");
+        return;
+      }
+
+      console.log("Requesting delivery with vehicle details:", vehicleDetails);
+      console.log("Current deliveryData:", deliveryData);
+
       setLoading(true);
       const headers = { headers: await authHeaders() };
+
+      // Extract data from deliveryData state
+      const pickup = deliveryData.pickup;
+      const dropoff = deliveryData.dropoff;
+      const package_data = deliveryData.package;
+      const to = deliveryData.to;
+      const selectedVehicle =
+        vehicleDetails || (deliveryData as any).selectedVehicle;
+      const deliveryDetails = deliveryData.deliveryDetails;
+
+      console.log("Selected vehicle:", selectedVehicle);
+      console.log("Delivery details:", deliveryDetails);
+
+      if (
+        !pickup ||
+        !dropoff ||
+        !package_data ||
+        !selectedVehicle ||
+        !deliveryDetails
+      ) {
+        console.log("Missing data:", {
+          pickup,
+          dropoff,
+          package_data,
+          selectedVehicle,
+          deliveryDetails,
+        });
+        showNotification("Missing required delivery information", "error");
+        return;
+      }
+
+      // Get fare based on selected vehicle type
+      const fare = selectedVehicle.amount;
+      const vehicle = selectedVehicle.type;
+      const km = deliveryDetails.distanceKm;
+      const min = deliveryDetails.durationMins;
+
+      console.log("Final delivery request data:", { fare, vehicle, km, min });
+
       const q: string[] = [];
       if (km !== undefined) q.push(`km=${km}`);
       if (min !== undefined) q.push(`min=${min}`);
@@ -300,6 +340,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         { pickup, dropoff, package_data, fare, vehicle, to },
         headers
       );
+      console.log("Delivery request successful:", data);
       showNotification(data.msg || "Delivery requested", "success");
       // refresh active deliveries
       await fetchUserActiveDeliveries();
@@ -493,14 +534,7 @@ export interface DeliverContextType {
   deliveryData: Delivery | null;
   setDeliveryData: Dispatch<SetStateAction<Delivery | null>>;
   requestDelivery: (
-    pickup: any,
-    dropoff: any,
-    package_data: any,
-    fare: number,
-    vehicle: string,
-    to?: Contact,
-    km?: number,
-    min?: number,
+    vehicleDetails?: { type: string; amount: number },
     scheduled_time?: Date
   ) => Promise<any>;
   retryDelivery: (delivery_id: string) => Promise<any>;

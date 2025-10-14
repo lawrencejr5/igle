@@ -503,7 +503,10 @@ const DetailsModal = () => {
               borderWidth: 1,
             },
           ]}
-          onPress={() => setDeliveryStatus("")}
+          onPress={() => {
+            setDeliveryStatus("");
+            setDeliveryData(null);
+          }}
         >
           <Text style={{ fontFamily: "raleway-semibold", color: "#fff" }}>
             Close
@@ -676,12 +679,19 @@ const RouteModal = () => {
       );
 
       if (deliveryDetails) {
-        // Store delivery details in deliveryData
+        // Store delivery details in deliveryData with the correct structure
         setDeliveryData(
           (prev) =>
             ({
               ...prev,
-              deliveryDetails,
+              deliveryDetails: {
+                distanceKm: deliveryDetails.distanceKm,
+                durationMins: deliveryDetails.durationMins,
+                bikeAmount: deliveryDetails.bike.amount,
+                cabAmount: deliveryDetails.cab.amount,
+                vanAmount: deliveryDetails.van.amount,
+                truckAmount: deliveryDetails.truck.amount,
+              },
             } as any)
         );
 
@@ -872,7 +882,7 @@ const ChooseVehicleModal = () => {
   const [selectedRideType, setSelectedRideType] = useState<
     "bike" | "cab" | "van" | "truck"
   >("bike");
-  const { setDeliveryStatus, deliveryData, setDeliveryData } =
+  const { setDeliveryStatus, deliveryData, setDeliveryData, requestDelivery } =
     useDeliverContext();
   return (
     <>
@@ -940,8 +950,8 @@ const ChooseVehicleModal = () => {
       </View>
       <TouchableWithoutFeedback>
         <TouchableOpacity
-          onPress={() => {
-            // Store selected vehicle details in deliveryData
+          onPress={async () => {
+            // Create vehicle details object
             const vehicleDetails = {
               type: selectedRideType,
               amount:
@@ -954,6 +964,7 @@ const ChooseVehicleModal = () => {
                   : deliveryData?.deliveryDetails?.truckAmount || 8000,
             };
 
+            // Store selected vehicle details in deliveryData for future reference
             setDeliveryData(
               (prev) =>
                 ({
@@ -962,7 +973,14 @@ const ChooseVehicleModal = () => {
                 } as any)
             );
 
-            setDeliveryStatus("searching");
+            // Request the delivery with the vehicle details directly
+            try {
+              await requestDelivery(vehicleDetails);
+              setDeliveryStatus("searching");
+            } catch (error) {
+              // Error is already handled in requestDelivery function
+              console.error("Failed to request delivery:", error);
+            }
           }}
           style={{
             marginVertical: 40,
