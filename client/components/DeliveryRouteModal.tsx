@@ -12,8 +12,9 @@ import {
   Pressable,
   ActivityIndicator,
   Linking,
-  ScrollView,
 } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+
 import { Picker } from "@react-native-picker/picker";
 import BottomSheet, {
   BottomSheetView,
@@ -516,7 +517,8 @@ const DetailsModal = () => {
 const RouteModal = () => {
   const { setDeliveryStatus, deliveryData, setDeliveryData } =
     useDeliverContext();
-  const { getSuggestions, getPlaceCoords } = useMapContext() as any;
+  const { getSuggestions, getPlaceCoords, calculateDelivery } =
+    useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
 
   // Get pickup and dropoff from deliveryData
@@ -648,7 +650,7 @@ const RouteModal = () => {
     }
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!pickup.trim()) {
       showNotification("Please enter pickup location", "error");
       return;
@@ -666,8 +668,31 @@ const RouteModal = () => {
       return;
     }
 
-    showNotification("Route details saved", "success");
-    setDeliveryStatus("vehicle");
+    try {
+      // Calculate delivery fares for all vehicle types
+      const deliveryDetails = await calculateDelivery(
+        deliveryData.pickup.coordinates,
+        deliveryData.dropoff.coordinates
+      );
+
+      if (deliveryDetails) {
+        // Store delivery details in deliveryData
+        setDeliveryData(
+          (prev) =>
+            ({
+              ...prev,
+              deliveryDetails,
+            } as any)
+        );
+
+        showNotification("Route details saved", "success");
+        setDeliveryStatus("vehicle");
+      } else {
+        showNotification("Failed to calculate delivery fare", "error");
+      }
+    } catch (error) {
+      showNotification("Error calculating delivery fare", "error");
+    }
   };
 
   return (
@@ -847,7 +872,8 @@ const ChooseVehicleModal = () => {
   const [selectedRideType, setSelectedRideType] = useState<
     "bike" | "cab" | "van" | "truck"
   >("bike");
-  const { setDeliveryStatus } = useDeliverContext();
+  const { setDeliveryStatus, deliveryData, setDeliveryData } =
+    useDeliverContext();
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -869,7 +895,7 @@ const ChooseVehicleModal = () => {
             title="Motorcycle"
             icon={require("../assets/images/icons/motorcycle-icon.png")}
             subtext="For small and light items"
-            amount={5000}
+            amount={deliveryData?.deliveryDetails?.bikeAmount || 2500}
             selected={selectedRideType === "bike"}
             onPress={() => {
               setSelectedRideType("bike");
@@ -881,7 +907,7 @@ const ChooseVehicleModal = () => {
             title="Cab"
             icon={require("../assets/images/icons/sedan-icon.png")}
             subtext="For medium-sized packages"
-            amount={5000}
+            amount={deliveryData?.deliveryDetails?.cabAmount || 3500}
             selected={selectedRideType === "cab"}
             onPress={() => {
               setSelectedRideType("cab");
@@ -893,7 +919,7 @@ const ChooseVehicleModal = () => {
             title="Van"
             icon={require("../assets/images/icons/van-icon.png")}
             subtext="For large or multiple packages"
-            amount={5000}
+            amount={deliveryData?.deliveryDetails?.vanAmount || 5000}
             selected={selectedRideType === "van"}
             onPress={() => {
               setSelectedRideType("van");
@@ -904,7 +930,7 @@ const ChooseVehicleModal = () => {
             title="Truck"
             icon={require("../assets/images/icons/truck-icon.png")}
             subtext="For heavy-duty deliveries"
-            amount={5000}
+            amount={deliveryData?.deliveryDetails?.truckAmount || 8000}
             selected={selectedRideType === "truck"}
             onPress={() => {
               setSelectedRideType("truck");
@@ -914,7 +940,30 @@ const ChooseVehicleModal = () => {
       </View>
       <TouchableWithoutFeedback>
         <TouchableOpacity
-          onPress={() => setDeliveryStatus("searching")}
+          onPress={() => {
+            // Store selected vehicle details in deliveryData
+            const vehicleDetails = {
+              type: selectedRideType,
+              amount:
+                selectedRideType === "bike"
+                  ? deliveryData?.deliveryDetails?.bikeAmount || 2500
+                  : selectedRideType === "cab"
+                  ? deliveryData?.deliveryDetails?.cabAmount || 3500
+                  : selectedRideType === "van"
+                  ? deliveryData?.deliveryDetails?.vanAmount || 5000
+                  : deliveryData?.deliveryDetails?.truckAmount || 8000,
+            };
+
+            setDeliveryData(
+              (prev) =>
+                ({
+                  ...prev,
+                  selectedVehicle: vehicleDetails,
+                } as any)
+            );
+
+            setDeliveryStatus("searching");
+          }}
           style={{
             marginVertical: 40,
             padding: 10,

@@ -260,7 +260,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const [calculating, setCalculating] = useState<boolean>(false);
-  const calculateRide = async (
+
+  // General function to get distance and duration from Google Maps API
+  const getDistanceAndDuration = async (
     pickup: [number, number],
     destination: [number, number]
   ): Promise<{ distanceKm: number; durationMins: number } | undefined> => {
@@ -277,48 +279,120 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         const distanceKm = Math.round(distanceMeters / 1000);
         const durationMins = Math.round(durationSeconds / 60);
 
-        const BASE_FARE = Number(process.env.EXPO_PUBLIC_BASE_FARE);
-        const PRICE_PER_KM = Number(process.env.EXPO_PUBLIC_PRICE_PER_KM);
-        const PRICE_PER_MIN = Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN);
-
-        // multipliers for vehicle types — tweak as needed or replace with env vars
-        const MULT = {
-          cab: 1.0,
-          keke: 0.6,
-          suv: 1.4,
-        };
-
-        const computeAmount = (mult: number) => {
-          const raw =
-            BASE_FARE * mult +
-            distanceKm * PRICE_PER_KM * mult +
-            durationMins * PRICE_PER_MIN * mult;
-          return Math.ceil(raw / 10) * 10;
-        };
-
-        const cabAmount = computeAmount(MULT.cab);
-        const kekeAmount = computeAmount(MULT.keke);
-        const suvAmount = computeAmount(MULT.suv);
-
-        // keep top-level amount as cab for backward compatibility
-        setRideDetails({
+        return {
           distanceKm,
           durationMins,
-          amount: cabAmount,
-          cab: { amount: cabAmount },
-          keke: { amount: kekeAmount },
-          suv: { amount: suvAmount },
-        });
-
-        return {
-          distanceKm: distanceMeters / 1000,
-          durationMins: durationSeconds / 60,
         };
       }
     } catch (error) {
-      console.error("Error fetching ride info:", error);
+      console.error("Error fetching distance and duration:", error);
     } finally {
       setCalculating(false);
+    }
+  };
+
+  const calculateRide = async (
+    pickup: [number, number],
+    destination: [number, number]
+  ): Promise<{ distanceKm: number; durationMins: number } | undefined> => {
+    const result = await getDistanceAndDuration(pickup, destination);
+
+    if (result) {
+      const { distanceKm, durationMins } = result;
+
+      const BASE_FARE = Number(process.env.EXPO_PUBLIC_BASE_FARE);
+      const PRICE_PER_KM = Number(process.env.EXPO_PUBLIC_PRICE_PER_KM);
+      const PRICE_PER_MIN = Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN);
+
+      // multipliers for vehicle types — tweak as needed or replace with env vars
+      const MULT = {
+        cab: 1.0,
+        keke: 0.6,
+        suv: 1.4,
+      };
+
+      const computeAmount = (mult: number) => {
+        const raw =
+          BASE_FARE * mult +
+          distanceKm * PRICE_PER_KM * mult +
+          durationMins * PRICE_PER_MIN * mult;
+        return Math.ceil(raw / 10) * 10;
+      };
+
+      const cabAmount = computeAmount(MULT.cab);
+      const kekeAmount = computeAmount(MULT.keke);
+      const suvAmount = computeAmount(MULT.suv);
+
+      // keep top-level amount as cab for backward compatibility
+      setRideDetails({
+        distanceKm,
+        durationMins,
+        amount: cabAmount,
+        cab: { amount: cabAmount },
+        keke: { amount: kekeAmount },
+        suv: { amount: suvAmount },
+      });
+
+      return result;
+    }
+  };
+
+  const calculateDelivery = async (
+    pickup: [number, number],
+    destination: [number, number]
+  ): Promise<
+    | {
+        distanceKm: number;
+        durationMins: number;
+        bike: { amount: number };
+        cab: { amount: number };
+        van: { amount: number };
+        truck: { amount: number };
+      }
+    | undefined
+  > => {
+    const result = await getDistanceAndDuration(pickup, destination);
+
+    if (result) {
+      const { distanceKm, durationMins } = result;
+
+      // Delivery pricing (adjust these as needed)
+      const DELIVERY_BASE_FARE =
+        Number(process.env.EXPO_PUBLIC_BASE_FARE) || 500;
+      const DELIVERY_PRICE_PER_KM =
+        Number(process.env.EXPO_PUBLIC_PRICE_PER_KM) || 100;
+      const DELIVERY_PRICE_PER_MIN =
+        Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN) || 20;
+
+      // Delivery vehicle multipliers
+      const DELIVERY_MULT = {
+        bike: 0.8, // Cheapest for small packages
+        cab: 1.0, // Standard car delivery
+        van: 1.5, // Larger packages
+        truck: 2.0, // Heavy-duty deliveries
+      };
+
+      const computeDeliveryAmount = (mult: number) => {
+        const raw =
+          DELIVERY_BASE_FARE * mult +
+          distanceKm * DELIVERY_PRICE_PER_KM * mult +
+          durationMins * DELIVERY_PRICE_PER_MIN * mult;
+        return Math.ceil(raw / 10) * 10;
+      };
+
+      const bikeAmount = computeDeliveryAmount(DELIVERY_MULT.bike);
+      const cabAmount = computeDeliveryAmount(DELIVERY_MULT.cab);
+      const vanAmount = computeDeliveryAmount(DELIVERY_MULT.van);
+      const truckAmount = computeDeliveryAmount(DELIVERY_MULT.truck);
+
+      return {
+        distanceKm,
+        durationMins,
+        bike: { amount: bikeAmount },
+        cab: { amount: cabAmount },
+        van: { amount: vanAmount },
+        truck: { amount: truckAmount },
+      };
     }
   };
 
@@ -352,6 +426,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
         fetchRoute,
         calculateRide,
+        calculateDelivery,
+        getDistanceAndDuration,
         calculating,
         setCalculating,
         rideDetails,
@@ -407,10 +483,28 @@ export interface MapContextType {
   getPlaceCoords: (place_id: string) => Promise<[number, number] | undefined>;
   getPlaceName: (lat: number, lng: number) => Promise<void>;
   fetchRoute: (destinationCoords: [number, number]) => Promise<void>;
+  getDistanceAndDuration: (
+    pickup: [number, number],
+    destination: [number, number]
+  ) => Promise<{ distanceKm: number; durationMins: number } | undefined>;
   calculateRide: (
     pickup: [number, number],
     destination: [number, number]
   ) => Promise<{ distanceKm: number; durationMins: number } | undefined>;
+  calculateDelivery: (
+    pickup: [number, number],
+    destination: [number, number]
+  ) => Promise<
+    | {
+        distanceKm: number;
+        durationMins: number;
+        bike: { amount: number };
+        cab: { amount: number };
+        van: { amount: number };
+        truck: { amount: number };
+      }
+    | undefined
+  >;
   calculating: boolean;
   setCalculating: Dispatch<SetStateAction<boolean>>;
 

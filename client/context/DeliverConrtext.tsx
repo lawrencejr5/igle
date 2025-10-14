@@ -108,6 +108,14 @@ export interface Delivery {
   scheduled_time?: string | Date | null;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  deliveryDetails?: {
+    distanceKm: number;
+    durationMins: number;
+    bikeAmount: number;
+    cabAmount: number;
+    vanAmount: number;
+    truckAmount: number;
+  };
 }
 
 const API_URL = API_URLS.deliveries;
