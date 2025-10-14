@@ -17,6 +17,7 @@ import { useAuthContext } from "./AuthContext";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { BackHandler, Platform } from "react-native";
 import { useNavigation } from "expo-router";
+import { useMapContext } from "./MapContext";
 
 export const DeliverContext = createContext<DeliverContextType | null>(null);
 
@@ -114,6 +115,9 @@ const API_URL = API_URLS.deliveries;
 const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext() as any;
   const { userSocket } = useAuthContext() as any;
+  const { getSuggestions, getPlaceCoords } = useMapContext();
+
+  const [deliveryData, setDeliveryData] = useState<Delivery | null>(null);
 
   const deliveryModalRef = useRef<BottomSheet>(null);
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryModalStatus>("");
@@ -448,6 +452,8 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         deliveryStatus,
         deliveryModalRef,
         setDeliveryStatus,
+        deliveryData,
+        setDeliveryData,
         requestDelivery,
         retryDelivery,
         rebookDelivery,
@@ -476,6 +482,8 @@ export interface DeliverContextType {
   deliveryStatus: DeliveryModalStatus;
   deliveryModalRef: any;
   setDeliveryStatus: Dispatch<SetStateAction<DeliveryModalStatus>>;
+  deliveryData: Delivery | null;
+  setDeliveryData: Dispatch<SetStateAction<Delivery | null>>;
   requestDelivery: (
     pickup: any,
     dropoff: any,

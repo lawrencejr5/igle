@@ -12,19 +12,20 @@ import {
   Pressable,
   ActivityIndicator,
   Linking,
+  ScrollView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import BottomSheet, {
   BottomSheetView,
   TouchableWithoutFeedback,
 } from "@gorhom/bottom-sheet";
+
+import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+
 import { useDeliverContext, Delivery } from "../context/DeliverConrtext";
 import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthContext } from "../context/AuthContext";
-import { useWalletContext } from "../context/WalletContext";
-import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
-import { ScrollView } from "react-native-gesture-handler";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -175,16 +176,95 @@ const StartModal = () => {
 };
 
 const DetailsModal = () => {
-  const { setDeliveryStatus } = useDeliverContext();
+  const { setDeliveryStatus, deliveryData, setDeliveryData } =
+    useDeliverContext();
   const { showNotification } = useNotificationContext() as any;
 
-  const [recipientName, setRecipientName] = useState<string>("");
-  const [recipientPhone, setRecipientPhone] = useState<string>("");
+  // Initialize form values from deliveryData or empty defaults
+  const recipientName = deliveryData?.to?.name || "";
+  const recipientPhone = deliveryData?.to?.phone || "";
+  const description = deliveryData?.package?.description || "";
+  const pkgType = deliveryData?.package?.type || "document";
+  const fragile = deliveryData?.package?.fragile || false;
+  const amount = deliveryData?.package?.amount?.toString() || "";
 
-  const [description, setDescription] = useState<string>("");
-  const [pkgType, setPkgType] = useState<string>("document");
-  const [fragile, setFragile] = useState<boolean>(false);
-  const [value, setValue] = useState<string>("");
+  const setRecipientName = (value: string) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          to: {
+            ...prev?.to,
+            name: value,
+          },
+        } as any)
+    );
+  };
+
+  const setRecipientPhone = (value: string) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          to: {
+            ...prev?.to,
+            phone: value,
+          },
+        } as any)
+    );
+  };
+
+  const setDescription = (value: string) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          package: {
+            ...prev?.package,
+            description: value,
+          },
+        } as any)
+    );
+  };
+
+  const setPkgType = (value: string) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          package: {
+            ...prev?.package,
+            type: value as any,
+          },
+        } as any)
+    );
+  };
+
+  const setFragile = (value: boolean) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          package: {
+            ...prev?.package,
+            fragile: value,
+          },
+        } as any)
+    );
+  };
+
+  const setAmount = (value: string) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          package: {
+            ...prev?.package,
+            amount: value ? parseFloat(value) : undefined,
+          },
+        } as any)
+    );
+  };
 
   const submit = () => {
     if (!recipientName.trim()) {
@@ -195,9 +275,17 @@ const DetailsModal = () => {
       showNotification("Please enter recipient phone", "error");
       return;
     }
+    if (!description.trim()) {
+      showNotification("Please enter package description", "error");
+      return;
+    }
+    if (!amount.trim()) {
+      showNotification("Please enter package amount", "error");
+      return;
+    }
 
     showNotification("Delivery details saved", "success");
-    setDeliveryStatus("");
+    setDeliveryStatus("route");
   };
 
   return (
@@ -334,8 +422,8 @@ const DetailsModal = () => {
             <TextInput
               placeholder="Amount"
               placeholderTextColor="#b0b0b0"
-              value={value}
-              onChangeText={setValue}
+              value={amount}
+              onChangeText={setAmount}
               keyboardType="numeric"
               style={[styles.text_input]}
               selectionColor="#fff"
@@ -399,10 +487,7 @@ const DetailsModal = () => {
       </View>
 
       <View style={{ flexDirection: "row", gap: 12, marginTop: 25 }}>
-        <TouchableOpacity
-          style={[styles.btn, { flex: 1 }]}
-          onPress={() => setDeliveryStatus("route")}
-        >
+        <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={submit}>
           <Text style={[styles.btnText, { textAlign: "center" }]}>
             Continue
           </Text>
@@ -428,11 +513,162 @@ const DetailsModal = () => {
   );
 };
 
-const RouteModal: FC = () => {
-  const { setDeliveryStatus } = useDeliverContext();
+const RouteModal = () => {
+  const { setDeliveryStatus, deliveryData, setDeliveryData } =
+    useDeliverContext();
+  const { getSuggestions, getPlaceCoords } = useMapContext() as any;
+  const { showNotification } = useNotificationContext() as any;
 
-  const [pickup, setPickup] = useState<string>("");
-  const [dropoff, setDropOff] = useState<string>("");
+  // Get pickup and dropoff from deliveryData
+  const pickup = deliveryData?.pickup?.address || "";
+  const dropoff = deliveryData?.dropoff?.address || "";
+
+  // State for suggestions
+  const [pickupSuggestions, setPickupSuggestions] = useState<any[]>([]);
+  const [dropoffSuggestions, setDropoffSuggestions] = useState<any[]>([]);
+  const [activeSuggestion, setActiveSuggestion] = useState<
+    "pickup" | "dropoff" | ""
+  >("");
+
+  // Update pickup in deliveryData
+  const setPickup = (value: string) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          pickup: {
+            ...prev?.pickup,
+            address: value,
+          },
+        } as any)
+    );
+  };
+
+  // Update dropoff in deliveryData
+  const setDropOff = (value: string) => {
+    setDeliveryData(
+      (prev) =>
+        ({
+          ...prev,
+          dropoff: {
+            ...prev?.dropoff,
+            address: value,
+          },
+        } as any)
+    );
+  };
+
+  // Focus handlers
+  const pickupFocus = () => {
+    setActiveSuggestion("pickup");
+    setDropoffSuggestions([]);
+  };
+
+  const dropoffFocus = () => {
+    setActiveSuggestion("dropoff");
+    setPickupSuggestions([]);
+  };
+
+  // Get suggestions when pickup text changes
+  React.useEffect(() => {
+    if (pickup.trim() && activeSuggestion === "pickup") {
+      getSuggestions(pickup)
+        .then((suggestions: any) => {
+          setPickupSuggestions(suggestions || []);
+        })
+        .catch(() => {
+          setPickupSuggestions([]);
+        });
+    } else {
+      setPickupSuggestions([]);
+    }
+  }, [pickup, activeSuggestion]);
+
+  // Get suggestions when dropoff text changes
+  React.useEffect(() => {
+    if (dropoff.trim() && activeSuggestion === "dropoff") {
+      getSuggestions(dropoff)
+        .then((suggestions: any) => {
+          setDropoffSuggestions(suggestions || []);
+        })
+        .catch(() => {
+          setDropoffSuggestions([]);
+        });
+    } else {
+      setDropoffSuggestions([]);
+    }
+  }, [dropoff, activeSuggestion]);
+
+  // Handle pickup suggestion selection
+  const setPickupFromSuggestion = async (place_id: string, address: string) => {
+    try {
+      const coords = await getPlaceCoords(place_id);
+      if (coords) {
+        setDeliveryData(
+          (prev) =>
+            ({
+              ...prev,
+              pickup: {
+                address,
+                coordinates: coords,
+              },
+            } as any)
+        );
+        setActiveSuggestion("");
+        setPickupSuggestions([]);
+      }
+    } catch (error) {
+      showNotification("Failed to get location coordinates", "error");
+    }
+  };
+
+  // Handle dropoff suggestion selection
+  const setDropoffFromSuggestion = async (
+    place_id: string,
+    address: string
+  ) => {
+    try {
+      const coords = await getPlaceCoords(place_id);
+      if (coords) {
+        setDeliveryData(
+          (prev) =>
+            ({
+              ...prev,
+              dropoff: {
+                address,
+                coordinates: coords,
+              },
+            } as any)
+        );
+        setActiveSuggestion("");
+        setDropoffSuggestions([]);
+      }
+    } catch (error) {
+      showNotification("Failed to get location coordinates", "error");
+    }
+  };
+
+  const submit = () => {
+    if (!pickup.trim()) {
+      showNotification("Please enter pickup location", "error");
+      return;
+    }
+    if (!dropoff.trim()) {
+      showNotification("Please enter dropoff location", "error");
+      return;
+    }
+    if (!deliveryData?.pickup?.coordinates) {
+      showNotification("Please select pickup from suggestions", "error");
+      return;
+    }
+    if (!deliveryData?.dropoff?.coordinates) {
+      showNotification("Please select dropoff from suggestions", "error");
+      return;
+    }
+
+    showNotification("Route details saved", "success");
+    setDeliveryStatus("vehicle");
+  };
 
   return (
     <>
@@ -475,6 +711,7 @@ const RouteModal: FC = () => {
                 style={[styles.route_input]}
                 placeholder="Pickup"
                 value={pickup}
+                onFocus={pickupFocus}
                 onChangeText={setPickup}
                 editable={true}
                 placeholderTextColor={"#b7b7b7"}
@@ -485,6 +722,7 @@ const RouteModal: FC = () => {
                 style={styles.route_input}
                 placeholder="Drop off"
                 value={dropoff}
+                onFocus={dropoffFocus}
                 onChangeText={setDropOff}
                 editable={true}
                 placeholderTextColor={"#b7b7b7"}
@@ -496,13 +734,94 @@ const RouteModal: FC = () => {
 
       {/* Suggestions */}
       <View style={[styles.suggestions_container]}>
-        <Text style={styles.suggestion_header_text}>Saved places</Text>
-        <Text style={styles.suggestion_sub_text}>— work, home, recent</Text>
+        {activeSuggestion === "pickup" && pickupSuggestions.length > 0 ? (
+          <FlatList
+            data={pickupSuggestions}
+            keyExtractor={(item) => item.place_id}
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.suggestion_box}
+                onPress={() =>
+                  setPickupFromSuggestion(
+                    item.place_id,
+                    item.structured_formatting.main_text
+                  )
+                }
+              >
+                <Feather name="map-pin" size={20} color="#b7b7b7" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    {item.structured_formatting.main_text}
+                  </Text>
+                  <Text style={styles.suggestion_sub_text} numberOfLines={1}>
+                    {item.structured_formatting.secondary_text}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+          />
+        ) : activeSuggestion === "dropoff" && dropoffSuggestions.length > 0 ? (
+          <FlatList
+            data={dropoffSuggestions}
+            keyExtractor={(item) => item.place_id}
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.suggestion_box}
+                onPress={() =>
+                  setDropoffFromSuggestion(
+                    item.place_id,
+                    item.structured_formatting.main_text
+                  )
+                }
+              >
+                <Feather name="map-pin" size={20} color="#b7b7b7" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    {item.structured_formatting.main_text}
+                  </Text>
+                  <Text style={styles.suggestion_sub_text} numberOfLines={1}>
+                    {item.structured_formatting.secondary_text}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+          />
+        ) : (
+          <View
+            style={{
+              paddingVertical: 20,
+              paddingHorizontal: 5,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 8,
+              }}
+            >
+              <Feather name="search" size={20} color="#b7b7b7" />
+              <View>
+                <Text
+                  style={[styles.suggestion_header_text, { color: "#b7b7b7" }]}
+                >
+                  Start typing to search locations
+                </Text>
+                <Text
+                  style={[styles.suggestion_sub_text, { color: "#b7b7b7" }]}
+                >
+                  Enter pickup or dropoff location above
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
 
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={() => setDeliveryStatus("vehicle")}
+        onPress={submit}
         style={{
           marginBottom: 50,
           padding: 10,
@@ -1718,14 +2037,22 @@ const styles = StyleSheet.create({
   },
   suggestion_header_text: {
     color: "#fff",
-    fontFamily: "raleway-semibold",
+    fontFamily: "raleway-bold",
     fontSize: 14,
   },
   suggestion_sub_text: {
     color: "#b0b0b0",
-    fontFamily: "raleway-semibold",
+    fontFamily: "raleway-regular",
     fontSize: 12,
     marginTop: 5,
+  },
+  suggestion_box: {
+    marginTop: 15,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    gap: 10,
+    paddingRight: 10,
   },
   route_inp_container: {
     flexDirection: "row",

@@ -54,6 +54,7 @@ const BookDelivery = () => {
   }, [region, mapRef.current]);
   return (
     <>
+      {notification.visible && <Notification notification={notification} />}
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         {region && (
           <MapView
