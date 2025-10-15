@@ -63,7 +63,6 @@ const RideRouteModal = () => {
     destination,
     setDestination,
     setDestinationCoords,
-    fetchRoute,
     setMapPadding,
   } = useMapContext();
 
@@ -73,6 +72,7 @@ const RideRouteModal = () => {
     ongoingRideData,
     routeModalRef,
     resetRide,
+    fetchRideRoute,
   } = useRideContext();
 
   const [activeSuggestion, setActiveSuggestion] = useState<
@@ -111,7 +111,11 @@ const RideRouteModal = () => {
     if (ongoingRideData) {
       setDestination(ongoingRideData.destination.address);
       setDestinationCoords(ongoingRideData.destination.coordinates);
-      fetchRoute(ongoingRideData.destination.coordinates);
+      // Fetch ride route with pickup and destination coordinates
+      fetchRideRoute(
+        ongoingRideData.pickup.coordinates,
+        ongoingRideData.destination.coordinates
+      );
       if (
         ongoingRideData.status === "pending" ||
         ongoingRideData.status === "expired"

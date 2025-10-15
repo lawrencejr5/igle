@@ -122,32 +122,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const [pickupMarker, setPickupMarker] = useState<CoordsType | null>(null);
-  const [destinationMarker, setDestinationMarker] = useState<CoordsType | null>(
-    null
-  );
-  const fetchRoute = async (destinationCoords: [number, number]) => {
-    const result = await getRoute(
-      pickupCoords || [region.latitude, region.longitude],
-      destinationCoords
-    );
-
-    if (result) {
-      setRouteCoords(result.coords);
-      setPickupMarker(result.pickupOnRoad);
-      setDestinationMarker(result.destinationOnRoad);
-
-      // 👇 Zoom map to fit route
-      mapRef.current?.fitToCoordinates(result.coords, {
-        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-        animated: true,
-      });
-    }
-  };
-  useEffect(() => {
-    if (destinationCoords) fetchRoute(destinationCoords);
-  }, [destinationCoords]);
-
   const [mapSuggestions, setMapSuggestions] = useState<any>(null);
 
   const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API;
@@ -424,7 +398,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         pickupCoords,
         setPickupCoords,
 
-        fetchRoute,
         calculateRide,
         calculateDelivery,
         getDistanceAndDuration,
@@ -435,8 +408,6 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
         locationLoading,
         routeCoords,
-        pickupMarker,
-        destinationMarker,
         mapRef,
         mapPadding,
         setMapPadding,
@@ -482,7 +453,6 @@ export interface MapContextType {
 
   getPlaceCoords: (place_id: string) => Promise<[number, number] | undefined>;
   getPlaceName: (lat: number, lng: number) => Promise<void>;
-  fetchRoute: (destinationCoords: [number, number]) => Promise<void>;
   getDistanceAndDuration: (
     pickup: [number, number],
     destination: [number, number]
@@ -530,8 +500,6 @@ export interface MapContextType {
   locationLoading: boolean;
 
   routeCoords: { latitude: number; longitude: number }[];
-  pickupMarker: CoordsType | null;
-  destinationMarker: CoordsType | null;
   mapRef: any;
   mapPadding: MapPadding;
   setMapPadding: Dispatch<SetStateAction<MapPadding>>;

@@ -1,11 +1,4 @@
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableWithoutFeedback,
-  Image,
-  Pressable,
-} from "react-native";
+import { StyleSheet, View, Pressable } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
@@ -15,9 +8,6 @@ import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
-import { useLoading } from "../../context/LoadingContext";
-import AppLoading from "../../loadings/AppLoading";
-import { useRideContext } from "../../context/RideContext";
 import { useAuthContext } from "../../context/AuthContext";
 import { router } from "expo-router";
 
@@ -29,15 +19,7 @@ import { useDeliverContext } from "../../context/DeliverConrtext";
 
 const BookDelivery = () => {
   const { notification } = useNotificationContext();
-  const {
-    region,
-    getPlaceName,
-    userAddress,
-    routeCoords,
-    mapRef,
-    mapPadding,
-    locationLoading,
-  } = useMapContext();
+  const { region, userAddress, mapRef, mapPadding } = useMapContext();
   const { signedIn } = useAuthContext();
   const {
     deliveryStatus,
@@ -107,9 +89,10 @@ const BookDelivery = () => {
 
             {/* Delivery pickup marker - matches ride pickup design */}
             {deliveryRouteCoords.length > 0 &&
+              deliveryPickupMarker &&
               deliveryData?.pickup?.address && (
                 <Marker
-                  coordinate={deliveryRouteCoords[0]}
+                  coordinate={deliveryPickupMarker}
                   title={deliveryData.pickup.address}
                   anchor={{ x: 0.2, y: 0.2 }}
                 >
@@ -133,11 +116,10 @@ const BookDelivery = () => {
 
             {/* Delivery dropoff marker - matches ride destination design */}
             {deliveryRouteCoords.length > 0 &&
+              deliveryDropoffMarker &&
               deliveryData?.dropoff?.address && (
                 <Marker
-                  coordinate={
-                    deliveryRouteCoords[deliveryRouteCoords.length - 1]
-                  }
+                  coordinate={deliveryDropoffMarker}
                   title={deliveryData.dropoff.address}
                   anchor={{ x: 0.2, y: 0.2 }}
                 >

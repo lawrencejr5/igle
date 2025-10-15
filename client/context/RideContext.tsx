@@ -106,7 +106,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     region,
     getPlaceCoords,
     pickupCoords,
+    destinationCoords,
     setUserAddress,
+    getRoute,
   } = useMapContext();
   const { getWalletBalance } = useWalletContext();
   const { getRideHistory, addRideHistory } = useHistoryContext();
@@ -114,6 +116,19 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const [ongoingRideData, setOngoingRideData] = useState<Ride | null>(null);
   const [rideData, setRideData] = useState<Ride | null>(null);
+
+  // Ride route states
+  const [rideRouteCoords, setRideRouteCoords] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
+  const [ridePickupMarker, setRidePickupMarker] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [rideDestinationMarker, setRideDestinationMarker] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const [rideStatus, setRideStatus] = useState<RideModalStatus>("");
   const [modalUp, setModalUp] = useState<boolean>(false);
@@ -124,6 +139,75 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { fetchActivities } = useActivityContext();
 
   const { userSocket, signedIn } = useAuthContext();
+
+  // Ride route functions
+  const fetchRideRoute = async (
+    pickupCoords: [number, number],
+    destinationCoords: [number, number]
+  ) => {
+    try {
+      const result = await getRoute(pickupCoords, destinationCoords);
+
+      if (result) {
+        setRideRouteCoords(result.coords);
+        setRidePickupMarker(result.pickupOnRoad);
+        setRideDestinationMarker(result.destinationOnRoad);
+
+        // Zoom map to fit route with a small delay to ensure map is ready
+        setTimeout(() => {
+          if (mapRef?.current) {
+            mapRef.current.fitToCoordinates(result.coords, {
+              edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+              animated: true,
+            });
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error("Error fetching ride route:", error);
+    }
+  };
+
+  // useEffect to fetch route when ride pickup and destination are set
+  useEffect(() => {
+    // For ongoing rides, use the ride data coordinates
+    if (
+      ongoingRideData?.pickup?.coordinates &&
+      ongoingRideData?.destination?.coordinates &&
+      (rideStatus === "choosing_car" ||
+        rideStatus === "searching" ||
+        rideStatus === "accepted" ||
+        rideStatus === "pay" ||
+        rideStatus === "paying" ||
+        rideStatus === "paid") // Show route for ride flow states
+    ) {
+      fetchRideRoute(
+        ongoingRideData.pickup.coordinates,
+        ongoingRideData.destination.coordinates
+      );
+    }
+    // For booking flow, use current pickup and destination coordinates
+    else if (destinationCoords && rideStatus === "choosing_car") {
+      // Use explicit pickup coordinates if available, otherwise use current region
+      const pickup = pickupCoords || [region?.latitude, region?.longitude];
+      if (pickup && pickup[0] && pickup[1]) {
+        fetchRideRoute(pickup as [number, number], destinationCoords);
+      }
+    } else {
+      // Clear route when not applicable
+      setRideRouteCoords([]);
+      setRidePickupMarker(null);
+      setRideDestinationMarker(null);
+    }
+  }, [
+    pickupCoords,
+    destinationCoords,
+    ongoingRideData?.pickup?.coordinates,
+    ongoingRideData?.destination?.coordinates,
+    rideStatus,
+    region?.latitude,
+    region?.longitude,
+  ]);
 
   useEffect(() => {
     getUserCompletedRides();
@@ -308,6 +392,11 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     setPickupTime("now");
     setScheduledTime(new Date());
     setScheduledTimeDif("");
+
+    // Clear ride route states
+    setRideRouteCoords([]);
+    setRidePickupMarker(null);
+    setRideDestinationMarker(null);
 
     mapRef.current && mapRef.current.animateToRegion(region, 100);
   };
@@ -693,6 +782,10 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         scheduledTimeDif,
         setScheduledTimeDif,
         getTimeDifference,
+        rideRouteCoords,
+        ridePickupMarker,
+        rideDestinationMarker,
+        fetchRideRoute,
       }}
     >
       {children}
@@ -770,6 +863,15 @@ export interface RideContextType {
   scheduledTimeDif: string;
   setScheduledTimeDif: Dispatch<SetStateAction<string>>;
   getTimeDifference: (targetDate: Date) => void;
+
+  // Ride route properties
+  rideRouteCoords: { latitude: number; longitude: number }[];
+  ridePickupMarker: { latitude: number; longitude: number } | null;
+  rideDestinationMarker: { latitude: number; longitude: number } | null;
+  fetchRideRoute: (
+    pickupCoords: [number, number],
+    destinationCoords: [number, number]
+  ) => Promise<void>;
 }
 
 export const useRideContext = () => {
