@@ -39,7 +39,21 @@ const BookDelivery = () => {
     locationLoading,
   } = useMapContext();
   const { signedIn } = useAuthContext();
-  const { deliveryStatus, setDeliveryStatus } = useDeliverContext();
+  const {
+    deliveryStatus,
+    setDeliveryStatus,
+    deliveryData,
+    deliveryRouteCoords,
+    deliveryPickupMarker,
+    deliveryDropoffMarker,
+  } = useDeliverContext();
+
+  const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+  // Stop tracking changes after the marker has loaded
+  const loadMap = () => {
+    setTracksViewChanges(false);
+  };
 
   useEffect(() => {
     if (!region) return;
@@ -59,33 +73,102 @@ const BookDelivery = () => {
         {region && (
           <MapView
             ref={mapRef}
+            onMapLoaded={loadMap}
             style={{ ...StyleSheet.absoluteFillObject }}
             provider={PROVIDER_GOOGLE}
             initialRegion={region}
             customMapStyle={darkMapStyle}
             mapPadding={mapPadding}
           >
-            <Marker
-              coordinate={routeCoords.length > 0 ? routeCoords[0] : region}
-              title={userAddress}
-              anchor={{ x: 0.2, y: 0.2 }}
-            >
-              <View
-                style={{
-                  backgroundColor: "white",
-                  padding: 5,
-                  borderRadius: 50,
-                }}
+            {/* Default user location marker - show when no delivery route is set */}
+            {deliveryRouteCoords.length === 0 && (
+              <Marker
+                coordinate={region}
+                title={userAddress}
+                anchor={{ x: 0.2, y: 0.2 }}
               >
                 <View
                   style={{
-                    backgroundColor: "black",
+                    backgroundColor: "white",
                     padding: 5,
                     borderRadius: 50,
                   }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "black",
+                      padding: 5,
+                      borderRadius: 50,
+                    }}
+                  />
+                </View>
+              </Marker>
+            )}
+
+            {/* Delivery pickup marker - matches ride pickup design */}
+            {deliveryRouteCoords.length > 0 &&
+              deliveryData?.pickup?.address && (
+                <Marker
+                  coordinate={deliveryRouteCoords[0]}
+                  title={deliveryData.pickup.address}
+                  anchor={{ x: 0.2, y: 0.2 }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 5,
+                      borderRadius: 50,
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 5,
+                        borderRadius: 50,
+                      }}
+                    />
+                  </View>
+                </Marker>
+              )}
+
+            {/* Delivery dropoff marker - matches ride destination design */}
+            {deliveryRouteCoords.length > 0 &&
+              deliveryData?.dropoff?.address && (
+                <Marker
+                  coordinate={
+                    deliveryRouteCoords[deliveryRouteCoords.length - 1]
+                  }
+                  title={deliveryData.dropoff.address}
+                  anchor={{ x: 0.2, y: 0.2 }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 4,
+                      borderRadius: 2,
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 4,
+                        borderRadius: 2,
+                      }}
+                    />
+                  </View>
+                </Marker>
+              )}
+
+            {/* Delivery route polyline - matches ride polyline design */}
+            {deliveryPickupMarker &&
+              deliveryDropoffMarker &&
+              deliveryData?.dropoff?.address && (
+                <Polyline
+                  coordinates={deliveryRouteCoords}
+                  strokeColor="#fff"
+                  strokeWidth={2}
                 />
-              </View>
-            </Marker>
+              )}
           </MapView>
         )}
 

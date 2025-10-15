@@ -342,8 +342,61 @@ const DetailsModal = () => {
         Package details
       </Text>
 
+      <View style={{ marginBottom: 12 }}>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginBottom: 12,
+            fontFamily: "raleway-semibold",
+          }}
+        >
+          Type
+        </Text>
+        <View
+          style={{
+            backgroundColor: "#2a2a2a",
+            borderRadius: 8,
+            paddingHorizontal: 8,
+          }}
+        >
+          <Picker
+            selectedValue={pkgType}
+            onValueChange={(v) => setPkgType(v)}
+            style={{ color: "#fff" }}
+            itemStyle={{ color: "#fff" }}
+          >
+            <Picker.Item label="Document" value="document" />
+            <Picker.Item label="Electronics" value="electronics" />
+            <Picker.Item label="Clothing" value="clothing" />
+            <Picker.Item label="Food" value="food" />
+            <Picker.Item label="Furniture" value="furniture" />
+            <Picker.Item label="Other" value="other" />
+          </Picker>
+        </View>
+      </View>
+
+      <View style={{ marginBottom: 12 }}>
+        <Text
+          style={{
+            color: "#cfcfcf",
+            marginBottom: 6,
+            fontFamily: "raleway-semibold",
+          }}
+        >
+          Description
+        </Text>
+        <TextInput
+          placeholder=" e.g. iPhone XR, Bag of oranges"
+          placeholderTextColor="#b0b0b0"
+          value={description}
+          onChangeText={setDescription}
+          style={[styles.text_input]}
+          multiline
+          selectionColor="#fff"
+        />
+      </View>
+
       <View style={{ marginVertical: 12 }}>
-        {/* Row: fragile selectors on the left, amount input on the right */}
         <View
           style={{
             flexDirection: "row",
@@ -430,60 +483,6 @@ const DetailsModal = () => {
               selectionColor="#fff"
             />
           </View>
-        </View>
-      </View>
-
-      <View style={{ marginBottom: 12 }}>
-        <Text
-          style={{
-            color: "#cfcfcf",
-            marginBottom: 6,
-            fontFamily: "raleway-semibold",
-          }}
-        >
-          Description
-        </Text>
-        <TextInput
-          placeholder=" e.g. iPhone XR, Bag of oranges"
-          placeholderTextColor="#b0b0b0"
-          value={description}
-          onChangeText={setDescription}
-          style={[styles.text_input]}
-          multiline
-          selectionColor="#fff"
-        />
-      </View>
-
-      <View style={{ marginBottom: 12 }}>
-        <Text
-          style={{
-            color: "#cfcfcf",
-            marginBottom: 6,
-            fontFamily: "raleway-semibold",
-          }}
-        >
-          Type
-        </Text>
-        <View
-          style={{
-            backgroundColor: "#2a2a2a",
-            borderRadius: 8,
-            paddingHorizontal: 8,
-          }}
-        >
-          <Picker
-            selectedValue={pkgType}
-            onValueChange={(v) => setPkgType(v)}
-            style={{ color: "#fff" }}
-            itemStyle={{ color: "#fff" }}
-          >
-            <Picker.Item label="Document" value="document" />
-            <Picker.Item label="Electronics" value="electronics" />
-            <Picker.Item label="Clothing" value="clothing" />
-            <Picker.Item label="Food" value="food" />
-            <Picker.Item label="Furniture" value="furniture" />
-            <Picker.Item label="Other" value="other" />
-          </Picker>
         </View>
       </View>
 

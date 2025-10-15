@@ -123,9 +123,22 @@ const API_URL = API_URLS.deliveries;
 const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext() as any;
   const { userSocket } = useAuthContext() as any;
-  const { getSuggestions, getPlaceCoords } = useMapContext();
+  const { getSuggestions, getPlaceCoords, getRoute, mapRef } = useMapContext();
 
   const [deliveryData, setDeliveryData] = useState<Delivery | null>(null);
+
+  // Delivery route states
+  const [deliveryRouteCoords, setDeliveryRouteCoords] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
+  const [deliveryPickupMarker, setDeliveryPickupMarker] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [deliveryDropoffMarker, setDeliveryDropoffMarker] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const deliveryModalRef = useRef<BottomSheet>(null);
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryModalStatus>("");
@@ -237,6 +250,64 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cancelling, setCancelling] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [rebooking, setRebooking] = useState(false);
+
+  // Delivery route functions
+  const fetchDeliveryRoute = async (
+    pickupCoords: [number, number],
+    dropoffCoords: [number, number]
+  ) => {
+    try {
+      const result = await getRoute(pickupCoords, dropoffCoords);
+
+      if (result) {
+        setDeliveryRouteCoords(result.coords);
+        setDeliveryPickupMarker(result.pickupOnRoad);
+        setDeliveryDropoffMarker(result.destinationOnRoad);
+
+        // Zoom map to fit route with a small delay to ensure map is ready
+        setTimeout(() => {
+          if (mapRef?.current) {
+            mapRef.current.fitToCoordinates(result.coords, {
+              edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+              animated: true,
+            });
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error("Error fetching delivery route:", error);
+    }
+  };
+
+  // useEffect to fetch route when delivery pickup and dropoff are set
+  useEffect(() => {
+    if (
+      deliveryData?.pickup?.coordinates &&
+      deliveryData?.dropoff?.coordinates &&
+      (deliveryStatus === "vehicle" ||
+        deliveryStatus === "searching" ||
+        deliveryStatus === "accepted" ||
+        deliveryStatus === "track_driver" ||
+        deliveryStatus === "arrived" ||
+        deliveryStatus === "paying" ||
+        deliveryStatus === "paid" ||
+        deliveryStatus === "track_delivery") // Show route for all delivery flow states
+    ) {
+      fetchDeliveryRoute(
+        deliveryData.pickup.coordinates,
+        deliveryData.dropoff.coordinates
+      );
+    } else {
+      // Clear route when not applicable
+      setDeliveryRouteCoords([]);
+      setDeliveryPickupMarker(null);
+      setDeliveryDropoffMarker(null);
+    }
+  }, [
+    deliveryData?.pickup?.coordinates,
+    deliveryData?.dropoff?.coordinates,
+    deliveryStatus,
+  ]);
 
   useEffect(() => {
     if (!userSocket) return;
@@ -520,6 +591,10 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         cancelling,
         retrying,
         rebooking,
+        deliveryRouteCoords,
+        deliveryPickupMarker,
+        deliveryDropoffMarker,
+        fetchDeliveryRoute,
       }}
     >
       {children}
@@ -558,6 +633,15 @@ export interface DeliverContextType {
   cancelling: boolean;
   retrying: boolean;
   rebooking: boolean;
+
+  // Delivery route properties
+  deliveryRouteCoords: { latitude: number; longitude: number }[];
+  deliveryPickupMarker: { latitude: number; longitude: number } | null;
+  deliveryDropoffMarker: { latitude: number; longitude: number } | null;
+  fetchDeliveryRoute: (
+    pickupCoords: [number, number],
+    dropoffCoords: [number, number]
+  ) => Promise<void>;
 }
 
 export const useDeliverContext = () => {
