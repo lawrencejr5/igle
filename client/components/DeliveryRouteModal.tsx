@@ -86,20 +86,6 @@ const DeliveryRouteModal: FC = () => {
       setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 20 }));
   };
 
-  React.useEffect(() => {
-    if (deliveryStatus !== "accepted") return;
-    const t = setTimeout(() => {
-      setDeliveryStatus("arrived");
-      try {
-        showNotification("Dispatch rider has arrived (demo)", "success");
-      } catch (e) {
-        // ignore if notification context isn't available
-      }
-    }, 5000);
-
-    return () => clearTimeout(t);
-  }, [deliveryStatus]);
-
   return (
     <BottomSheet
       index={0}
@@ -1004,7 +990,8 @@ const ChooseVehicleModal = () => {
 };
 
 const SearchingModal = () => {
-  const { deliveryStatus, setDeliveryStatus } = useDeliverContext();
+  const { deliveryStatus, setDeliveryStatus, resetDeliveryFlow } =
+    useDeliverContext();
   const { region, mapRef } = useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
 
@@ -1013,15 +1000,12 @@ const SearchingModal = () => {
   );
 
   React.useEffect(() => {
-    // only run the dummy flow when the sheet is in searching state
+    // Update search text but don't auto-transition - let socket handle it
     if (deliveryStatus !== "searching") return;
 
     setSearchText("Searching for dispatch riders...");
     const id = setTimeout(() => {
-      setSearchText("Dispatch rider found!");
-      // advance to accepted state (dummy)
-      setDeliveryStatus("accepted");
-      showNotification("Dispatch rider assigned (demo)", "success");
+      setSearchText("Still searching for dispatch riders...");
     }, 3000);
 
     return () => clearTimeout(id);
@@ -1056,7 +1040,10 @@ const SearchingModal = () => {
       <View style={{ marginTop: 30 }}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => setDeliveryStatus("")}
+          onPress={() => {
+            resetDeliveryFlow();
+            showNotification("Delivery cancelled", "info");
+          }}
           style={{
             width: "100%",
             padding: 10,
@@ -1082,52 +1069,85 @@ const SearchingModal = () => {
 };
 
 const AcceptedModal = () => {
-  const { deliveryStatus, setDeliveryStatus } = useDeliverContext();
+  const {
+    deliveryStatus,
+    setDeliveryStatus,
+    ongoingDeliveryData,
+    resetDeliveryFlow,
+  } = useDeliverContext();
   const { region, mapRef } = useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
 
-  // Demo: once a dispatch rider is assigned (accepted), auto-transition to "arrived"
-  // after ~5 seconds to simulate the rider reaching the pickup.
-  React.useEffect(() => {
-    if (deliveryStatus !== "accepted") return;
-    const t = setTimeout(() => {
-      setDeliveryStatus("arrived");
-      try {
-        showNotification("Dispatch rider has arrived (demo)", "success");
-      } catch (e) {
-        // ignore if notification context isn't available
-      }
-    }, 5000);
-
-    return () => clearTimeout(t);
-  }, [deliveryStatus]);
+  const [isDeliveryExpanded, setIsDeliveryExpanded] = useState<boolean>(false);
 
   const track_rider = () => {
     setDeliveryStatus("track_driver");
-    // demo: animate to a mocked location if mapRef available
+    // animate to driver location if available
     setTimeout(() => {
       try {
-        if (mapRef?.current) {
-          // fall back to region or a small offset
-          const target = region
-            ? {
-                latitude: region.latitude || 6.5244,
-                longitude: region.longitude || 3.3792,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-              }
-            : {
-                latitude: 6.5244,
-                longitude: 3.3792,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-              };
+        if (mapRef?.current && ongoingDeliveryData?.driver?.current_location) {
+          const driverCoords =
+            ongoingDeliveryData.driver.current_location.coordinates;
+          const target = {
+            latitude: driverCoords[0],
+            longitude: driverCoords[1],
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          };
+          mapRef.current.animateToRegion(target, 1000);
+        } else if (mapRef?.current && region) {
+          // fall back to region if no driver location
+          const target = {
+            latitude: region.latitude || 6.5244,
+            longitude: region.longitude || 3.3792,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          };
           mapRef.current.animateToRegion(target, 1000);
         }
       } catch (e) {
         // ignore in demo
       }
     }, 800);
+  };
+
+  // Extract driver data from ongoingDeliveryData
+  const driverData = ongoingDeliveryData?.driver;
+  const driverName = driverData?.user?.name || "Unknown Driver";
+  const vehicleInfo = driverData?.vehicle
+    ? `${driverData.vehicle.brand} ${driverData.vehicle.model}`
+    : "Unknown Vehicle";
+  const driverRating = driverData?.rating || 0;
+  const totalTrips = driverData?.total_trips || 0;
+  const deliveryFare = ongoingDeliveryData?.fare || 0;
+
+  // Extract delivery details from ongoingDeliveryData
+  const deliveryId = ongoingDeliveryData?._id || "N/A";
+  const packageData = ongoingDeliveryData?.package;
+  const packageDescription = packageData?.description || "Package";
+  const packageType = packageData?.type || "other";
+  const packageAmount = packageData?.amount || deliveryFare;
+  const isFragile = packageData?.fragile || false;
+  const recipientName = ongoingDeliveryData?.to?.name || "Unknown Recipient";
+  const recipientPhone = ongoingDeliveryData?.to?.phone || "N/A";
+  const vehicleType = ongoingDeliveryData?.vehicle || "bike";
+
+  // Get vehicle icon based on vehicle type
+  const getVehicleIcon = (vehicle: string) => {
+    switch (vehicle) {
+      case "bike":
+      case "motorcycle":
+        return require("../assets/images/icons/motorcycle-icon.png");
+      case "cab":
+      case "car":
+        return require("../assets/images/icons/sedan-icon.png");
+      case "van":
+        return require("../assets/images/icons/van-icon.png");
+      case "truck":
+        return require("../assets/images/icons/truck-icon.png");
+      default:
+        return require("../assets/images/icons/motorcycle-icon.png");
+    }
   };
 
   return (
@@ -1140,7 +1160,7 @@ const AcceptedModal = () => {
         This rider is on the way...
       </Text>
 
-      {/* Minimal driver card (demo data) */}
+      {/* Driver card with real data */}
       <View
         style={{
           marginTop: 12,
@@ -1158,23 +1178,151 @@ const AcceptedModal = () => {
           />
           <View style={{ flex: 1 }}>
             <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
-              John Doe
+              {driverName}
             </Text>
             <Text
               style={{
                 color: "#cfcfcf",
                 fontFamily: "poppins-regular",
                 fontSize: 12,
+                marginTop: 7,
               }}
             >
-              Bike • 4.9 ★ • 120 trips
+              {vehicleInfo} • {driverRating.toFixed(1)} ★ • {totalTrips} trips
             </Text>
           </View>
-          <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
-            NGN 1,200
-          </Text>
         </View>
       </View>
+
+      {/* Delivery details card with real data */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => setIsDeliveryExpanded(!isDeliveryExpanded)}
+        style={{
+          marginTop: 12,
+          padding: 14,
+          borderRadius: 12,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+        }}
+      >
+        {/* ID at the top */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#2a2a2a",
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 6,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "poppins-regular",
+                fontSize: 10,
+              }}
+            >
+              ID: #{deliveryId.slice(-9).toUpperCase()}
+            </Text>
+          </View>
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "poppins-bold",
+              fontSize: 14,
+            }}
+          >
+            NGN {deliveryFare.toLocaleString()}
+          </Text>
+        </View>
+
+        {/* Main content */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 8,
+              backgroundColor: "#2a2a2a",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Image
+              source={getVehicleIcon(vehicleType)}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: "#fff",
+              }}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
+              {packageType.charAt(0).toUpperCase() + packageType.slice(1)}{" "}
+              Package
+            </Text>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 12,
+                marginTop: 2,
+              }}
+            >
+              {packageDescription}
+              {isFragile ? " • Fragile" : ""}
+            </Text>
+          </View>
+          <Feather
+            name={isDeliveryExpanded ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#cfcfcf"
+          />
+        </View>
+
+        {/* Expanded content - recipient info */}
+        {isDeliveryExpanded && (
+          <View
+            style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTopWidth: 0.5,
+              borderTopColor: "#2a2a2a",
+            }}
+          >
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 11,
+              }}
+            >
+              Recipient: {recipientName}
+            </Text>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 11,
+                marginTop: 2,
+              }}
+            >
+              Phone: {recipientPhone}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
 
       <TouchableOpacity
         activeOpacity={0.7}
@@ -1199,7 +1347,10 @@ const AcceptedModal = () => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => setDeliveryStatus("")}
+        onPress={() => {
+          resetDeliveryFlow();
+          showNotification("Delivery cancelled", "info");
+        }}
         style={{ marginTop: 18 }}
         activeOpacity={0.8}
       >

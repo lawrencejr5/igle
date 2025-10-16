@@ -126,6 +126,8 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { getSuggestions, getPlaceCoords, getRoute, mapRef } = useMapContext();
 
   const [deliveryData, setDeliveryData] = useState<Delivery | null>(null);
+  const [ongoingDeliveryData, setOngoingDeliveryData] =
+    useState<Delivery | null>(null);
 
   // Delivery route states
   const [deliveryRouteCoords, setDeliveryRouteCoords] = useState<
@@ -309,15 +311,51 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     deliveryStatus,
   ]);
 
+  // Fetch delivery data function
+  const fetchDeliveryData = async (delivery_id: string): Promise<void> => {
+    try {
+      const headers = { headers: await authHeaders() };
+      const { data } = await axios.get(
+        `${API_URL}/data?delivery_id=${delivery_id}`,
+        headers
+      );
+      if (data.delivery) {
+        setOngoingDeliveryData(data.delivery);
+      }
+    } catch (error: any) {
+      console.error("Error fetching delivery data:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     if (!userSocket) return;
 
-    const onDeliveryAccepted = (data: any) => {
-      // refresh active deliveries when one is accepted
-      fetchUserActiveDeliveries();
+    const onDeliveryAccepted = async (data: any) => {
+      const { delivery_id, driver_id } = data;
+      showNotification("Delivery has been accepted", "success");
+
+      try {
+        // Fetch the full delivery data with driver details
+        await fetchDeliveryData(delivery_id);
+        setDeliveryStatus("accepted");
+        console.log("Delivery accepted:", data);
+      } catch (error: any) {
+        console.error("Error fetching delivery data:", error);
+        showNotification("Error loading delivery details", "error");
+      }
     };
 
     const onDeliveryTimeout = (data: any) => {
+      const { delivery_id } = data;
+      showNotification("Delivery request timed out", "error");
+
+      // Clear ongoing delivery if it's the one that timed out
+      if (ongoingDeliveryData?._id === delivery_id) {
+        setOngoingDeliveryData(null);
+        setDeliveryStatus("");
+      }
+
       fetchUserActiveDeliveries();
     };
 
@@ -339,6 +377,16 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       userSocket.off("delivery_completed", onDeliveryUpdate);
     };
   }, [userSocket]);
+
+  // Reset delivery flow
+  const resetDeliveryFlow = () => {
+    setDeliveryData(null);
+    setOngoingDeliveryData(null);
+    setDeliveryStatus("");
+    setDeliveryRouteCoords([]);
+    setDeliveryPickupMarker(null);
+    setDeliveryDropoffMarker(null);
+  };
 
   const authHeaders = async () => {
     const token = await AsyncStorage.getItem("token");
@@ -413,6 +461,10 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
       console.log("Delivery request successful:", data);
       showNotification(data.msg || "Delivery requested", "success");
+
+      // Store the ongoing delivery data
+      setOngoingDeliveryData(data.delivery);
+
       // refresh active deliveries
       await fetchUserActiveDeliveries();
       return data.delivery;
@@ -574,6 +626,10 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setDeliveryStatus,
         deliveryData,
         setDeliveryData,
+        ongoingDeliveryData,
+        setOngoingDeliveryData,
+        fetchDeliveryData,
+        resetDeliveryFlow,
         requestDelivery,
         retryDelivery,
         rebookDelivery,
@@ -608,6 +664,10 @@ export interface DeliverContextType {
   setDeliveryStatus: Dispatch<SetStateAction<DeliveryModalStatus>>;
   deliveryData: Delivery | null;
   setDeliveryData: Dispatch<SetStateAction<Delivery | null>>;
+  ongoingDeliveryData: Delivery | null;
+  setOngoingDeliveryData: Dispatch<SetStateAction<Delivery | null>>;
+  fetchDeliveryData: (delivery_id: string) => Promise<void>;
+  resetDeliveryFlow: () => void;
   requestDelivery: (
     vehicleDetails?: { type: string; amount: number },
     scheduled_time?: Date
