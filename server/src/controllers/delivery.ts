@@ -255,7 +255,14 @@ export const get_user_active_deliveries = async (
     const deliveries = await Delivery.find({
       sender: user_id,
       status: {
-        $in: ["pending", "accepted", "picked_up", "in_transit", "expired"],
+        $in: [
+          "pending",
+          "accepted",
+          "picked_up",
+          "arrived",
+          "in_transit",
+          "expired",
+        ],
       },
     }).sort({ createdAt: -1 });
     res
@@ -367,11 +374,9 @@ export const update_delivery_status = async (
       case "picked_up":
         // Only allow marking as picked_up when delivery was accepted
         if (delivery.status !== "accepted") {
-          return res
-            .status(400)
-            .json({
-              msg: "Delivery must be 'accepted' before it can be picked up",
-            });
+          return res.status(400).json({
+            msg: "Delivery must be 'accepted' before it can be picked up",
+          });
         }
 
         delivery.status = "picked_up" as any;
@@ -382,23 +387,35 @@ export const update_delivery_status = async (
         if (sender_socket)
           io.to(sender_socket).emit("delivery_picked_up", { delivery_id });
         break;
+      case "arrived":
+        // Only allow marking as arrived when delivery was accepted
+        if (delivery.status !== "accepted") {
+          return res.status(400).json({
+            msg: "Delivery must be 'accepted' before driver can mark as arrived",
+          });
+        }
+
+        delivery.status = "arrived" as any;
+        delivery.timestamps = {
+          ...(delivery.timestamps as any),
+          arrived_at: new Date(),
+        } as any;
+        if (sender_socket)
+          io.to(sender_socket).emit("delivery_arrived", { delivery_id });
+        break;
       case "in_transit":
         // Only allow starting transit when package was picked up
         if (delivery.status !== "picked_up") {
-          return res
-            .status(400)
-            .json({
-              msg: "Delivery must be 'picked_up' before starting transit",
-            });
+          return res.status(400).json({
+            msg: "Delivery must be 'picked_up' before starting transit",
+          });
         }
 
         // Prevent transit start if payment not completed
         if ((delivery as any).payment_status !== "paid") {
-          return res
-            .status(400)
-            .json({
-              msg: "Payment must be completed before transit can start",
-            });
+          return res.status(400).json({
+            msg: "Payment must be completed before transit can start",
+          });
         }
 
         delivery.status = "in_transit" as any;
@@ -409,14 +426,13 @@ export const update_delivery_status = async (
         if (sender_socket)
           io.to(sender_socket).emit("delivery_in_transit", { delivery_id });
         break;
+
       case "delivered":
         // Only allow delivered when currently in transit
         if (delivery.status !== "in_transit") {
-          return res
-            .status(400)
-            .json({
-              msg: "Delivery must be 'in_transit' before it can be marked delivered",
-            });
+          return res.status(400).json({
+            msg: "Delivery must be 'in_transit' before it can be marked delivered",
+          });
         }
 
         delivery.status = "delivered" as any;

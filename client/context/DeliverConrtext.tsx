@@ -363,9 +363,22 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       fetchUserActiveDeliveries();
     };
 
+    const onDeliveryArrived = (data: any) => {
+      const { delivery_id } = data;
+      showNotification("Dispatch rider has arrived!", "success");
+
+      // Update delivery status if it's the current ongoing delivery
+      if (ongoingDeliveryData?._id === delivery_id) {
+        setDeliveryStatus("arrived");
+      }
+
+      fetchUserActiveDeliveries();
+    };
+
     userSocket.on("delivery_accepted", onDeliveryAccepted);
     userSocket.on("delivery_timeout", onDeliveryTimeout);
     userSocket.on("delivery_picked_up", onDeliveryUpdate);
+    userSocket.on("delivery_arrived", onDeliveryArrived);
     userSocket.on("delivery_in_transit", onDeliveryUpdate);
     userSocket.on("delivery_completed", onDeliveryUpdate);
 
@@ -373,6 +386,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       userSocket.off("delivery_accepted", onDeliveryAccepted);
       userSocket.off("delivery_timeout", onDeliveryTimeout);
       userSocket.off("delivery_picked_up", onDeliveryUpdate);
+      userSocket.off("delivery_arrived", onDeliveryArrived);
       userSocket.off("delivery_in_transit", onDeliveryUpdate);
       userSocket.off("delivery_completed", onDeliveryUpdate);
     };

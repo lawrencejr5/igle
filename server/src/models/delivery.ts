@@ -32,6 +32,7 @@ export interface DeliveryType extends Document {
     | "pending"
     | "scheduled"
     | "accepted"
+    | "arrived"
     | "picked_up"
     | "in_transit"
     | "delivered"
@@ -96,6 +97,7 @@ const DeliverySchema = new Schema<DeliveryType>(
         "pending",
         "scheduled",
         "accepted",
+        "arrived",
         "picked_up",
         "in_transit",
         "delivered",

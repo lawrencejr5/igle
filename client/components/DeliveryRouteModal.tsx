@@ -1369,42 +1369,39 @@ const AcceptedModal = () => {
 };
 
 const TrackDriver = () => {
-  const { setDeliveryStatus } = useDeliverContext();
+  const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
   const { mapRef } = useMapContext() as any;
 
-  // Local demo delivery for tracking UI (no real API calls)
-  const delivery: any = {
-    driver: {
-      user: { name: "John Doe" },
-      vehicle: { brand: "Yamaha", model: "- MT-15" },
-      current_location: { coordinates: [6.5244, 3.3792] },
-    },
-    pickup: { coordinates: [6.523, 3.38] },
-  };
+  // Extract driver and delivery data from ongoingDeliveryData
+  const driverData = ongoingDeliveryData?.driver;
+  const driverName = driverData?.user?.name || "Unknown Driver";
+  const vehicleInfo = driverData?.vehicle
+    ? `${driverData.vehicle.brand} ${driverData.vehicle.model}`
+    : "Unknown Vehicle";
+  const driverLocation = driverData?.current_location?.coordinates;
+  const pickupLocation = ongoingDeliveryData?.pickup?.coordinates;
 
   const see_delivery_info = () => {
-    if (mapRef?.current && delivery?.driver?.current_location) {
-      const coords = delivery.driver.current_location.coordinates;
+    if (mapRef?.current && driverLocation) {
       try {
-        mapRef.current.fitToCoordinates(
-          [
-            { latitude: coords[0], longitude: coords[1] },
-            ...(delivery.pickup?.coordinates
-              ? [
-                  {
-                    latitude: delivery.pickup.coordinates[0],
-                    longitude: delivery.pickup.coordinates[1],
-                  },
-                ]
-              : []),
-          ],
-          {
-            edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
-            animated: true,
-          }
-        );
+        const coordinatesToFit = [
+          { latitude: driverLocation[0], longitude: driverLocation[1] },
+        ];
+
+        // Add pickup location if available
+        if (pickupLocation) {
+          coordinatesToFit.push({
+            latitude: pickupLocation[0],
+            longitude: pickupLocation[1],
+          });
+        }
+
+        mapRef.current.fitToCoordinates(coordinatesToFit, {
+          edgePadding: { top: 100, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        });
       } catch (e) {
-        // ignore in demo
+        // ignore errors in demo
       }
     }
     setDeliveryStatus("accepted");
@@ -1429,7 +1426,7 @@ const TrackDriver = () => {
               marginTop: 10,
             }}
           >
-            {delivery.driver.user.name}
+            {driverName}
           </Text>
           <Text
             style={{
@@ -1438,7 +1435,7 @@ const TrackDriver = () => {
               fontSize: 12,
             }}
           >
-            {delivery.driver.vehicle.brand} {delivery.driver.vehicle.model}
+            {vehicleInfo}
           </Text>
         </View>
 
@@ -1468,18 +1465,17 @@ const TrackDriver = () => {
 };
 
 const ArrivedModal = () => {
-  const { setDeliveryStatus } = useDeliverContext();
+  const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
 
-  // Dummy delivery for demo
-  const delivery: any = {
-    fare: 1200,
-    driver: {
-      user: { name: "John Doe" },
-      vehicle: { brand: "Yamaha", model: "MT-15" },
-      rating: 4.9,
-      trips: 120,
-    },
-  };
+  // Extract driver data from ongoingDeliveryData
+  const driverData = ongoingDeliveryData?.driver;
+  const driverName = driverData?.user?.name || "Unknown Driver";
+  const vehicleInfo = driverData?.vehicle
+    ? `${driverData.vehicle.brand} ${driverData.vehicle.model}`
+    : "Unknown Vehicle";
+  const driverRating = driverData?.rating || 0;
+  const totalTrips = driverData?.total_trips || 0;
+  const deliveryFare = ongoingDeliveryData?.fare || 0;
 
   return (
     <>
@@ -1508,21 +1504,21 @@ const ArrivedModal = () => {
           />
           <View style={{ flex: 1 }}>
             <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
-              {delivery.driver.user.name}
+              {driverName}
             </Text>
             <Text
               style={{
                 color: "#cfcfcf",
                 fontFamily: "poppins-regular",
                 fontSize: 12,
+                marginTop: 7,
               }}
             >
-              {delivery.driver.vehicle.brand} • {delivery.driver.rating} ★ •{" "}
-              {delivery.driver.trips} trips
+              {vehicleInfo}
             </Text>
           </View>
           <Text style={{ color: "#fff", fontFamily: "poppins-bold" }}>
-            NGN {delivery.fare.toLocaleString()}
+            NGN {deliveryFare.toLocaleString()}
           </Text>
         </View>
       </View>
@@ -1545,7 +1541,7 @@ const ArrivedModal = () => {
             textAlign: "center",
           }}
         >
-          Pay NGN {delivery.fare.toLocaleString()}
+          Pay NGN {deliveryFare.toLocaleString()}
         </Text>
       </TouchableOpacity>
     </>
