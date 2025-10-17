@@ -54,6 +54,8 @@ export type DeliveryModalStatus =
   | "arrived"
   | "paying"
   | "paid"
+  | "picked_up"
+  | "in_transit"
   | "track_delivery"
   | "rating";
 
@@ -147,7 +149,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (!userSocket) return;
 
     const onDeliveryAccepted = async (data: any) => {
-      const { delivery_id, driver_id } = data;
+      const { delivery_id } = data;
       showNotification("Delivery has been accepted", "success");
 
       try {
@@ -159,6 +161,28 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         console.error("Error fetching delivery data:", error);
         showNotification("Error loading delivery details", "error");
       }
+    };
+
+    const onDeliveryPickedUp = async (data: any) => {
+      const { delivery_id } = data;
+      showNotification("Package has been picked up!", "success");
+
+      if (delivery_id === ongoingDeliveryData?._id) {
+        setDeliveryStatus("picked_up");
+      }
+
+      fetchUserActiveDeliveries();
+    };
+
+    const onDeliveryInTransit = async (data: any) => {
+      const { delivery_id } = data;
+      showNotification("Package is now in transit!", "success");
+
+      if (delivery_id === ongoingDeliveryData?._id) {
+        setDeliveryStatus("in_transit");
+      }
+
+      fetchUserActiveDeliveries();
     };
 
     const onDeliveryTimeout = (data: any) => {
@@ -191,17 +215,17 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     userSocket.on("delivery_accepted", onDeliveryAccepted);
     userSocket.on("delivery_timeout", onDeliveryTimeout);
-    userSocket.on("delivery_picked_up", onDeliveryUpdate);
+    userSocket.on("delivery_picked_up", onDeliveryPickedUp);
     userSocket.on("delivery_arrived", onDeliveryArrived);
-    userSocket.on("delivery_in_transit", onDeliveryUpdate);
+    userSocket.on("delivery_in_transit", onDeliveryInTransit);
     userSocket.on("delivery_completed", onDeliveryUpdate);
 
     return () => {
       userSocket.off("delivery_accepted", onDeliveryAccepted);
       userSocket.off("delivery_timeout", onDeliveryTimeout);
-      userSocket.off("delivery_picked_up", onDeliveryUpdate);
+      userSocket.off("delivery_picked_up", onDeliveryPickedUp);
       userSocket.off("delivery_arrived", onDeliveryArrived);
-      userSocket.off("delivery_in_transit", onDeliveryUpdate);
+      userSocket.off("delivery_in_transit", onDeliveryInTransit);
       userSocket.off("delivery_completed", onDeliveryUpdate);
     };
   }, [userSocket, ongoingDeliveryData]);
@@ -242,6 +266,12 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (deliveryStatus === "paid") {
       deliveryModalRef.current?.snapToIndex(1);
     }
+    if (deliveryStatus === "picked_up") {
+      deliveryModalRef.current?.snapToIndex(2);
+    }
+    if (deliveryStatus === "in_transit") {
+      deliveryModalRef.current?.snapToIndex(3);
+    }
     if (deliveryStatus === "track_delivery") {
       deliveryModalRef.current?.snapToIndex(3);
     }
@@ -276,6 +306,10 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "arrived") {
       setDeliveryStatus("track_driver");
+      return true;
+    }
+    if (deliveryStatus === "picked_up") {
+      setDeliveryStatus("arrived");
       return true;
     }
     if (deliveryStatus === "paying") {
@@ -363,6 +397,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         deliveryStatus === "accepted" ||
         deliveryStatus === "track_driver" ||
         deliveryStatus === "arrived" ||
+        deliveryStatus === "picked_up" ||
         deliveryStatus === "paying" ||
         deliveryStatus === "paid" ||
         deliveryStatus === "track_delivery") // Show route for all delivery flow states

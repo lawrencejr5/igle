@@ -371,22 +371,6 @@ export const update_delivery_status = async (
     const sender_socket = await get_user_socket_id(delivery.sender!.toString());
 
     switch (status) {
-      case "picked_up":
-        // Only allow marking as picked_up when delivery was accepted
-        if (delivery.status !== "accepted") {
-          return res.status(400).json({
-            msg: "Delivery must be 'accepted' before it can be picked up",
-          });
-        }
-
-        delivery.status = "picked_up" as any;
-        delivery.timestamps = {
-          ...(delivery.timestamps as any),
-          picked_up_at: new Date(),
-        } as any;
-        if (sender_socket)
-          io.to(sender_socket).emit("delivery_picked_up", { delivery_id });
-        break;
       case "arrived":
         // Only allow marking as arrived when delivery was accepted
         if (delivery.status !== "accepted") {
@@ -403,6 +387,31 @@ export const update_delivery_status = async (
         if (sender_socket)
           io.to(sender_socket).emit("delivery_arrived", { delivery_id });
         break;
+
+      case "picked_up":
+        // Only allow marking as picked_up when delivery was accepted
+        if (delivery.status !== "arrived") {
+          return res.status(400).json({
+            msg: "Dispatch rider must arrive first before it can be picked up",
+          });
+        }
+
+        // Prevent pickup if payment not completed
+        if ((delivery as any).payment_status !== "paid") {
+          return res.status(400).json({
+            msg: "Payment must be completed before package can be picked up",
+          });
+        }
+
+        delivery.status = "picked_up" as any;
+        delivery.timestamps = {
+          ...(delivery.timestamps as any),
+          picked_up_at: new Date(),
+        } as any;
+        if (sender_socket)
+          io.to(sender_socket).emit("delivery_picked_up", { delivery_id });
+        break;
+
       case "in_transit":
         // Only allow starting transit when package was picked up
         if (delivery.status !== "picked_up") {

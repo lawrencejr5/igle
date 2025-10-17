@@ -121,9 +121,11 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "accepted" && <AcceptedModal />}
         {deliveryStatus === "track_driver" && <TrackDriver />}
         {deliveryStatus === "arrived" && <ArrivedModal />}
+        {deliveryStatus === "picked_up" && <PickedUpModal />}
         {deliveryStatus === "paying" && <PayingModal />}
         {deliveryStatus === "paid" && <PaidModal />}
-        {deliveryStatus === "track_delivery" && <TrackDelivery />}
+        {deliveryStatus === "in_transit" && <InTransitModal />}
+        {deliveryStatus === "track_delivery" && <InTransitModal />}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -1640,10 +1642,8 @@ const ArrivedModal = () => {
   const driverData = ongoingDeliveryData?.driver;
   const driverName = driverData?.user?.name || "Unknown Driver";
   const vehicleInfo = driverData?.vehicle
-    ? `${driverData.vehicle.brand} ${driverData.vehicle.model}`
+    ? `${driverData.vehicle.color} ${driverData.vehicle.brand} ${driverData.vehicle.model}`
     : "Unknown Vehicle";
-  const driverRating = driverData?.rating || 0;
-  const totalTrips = driverData?.total_trips || 0;
   const deliveryFare = ongoingDeliveryData?.fare || 0;
 
   return (
@@ -1711,6 +1711,112 @@ const ArrivedModal = () => {
           }}
         >
           Pay NGN {deliveryFare.toLocaleString()}
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+};
+
+const PickedUpModal = () => {
+  const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
+
+  // Extract driver and delivery data from ongoingDeliveryData
+  const driverData = ongoingDeliveryData?.driver;
+  const driverName = driverData?.user?.name || "Unknown Driver";
+  const vehicleInfo = driverData?.vehicle
+    ? `${driverData.vehicle.color} ${driverData.vehicle.brand} ${driverData.vehicle.model}`
+    : "Unknown Vehicle";
+  const deliveryFare = ongoingDeliveryData?.fare || 0;
+  const packageData = ongoingDeliveryData?.package;
+  const packageDescription = packageData?.description || "Package";
+  const recipientName = ongoingDeliveryData?.to?.name || "Unknown Recipient";
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Package picked up
+      </Text>
+
+      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+        {driverName} has up your package and is about heading to drop off.
+      </Text>
+
+      {/* Route display */}
+      <View
+        style={{
+          marginTop: 12,
+          padding: 12,
+          borderRadius: 10,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 10,
+              }}
+            >
+              FROM
+            </Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-semibold",
+                fontSize: 12,
+              }}
+              numberOfLines={1}
+            >
+              {ongoingDeliveryData?.pickup?.address || "Pickup location"}
+            </Text>
+          </View>
+          <Feather name="arrow-right" size={18} color="#8d8d8d" />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 10,
+              }}
+            >
+              TO
+            </Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-semibold",
+                fontSize: 12,
+              }}
+              numberOfLines={1}
+            >
+              {ongoingDeliveryData?.dropoff?.address || "Drop off location"}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => {}}
+        style={{
+          marginTop: 30,
+          padding: 12,
+          borderRadius: 30,
+          backgroundColor: "#fff",
+        }}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+            color: "#121212",
+          }}
+        >
+          Track delivery
         </Text>
       </TouchableOpacity>
     </>
@@ -1819,36 +1925,6 @@ const PayingModal = () => {
   );
 };
 
-const ProcessingPaymentModal = () => {
-  const { setDeliveryStatus } = useDeliverContext();
-  const { showNotification } = useNotificationContext() as any;
-
-  React.useEffect(() => {
-    const id = setTimeout(() => {
-      try {
-        showNotification("Payment processed (demo)", "success");
-      } catch (e) {}
-      setDeliveryStatus("paid");
-    }, 1500);
-
-    return () => clearTimeout(id);
-  }, []);
-
-  return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center" }]}>
-        Processing payment
-      </Text>
-      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
-        Please wait while we confirm your payment...
-      </Text>
-      <View style={{ marginTop: 30, alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#fff" />
-      </View>
-    </>
-  );
-};
-
 const PaidModal = () => {
   const { setDeliveryStatus } = useDeliverContext();
 
@@ -1857,8 +1933,10 @@ const PaidModal = () => {
       <Text style={[styles.header_text, { textAlign: "center" }]}>
         Payment successful
       </Text>
-      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
-        Thanks — your delivery has been paid (demo)
+      <Text
+        style={[styles.rideStatusText, { marginTop: 20, textAlign: "center" }]}
+      >
+        Thanks — your delivery has been paid for
       </Text>
       <TouchableOpacity
         activeOpacity={0.8}
@@ -1884,7 +1962,7 @@ const PaidModal = () => {
   );
 };
 
-const TrackDelivery = () => {
+const InTransitModal = () => {
   const { setDeliveryStatus } = useDeliverContext();
   const { mapRef } = useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
@@ -2368,10 +2446,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   rideStatusText: {
-    color: "#fff",
+    color: "#ffffffff",
     fontSize: 14,
-    fontFamily: "raleway-bold",
+    fontFamily: "raleway-regular",
     marginBottom: 10,
+    lineHeight: 22,
   },
   select_ride_container: {
     marginBottom: 20,
