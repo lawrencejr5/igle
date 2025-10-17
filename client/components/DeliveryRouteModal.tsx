@@ -44,7 +44,6 @@ const DeliveryRouteModal: FC = () => {
 
   const { setDestinationCoords, setDestination, setMapPadding } =
     useMapContext() as any;
-  const { showNotification } = useNotificationContext() as any;
 
   const windowHeight = Dimensions.get("window").height;
   const fontScale = PixelRatio.getFontScale();
@@ -84,6 +83,8 @@ const DeliveryRouteModal: FC = () => {
     }
 
     if (index < 4)
+      setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 40 }));
+    if (index < 2)
       setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 20 }));
   };
 
@@ -1963,32 +1964,39 @@ const PaidModal = () => {
 };
 
 const InTransitModal = () => {
-  const { setDeliveryStatus } = useDeliverContext();
+  const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
   const { mapRef } = useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
 
-  // Dummy delivery data for demo
-  const delivery: any = {
-    id: "demo-delivery-1",
-    status: "en_route",
-    eta: "5 mins",
-    progress: 0.45,
-    driver: {
-      name: "Jane Rider",
-      phone: "+2348012345678",
-      vehicle: "Yamaha MT-15",
-      rating: 4.9,
-      avatar: require("../assets/images/black-profile.jpeg"),
-    },
-    pickup: { latitude: 6.523, longitude: 3.38 },
-    current_location: { latitude: 6.5244, longitude: 3.3792 },
-  };
+  // Extract real delivery data from ongoingDeliveryData
+  const driverData = ongoingDeliveryData?.driver;
+  const driverName = driverData?.user?.name || "Unknown Driver";
+  const driverPhone = driverData?.user?.phone || "+234xxxxxxxxx";
+  const vehicleInfo = driverData?.vehicle
+    ? `${driverData.vehicle.color} ${driverData.vehicle.brand} ${driverData.vehicle.model}`
+    : "Unknown Vehicle";
+  const driverRating = driverData?.rating || 0;
+  const driverLocation = driverData?.current_location?.coordinates;
 
-  const [progress, setProgress] = React.useState<number>(delivery.progress);
+  // Extract delivery details
+  const deliveryId = ongoingDeliveryData?._id || "N/A";
+  const deliveryFare = ongoingDeliveryData?.fare || 0;
+  const packageData = ongoingDeliveryData?.package;
+  const packageDescription = packageData?.description || "Package";
+  const packageType = packageData?.type || "other";
+  const packageAmount = packageData?.amount || deliveryFare;
+  const isFragile = packageData?.fragile || false;
+  const recipientName = ongoingDeliveryData?.to?.name || "Unknown Recipient";
+  const recipientPhone = ongoingDeliveryData?.to?.phone || "N/A";
+  const vehicleType = ongoingDeliveryData?.vehicle || "bike";
+  const eta = ongoingDeliveryData?.duration_mins || 5;
+
+  // Calculate estimated progress (this could be enhanced with real-time data)
+  const [progress, setProgress] = React.useState<number>(0.45);
   const [isDeliveryExpanded, setIsDeliveryExpanded] =
     React.useState<boolean>(false);
 
-  // Simulate progress while modal is open
+  // Simulate progress while modal is open (replace with real progress tracking later)
   React.useEffect(() => {
     let id: any;
     id = setInterval(() => {
@@ -2001,28 +2009,46 @@ const InTransitModal = () => {
     return () => clearInterval(id);
   }, []);
 
+  // Get vehicle icon based on vehicle type
+  const getVehicleIcon = (vehicle: string) => {
+    switch (vehicle) {
+      case "bike":
+      case "motorcycle":
+        return require("../assets/images/icons/motorcycle-icon.png");
+      case "cab":
+      case "car":
+        return require("../assets/images/icons/sedan-icon.png");
+      case "van":
+        return require("../assets/images/icons/van-icon.png");
+      case "truck":
+        return require("../assets/images/icons/truck-icon.png");
+      default:
+        return require("../assets/images/icons/motorcycle-icon.png");
+    }
+  };
+
   const focusOnRider = () => {
     try {
-      if (mapRef?.current) {
+      if (mapRef?.current && driverLocation) {
         mapRef.current.animateToRegion(
           {
-            latitude: delivery.current_location.latitude,
-            longitude: delivery.current_location.longitude,
+            latitude: driverLocation[0],
+            longitude: driverLocation[1],
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           },
           800
         );
-        showNotification("Focusing on rider (demo)", "info");
+        showNotification("Focusing on rider", "success");
       }
     } catch (e) {
-      // ignore in demo
+      // ignore errors
     }
   };
 
   const callRider = async () => {
     try {
-      const url = `tel:${delivery.driver.phone}`;
+      const url = `tel:${driverPhone}`;
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
@@ -2030,7 +2056,7 @@ const InTransitModal = () => {
         showNotification("Cannot open dialer on this device", "error");
       }
     } catch (e) {
-      showNotification("Failed to initiate call (demo)", "error");
+      showNotification("Failed to initiate call", "error");
     }
   };
 
@@ -2041,10 +2067,10 @@ const InTransitModal = () => {
       </Text>
 
       <Text style={[styles.rideStatusText, { marginTop: 12, fontSize: 13 }]}>
-        ETA • {delivery.eta}
+        ETA • {eta} mins
       </Text>
 
-      <View style={{ marginTop: 12 }}>
+      <View style={{ marginTop: 5 }}>
         <View
           style={{
             height: 10,
@@ -2088,12 +2114,12 @@ const InTransitModal = () => {
         }}
       >
         <Image
-          source={delivery.driver.avatar}
+          source={require("../assets/images/black-profile.jpeg")}
           style={{ width: 58, height: 58, borderRadius: 30 }}
         />
         <View style={{ flex: 1 }}>
           <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
-            {delivery.driver.name}
+            {driverName}
           </Text>
           <Text
             style={{
@@ -2102,7 +2128,7 @@ const InTransitModal = () => {
               fontSize: 12,
             }}
           >
-            {delivery.driver.vehicle}
+            {vehicleInfo}
           </Text>
           <Text
             style={{
@@ -2111,7 +2137,7 @@ const InTransitModal = () => {
               fontSize: 12,
             }}
           >
-            {delivery.driver.rating} ★
+            {driverRating.toFixed(1)} ★
           </Text>
         </View>
         <TouchableOpacity onPress={callRider} style={{ padding: 8 }}>
@@ -2156,7 +2182,7 @@ const InTransitModal = () => {
                 fontSize: 10,
               }}
             >
-              ID: #D001
+              ID: #{deliveryId.slice(-9).toUpperCase()}
             </Text>
           </View>
           <Text
@@ -2166,7 +2192,7 @@ const InTransitModal = () => {
               fontSize: 14,
             }}
           >
-            NGN 250,000
+            NGN {deliveryFare.toLocaleString()}
           </Text>
         </View>
 
@@ -2182,11 +2208,20 @@ const InTransitModal = () => {
               justifyContent: "center",
             }}
           >
-            <FontAwesome6 name="box" size={20} color="#fff" />
+            <Image
+              source={getVehicleIcon(vehicleType)}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: "#fff",
+              }}
+              resizeMode="contain"
+            />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
-              Electronics Package
+              {packageType.charAt(0).toUpperCase() + packageType.slice(1)}{" "}
+              Package
             </Text>
             <Text
               style={{
@@ -2196,7 +2231,8 @@ const InTransitModal = () => {
                 marginTop: 2,
               }}
             >
-              iPhone XR • Fragile
+              {packageDescription} ({packageAmount})
+              {isFragile ? " • Fragile" : ""}
             </Text>
           </View>
           <Feather
@@ -2223,7 +2259,7 @@ const InTransitModal = () => {
                 fontSize: 11,
               }}
             >
-              Recipient: John Smith
+              Recipient: {recipientName}
             </Text>
             <Text
               style={{
@@ -2233,7 +2269,7 @@ const InTransitModal = () => {
                 marginTop: 2,
               }}
             >
-              Phone: +2348123456789
+              Phone: {recipientPhone}
             </Text>
           </View>
         )}
