@@ -48,6 +48,7 @@ export type DeliveryModalStatus =
   | "route"
   | "vehicle"
   | "searching"
+  | "expired"
   | "accepted"
   | "track_driver"
   | "arrived"
@@ -142,6 +143,69 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     longitude: number;
   } | null>(null);
 
+  useEffect(() => {
+    if (!userSocket) return;
+
+    const onDeliveryAccepted = async (data: any) => {
+      const { delivery_id, driver_id } = data;
+      showNotification("Delivery has been accepted", "success");
+
+      try {
+        // Fetch the full delivery data with driver details
+        await fetchDeliveryData(delivery_id);
+        setDeliveryStatus("accepted");
+        console.log("Delivery accepted:", data);
+      } catch (error: any) {
+        console.error("Error fetching delivery data:", error);
+        showNotification("Error loading delivery details", "error");
+      }
+    };
+
+    const onDeliveryTimeout = (data: any) => {
+      const { delivery_id } = data;
+      showNotification("Delivery request timed out", "error");
+
+      if (delivery_id === ongoingDeliveryData?._id) {
+        setOngoingDeliveryData(
+          (prev) => ({ ...prev, status: "expired" } as any)
+        );
+        setDeliveryStatus("expired");
+      }
+      fetchUserActiveDeliveries();
+    };
+
+    const onDeliveryUpdate = (data: any) => {
+      fetchUserActiveDeliveries();
+    };
+
+    const onDeliveryArrived = (data: any) => {
+      const { delivery_id } = data;
+      showNotification("Dispatch rider has arrived!", "success");
+
+      if (delivery_id === ongoingDeliveryData?._id) {
+        setDeliveryStatus("arrived");
+      }
+
+      fetchUserActiveDeliveries();
+    };
+
+    userSocket.on("delivery_accepted", onDeliveryAccepted);
+    userSocket.on("delivery_timeout", onDeliveryTimeout);
+    userSocket.on("delivery_picked_up", onDeliveryUpdate);
+    userSocket.on("delivery_arrived", onDeliveryArrived);
+    userSocket.on("delivery_in_transit", onDeliveryUpdate);
+    userSocket.on("delivery_completed", onDeliveryUpdate);
+
+    return () => {
+      userSocket.off("delivery_accepted", onDeliveryAccepted);
+      userSocket.off("delivery_timeout", onDeliveryTimeout);
+      userSocket.off("delivery_picked_up", onDeliveryUpdate);
+      userSocket.off("delivery_arrived", onDeliveryArrived);
+      userSocket.off("delivery_in_transit", onDeliveryUpdate);
+      userSocket.off("delivery_completed", onDeliveryUpdate);
+    };
+  }, [userSocket, ongoingDeliveryData]);
+
   const deliveryModalRef = useRef<BottomSheet>(null);
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryModalStatus>("");
   useEffect(() => {
@@ -159,6 +223,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "searching") {
       deliveryModalRef.current?.snapToIndex(2);
+    }
+    if (deliveryStatus === "expired") {
+      deliveryModalRef.current?.snapToIndex(1);
     }
     if (deliveryStatus === "accepted") {
       deliveryModalRef.current?.snapToIndex(3);
@@ -193,6 +260,10 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "vehicle") {
       setDeliveryStatus("route");
+      return true;
+    }
+    if (deliveryStatus === "expired") {
+      setDeliveryStatus("vehicle");
       return true;
     }
     if (deliveryStatus === "accepted") {
@@ -288,6 +359,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       deliveryData?.dropoff?.coordinates &&
       (deliveryStatus === "vehicle" ||
         deliveryStatus === "searching" ||
+        deliveryStatus === "expired" ||
         deliveryStatus === "accepted" ||
         deliveryStatus === "track_driver" ||
         deliveryStatus === "arrived" ||
@@ -328,70 +400,6 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    if (!userSocket) return;
-
-    const onDeliveryAccepted = async (data: any) => {
-      const { delivery_id, driver_id } = data;
-      showNotification("Delivery has been accepted", "success");
-
-      try {
-        // Fetch the full delivery data with driver details
-        await fetchDeliveryData(delivery_id);
-        setDeliveryStatus("accepted");
-        console.log("Delivery accepted:", data);
-      } catch (error: any) {
-        console.error("Error fetching delivery data:", error);
-        showNotification("Error loading delivery details", "error");
-      }
-    };
-
-    const onDeliveryTimeout = (data: any) => {
-      const { delivery_id } = data;
-      showNotification("Delivery request timed out", "error");
-
-      // Clear ongoing delivery if it's the one that timed out
-      if (ongoingDeliveryData?._id === delivery_id) {
-        setOngoingDeliveryData(null);
-        setDeliveryStatus("");
-      }
-
-      fetchUserActiveDeliveries();
-    };
-
-    const onDeliveryUpdate = (data: any) => {
-      fetchUserActiveDeliveries();
-    };
-
-    const onDeliveryArrived = (data: any) => {
-      const { delivery_id } = data;
-      showNotification("Dispatch rider has arrived!", "success");
-
-      // Update delivery status if it's the current ongoing delivery
-      if (ongoingDeliveryData?._id === delivery_id) {
-        setDeliveryStatus("arrived");
-      }
-
-      fetchUserActiveDeliveries();
-    };
-
-    userSocket.on("delivery_accepted", onDeliveryAccepted);
-    userSocket.on("delivery_timeout", onDeliveryTimeout);
-    userSocket.on("delivery_picked_up", onDeliveryUpdate);
-    userSocket.on("delivery_arrived", onDeliveryArrived);
-    userSocket.on("delivery_in_transit", onDeliveryUpdate);
-    userSocket.on("delivery_completed", onDeliveryUpdate);
-
-    return () => {
-      userSocket.off("delivery_accepted", onDeliveryAccepted);
-      userSocket.off("delivery_timeout", onDeliveryTimeout);
-      userSocket.off("delivery_picked_up", onDeliveryUpdate);
-      userSocket.off("delivery_arrived", onDeliveryArrived);
-      userSocket.off("delivery_in_transit", onDeliveryUpdate);
-      userSocket.off("delivery_completed", onDeliveryUpdate);
-    };
-  }, [userSocket]);
-
   // Reset delivery flow
   const resetDeliveryFlow = () => {
     setDeliveryData(null);
@@ -416,9 +424,6 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         showNotification("No delivery data available", "error");
         return;
       }
-
-      console.log("Requesting delivery with vehicle details:", vehicleDetails);
-      console.log("Current deliveryData:", deliveryData);
 
       setLoading(true);
       const headers = { headers: await authHeaders() };
@@ -473,7 +478,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         { pickup, dropoff, package_data, fare, vehicle, to },
         headers
       );
-      console.log("Delivery request successful:", data);
+      console.log("Delivery request successful:", data.delivery._id);
       showNotification(data.msg || "Delivery requested", "success");
 
       // Store the ongoing delivery data
@@ -622,6 +627,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         headers
       );
       showNotification(data.msg || "Delivery cancelled", "success");
+      resetDeliveryFlow();
       await fetchUserActiveDeliveries();
       return data.delivery;
     } catch (err: any) {

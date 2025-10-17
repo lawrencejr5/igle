@@ -116,6 +116,7 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "route" && <RouteModal />}
         {deliveryStatus === "vehicle" && <ChooseVehicleModal />}
         {deliveryStatus === "searching" && <SearchingModal />}
+        {deliveryStatus === "expired" && <ExpiredModal />}
         {deliveryStatus === "accepted" && <AcceptedModal />}
         {deliveryStatus === "track_driver" && <TrackDriver />}
         {deliveryStatus === "arrived" && <ArrivedModal />}
@@ -990,8 +991,14 @@ const ChooseVehicleModal = () => {
 };
 
 const SearchingModal = () => {
-  const { deliveryStatus, setDeliveryStatus, resetDeliveryFlow } =
-    useDeliverContext();
+  const {
+    deliveryStatus,
+    setDeliveryStatus,
+    resetDeliveryFlow,
+    ongoingDeliveryData,
+    cancelDelivery,
+    cancelling,
+  } = useDeliverContext();
   const { region, mapRef } = useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
 
@@ -1000,16 +1007,61 @@ const SearchingModal = () => {
   );
 
   React.useEffect(() => {
-    // Update search text but don't auto-transition - let socket handle it
-    if (deliveryStatus !== "searching") return;
+    // Only show progressive messages for active search (pending/scheduled status)
+    const validStatuses = ["pending", "scheduled"];
 
-    setSearchText("Searching for dispatch riders...");
-    const id = setTimeout(() => {
-      setSearchText("Still searching for dispatch riders...");
-    }, 3000);
+    if (
+      !validStatuses.includes(ongoingDeliveryData?.status!) ||
+      deliveryStatus !== "searching"
+    ) {
+      return;
+    }
 
-    return () => clearTimeout(id);
-  }, [deliveryStatus]);
+    const messages = [
+      {
+        text: "We're trying to locate dispatch riders around you...",
+        delay: 3000,
+      },
+      {
+        text: "Please wait, still locating dispatch riders around you...",
+        delay: 10000,
+      },
+      { text: "Expanding area of search...", delay: 10000 },
+    ];
+
+    let totalDelay = 0;
+    const timeouts: NodeJS.Timeout[] = [];
+
+    messages.forEach(({ text, delay }) => {
+      totalDelay += delay;
+      const id = setTimeout(() => {
+        setSearchText(text);
+      }, totalDelay);
+      timeouts.push(id);
+    });
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
+  }, [deliveryStatus, ongoingDeliveryData?.status]);
+
+  const cancel_delivery = async () => {
+    const reason = "No reason";
+    const by = "sender";
+    const delivery_id = ongoingDeliveryData?._id;
+
+    try {
+      if (delivery_id) {
+        await cancelDelivery(delivery_id, by, reason);
+      } else {
+        resetDeliveryFlow();
+        showNotification("Delivery cancelled", "info");
+      }
+      if (region) mapRef.current?.animateToRegion(region, 1000);
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
 
   return (
     <>
@@ -1018,13 +1070,11 @@ const SearchingModal = () => {
       </Text>
 
       <View style={{ marginTop: 20 }}>
-        {deliveryStatus === "searching" && (
-          <ActivityIndicator
-            size={"large"}
-            color={"#fff"}
-            style={{ marginBottom: 20, marginTop: 10 }}
-          />
-        )}
+        <ActivityIndicator
+          size={"large"}
+          color={"#fff"}
+          style={{ marginBottom: 20, marginTop: 10 }}
+        />
         <Text
           style={{
             fontFamily: "raleway-regular",
@@ -1036,14 +1086,11 @@ const SearchingModal = () => {
         </Text>
       </View>
 
-      {/* Simple cancel action while searching */}
       <View style={{ marginTop: 30 }}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => {
-            resetDeliveryFlow();
-            showNotification("Delivery cancelled", "info");
-          }}
+          onPress={cancel_delivery}
+          disabled={cancelling}
           style={{
             width: "100%",
             padding: 10,
@@ -1051,6 +1098,7 @@ const SearchingModal = () => {
             backgroundColor: "transparent",
             borderWidth: 1,
             borderColor: "#fff",
+            opacity: cancelling ? 0.5 : 1,
           }}
         >
           <Text
@@ -1060,7 +1108,131 @@ const SearchingModal = () => {
               textAlign: "center",
             }}
           >
-            Cancel
+            {cancelling ? "Cancelling..." : "Cancel"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+};
+
+const ExpiredModal = () => {
+  const {
+    setDeliveryStatus,
+    resetDeliveryFlow,
+    ongoingDeliveryData,
+    retryDelivery,
+    cancelDelivery,
+    retrying,
+    cancelling,
+  } = useDeliverContext();
+  const { region, mapRef } = useMapContext() as any;
+  const { showNotification } = useNotificationContext() as any;
+
+  const cancel_delivery = async () => {
+    const reason = "No reason";
+    const by = "sender";
+    const delivery_id = ongoingDeliveryData?._id;
+
+    try {
+      if (delivery_id) {
+        await cancelDelivery(delivery_id, by, reason);
+      } else {
+        resetDeliveryFlow();
+        showNotification("Delivery cancelled", "info");
+      }
+      if (region) mapRef.current?.animateToRegion(region, 1000);
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
+
+  const retry_delivery = async () => {
+    try {
+      const delivery_id = ongoingDeliveryData?._id;
+      if (delivery_id) {
+        await retryDelivery(delivery_id);
+        setDeliveryStatus("searching"); // Go back to searching after retry
+        showNotification("Retrying delivery request...", "info");
+      }
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center" }]}>
+        Delivery timeout
+      </Text>
+
+      <View style={{ marginTop: 20 }}>
+        <Text
+          style={{
+            fontFamily: "raleway-regular",
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
+          No dispatch rider was found at this time to deliver to{" "}
+          {ongoingDeliveryData?.dropoff?.address || "your destination"}
+        </Text>
+      </View>
+
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginTop: 30,
+          gap: 20,
+        }}
+      >
+        <TouchableOpacity
+          onPress={retry_delivery}
+          disabled={retrying}
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            justifyContent: "center",
+            backgroundColor: "#fff",
+            opacity: retrying ? 0.5 : 1,
+            borderRadius: 30,
+            padding: 10,
+          }}
+        >
+          <Text
+            style={{
+              color: "#121212",
+              fontFamily: "raleway-bold",
+              fontSize: 14,
+              textAlign: "center",
+            }}
+          >
+            {retrying ? "Retrying..." : "Retry"}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={cancel_delivery}
+          disabled={cancelling}
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            justifyContent: "center",
+            borderColor: "#fff",
+            borderWidth: 1,
+            borderRadius: 30,
+            padding: 10,
+          }}
+        >
+          <Text
+            style={{
+              color: cancelling ? "#d7d7d7" : "#fff",
+              fontFamily: "raleway-bold",
+              fontSize: 14,
+              textAlign: "center",
+            }}
+          >
+            {cancelling ? "Cancelling..." : "Cancel"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -1069,12 +1241,8 @@ const SearchingModal = () => {
 };
 
 const AcceptedModal = () => {
-  const {
-    deliveryStatus,
-    setDeliveryStatus,
-    ongoingDeliveryData,
-    resetDeliveryFlow,
-  } = useDeliverContext();
+  const { setDeliveryStatus, ongoingDeliveryData, resetDeliveryFlow } =
+    useDeliverContext();
   const { region, mapRef } = useMapContext() as any;
   const { showNotification } = useNotificationContext() as any;
 
@@ -1280,7 +1448,7 @@ const AcceptedModal = () => {
                 marginTop: 2,
               }}
             >
-              {packageDescription}
+              {packageDescription} ({packageAmount})
               {isFragile ? " • Fragile" : ""}
             </Text>
           </View>
