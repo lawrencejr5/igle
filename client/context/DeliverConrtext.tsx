@@ -199,7 +199,14 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       fetchUserActiveDeliveries();
     };
 
-    const onDeliveryUpdate = (data: any) => {
+    const onDeliveryCompleted = (data: any) => {
+      const { delivery_id } = data;
+      showNotification("Delivery completed successfully!", "success");
+
+      if (delivery_id === ongoingDeliveryData?._id) {
+        setDeliveryStatus("rating");
+      }
+
       fetchUserActiveDeliveries();
     };
 
@@ -219,7 +226,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     userSocket.on("delivery_picked_up", onDeliveryPickedUp);
     userSocket.on("delivery_arrived", onDeliveryArrived);
     userSocket.on("delivery_in_transit", onDeliveryInTransit);
-    userSocket.on("delivery_completed", onDeliveryUpdate);
+    userSocket.on("delivery_completed", onDeliveryCompleted);
 
     return () => {
       userSocket.off("delivery_accepted", onDeliveryAccepted);
@@ -227,7 +234,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       userSocket.off("delivery_picked_up", onDeliveryPickedUp);
       userSocket.off("delivery_arrived", onDeliveryArrived);
       userSocket.off("delivery_in_transit", onDeliveryInTransit);
-      userSocket.off("delivery_completed", onDeliveryUpdate);
+      userSocket.off("delivery_completed", onDeliveryCompleted);
     };
   }, [userSocket, ongoingDeliveryData]);
 
@@ -275,6 +282,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "track_delivery") {
       deliveryModalRef.current?.snapToIndex(3);
+    }
+    if (deliveryStatus === "rating") {
+      deliveryModalRef.current?.snapToIndex(5);
     }
   }, [deliveryStatus]);
 
@@ -327,6 +337,10 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
     if (deliveryStatus === "track_delivery") {
       setDeliveryStatus("paid");
+      return true;
+    }
+    if (deliveryStatus === "rating") {
+      setDeliveryStatus("in_transit");
       return true;
     }
 

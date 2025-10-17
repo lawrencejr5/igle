@@ -28,6 +28,8 @@ import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthContext } from "../context/AuthContext";
 import { useWalletContext } from "../context/WalletContext";
+import { useRatingContext } from "../context/RatingContext";
+import RideRoute from "./RideRoute";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -127,6 +129,7 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "paid" && <PaidModal />}
         {deliveryStatus === "in_transit" && <InTransitModal />}
         {deliveryStatus === "track_delivery" && <InTransitModal />}
+        {deliveryStatus === "rating" && <RateModal />}
       </BottomSheetView>
     </BottomSheet>
   );
@@ -2339,6 +2342,199 @@ const InTransitModal = () => {
   );
 };
 
+const RateModal = () => {
+  const { rating, review, setRating, setReview, createRating, ratingLoading } =
+    useRatingContext();
+
+  const { resetDeliveryFlow, ongoingDeliveryData } = useDeliverContext();
+
+  const rate_driver = async () => {
+    try {
+      ongoingDeliveryData &&
+        (await createRating(
+          ongoingDeliveryData._id,
+          ongoingDeliveryData.driver._id
+        ));
+      resetDeliveryFlow();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={styles.header_text}>Delivery completed!</Text>
+      <View
+        style={{
+          flex: 1,
+          paddingBottom: 20,
+        }}
+      >
+        <View style={{ alignItems: "center" }}>
+          <Image
+            source={
+              ongoingDeliveryData?.driver.profile_img
+                ? { uri: ongoingDeliveryData.driver.profile_img }
+                : require("../assets/images/user.png")
+            }
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: 40,
+              marginTop: 20,
+            }}
+          />
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "raleway-regular",
+              marginTop: 10,
+            }}
+          >
+            How was this driver?
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 20,
+              marginTop: 20,
+            }}
+          >
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                <FontAwesome
+                  name={rating >= star ? "star" : "star-o"}
+                  size={30}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={{ width: "100%" }}>
+            <TextInput
+              value={review}
+              onChangeText={setReview}
+              style={{
+                backgroundColor: "transparent",
+                borderColor: "#fff",
+                borderWidth: 1,
+                color: "#fff",
+                borderRadius: 10,
+                padding: 20,
+                marginTop: 20,
+                fontFamily: "raleway-regular",
+              }}
+              placeholder="Write a review"
+              placeholderTextColor="#aaaaaa"
+            />
+          </View>
+        </View>
+
+        <View style={{ marginTop: 30 }}>
+          <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
+            Delivery summary
+          </Text>
+          {ongoingDeliveryData && (
+            <RideRoute
+              from={ongoingDeliveryData?.pickup.address || "Pickup location"}
+              to={ongoingDeliveryData.dropoff.address || "Drop-off location"}
+            />
+          )}
+
+          <Text
+            style={{
+              color: "#d2ceceff",
+              fontFamily: "raleway-bold",
+              fontSize: 14,
+              marginBottom: 10,
+            }}
+          >
+            **Package delivered {ongoingDeliveryData?.distance_km}km in{" "}
+            {ongoingDeliveryData?.duration_mins} mins
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-regular",
+                fontSize: 18,
+              }}
+            >
+              Total fare:
+            </Text>
+            <Text style={styles.priceText}>
+              NGN {ongoingDeliveryData?.fare.toLocaleString()}(Paid)
+            </Text>
+          </View>
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 20,
+            marginTop: 50,
+          }}
+        >
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={resetDeliveryFlow}
+            style={{
+              backgroundColor: "transparent",
+              borderColor: "#fff",
+              borderWidth: 1,
+              borderRadius: 50,
+              width: 100,
+              paddingVertical: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Skip
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={rate_driver}
+            disabled={ratingLoading}
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 50,
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              flex: 1,
+              opacity: ratingLoading ? 0.5 : 1,
+            }}
+          >
+            <Text
+              style={{
+                color: "#121212",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              {ratingLoading ? "Submitting" : "Submit review"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 // Reusable ride type card used in ChooseRideModal
 const RideTypeCard: FC<{
   id: "bike" | "cab" | "van" | "truck";
@@ -2587,6 +2783,11 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     paddingHorizontal: 20,
     fontFamily: "raleway-semibold",
+  },
+  priceText: {
+    color: "#fff",
+    fontFamily: "poppins-bold",
+    fontSize: 18,
   },
 });
 
