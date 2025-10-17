@@ -27,6 +27,7 @@ import { useDeliverContext, Delivery } from "../context/DeliverConrtext";
 import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthContext } from "../context/AuthContext";
+import { useWalletContext } from "../context/WalletContext";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -1717,23 +1718,30 @@ const ArrivedModal = () => {
 };
 
 const PayingModal = () => {
-  const { setDeliveryStatus } = useDeliverContext();
+  const { setDeliveryStatus, ongoingDeliveryData, payForDelivery, paying } =
+    useDeliverContext();
+  const { userWalletBal, getWalletBalance } = useWalletContext();
   const { showNotification } = useNotificationContext() as any;
 
-  const [paying, setPaying] = useState<boolean>(false);
+  const deliveryFare = ongoingDeliveryData?.fare || 0;
+  const delivery_id = ongoingDeliveryData?._id;
 
-  // Dummy delivery & wallet for demo
-  const delivery: any = { fare: 1200, _id: "demo-delivery-1" };
-  const userWalletBal = 5000;
+  // Fetch wallet balance when modal loads
+  React.useEffect(() => {
+    getWalletBalance("User").catch(() => {
+      // Handle error silently or show notification if needed
+    });
+  }, []);
 
   const pay_func = async () => {
-    setPaying(true);
-    // simulate initiating real payment then move to processing screen
-    setTimeout(() => {
-      setPaying(false);
-      // move to processing state which will itself simulate completion
-      setDeliveryStatus("paid");
-    }, 600);
+    try {
+      if (delivery_id) {
+        await payForDelivery(delivery_id);
+        setDeliveryStatus("paid");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -1744,7 +1752,7 @@ const PayingModal = () => {
           { textAlign: "center", fontFamily: "poppins-bold" },
         ]}
       >
-        Confirm payment (NGN {delivery.fare.toLocaleString()})
+        Confirm payment (NGN {deliveryFare.toLocaleString()})
       </Text>
 
       <View style={{ marginTop: 25, paddingHorizontal: 10 }}>
@@ -1784,7 +1792,7 @@ const PayingModal = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => setDeliveryStatus("paid")}
+            onPress={() => setDeliveryStatus("arrived")}
             style={{
               borderRadius: 20,
               paddingHorizontal: 30,
