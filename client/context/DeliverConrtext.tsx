@@ -65,6 +65,7 @@ export interface Delivery {
   driver: {
     _id: string;
     vehicle_type: string;
+    profile_img: string;
     vehicle: {
       model: string;
       brand: string;
@@ -308,16 +309,20 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setDeliveryStatus("track_driver");
       return true;
     }
-    if (deliveryStatus === "picked_up") {
-      setDeliveryStatus("arrived");
-      return true;
-    }
     if (deliveryStatus === "paying") {
       setDeliveryStatus("arrived");
       return true;
     }
     if (deliveryStatus === "paid") {
       setDeliveryStatus("paying");
+      return true;
+    }
+    if (deliveryStatus === "picked_up") {
+      setDeliveryStatus("paid");
+      return true;
+    }
+    if (deliveryStatus === "in_transit") {
+      setDeliveryStatus("picked_up");
       return true;
     }
     if (deliveryStatus === "track_delivery") {
@@ -400,6 +405,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         deliveryStatus === "picked_up" ||
         deliveryStatus === "paying" ||
         deliveryStatus === "paid" ||
+        deliveryStatus === "in_transit" ||
         deliveryStatus === "track_delivery") // Show route for all delivery flow states
     ) {
       fetchDeliveryRoute(

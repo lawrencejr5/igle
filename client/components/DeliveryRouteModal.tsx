@@ -1345,7 +1345,11 @@ const AcceptedModal = () => {
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Image
-            source={require("../assets/images/black-profile.jpeg")}
+            source={
+              (driverData as any)?.profile_img
+                ? { uri: (driverData as any).profile_img }
+                : require("../assets/images/user.png")
+            }
             style={{ width: 50, height: 50, borderRadius: 25 }}
           />
           <View style={{ flex: 1 }}>
@@ -1548,7 +1552,7 @@ const TrackDriver = () => {
   const driverData = ongoingDeliveryData?.driver;
   const driverName = driverData?.user?.name || "Unknown Driver";
   const vehicleInfo = driverData?.vehicle
-    ? `${driverData.vehicle.brand} ${driverData.vehicle.model}`
+    ? `${driverData.vehicle.color} ${driverData.vehicle.brand} ${driverData.vehicle.model}`
     : "Unknown Vehicle";
   const driverLocation = driverData?.current_location?.coordinates;
   const pickupLocation = ongoingDeliveryData?.pickup?.coordinates;
@@ -1588,7 +1592,11 @@ const TrackDriver = () => {
       <View style={{ marginTop: 20 }}>
         <View style={{ alignItems: "center" }}>
           <Image
-            source={require("../assets/images/black-profile.jpeg")}
+            source={
+              (driverData as any)?.profile_img
+                ? { uri: (driverData as any).profile_img }
+                : require("../assets/images/user.png")
+            }
             style={{ width: 70, height: 70, borderRadius: 40, marginTop: 10 }}
           />
           <Text
@@ -1669,7 +1677,11 @@ const ArrivedModal = () => {
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Image
-            source={require("../assets/images/black-profile.jpeg")}
+            source={
+              (driverData as any)?.profile_img
+                ? { uri: (driverData as any).profile_img }
+                : require("../assets/images/user.png")
+            }
             style={{ width: 50, height: 50, borderRadius: 25 }}
           />
           <View style={{ flex: 1 }}>
@@ -1941,7 +1953,7 @@ const PaidModal = () => {
       </Text>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => setDeliveryStatus("track_delivery")}
+        onPress={() => {}}
         style={{
           marginTop: 30,
           padding: 12,
@@ -1956,7 +1968,7 @@ const PaidModal = () => {
             color: "#121212",
           }}
         >
-          Track delivery
+          See delivery info
         </Text>
       </TouchableOpacity>
     </>
@@ -2114,7 +2126,11 @@ const InTransitModal = () => {
         }}
       >
         <Image
-          source={require("../assets/images/black-profile.jpeg")}
+          source={
+            (driverData as any)?.profile_img
+              ? { uri: (driverData as any).profile_img }
+              : require("../assets/images/user.png")
+          }
           style={{ width: 58, height: 58, borderRadius: 30 }}
         />
         <View style={{ flex: 1 }}>

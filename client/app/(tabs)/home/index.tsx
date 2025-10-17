@@ -40,7 +40,6 @@ const Home = () => {
 
   // Notification screen state
   const [openNotification, setOpenNotification] = useState<boolean>(false);
-  const { activities, activityLoading, formatTime } = useActivityContext();
 
   return (
     <>
