@@ -1,4 +1,4 @@
-import React, { FC, useRef, useMemo, useState } from "react";
+import React, { FC, useRef, useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -33,15 +33,11 @@ import RideRoute from "./RideRoute";
 
 const DeliveryRouteModal: FC = () => {
   const {
-    activeDeliveries,
-    fetchUserActiveDeliveries,
-    payForDelivery,
-    updateDeliveryStatus,
-    rebookDelivery,
-    cancelDelivery,
     deliveryStatus,
     setDeliveryStatus,
     deliveryModalRef,
+    ongoingDeliveryData,
+    fetchDeliveryRoute,
   } = useDeliverContext();
 
   const { setDestinationCoords, setDestination, setMapPadding } =
@@ -67,6 +63,46 @@ const DeliveryRouteModal: FC = () => {
 
     return adjusted;
   }, [fontScale]);
+
+  useEffect(() => {
+    if (ongoingDeliveryData) {
+      // Set destination for map view
+      if (ongoingDeliveryData.dropoff?.address) {
+        setDestination(ongoingDeliveryData.dropoff.address);
+      }
+      if (ongoingDeliveryData.dropoff?.coordinates) {
+        setDestinationCoords(ongoingDeliveryData.dropoff.coordinates);
+      }
+
+      // Fetch delivery route with pickup and dropoff coordinates
+      if (
+        ongoingDeliveryData.pickup?.coordinates &&
+        ongoingDeliveryData.dropoff?.coordinates
+      ) {
+        fetchDeliveryRoute(
+          ongoingDeliveryData.pickup.coordinates,
+          ongoingDeliveryData.dropoff.coordinates
+        );
+      }
+
+      // Set delivery status based on delivery status and payment status
+      if (ongoingDeliveryData.status === "pending") {
+        setDeliveryStatus("searching");
+      }
+      if (ongoingDeliveryData.status === "expired") {
+        setDeliveryStatus("expired");
+      }
+      if (ongoingDeliveryData.status === "accepted") {
+        setDeliveryStatus("accepted");
+      }
+      if (ongoingDeliveryData.status === "arrived") {
+        setDeliveryStatus("arrived");
+      }
+      if (ongoingDeliveryData.status === "picked_up") {
+        setDeliveryStatus("picked_up");
+      }
+    }
+  }, [ongoingDeliveryData]);
 
   const handleSheetChange = (index: number) => {
     const snapValue = snapPoints[index];

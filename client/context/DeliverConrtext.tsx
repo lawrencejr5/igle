@@ -27,6 +27,7 @@ export type DeliveryStatus =
   | "pending"
   | "scheduled"
   | "accepted"
+  | "arrived"
   | "picked_up"
   | "in_transit"
   | "delivered"
@@ -126,7 +127,7 @@ const API_URL = API_URLS.deliveries;
 
 const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext() as any;
-  const { userSocket } = useAuthContext() as any;
+  const { userSocket, signedIn } = useAuthContext() as any;
   const { getSuggestions, getPlaceCoords, getRoute, mapRef } = useMapContext();
 
   const [deliveryData, setDeliveryData] = useState<Delivery | null>(null);
@@ -172,7 +173,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setDeliveryStatus("picked_up");
       }
 
-      fetchUserActiveDeliveries();
+      fetchUserActiveDelivery();
     };
 
     const onDeliveryInTransit = async (data: any) => {
@@ -183,7 +184,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setDeliveryStatus("in_transit");
       }
 
-      fetchUserActiveDeliveries();
+      fetchUserActiveDelivery();
     };
 
     const onDeliveryTimeout = (data: any) => {
@@ -196,7 +197,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         );
         setDeliveryStatus("expired");
       }
-      fetchUserActiveDeliveries();
+      fetchUserActiveDelivery();
     };
 
     const onDeliveryCompleted = (data: any) => {
@@ -207,7 +208,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setDeliveryStatus("rating");
       }
 
-      fetchUserActiveDeliveries();
+      fetchUserActiveDelivery();
     };
 
     const onDeliveryArrived = (data: any) => {
@@ -218,7 +219,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setDeliveryStatus("arrived");
       }
 
-      fetchUserActiveDeliveries();
+      fetchUserActiveDelivery();
     };
 
     userSocket.on("delivery_accepted", onDeliveryAccepted);
@@ -240,6 +241,23 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const deliveryModalRef = useRef<BottomSheet>(null);
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryModalStatus>("");
+
+  useEffect(() => {
+    const loadOngoingDelivery = async () => {
+      try {
+        await fetchUserActiveDelivery();
+      } catch (error: any) {
+        const errMsg =
+          error?.response?.data?.msg || "Failed to load ongoing delivery";
+        console.log("Error loading ongoing delivery:", errMsg);
+      }
+    };
+
+    if (signedIn) {
+      loadOngoingDelivery();
+    }
+  }, [signedIn]);
+
   useEffect(() => {
     if (deliveryStatus === "") {
       deliveryModalRef.current?.snapToIndex(0);
@@ -364,7 +382,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   }, [navigation, deliveryStatus]);
 
   const [userDeliveries, setUserDeliveries] = useState<Delivery[] | null>(null);
-  const [activeDeliveries, setActiveDeliveries] = useState<Delivery[] | null>(
+  const [ongoingDeliveries, setOngoingDeliveries] = useState<Delivery[] | null>(
     null
   );
   const [availableDeliveries, setAvailableDeliveries] = useState<
@@ -540,7 +558,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setOngoingDeliveryData(data.delivery);
 
       // refresh active deliveries
-      await fetchUserActiveDeliveries();
+      await fetchUserActiveDelivery();
       return data.delivery;
     } catch (err: any) {
       const msg =
@@ -562,7 +580,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         headers
       );
       showNotification(data.msg || "Retrying delivery", "success");
-      await fetchUserActiveDeliveries();
+      await fetchUserActiveDelivery();
       return data.delivery;
     } catch (err: any) {
       showNotification(err?.response?.data?.msg || "Failed to retry", "error");
@@ -582,7 +600,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         headers
       );
       showNotification(data.msg || "Rebooked delivery", "success");
-      await fetchUserActiveDeliveries();
+      await fetchUserActiveDelivery();
       return data.delivery;
     } catch (err: any) {
       showNotification(err?.response?.data?.msg || "Failed to rebook", "error");
@@ -616,14 +634,26 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const fetchUserActiveDeliveries = async () => {
+  const fetchUserOngoingDeliveries = async () => {
+    try {
+      const headers = { headers: await authHeaders() };
+      const { data } = await axios.get(`${API_URL}/ongoing`, headers);
+      setOngoingDeliveries(data.deliveries || []);
+      return data.deliveries || [];
+    } catch (err) {
+      console.log("Failed to fetch ongoing deliveries", err);
+      return [];
+    }
+  };
+
+  const fetchUserActiveDelivery = async () => {
     try {
       const headers = { headers: await authHeaders() };
       const { data } = await axios.get(`${API_URL}/active`, headers);
-      setActiveDeliveries(data.deliveries || []);
+      setOngoingDeliveryData(data.delivery || null);
       return data.deliveries || [];
     } catch (err) {
-      console.log("Failed to fetch active deliveries", err);
+      console.log("Failed to fetch active delivery", err);
       return [];
     }
   };
@@ -637,7 +667,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         headers
       );
       showNotification(data.msg || "Status updated", "success");
-      await fetchUserActiveDeliveries();
+      await fetchUserActiveDelivery();
       return data.delivery;
     } catch (err: any) {
       showNotification(
@@ -658,7 +688,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         headers
       );
       showNotification(data.msg || "Payment successful", "success");
-      await fetchUserActiveDeliveries();
+      await fetchUserActiveDelivery();
       return data.transaction;
     } catch (err: any) {
       showNotification(err?.response?.data?.msg || "Payment failed", "error");
@@ -683,7 +713,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
       showNotification(data.msg || "Delivery cancelled", "success");
       resetDeliveryFlow();
-      await fetchUserActiveDeliveries();
+      await fetchUserActiveDelivery();
       return data.delivery;
     } catch (err: any) {
       showNotification(err?.response?.data?.msg || "Cancel failed", "error");
@@ -710,12 +740,12 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         rebookDelivery,
         fetchAvailableDeliveries,
         fetchUserDeliveries,
-        fetchUserActiveDeliveries,
+        fetchUserActiveDelivery,
         updateDeliveryStatus,
         payForDelivery,
         cancelDelivery,
         userDeliveries,
-        activeDeliveries,
+        ongoingDeliveries,
         availableDeliveries,
         loading,
         paying,
@@ -751,7 +781,7 @@ export interface DeliverContextType {
   rebookDelivery: (delivery_id: string) => Promise<any>;
   fetchAvailableDeliveries: () => Promise<any>;
   fetchUserDeliveries: (status?: string) => Promise<any>;
-  fetchUserActiveDeliveries: () => Promise<any>;
+  fetchUserActiveDelivery: () => Promise<any>;
   updateDeliveryStatus: (delivery_id: string, status: string) => Promise<any>;
   payForDelivery: (delivery_id: string) => Promise<any>;
   cancelDelivery: (
@@ -761,7 +791,7 @@ export interface DeliverContextType {
   ) => Promise<any>;
 
   userDeliveries: Delivery[] | null;
-  activeDeliveries: Delivery[] | null;
+  ongoingDeliveries: Delivery[] | null;
   availableDeliveries: Delivery[] | null;
   loading: boolean;
   paying: boolean;

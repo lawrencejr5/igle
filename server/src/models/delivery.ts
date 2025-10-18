@@ -11,7 +11,6 @@ export interface DeliveryType extends Document {
     address: string;
     coordinates: [number, number];
   };
-
   to?: {
     name?: string;
     phone?: string;

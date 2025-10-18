@@ -11,14 +11,16 @@ import {
   get_user_deliveries,
   update_delivery_status,
   pay_for_delivery,
-  get_user_active_deliveries,
+  get_user_active_delivery,
+  get_user_ongoing_deliveries,
 } from "../controllers/delivery";
 
 const DeliveryRouter = Router();
 
 DeliveryRouter.use(auth);
 
-DeliveryRouter.get("/active", get_user_active_deliveries);
+DeliveryRouter.get("/active", get_user_active_delivery);
+DeliveryRouter.get("/ongoing", get_user_ongoing_deliveries);
 DeliveryRouter.post("/request", request_delivery);
 DeliveryRouter.patch("/retry", retry_delivery);
 DeliveryRouter.post("/rebook", rebook_delivery);

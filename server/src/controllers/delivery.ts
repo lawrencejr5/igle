@@ -246,7 +246,7 @@ export const get_user_deliveries = async (
   }
 };
 
-export const get_user_active_deliveries = async (
+export const get_user_ongoing_deliveries = async (
   req: Request,
   res: Response
 ): Promise<any> => {
@@ -254,20 +254,28 @@ export const get_user_active_deliveries = async (
     const user_id = req.user?.id;
     const deliveries = await Delivery.find({
       sender: user_id,
-      status: {
-        $in: [
-          "pending",
-          "accepted",
-          "picked_up",
-          "arrived",
-          "in_transit",
-          "expired",
-        ],
-      },
+      status: "in_transit",
     }).sort({ createdAt: -1 });
     res
       .status(200)
       .json({ msg: "success", rowCount: deliveries.length, deliveries });
+  } catch (err: any) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+export const get_user_active_delivery = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const user_id = req.user?.id;
+    const delivery = await Delivery.findOne({
+      sender: user_id,
+      status: {
+        $in: ["pending", "accepted", "picked_up", "arrived", "expired"],
+      },
+    }).sort({ createdAt: -1 });
+    res.status(200).json({ msg: "success", delivery });
   } catch (err: any) {
     res.status(500).json({ msg: "Server error." });
   }
