@@ -1,12 +1,5 @@
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableWithoutFeedback,
-  Image,
-  Pressable,
-} from "react-native";
-import React, { useState, useEffect, useRef } from "react";
+import { StyleSheet, View, Image, Pressable } from "react-native";
+import React, { useState, useEffect } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
@@ -65,10 +58,6 @@ const BookRide = () => {
 
     return () => clearTimeout(timer);
   }, [region, mapRef.current]);
-
-  useEffect(() => {
-    setRideStatus("booking");
-  }, []);
 
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
 

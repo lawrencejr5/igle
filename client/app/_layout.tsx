@@ -23,7 +23,7 @@ import RatingProvider from "../context/RatingContext";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TransactionContextProvider from "../context/TransactionContext";
-import DeliverProvider from "../context/DeliverConrtext";
+import DeliverProvider from "../context/DeliveryContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");

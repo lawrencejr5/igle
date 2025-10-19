@@ -1,4 +1,4 @@
-import React, { FC, useRef, useMemo, useState, useEffect } from "react";
+import React, { FC, useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -23,7 +23,7 @@ import BottomSheet, {
 
 import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 
-import { useDeliverContext, Delivery } from "../context/DeliverConrtext";
+import { useDeliverContext, Delivery } from "../context/DeliveryContext";
 import { useMapContext } from "../context/MapContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useAuthContext } from "../context/AuthContext";
@@ -101,6 +101,8 @@ const DeliveryRouteModal: FC = () => {
       if (ongoingDeliveryData.status === "picked_up") {
         setDeliveryStatus("picked_up");
       }
+    } else {
+      setDeliveryStatus("details");
     }
   }, [ongoingDeliveryData]);
 
@@ -120,15 +122,77 @@ const DeliveryRouteModal: FC = () => {
       sheetHeight = snapValue;
     }
 
-    if (index < 4)
-      setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 40 }));
+    if (index === 3)
+      setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 35 }));
+    if (index === 2)
+      setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 25 }));
     if (index < 2)
       setMapPadding((prev: any) => ({ ...prev, bottom: sheetHeight + 20 }));
   };
 
+  // Get initial snap index based on delivery status
+  const getInitialSnapIndex = () => {
+    // If we have ongoing delivery data, use its status to determine initial index
+    if (ongoingDeliveryData)
+      switch (ongoingDeliveryData.status) {
+        case "pending":
+          return 2; // searching
+        case "expired":
+          return 1; // expired
+        case "accepted":
+          return 3; // accepted
+        case "arrived":
+          return 2; // arrived
+        case "picked_up":
+          return 2; // picked_up
+        case "in_transit":
+          return 3; // in_transit
+        case "delivered":
+          return 5; // rating
+        default:
+          return 2;
+      }
+
+    // Otherwise use deliveryStatus
+    switch (deliveryStatus) {
+      case "":
+        return 0;
+      case "details":
+        return 5;
+      case "route":
+        return 5;
+      case "vehicle":
+        return 2;
+      case "searching":
+        return 2;
+      case "expired":
+        return 1;
+      case "accepted":
+        return 3;
+      case "track_driver":
+        return 2;
+      case "arrived":
+        return 2;
+      case "paying":
+        return 1;
+      case "paid":
+        return 1;
+      case "picked_up":
+        return 2;
+      case "in_transit":
+        return 3;
+      case "track_delivery":
+        return 3;
+      case "rating":
+        return 5;
+      default:
+        return 0;
+    }
+  };
+
   return (
     <BottomSheet
-      index={0}
+      index={getInitialSnapIndex()}
       snapPoints={snapPoints}
       ref={deliveryModalRef}
       onChange={handleSheetChange}

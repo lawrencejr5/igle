@@ -733,6 +733,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setDeliveryData,
         ongoingDeliveryData,
         setOngoingDeliveryData,
+        fetchUserOngoingDeliveries,
         fetchDeliveryData,
         resetDeliveryFlow,
         requestDelivery,
@@ -771,6 +772,7 @@ export interface DeliverContextType {
   setDeliveryData: Dispatch<SetStateAction<Delivery | null>>;
   ongoingDeliveryData: Delivery | null;
   setOngoingDeliveryData: Dispatch<SetStateAction<Delivery | null>>;
+  fetchUserOngoingDeliveries: () => Promise<void>;
   fetchDeliveryData: (delivery_id: string) => Promise<void>;
   resetDeliveryFlow: () => void;
   requestDelivery: (

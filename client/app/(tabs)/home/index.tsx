@@ -8,10 +8,11 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import { router } from "expo-router";
 import { useRideContext } from "../../../context/RideContext";
+import { useDeliverContext } from "../../../context/DeliveryContext";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -28,7 +29,84 @@ const Home = () => {
   const insets = useSafeAreaInsets();
 
   const { signedIn } = useAuthContext();
-  const { setRideStatus, setModalUp } = useRideContext();
+  const {
+    setRideStatus,
+    setModalUp,
+    ongoingRideData,
+    ongoingRide,
+    getActiveRide,
+    getOngoingRide,
+  } = useRideContext();
+  const {
+    ongoingDeliveryData,
+    ongoingDeliveries,
+    fetchUserActiveDelivery,
+    fetchUserOngoingDeliveries,
+  } = useDeliverContext();
+
+  // Logic to determine ongoing activity priority
+  const getOngoingActivity = (): {
+    type: "ride" | "delivery";
+    data: any;
+  } | null => {
+    // 1. Active ride (highest priority)
+    if (ongoingRideData) {
+      return {
+        type: "ride" as const,
+        data: ongoingRideData,
+      };
+    }
+
+    // 2. Active delivery
+    if (ongoingDeliveryData) {
+      return {
+        type: "delivery" as const,
+        data: ongoingDeliveryData,
+      };
+    }
+
+    // 3. Ongoing ride
+    if (ongoingRide) {
+      return {
+        type: "ride" as const,
+        data: ongoingRide,
+      };
+    }
+
+    // 4. Ongoing delivery (pick latest)
+    if (ongoingDeliveries && ongoingDeliveries.length > 0) {
+      // Sort by createdAt or updatedAt to get the latest
+      const latestDelivery = [...ongoingDeliveries].sort(
+        (a, b) =>
+          new Date(b.createdAt || b.updatedAt || 0).getTime() -
+          new Date(a.createdAt || a.updatedAt || 0).getTime()
+      )[0];
+
+      return {
+        type: "delivery" as const,
+        data: latestDelivery,
+      };
+    }
+
+    return null;
+  };
+
+  const ongoingActivity = getOngoingActivity();
+
+  // Determine header text based on activity type
+  const getActivityHeaderText = () => {
+    // Active activities (highest priority) get "Jump back in"
+    if (ongoingRideData || ongoingDeliveryData) {
+      return "Jump back in";
+    }
+
+    // Ongoing activities get "Ongoing"
+    if (ongoingRide || (ongoingDeliveries && ongoingDeliveries.length > 0)) {
+      return "Ongoing";
+    }
+
+    return "Ongoing"; // fallback
+  };
 
   const scrollRef = useRef<ScrollView | null>(null);
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -40,6 +118,19 @@ const Home = () => {
 
   // Notification screen state
   const [openNotification, setOpenNotification] = useState<boolean>(false);
+
+  // Load ongoing activities when component mounts and user is signed in
+  useEffect(() => {
+    if (signedIn) {
+      // Load ride data
+      getActiveRide();
+      getOngoingRide();
+
+      // Load delivery data
+      fetchUserActiveDelivery();
+      fetchUserOngoingDeliveries();
+    }
+  }, [signedIn]);
 
   return (
     <>
@@ -253,20 +344,22 @@ const Home = () => {
               </View>
             </View>
 
-            {/* Ongoing ride/package card (dummy data) */}
-            <View style={{ marginTop: 22 }}>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 18,
-                  marginBottom: 12,
-                }}
-              >
-                Ongoing
-              </Text>
-              <OngoingCard />
-            </View>
+            {/* Ongoing ride/package card */}
+            {ongoingActivity && (
+              <View style={{ marginTop: 22 }}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontFamily: "raleway-bold",
+                    fontSize: 18,
+                    marginBottom: 12,
+                  }}
+                >
+                  {getActivityHeaderText()}
+                </Text>
+                <OngoingCard activity={ongoingActivity} />
+              </View>
+            )}
 
             {/* Saved places (like RouteModal) */}
             <View style={{ marginTop: 20 }}>
@@ -315,21 +408,80 @@ const Home = () => {
 
 export default Home;
 
-const OngoingCard = () => {
-  // dummy data
-  const ongoing = {
-    type: "package", // or 'ride'
-    from: "Umuahia Airport",
-    to: "City Center",
-    driver: "Samuel I.",
-    eta: "5 mins",
-    status: "arriving",
+const OngoingCard = ({
+  activity,
+}: {
+  activity: { type: "ride" | "delivery"; data: any };
+}) => {
+  const isPackage = activity.type === "delivery";
+
+  // Extract data based on type
+  const getActivityData = () => {
+    if (activity.type === "ride") {
+      const rideData = activity.data;
+      return {
+        from: rideData.pickup?.address || "Pickup location",
+        to: rideData.destination?.address || "Destination",
+        status:
+          rideData.status === "expired"
+            ? "timed out"
+            : rideData.status || "pending",
+        driver: rideData.driver?.user?.name || "Driver",
+      };
+    } else {
+      const deliveryData = activity.data;
+      return {
+        from: deliveryData.pickup?.address || "Pickup location",
+        to: deliveryData.dropoff?.address || "Dropoff location",
+        status:
+          deliveryData.status === "expired"
+            ? "timed out"
+            : deliveryData.status || "pending",
+        driver: deliveryData.driver?.user?.name || "Dispatch rider",
+      };
+    }
   };
 
-  const isPackage = ongoing.type === "package";
+  const ongoing = getActivityData();
+
+  // Get status color based on status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "accepted":
+      case "arrived":
+        return { bg: "#4caf503a", text: "#4caf50" };
+      case "ongoing":
+      case "in_transit":
+      case "picked_up":
+        return { bg: "#2196f33a", text: "#2196f3" };
+      case "completed":
+      case "delivered":
+        return { bg: "#4caf503a", text: "#4caf50" };
+      case "cancelled":
+      case "failed":
+      case "expired":
+      case "timed out":
+        return { bg: "#f443363a", text: "#f44336" };
+      default:
+        return { bg: "#ff9d003a", text: "#ff9d00" };
+    }
+  };
+
+  const statusColors = getStatusColor(ongoing.status);
+
+  const handlePress = () => {
+    // Navigate to appropriate screen based on activity type
+    if (activity.type === "ride") {
+      // Navigate to ride tracking or ride details
+      router.push("../(book)/book_ride");
+    } else {
+      // Navigate to delivery tracking or delivery details
+      router.push("../(book)/book_delivery"); // You might want to create a deliveries screen
+    }
+  };
 
   return (
-    <Pressable style={styles.ongoingCard} onPress={() => {}}>
+    <Pressable style={styles.ongoingCard} onPress={handlePress}>
       <View style={styles.ongoingLeft}>
         <View style={styles.ongoingIconBox}>
           {isPackage ? (
@@ -350,7 +502,7 @@ const OngoingCard = () => {
 
       <View
         style={{
-          backgroundColor: "#ff9d003a",
+          backgroundColor: statusColors.bg,
           paddingVertical: 5,
           paddingHorizontal: 10,
           borderRadius: 20,
@@ -359,7 +511,7 @@ const OngoingCard = () => {
       >
         <Text
           style={{
-            color: "#ff9d00",
+            color: statusColors.text,
             fontFamily: "raleway-bold",
             fontSize: 10,
             textTransform: "capitalize",

@@ -8,19 +8,17 @@ import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
-import { useAuthContext } from "../../context/AuthContext";
 import { router } from "expo-router";
 
 import { darkMapStyle } from "../../data/map.dark";
 
 import Feather from "@expo/vector-icons/Feather";
 import DeliveryRouteModal from "../../components/DeliveryRouteModal";
-import { useDeliverContext } from "../../context/DeliverConrtext";
+import { useDeliverContext } from "../../context/DeliveryContext";
 
 const BookDelivery = () => {
   const { notification } = useNotificationContext();
   const { region, userAddress, mapRef, mapPadding } = useMapContext();
-  const { signedIn } = useAuthContext();
   const {
     deliveryStatus,
     setDeliveryStatus,

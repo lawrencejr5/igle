@@ -135,6 +135,8 @@ const RideRouteModal = () => {
       if (ongoingRideData.status === "ongoing") {
         setRideStatus("paid");
       }
+    } else {
+      setRideStatus("booking");
     }
   }, [ongoingRideData]);
 
@@ -185,9 +187,40 @@ const RideRouteModal = () => {
     }
   };
 
+  // Get initial snap index based on ride status
+  const getInitialSnapIndex = () => {
+    if (ongoingRideData)
+      switch (rideStatus) {
+        case "":
+          return 1;
+        case "booking":
+          return 5;
+        case "choosing_car":
+          return 2;
+        case "searching":
+          return 1;
+        case "accepted":
+          return 4;
+        case "track_driver":
+          return 1;
+        case "pay":
+          return 4;
+        case "paying":
+          return 1;
+        case "paid":
+          return 0;
+        case "track_ride":
+          return 0;
+        case "rating":
+          return 5;
+        default:
+          return 1;
+      }
+  };
+
   return (
     <BottomSheet
-      index={5}
+      index={getInitialSnapIndex()}
       snapPoints={snapPoints}
       ref={routeModalRef}
       onChange={handleSheetChange}

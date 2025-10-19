@@ -431,6 +431,33 @@ export const get_user_active_ride = async (
     res.status(500).json({ msg: "An error occurred while fetching ride" });
   }
 };
+export const get_user_ongoing_ride = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const user_id = req.user?.id;
+    const ride = await Ride.findOne({
+      rider: user_id,
+      status: "ongoing",
+      scheduled: false,
+    })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
+      .populate("rider", "name phone profile_pic");
+    res.status(200).json({ msg: "success", ride });
+  } catch (error) {
+    res.status(500).json({ msg: "An error occurred while fetching ride" });
+  }
+};
 
 export const get_user_scheduled_rides = async (
   req: Request,

@@ -115,6 +115,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const { createActivity } = useActivityContext();
 
   const [ongoingRideData, setOngoingRideData] = useState<Ride | null>(null);
+  const [ongoingRide, setOngoingRide] = useState<Ride | null>(null);
   const [rideData, setRideData] = useState<Ride | null>(null);
 
   // Ride route states
@@ -602,6 +603,19 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     }
   };
 
+  const getOngoingRide = async (): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    try {
+      const { data } = await axios.get(`${API_URL}/ongoing`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOngoingRide(data.ride);
+    } catch (error: any) {
+      console.log(error);
+      showNotification(error.response.data.msg, "error");
+    }
+  };
+
   const [scheduledRides, setScheduledRides] = useState<Ride[] | null>(null);
   const getScheduledRides = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
@@ -759,6 +773,9 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         set_destination_func,
         set_pickup_func,
         getActiveRide,
+        ongoingRide,
+        setOngoingRide,
+        getOngoingRide,
         ongoingRideData,
         setOngoingRideData,
         resetRide,
@@ -826,9 +843,12 @@ export interface RideContextType {
   routeModalRef: any;
 
   getActiveRide: () => Promise<void>;
+  getOngoingRide: () => Promise<void>;
   rideData: Ride | null;
   ongoingRideData: Ride | null;
+  ongoingRide: Ride | null;
   setOngoingRideData: Dispatch<SetStateAction<Ride | null>>;
+  setOngoingRide: Dispatch<SetStateAction<Ride | null>>;
   fetchRideDetails: (ride_id: string) => Promise<void>;
 
   placeId: string;
