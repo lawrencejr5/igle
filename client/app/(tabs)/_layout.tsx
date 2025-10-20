@@ -76,12 +76,12 @@ const TabsLayout = () => {
             title: "Home",
             tabBarIcon: ({ focused }) => (
               <Image
-                source={
-                  focused
-                    ? require("../../assets/images/icons/home-fill.png")
-                    : require("../../assets/images/icons/home-fill-grey.png")
-                }
-                style={{ height: 25, width: 25 }}
+                source={require("../../assets/images/icons/home-fill-grey.png")}
+                style={{
+                  height: 22,
+                  width: 22,
+                  tintColor: focused ? "#fff" : "#797979",
+                }}
                 resizeMode="contain"
               />
             ),
@@ -93,12 +93,29 @@ const TabsLayout = () => {
             title: "Rides",
             tabBarIcon: ({ focused }) => (
               <Image
-                source={
-                  focused
-                    ? require("../../assets/images/icons/schedule-fill.png")
-                    : require("../../assets/images/icons/schedule-fill-grey.png")
-                }
-                style={{ height: 25, width: 25 }}
+                source={require("../../assets/images/icons/schedule-fill.png")}
+                style={{
+                  height: 25,
+                  width: 25,
+                  tintColor: focused ? "#fff" : "#797979",
+                }}
+                resizeMode="contain"
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="delivery"
+          options={{
+            title: "Deliveries",
+            tabBarIcon: ({ focused }) => (
+              <Image
+                source={require("../../assets/images/icons/delivery-tab-icon.png")}
+                style={{
+                  height: 25,
+                  width: 25,
+                  tintColor: focused ? "#fff" : "#797979",
+                }}
                 resizeMode="contain"
               />
             ),
@@ -110,12 +127,12 @@ const TabsLayout = () => {
             title: "Account",
             tabBarIcon: ({ focused }) => (
               <Image
-                source={
-                  focused
-                    ? require("../../assets/images/icons/user-fill.png")
-                    : require("../../assets/images/icons/user-fill-grey.png")
-                }
-                style={{ height: 25, width: 25 }}
+                source={require("../../assets/images/icons/user-fill.png")}
+                style={{
+                  height: 22,
+                  width: 22,
+                  tintColor: focused ? "#fff" : "#797979",
+                }}
                 resizeMode="contain"
               />
             ),
