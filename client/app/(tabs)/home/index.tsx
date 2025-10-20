@@ -245,81 +245,78 @@ const Home = () => {
                       setActiveIndex(idx);
                     }}
                   >
-                    <Pressable
-                      style={styles.bannerCard}
-                      onPress={() => {
-                        router.push("../(book)/book_ride");
-                      }}
-                    >
-                      <Text style={styles.bannerTitle}>Need a ride</Text>
-                      <Text style={styles.bannerSubtitle}>
-                        Get picked up in minutes
-                      </Text>
-                      <TouchableOpacity
-                        style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
-                        onPress={() => {
-                          setRideStatus("booking");
-                          setModalUp(true);
-                          router.push("../(book)/book_ride");
-                        }}
-                      >
-                        <Text style={styles.bannerBtnText}>Book ride</Text>
-                      </TouchableOpacity>
-                    </Pressable>
-
-                    <Pressable
-                      style={[styles.bannerCard, styles.bannerCardAlt]}
-                      onPress={() => router.push("../(book)/book_delivery")}
-                    >
-                      <Text style={styles.bannerTitle}>Send a package</Text>
-                      <Text style={styles.bannerSubtitle}>
-                        Fast door-to-door delivery
-                      </Text>
-                      <TouchableOpacity
-                        style={[
-                          styles.bannerBtn,
-                          styles.bannerBtnAlt,
-                          { alignSelf: "flex-end" },
-                        ]}
-                        onPress={() => router.push("../(book)/book_delivery")}
-                      >
-                        <Text
-                          style={[
-                            styles.bannerBtnText,
-                            styles.bannerBtnTextAlt,
-                          ]}
+                    <View style={styles.bannerCard}>
+                      <Image
+                        source={require("../../../assets/images/icons/banner-cab.png")}
+                        style={{ width: 60, height: 60, alignSelf: "center" }}
+                      />
+                      <View style={styles.bannerContent}>
+                        <View>
+                          <Text style={styles.bannerTitle}>Need a ride</Text>
+                          <Text style={styles.bannerSubtitle}>
+                            Get picked up in minutes
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
+                          onPress={() => {
+                            setRideStatus("booking");
+                            setModalUp(true);
+                            router.push("../(book)/book_ride");
+                          }}
                         >
-                          Send now
-                        </Text>
-                      </TouchableOpacity>
-                    </Pressable>
-
-                    <Pressable
-                      style={[styles.bannerCard, styles.bannerCardAlt2]}
-                      onPress={() => router.push("../offers")}
-                    >
-                      <Text style={styles.bannerTitle}>Explore offers</Text>
-                      <Text style={styles.bannerSubtitle}>
-                        Deals, promos & vouchers
-                      </Text>
-                      <TouchableOpacity
-                        style={[
-                          styles.bannerBtn,
-                          styles.bannerBtnAlt2,
-                          { alignSelf: "flex-end" },
-                        ]}
-                        onPress={() => router.push("../offers")}
-                      >
-                        <Text
-                          style={[
-                            styles.bannerBtnText,
-                            styles.bannerBtnTextAlt,
-                          ]}
+                          <Text style={styles.bannerBtnText}>Book ride</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.bannerCard}>
+                      <Image
+                        source={require("../../../assets/images/icons/banner-delivery.png")}
+                        style={{ width: 60, height: 60, alignSelf: "center" }}
+                      />
+                      <View style={styles.bannerContent}>
+                        <View>
+                          <Text style={styles.bannerTitle}>Send a package</Text>
+                          <Text style={styles.bannerSubtitle}>
+                            Fast door-to-door delivery
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
+                          onPress={() => {
+                            setRideStatus("booking");
+                            setModalUp(true);
+                            router.push("../(book)/book_delivery");
+                          }}
                         >
-                          See offers
-                        </Text>
-                      </TouchableOpacity>
-                    </Pressable>
+                          <Text style={styles.bannerBtnText}>Send package</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.bannerCard}>
+                      <Image
+                        source={require("../../../assets/images/icons/banner-schedule.png")}
+                        style={{ width: 60, height: 60, alignSelf: "center" }}
+                      />
+                      <View style={styles.bannerContent}>
+                        <View>
+                          <Text style={styles.bannerTitle}>Schedule ride</Text>
+                          <Text style={styles.bannerSubtitle}>
+                            Schedule ride for anytime
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
+                          onPress={() => {
+                            setRideStatus("booking");
+                            setModalUp(true);
+                            router.push("../(book)/book_ride");
+                          }}
+                        >
+                          <Text style={styles.bannerBtnText}>Schedule</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                   </ScrollView>
                   <View style={styles.dotContainer}>
                     {[0, 1, 2].map((i) => (
@@ -841,11 +838,17 @@ const styles = StyleSheet.create({
   bannerCard: {
     width: 300,
     height: 120,
+    paddingLeft: 12,
+    marginRight: 12,
     borderRadius: 10,
     backgroundColor: "#fff",
-    padding: 12,
-    marginRight: 12,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+  },
+  bannerContent: {
+    padding: 7,
     justifyContent: "space-between",
+    flex: 1,
   },
   bannerCardAlt: {
     backgroundColor: "#f5f5f5",
@@ -862,6 +865,7 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-regular",
     fontSize: 11,
     color: "#666",
+    marginTop: 8,
   },
   bannerBtn: {
     backgroundColor: "#121212",
