@@ -52,7 +52,7 @@ const DeliverySchema = new mongoose_1.Schema({
     package: {
         description: String,
         fragile: { type: Boolean, default: false },
-        value: Number,
+        amount: Number,
         type: {
             type: String,
             enum: [
@@ -72,6 +72,7 @@ const DeliverySchema = new mongoose_1.Schema({
             "pending",
             "scheduled",
             "accepted",
+            "arrived",
             "picked_up",
             "in_transit",
             "delivered",

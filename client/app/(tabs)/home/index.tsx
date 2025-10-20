@@ -212,7 +212,7 @@ const Home = () => {
                         fontSize: 10,
                       }}
                     >
-                      {cityAddress}
+                      {cityAddress || "Somewhere, Nigeria"}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -221,7 +221,7 @@ const Home = () => {
                 <Text
                   style={{
                     color: "#fff",
-                    fontSize: 25,
+                    fontSize: 22,
                     fontFamily: "raleway-bold",
                   }}
                 >
@@ -229,7 +229,7 @@ const Home = () => {
                 </Text>
 
                 {/* Banner */}
-                <View style={{ marginTop: 10 }}>
+                <View style={{ marginTop: 20 }}>
                   <ScrollView
                     ref={(r) => {
                       scrollRef.current = r;

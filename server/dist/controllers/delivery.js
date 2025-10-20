@@ -45,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pay_for_delivery = exports.update_delivery_status = exports.cancel_delivery = exports.accept_delivery = exports.get_user_active_deliveries = exports.get_user_deliveries = exports.get_delivery_data = exports.get_available_deliveries = exports.rebook_delivery = exports.retry_delivery = exports.request_delivery = void 0;
+exports.pay_for_delivery = exports.update_delivery_status = exports.cancel_delivery = exports.accept_delivery = exports.get_user_active_delivery = exports.get_user_delivered_deliveries = exports.get_user_cancelled_deliveries = exports.get_user_in_transit_deliveries = exports.get_user_deliveries = exports.get_delivery_data = exports.get_available_deliveries = exports.rebook_delivery = exports.retry_delivery = exports.request_delivery = void 0;
 const delivery_1 = __importDefault(require("../models/delivery"));
 const calc_commision_1 = require("../utils/calc_commision");
 const server_1 = require("../server");
@@ -241,15 +241,13 @@ const get_user_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.get_user_deliveries = get_user_deliveries;
-const get_user_active_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const get_user_in_transit_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const deliveries = yield delivery_1.default.find({
             sender: user_id,
-            status: {
-                $in: ["pending", "accepted", "picked_up", "in_transit", "expired"],
-            },
+            status: "in_transit",
         }).sort({ createdAt: -1 });
         res
             .status(200)
@@ -259,7 +257,58 @@ const get_user_active_deliveries = (req, res) => __awaiter(void 0, void 0, void 
         res.status(500).json({ msg: "Server error." });
     }
 });
-exports.get_user_active_deliveries = get_user_active_deliveries;
+exports.get_user_in_transit_deliveries = get_user_in_transit_deliveries;
+const get_user_cancelled_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const deliveries = yield delivery_1.default.find({
+            sender: user_id,
+            status: "cancelled",
+        }).sort({ createdAt: -1 });
+        res
+            .status(200)
+            .json({ msg: "success", rowCount: deliveries.length, deliveries });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_user_cancelled_deliveries = get_user_cancelled_deliveries;
+const get_user_delivered_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const deliveries = yield delivery_1.default.find({
+            sender: user_id,
+            status: "cancelled",
+        }).sort({ createdAt: -1 });
+        res
+            .status(200)
+            .json({ msg: "success", rowCount: deliveries.length, deliveries });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_user_delivered_deliveries = get_user_delivered_deliveries;
+const get_user_active_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const delivery = yield delivery_1.default.findOne({
+            sender: user_id,
+            status: {
+                $in: ["pending", "accepted", "picked_up", "arrived", "expired"],
+            },
+        }).sort({ createdAt: -1 });
+        res.status(200).json({ msg: "success", delivery });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_user_active_delivery = get_user_active_delivery;
 const accept_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -333,13 +382,29 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 .json({ msg: "Delivery not found or not assigned to you" });
         const sender_socket = yield (0, get_id_1.get_user_socket_id)(delivery.sender.toString());
         switch (status) {
+            case "arrived":
+                // Only allow marking as arrived when delivery was accepted
+                if (delivery.status !== "accepted") {
+                    return res.status(400).json({
+                        msg: "Delivery must be 'accepted' before driver can mark as arrived",
+                    });
+                }
+                delivery.status = "arrived";
+                delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { arrived_at: new Date() });
+                if (sender_socket)
+                    server_1.io.to(sender_socket).emit("delivery_arrived", { delivery_id });
+                break;
             case "picked_up":
                 // Only allow marking as picked_up when delivery was accepted
-                if (delivery.status !== "accepted") {
-                    return res
-                        .status(400)
-                        .json({
-                        msg: "Delivery must be 'accepted' before it can be picked up",
+                if (delivery.status !== "arrived") {
+                    return res.status(400).json({
+                        msg: "Dispatch rider must arrive first before it can be picked up",
+                    });
+                }
+                // Prevent pickup if payment not completed
+                if (delivery.payment_status !== "paid") {
+                    return res.status(400).json({
+                        msg: "Payment must be completed before package can be picked up",
                     });
                 }
                 delivery.status = "picked_up";
@@ -350,17 +415,13 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
             case "in_transit":
                 // Only allow starting transit when package was picked up
                 if (delivery.status !== "picked_up") {
-                    return res
-                        .status(400)
-                        .json({
+                    return res.status(400).json({
                         msg: "Delivery must be 'picked_up' before starting transit",
                     });
                 }
                 // Prevent transit start if payment not completed
                 if (delivery.payment_status !== "paid") {
-                    return res
-                        .status(400)
-                        .json({
+                    return res.status(400).json({
                         msg: "Payment must be completed before transit can start",
                     });
                 }
@@ -372,9 +433,7 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
             case "delivered":
                 // Only allow delivered when currently in transit
                 if (delivery.status !== "in_transit") {
-                    return res
-                        .status(400)
-                        .json({
+                    return res.status(400).json({
                         msg: "Delivery must be 'in_transit' before it can be marked delivered",
                     });
                 }

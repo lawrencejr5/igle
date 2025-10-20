@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = void 0;
+exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_ongoing_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = void 0;
 const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
@@ -379,6 +379,32 @@ const get_user_active_ride = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.get_user_active_ride = get_user_active_ride;
+const get_user_ongoing_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const ride = yield ride_1.default.findOne({
+            rider: user_id,
+            status: "ongoing",
+            scheduled: false,
+        })
+            .sort({ createdAt: -1 })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        })
+            .populate("rider", "name phone profile_pic");
+        res.status(200).json({ msg: "success", ride });
+    }
+    catch (error) {
+        res.status(500).json({ msg: "An error occurred while fetching ride" });
+    }
+});
+exports.get_user_ongoing_ride = get_user_ongoing_ride;
 const get_user_scheduled_rides = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {

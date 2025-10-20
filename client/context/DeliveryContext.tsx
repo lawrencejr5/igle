@@ -393,6 +393,12 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [ongoingDeliveries, setOngoingDeliveries] = useState<Delivery[] | null>(
     null
   );
+  const [cancelledDeliveries, setCancelledDeliveries] = useState<
+    Delivery[] | null
+  >(null);
+  const [deliveredDeliveries, setDeliveredDeliveries] = useState<
+    Delivery[] | null
+  >(null);
   const [availableDeliveries, setAvailableDeliveries] = useState<
     Delivery[] | null
   >(null);
@@ -659,7 +665,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const fetchUserOngoingDeliveries = async () => {
     try {
       const headers = { headers: await authHeaders() };
-      const { data } = await axios.get(`${API_URL}/ongoing`, headers);
+      const { data } = await axios.get(`${API_URL}/in_transit`, headers);
       setOngoingDeliveries(data.deliveries || []);
       return data.deliveries || [];
     } catch (err) {
@@ -676,6 +682,33 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       return data.deliveries || [];
     } catch (err) {
       console.log("Failed to fetch active delivery", err);
+      return [];
+    }
+  };
+
+  const fetchCancelledDeliveries = async () => {
+    try {
+      const headers = { headers: await authHeaders() };
+      const { data } = await axios.get(`${API_URL}/cancelled`, headers);
+      setCancelledDeliveries(data.deliveries || []);
+      return data.deliveries || [];
+    } catch (err) {
+      console.log("Failed to fetch cancelled deliveries", err);
+      return [];
+    }
+  };
+
+  const fetchDeliveredDeliveries = async () => {
+    try {
+      const headers = { headers: await authHeaders() };
+      const { data } = await axios.get(
+        `${API_URL}/user?status=delivered`,
+        headers
+      );
+      setDeliveredDeliveries(data.deliveries || []);
+      return data.deliveries || [];
+    } catch (err) {
+      console.log("Failed to fetch delivered deliveries", err);
       return [];
     }
   };
@@ -769,6 +802,8 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         cancelDelivery,
         userDeliveries,
         ongoingDeliveries,
+        cancelledDeliveries,
+        deliveredDeliveries,
         availableDeliveries,
         loading,
         paying,
@@ -779,6 +814,8 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         deliveryPickupMarker,
         deliveryDropoffMarker,
         fetchDeliveryRoute,
+        fetchCancelledDeliveries,
+        fetchDeliveredDeliveries,
       }}
     >
       {children}
@@ -816,6 +853,8 @@ export interface DeliverContextType {
 
   userDeliveries: Delivery[] | null;
   ongoingDeliveries: Delivery[] | null;
+  cancelledDeliveries: Delivery[] | null;
+  deliveredDeliveries: Delivery[] | null;
   availableDeliveries: Delivery[] | null;
   loading: boolean;
   paying: boolean;
@@ -831,6 +870,8 @@ export interface DeliverContextType {
     pickupCoords: [number, number],
     dropoffCoords: [number, number]
   ) => Promise<void>;
+  fetchCancelledDeliveries: () => Promise<any>;
+  fetchDeliveredDeliveries: () => Promise<any>;
 }
 
 export const useDeliverContext = () => {
