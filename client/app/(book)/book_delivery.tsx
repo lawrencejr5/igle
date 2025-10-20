@@ -22,11 +22,16 @@ const BookDelivery = () => {
   const {
     deliveryStatus,
     setDeliveryStatus,
+    ongoingDeliveryData,
     deliveryData,
     deliveryRouteCoords,
     deliveryPickupMarker,
     deliveryDropoffMarker,
   } = useDeliverContext();
+
+  useEffect(() => {
+    console.log("route: ", deliveryRouteCoords);
+  }, []);
 
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
 
@@ -88,10 +93,14 @@ const BookDelivery = () => {
             {/* Delivery pickup marker - matches ride pickup design */}
             {deliveryRouteCoords.length > 0 &&
               deliveryPickupMarker &&
-              deliveryData?.pickup?.address && (
+              (deliveryData?.pickup?.address ||
+                ongoingDeliveryData?.pickup?.address) && (
                 <Marker
                   coordinate={deliveryPickupMarker}
-                  title={deliveryData.pickup.address}
+                  title={
+                    deliveryData?.pickup.address ||
+                    ongoingDeliveryData?.pickup.address
+                  }
                   anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <View
@@ -115,10 +124,14 @@ const BookDelivery = () => {
             {/* Delivery dropoff marker - matches ride destination design */}
             {deliveryRouteCoords.length > 0 &&
               deliveryDropoffMarker &&
-              deliveryData?.dropoff?.address && (
+              (deliveryData?.dropoff?.address ||
+                ongoingDeliveryData?.dropoff?.address) && (
                 <Marker
                   coordinate={deliveryDropoffMarker}
-                  title={deliveryData.dropoff.address}
+                  title={
+                    deliveryData?.dropoff?.address ||
+                    ongoingDeliveryData?.dropoff?.address
+                  }
                   anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <View
@@ -142,7 +155,8 @@ const BookDelivery = () => {
             {/* Delivery route polyline - matches ride polyline design */}
             {deliveryPickupMarker &&
               deliveryDropoffMarker &&
-              deliveryData?.dropoff?.address && (
+              (deliveryData?.dropoff?.address ||
+                ongoingDeliveryData?.dropoff?.address) && (
                 <Polyline
                   coordinates={deliveryRouteCoords}
                   strokeColor="#fff"

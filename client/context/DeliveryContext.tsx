@@ -128,7 +128,15 @@ const API_URL = API_URLS.deliveries;
 const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext() as any;
   const { userSocket, signedIn } = useAuthContext() as any;
-  const { getSuggestions, getPlaceCoords, getRoute, mapRef } = useMapContext();
+  const {
+    getSuggestions,
+    getPlaceCoords,
+    getRoute,
+    mapRef,
+    pickupCoords,
+    destinationCoords,
+    region,
+  } = useMapContext();
 
   const [deliveryData, setDeliveryData] = useState<Delivery | null>(null);
   const [ongoingDeliveryData, setOngoingDeliveryData] =
@@ -365,21 +373,21 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     return false;
   };
 
-  useEffect(() => {
-    // Handles navigation back (iOS + Android header back + swipe)
-    const subNav = navigation.addListener("beforeRemove", handleBackAction);
+  // useEffect(() => {
+  //   // Handles navigation back (iOS + Android header back + swipe)
+  //   const subNav = navigation.addListener("beforeRemove", handleBackAction);
 
-    // Handles hardware back (Android only)
-    const subHW =
-      Platform.OS === "android"
-        ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
-        : null;
+  //   // Handles hardware back (Android only)
+  //   const subHW =
+  //     Platform.OS === "android"
+  //       ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
+  //       : null;
 
-    return () => {
-      subNav();
-      if (subHW) subHW.remove();
-    };
-  }, [navigation, deliveryStatus]);
+  //   return () => {
+  //     subNav();
+  //     if (subHW) subHW.remove();
+  //   };
+  // }, [navigation, deliveryStatus]);
 
   const [userDeliveries, setUserDeliveries] = useState<Delivery[] | null>(null);
   const [ongoingDeliveries, setOngoingDeliveries] = useState<Delivery[] | null>(
@@ -425,11 +433,11 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   // useEffect to fetch route when delivery pickup and dropoff are set
   useEffect(() => {
+    // For ongoing deliveries, use the delivery data coordinates
     if (
-      deliveryData?.pickup?.coordinates &&
-      deliveryData?.dropoff?.coordinates &&
-      (deliveryStatus === "vehicle" ||
-        deliveryStatus === "searching" ||
+      ongoingDeliveryData?.pickup?.coordinates &&
+      ongoingDeliveryData?.dropoff?.coordinates &&
+      (deliveryStatus === "searching" ||
         deliveryStatus === "expired" ||
         deliveryStatus === "accepted" ||
         deliveryStatus === "track_driver" ||
@@ -438,12 +446,21 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         deliveryStatus === "paying" ||
         deliveryStatus === "paid" ||
         deliveryStatus === "in_transit" ||
-        deliveryStatus === "track_delivery") // Show route for all delivery flow states
+        deliveryStatus === "track_delivery") // Show route for delivery flow states
     ) {
+      console.log(ongoingDeliveryData?.pickup?.coordinates);
       fetchDeliveryRoute(
-        deliveryData.pickup.coordinates,
-        deliveryData.dropoff.coordinates
+        ongoingDeliveryData.pickup.coordinates,
+        ongoingDeliveryData.dropoff.coordinates
       );
+    }
+    // For booking flow, use current pickup and destination coordinates
+    else if (destinationCoords && deliveryStatus === "vehicle") {
+      // Use explicit pickup coordinates if available, otherwise use current region
+      const pickup = pickupCoords || [region?.latitude, region?.longitude];
+      if (pickup && pickup[0] && pickup[1]) {
+        fetchDeliveryRoute(pickup as [number, number], destinationCoords);
+      }
     } else {
       // Clear route when not applicable
       setDeliveryRouteCoords([]);
@@ -451,9 +468,14 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setDeliveryDropoffMarker(null);
     }
   }, [
-    deliveryData?.pickup?.coordinates,
-    deliveryData?.dropoff?.coordinates,
+    pickupCoords,
+    destinationCoords,
+    ongoingDeliveryData,
+    ongoingDeliveryData?.pickup?.coordinates,
+    ongoingDeliveryData?.dropoff?.coordinates,
     deliveryStatus,
+    region?.latitude,
+    region?.longitude,
   ]);
 
   // Fetch delivery data function
