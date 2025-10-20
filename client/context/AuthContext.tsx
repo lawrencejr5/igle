@@ -319,8 +319,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       const is_driver = data.user.is_driver;
 
+      showNotification(
+        data.isNew ? "Account created" : "Login successful.",
+        "success"
+      );
+
       await getUserData();
-      // If this is a newly created user via Google, navigate to phone update flow
+
       if (data.isNew) {
         router.push("/(auth)/phone");
       } else {
@@ -330,10 +335,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
           router.push("/(tabs)/home");
         }
       }
-      showNotification(
-        data.isNew ? "Account created" : "Login successful.",
-        "success"
-      );
     } catch (err: any) {
       showNotification(
         err?.response?.data?.msg || "Google login failed.",

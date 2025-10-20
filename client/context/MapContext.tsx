@@ -50,6 +50,8 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     bottom: 240,
   });
 
+  const [cityAddress, setCityAddress] = useState<string>("");
+
   const [userAddress, setUserAddress] = useState<string>("");
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(
     null
@@ -164,7 +166,14 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       if (data.results.length > 0) {
         const address = `${data.results[0].address_components[1].long_name}, ${data.results[0].address_components[2].long_name}`;
+
+        const formatted_address = data.results[0].formatted_address.split(",");
+        const city = `${formatted_address[formatted_address.length - 2]}, ${
+          formatted_address[formatted_address.length - 1]
+        }`;
+
         setUserAddress(address);
+        setCityAddress(city);
       }
     } catch (error) {
       console.error("Error fetching place name", error);
@@ -374,6 +383,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     <MapContext.Provider
       value={{
         region,
+        cityAddress,
         userAddress,
         setUserAddress,
         getDestinationSuggestions,
@@ -430,6 +440,7 @@ type CoordsType = { latitude: number; longitude: number };
 export interface MapContextType {
   region: any;
   set_user_location: () => Promise<void>;
+  cityAddress: string;
   userAddress: string;
   setUserAddress: Dispatch<SetStateAction<string>>;
   getSuggestions: (text: string) => Promise<any>;

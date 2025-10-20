@@ -63,7 +63,12 @@ const Rides = () => {
             <Text style={styles.header_text}>Rides</Text>
 
             {/* Categories nav... */}
-            <CategoryTabs category={category} setCategory={setCategory} />
+            <CategoryTabs
+              category={category}
+              setCategory={setCategory}
+              scheduledRides={scheduledRides}
+              userCancelledRides={userCancelledRides}
+            />
 
             {/* Ongoing data */}
             {category === "ongoing" &&
@@ -121,18 +126,42 @@ const Rides = () => {
 const CategoryTabs = ({
   category,
   setCategory,
+  scheduledRides,
+  userCancelledRides,
 }: {
   category: "ongoing" | "scheduled" | "completed" | "cancelled";
   setCategory: (
     cat: "ongoing" | "scheduled" | "completed" | "cancelled"
   ) => void;
+  scheduledRides: any;
+  userCancelledRides: any;
 }) => {
-  const tabs: Array<"ongoing" | "scheduled" | "completed" | "cancelled"> = [
+  // Always show ongoing and completed
+  const baseTabs: Array<"ongoing" | "scheduled" | "completed" | "cancelled"> = [
     "ongoing",
-    "scheduled",
     "completed",
-    "cancelled",
   ];
+
+  // Conditionally add scheduled and cancelled tabs
+  const conditionalTabs: Array<"scheduled" | "cancelled"> = [];
+
+  if (scheduledRides && scheduledRides.length > 0) {
+    conditionalTabs.push("scheduled");
+  }
+
+  if (userCancelledRides && userCancelledRides.length > 0) {
+    conditionalTabs.push("cancelled");
+  }
+
+  // Combine base tabs with conditional tabs
+  const tabs = [...baseTabs, ...conditionalTabs];
+
+  // If current category is not in available tabs, switch to ongoing
+  React.useEffect(() => {
+    if (!tabs.includes(category)) {
+      setCategory("ongoing");
+    }
+  }, [tabs, category, setCategory]);
 
   return (
     <View>

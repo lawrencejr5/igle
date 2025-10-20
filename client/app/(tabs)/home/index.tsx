@@ -24,9 +24,26 @@ import { useActivityContext } from "../../../context/ActivityContext";
 import SideNav from "../../../components/SideNav";
 import NotificationScreen from "../../../components/screens/NotificationScreen";
 import { useAuthContext } from "../../../context/AuthContext";
+import { useLoading } from "../../../context/LoadingContext";
+import AppLoading from "../../../loadings/AppLoading";
+import { useMapContext } from "../../../context/MapContext";
 
 const Home = () => {
   const insets = useSafeAreaInsets();
+
+  // Function to get appropriate greeting based on time of day
+  const getGreeting = () => {
+    const now = new Date();
+    const hour = now.getHours();
+
+    if (hour < 12) {
+      return "Good Morning ☀️";
+    } else if (hour < 17) {
+      return "Good Afternoon 🌤️";
+    } else {
+      return "Good Evening 🌙";
+    }
+  };
 
   const { signedIn } = useAuthContext();
   const {
@@ -43,6 +60,8 @@ const Home = () => {
     fetchUserActiveDelivery,
     fetchUserOngoingDeliveries,
   } = useDeliverContext();
+  const { locationLoading, getPlaceName, region, cityAddress } =
+    useMapContext();
 
   // Logic to determine ongoing activity priority
   const getOngoingActivity = (): {
@@ -132,221 +151,269 @@ const Home = () => {
     }
   }, [signedIn]);
 
+  const { appLoading } = useLoading();
+
   return (
     <>
-      <ScrollView style={[styles.container, { paddingTop: insets.top + 10 }]}>
-        <View>
-          <View style={styles.nav_container}>
-            <TouchableOpacity
-              style={styles.nav_box}
-              onPress={() => setSideNavOpen(true)}
-            >
-              <Feather name="menu" size={25} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                gap: 10,
-                alignItems: "center",
-                paddingHorizontal: 10,
-                paddingRight: 20,
-                borderTopLeftRadius: 50,
-                borderBottomLeftRadius: 50,
-                paddingVertical: 5,
-              }}
-            >
-              <Image
-                source={
-                  signedIn?.profile_pic
-                    ? { uri: signedIn?.profile_pic } // remote image from backend
-                    : require("../../../assets/images/user.png") // fallback local asset
-                }
-                style={{
-                  height: 40,
-                  width: 40,
-                  borderRadius: 20,
-                }}
-              />
-              <View>
-                <Text
+      {appLoading || locationLoading ? (
+        <AppLoading />
+      ) : (
+        <>
+          <ScrollView
+            style={[styles.container, { paddingTop: insets.top + 10 }]}
+          >
+            <View>
+              <View style={styles.nav_container}>
+                <TouchableOpacity
+                  style={styles.nav_box}
+                  onPress={() => setSideNavOpen(true)}
+                >
+                  <Feather name="menu" size={25} color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity
                   style={{
-                    color: "#fff",
-                    fontFamily: "raleway-bold",
-                    fontSize: 14,
+                    flexDirection: "row",
+                    gap: 10,
+                    alignItems: "center",
+                    paddingHorizontal: 10,
+                    paddingRight: 20,
+                    borderTopLeftRadius: 50,
+                    borderBottomLeftRadius: 50,
+                    paddingVertical: 5,
                   }}
                 >
-                  {signedIn?.name}
-                </Text>
-                <Text
-                  style={{
-                    color: "#fff",
-                    fontFamily: "raleway-regular",
-                    fontSize: 10,
-                  }}
-                >
-                  Asaba, Nigeria
-                </Text>
+                  <Image
+                    source={
+                      signedIn?.profile_pic
+                        ? { uri: signedIn?.profile_pic } // remote image from backend
+                        : require("../../../assets/images/user.png") // fallback local asset
+                    }
+                    style={{
+                      height: 40,
+                      width: 40,
+                      borderRadius: 20,
+                    }}
+                  />
+                  <View>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "raleway-bold",
+                        fontSize: 14,
+                      }}
+                    >
+                      {signedIn?.name}
+                    </Text>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "raleway-regular",
+                        fontSize: 10,
+                      }}
+                    >
+                      {cityAddress}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </View>
-          <View style={{ marginTop: 20 }}>
-            <Text
-              style={{
-                color: "#fff",
-                fontSize: 25,
-                fontFamily: "raleway-bold",
-              }}
-            >
-              Good Morning 👋
-            </Text>
-
-            {/* Banner */}
-            <View style={{ marginTop: 10 }}>
-              <ScrollView
-                ref={(r) => {
-                  scrollRef.current = r;
-                }}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.bannerScroll}
-                snapToInterval={CARD_WIDTH + CARD_SPACING}
-                decelerationRate="fast"
-                snapToAlignment="start"
-                onMomentumScrollEnd={(e) => {
-                  const x = e.nativeEvent.contentOffset.x;
-                  const idx = Math.round(x / (CARD_WIDTH + CARD_SPACING));
-                  setActiveIndex(idx);
-                }}
-              >
-                <Pressable
-                  style={styles.bannerCard}
-                  onPress={() => {
-                    router.push("../(book)/book_ride");
+              <View style={{ marginTop: 20 }}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 25,
+                    fontFamily: "raleway-bold",
                   }}
                 >
-                  <Text style={styles.bannerTitle}>Need a ride</Text>
-                  <Text style={styles.bannerSubtitle}>
-                    Get picked up in minutes
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
-                    onPress={() => {
-                      setRideStatus("booking");
-                      setModalUp(true);
-                      router.push("../(book)/book_ride");
+                  {getGreeting()}
+                </Text>
+
+                {/* Banner */}
+                <View style={{ marginTop: 10 }}>
+                  <ScrollView
+                    ref={(r) => {
+                      scrollRef.current = r;
+                    }}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.bannerScroll}
+                    snapToInterval={CARD_WIDTH + CARD_SPACING}
+                    decelerationRate="fast"
+                    snapToAlignment="start"
+                    onMomentumScrollEnd={(e) => {
+                      const x = e.nativeEvent.contentOffset.x;
+                      const idx = Math.round(x / (CARD_WIDTH + CARD_SPACING));
+                      setActiveIndex(idx);
                     }}
                   >
-                    <Text style={styles.bannerBtnText}>Book ride</Text>
-                  </TouchableOpacity>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.bannerCard, styles.bannerCardAlt]}
-                  onPress={() => router.push("../(book)/book_delivery")}
-                >
-                  <Text style={styles.bannerTitle}>Send a package</Text>
-                  <Text style={styles.bannerSubtitle}>
-                    Fast door-to-door delivery
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.bannerBtn,
-                      styles.bannerBtnAlt,
-                      { alignSelf: "flex-end" },
-                    ]}
-                    onPress={() => router.push("../(book)/book_delivery")}
-                  >
-                    <Text
-                      style={[styles.bannerBtnText, styles.bannerBtnTextAlt]}
+                    <Pressable
+                      style={styles.bannerCard}
+                      onPress={() => {
+                        router.push("../(book)/book_ride");
+                      }}
                     >
-                      Send now
-                    </Text>
-                  </TouchableOpacity>
-                </Pressable>
+                      <Text style={styles.bannerTitle}>Need a ride</Text>
+                      <Text style={styles.bannerSubtitle}>
+                        Get picked up in minutes
+                      </Text>
+                      <TouchableOpacity
+                        style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
+                        onPress={() => {
+                          setRideStatus("booking");
+                          setModalUp(true);
+                          router.push("../(book)/book_ride");
+                        }}
+                      >
+                        <Text style={styles.bannerBtnText}>Book ride</Text>
+                      </TouchableOpacity>
+                    </Pressable>
 
-                <Pressable
-                  style={[styles.bannerCard, styles.bannerCardAlt2]}
-                  onPress={() => router.push("../offers")}
-                >
-                  <Text style={styles.bannerTitle}>Explore offers</Text>
-                  <Text style={styles.bannerSubtitle}>
-                    Deals, promos & vouchers
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.bannerBtn,
-                      styles.bannerBtnAlt2,
-                      { alignSelf: "flex-end" },
-                    ]}
-                    onPress={() => router.push("../offers")}
-                  >
-                    <Text
-                      style={[styles.bannerBtnText, styles.bannerBtnTextAlt]}
+                    <Pressable
+                      style={[styles.bannerCard, styles.bannerCardAlt]}
+                      onPress={() => router.push("../(book)/book_delivery")}
                     >
-                      See offers
-                    </Text>
-                  </TouchableOpacity>
-                </Pressable>
-              </ScrollView>
-              <View style={styles.dotContainer}>
-                {[0, 1, 2].map((i) => (
-                  <View
-                    key={i}
-                    style={[styles.dot, i === activeIndex && styles.dotActive]}
-                  />
-                ))}
-              </View>
-            </View>
-            {/* Services section */}
-            <View style={{ marginTop: 30 }}>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 18,
-                  marginBottom: 12,
-                }}
-              >
-                What would you like to do?
-              </Text>
-              <View style={styles.serviceRow}>
-                <Pressable
-                  style={styles.serviceCard}
-                  onPress={() => {
-                    router.push("../(book)/book_ride");
-                  }}
-                >
-                  <View style={styles.serviceIconBox}>
-                    <Feather name="navigation" size={16} color="#fff" />
-                  </View>
-                  <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
-                    <Text style={styles.serviceTitle}>Book ride</Text>
-                    <Text style={styles.serviceSubtitle}>
-                      Request a nearby driver
-                    </Text>
-                  </View>
-                </Pressable>
+                      <Text style={styles.bannerTitle}>Send a package</Text>
+                      <Text style={styles.bannerSubtitle}>
+                        Fast door-to-door delivery
+                      </Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.bannerBtn,
+                          styles.bannerBtnAlt,
+                          { alignSelf: "flex-end" },
+                        ]}
+                        onPress={() => router.push("../(book)/book_delivery")}
+                      >
+                        <Text
+                          style={[
+                            styles.bannerBtnText,
+                            styles.bannerBtnTextAlt,
+                          ]}
+                        >
+                          Send now
+                        </Text>
+                      </TouchableOpacity>
+                    </Pressable>
 
-                <Pressable
-                  style={styles.serviceCard}
-                  onPress={() => router.push("../(book)/book_delivery")}
-                >
-                  <View style={styles.serviceIconBox}>
-                    <Feather name="truck" size={16} color="#fff" />
+                    <Pressable
+                      style={[styles.bannerCard, styles.bannerCardAlt2]}
+                      onPress={() => router.push("../offers")}
+                    >
+                      <Text style={styles.bannerTitle}>Explore offers</Text>
+                      <Text style={styles.bannerSubtitle}>
+                        Deals, promos & vouchers
+                      </Text>
+                      <TouchableOpacity
+                        style={[
+                          styles.bannerBtn,
+                          styles.bannerBtnAlt2,
+                          { alignSelf: "flex-end" },
+                        ]}
+                        onPress={() => router.push("../offers")}
+                      >
+                        <Text
+                          style={[
+                            styles.bannerBtnText,
+                            styles.bannerBtnTextAlt,
+                          ]}
+                        >
+                          See offers
+                        </Text>
+                      </TouchableOpacity>
+                    </Pressable>
+                  </ScrollView>
+                  <View style={styles.dotContainer}>
+                    {[0, 1, 2].map((i) => (
+                      <View
+                        key={i}
+                        style={[
+                          styles.dot,
+                          i === activeIndex && styles.dotActive,
+                        ]}
+                      />
+                    ))}
                   </View>
-                  <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
-                    <Text style={styles.serviceTitle}>Deliver package</Text>
-                    <Text style={styles.serviceSubtitle}>
-                      Fast door-to-door
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
+                </View>
+                {/* Services section */}
+                <View style={{ marginTop: 30 }}>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-bold",
+                      fontSize: 18,
+                      marginBottom: 12,
+                    }}
+                  >
+                    What would you like to do?
+                  </Text>
+                  <View style={styles.serviceRow}>
+                    <Pressable
+                      style={styles.serviceCard}
+                      onPress={() => {
+                        router.push("../(book)/book_ride");
+                      }}
+                    >
+                      <View style={styles.serviceIconBox}>
+                        <Feather name="navigation" size={16} color="#fff" />
+                      </View>
+                      <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
+                        <Text style={styles.serviceTitle}>Book ride</Text>
+                        <Text style={styles.serviceSubtitle}>
+                          Request a nearby driver
+                        </Text>
+                      </View>
+                    </Pressable>
 
-            {/* Ongoing ride/package card */}
-            {ongoingActivity && (
-              <View style={{ marginTop: 22 }}>
+                    <Pressable
+                      style={styles.serviceCard}
+                      onPress={() => router.push("../(book)/book_delivery")}
+                    >
+                      <View style={styles.serviceIconBox}>
+                        <Feather name="truck" size={16} color="#fff" />
+                      </View>
+                      <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
+                        <Text style={styles.serviceTitle}>Deliver package</Text>
+                        <Text style={styles.serviceSubtitle}>
+                          Fast door-to-door
+                        </Text>
+                      </View>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Ongoing ride/package card */}
+                {ongoingActivity && (
+                  <View style={{ marginTop: 22 }}>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "raleway-bold",
+                        fontSize: 18,
+                        marginBottom: 12,
+                      }}
+                    >
+                      {getActivityHeaderText()}
+                    </Text>
+                    <OngoingCard activity={ongoingActivity} />
+                  </View>
+                )}
+
+                {/* Saved places (like RouteModal) */}
+                <View style={{ marginTop: 20 }}>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-bold",
+                      fontSize: 18,
+                      marginBottom: 12,
+                    }}
+                  >
+                    Saved places
+                  </Text>
+                  <SavedPlaces />
+                </View>
+              </View>
+              {/* Recent activities (3 items) */}
+              <View style={{ marginTop: 20, marginBottom: 60 }}>
                 <Text
                   style={{
                     color: "#fff",
@@ -355,53 +422,24 @@ const Home = () => {
                     marginBottom: 12,
                   }}
                 >
-                  {getActivityHeaderText()}
+                  Recent activities
                 </Text>
-                <OngoingCard activity={ongoingActivity} />
+                <RecentActivities />
               </View>
-            )}
-
-            {/* Saved places (like RouteModal) */}
-            <View style={{ marginTop: 20 }}>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 18,
-                  marginBottom: 12,
-                }}
-              >
-                Saved places
-              </Text>
-              <SavedPlaces />
             </View>
-          </View>
-          {/* Recent activities (3 items) */}
-          <View style={{ marginTop: 20, marginBottom: 60 }}>
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-bold",
-                fontSize: 18,
-                marginBottom: 12,
-              }}
-            >
-              Recent activities
-            </Text>
-            <RecentActivities />
-          </View>
-        </View>
-      </ScrollView>
-      {/* Side nav */}
-      <SideNav
-        open={sideNavOpen}
-        setSideNavOpen={setSideNavOpen}
-        mode="rider"
-      />
-      <NotificationScreen
-        open={openNotification}
-        setOpen={setOpenNotification}
-      />
+          </ScrollView>
+          {/* Side nav */}
+          <SideNav
+            open={sideNavOpen}
+            setSideNavOpen={setSideNavOpen}
+            mode="rider"
+          />
+          <NotificationScreen
+            open={openNotification}
+            setOpen={setOpenNotification}
+          />
+        </>
+      )}
     </>
   );
 };
