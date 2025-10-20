@@ -169,6 +169,7 @@ const CategoryTabs = ({
         contentContainerStyle={styles.nav_container}
         horizontal
         showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
       >
         {tabs.map((tab) => (
           <Pressable
@@ -198,7 +199,7 @@ const EmptyState = ({
   message: string;
   tab: "ongoing" | "scheduled" | "cancelled" | "completed";
 }) => {
-  const { setRideStatus, setModalUp, setPickupTime } = useRideContext();
+  const { setRideStatus, setPickupTime } = useRideContext();
 
   return (
     <View
@@ -211,10 +212,28 @@ const EmptyState = ({
       <View
         style={{ justifyContent: "center", alignItems: "center", width: "90%" }}
       >
-        <Image
-          source={require("../../../assets/images/icons/no-results-white.png")}
-          style={{ width: 100, height: 100, marginBottom: 20 }}
-        />
+        {tab === "completed" ? (
+          <Image
+            source={require("../../../assets/images/icons/empty-complete-cab.png")}
+            style={{
+              width: 100,
+              height: 100,
+              marginBottom: 20,
+              tintColor: "#fff",
+            }}
+          />
+        ) : (
+          <Image
+            source={require("../../../assets/images/icons/empty-cab.png")}
+            style={{
+              width: 100,
+              height: 100,
+              marginBottom: 20,
+              tintColor: "#fff",
+            }}
+          />
+        )}
+
         <Text
           style={{
             color: "#fff",

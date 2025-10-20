@@ -160,6 +160,7 @@ const Home = () => {
       ) : (
         <>
           <ScrollView
+            showsVerticalScrollIndicator={false}
             style={[styles.container, { paddingTop: insets.top + 10 }]}
           >
             <View>
@@ -853,9 +854,7 @@ const styles = StyleSheet.create({
   bannerCardAlt: {
     backgroundColor: "#f5f5f5",
   },
-  bannerCardAlt2: {
-    backgroundColor: "#eef6ff",
-  },
+
   bannerTitle: {
     fontFamily: "raleway-bold",
     fontSize: 16,
@@ -877,13 +876,12 @@ const styles = StyleSheet.create({
   bannerBtnText: {
     color: "#fff",
     fontFamily: "raleway-bold",
+    fontSize: 12,
   },
   bannerBtnAlt: {
     backgroundColor: "#ff8c00",
   },
-  bannerBtnAlt2: {
-    backgroundColor: "#007bff",
-  },
+
   bannerBtnTextAlt: {
     color: "#fff",
   },
