@@ -461,6 +461,11 @@ const OngoingRide = ({ data }: { data: any }) => {
           <>
             <DriverCard
               name={data.driver.user.name}
+              profile_img={
+                (ongoingRideData?.driver as any)?.profile_img
+                  ? { uri: (ongoingRideData?.driver as any).profile_img }
+                  : require("../../../assets/images/user.png")
+              }
               id={data.driver._id}
               rating={data.driver.rating}
               total_trips={data.driver.total_trips}
@@ -857,6 +862,13 @@ const ScheduledRides = ({ data }: { data: any }) => {
                   <>
                     <DriverCard
                       name={ride.driver.user.name}
+                      profile_img={
+                        (ongoingRideData?.driver as any)?.profile_img
+                          ? {
+                              uri: (ongoingRideData?.driver as any).profile_img,
+                            }
+                          : require("../../../assets/images/user.png")
+                      }
                       id={ride.driver._id}
                       rating={ride.driver.rating}
                       total_trips={ride.driver.total_trips}

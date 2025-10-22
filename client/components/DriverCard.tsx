@@ -28,11 +28,12 @@ import * as Linking from "expo-linking";
 
 const DriverCard: FC<{
   name: string;
+  profile_img: any;
   id: string;
   rating: number;
   total_trips: number;
   num_of_reviews: number;
-}> = ({ name, id, rating, total_trips, num_of_reviews }) => {
+}> = ({ name, profile_img, id, rating, total_trips, num_of_reviews }) => {
   const [openModal, setOpenModal] = useState(false);
 
   return (
@@ -53,7 +54,7 @@ const DriverCard: FC<{
       >
         {/* Driver image */}
         <Image
-          source={require("../assets/images/black-profile.jpeg")}
+          source={profile_img || require("../assets/images/user.png")}
           style={{ height: 50, width: 50, borderRadius: 25 }}
         />
 
@@ -197,7 +198,10 @@ export const DriverDetailsModal: FC<{
             <>
               <View style={{ marginTop: 10 }}>
                 <Image
-                  source={require("../assets/images/black-profile.jpeg")}
+                  source={
+                    driverData.profile_img ||
+                    require("../assets/images/user.png")
+                  }
                   style={{
                     height: 100,
                     width: 100,

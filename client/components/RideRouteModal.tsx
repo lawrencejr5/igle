@@ -1081,6 +1081,11 @@ const TrackDriver = () => {
       {ongoingRideData && (
         <DriverCard
           name={ongoingRideData?.driver.user.name}
+          profile_img={
+            (ongoingRideData?.driver as any)?.profile_img
+              ? { uri: (ongoingRideData?.driver as any).profile_img }
+              : require("../assets/images/user.png")
+          }
           id={ongoingRideData?.driver._id}
           total_trips={ongoingRideData?.driver.total_trips}
           rating={ongoingRideData?.driver.rating}
@@ -1856,7 +1861,11 @@ const RideRequestCard = () => {
           style={styles.userInfo}
         >
           <Image
-            source={require("../assets/images/black-profile.jpeg")}
+            source={
+              (ongoingRideData?.driver as any)?.profile_img
+                ? { uri: (ongoingRideData?.driver as any).profile_img }
+                : require("../assets/images/user.png")
+            }
             style={styles.userImage}
           />
           <View>
@@ -2125,6 +2134,7 @@ const styles = StyleSheet.create({
   userImage: {
     width: 30,
     height: 30,
+    borderRadius: 15,
   },
   userName: {
     color: "#fff",

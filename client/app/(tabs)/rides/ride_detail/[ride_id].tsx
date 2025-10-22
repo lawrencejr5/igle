@@ -305,6 +305,11 @@ const RideDetails = () => {
                 {rideData.driver ? (
                   <DriverCard
                     name={rideData.driver.user.name}
+                    profile_img={
+                      (rideData?.driver as any)?.profile_img
+                        ? { uri: (rideData?.driver as any).profile_img }
+                        : require("../../../../assets/images/user.png")
+                    }
                     id={rideData.driver._id}
                     rating={rideData.driver.rating}
                     total_trips={rideData.driver.total_trips}
