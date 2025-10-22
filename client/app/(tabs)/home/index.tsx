@@ -747,11 +747,9 @@ const SavedPlaces = () => {
   );
 };
 
-const RecentActivities: React.FC<{
-  onSeeMore?: () => void;
-}> = ({ onSeeMore }) => {
+const RecentActivities: React.FC = () => {
   const { activities, activityLoading, formatTime } = useActivityContext();
-  const items = activities?.slice(0, 3) || [];
+  const items = activities?.slice(0, 1) || [];
 
   return (
     <View>

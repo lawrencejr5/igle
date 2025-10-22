@@ -102,7 +102,10 @@ const DeliveryRouteModal: FC = () => {
         setDeliveryStatus("picked_up");
       }
     } else {
-      setDeliveryStatus("details");
+      const t = setTimeout(() => {
+        setDeliveryStatus("details");
+      }, 500);
+      return () => clearTimeout(t);
     }
   }, [ongoingDeliveryData]);
 

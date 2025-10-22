@@ -107,6 +107,13 @@ const RideRouteModal = () => {
         })();
   }, [destination]);
 
+  // useEffect(() => {
+  //   const t = setTimeout(() => {
+  //     setRideStatus("booking");
+  //   }, 500);
+  //   return () => clearTimeout(t);
+  // }, []);
+
   useEffect(() => {
     if (ongoingRideData) {
       setDestination(ongoingRideData.destination.address);
@@ -136,7 +143,10 @@ const RideRouteModal = () => {
         setRideStatus("paid");
       }
     } else {
-      setRideStatus("booking");
+      const t = setTimeout(() => {
+        setRideStatus("booking");
+      }, 500);
+      return () => clearTimeout(t);
     }
   }, [ongoingRideData]);
 

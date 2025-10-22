@@ -220,7 +220,7 @@ const WalletScreen: FC<{
         <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
           <TouchableWithoutFeedback
             onPress={fundWalletFunc}
-            disabled={btnLoading}
+            disabled={btnLoading || !amount}
           >
             <View
               style={{

@@ -6,6 +6,7 @@ import {
   Animated,
   Image,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -107,32 +108,72 @@ const SideNav: React.FC<{
 
               {/* Side bar values */}
               <View>
-                <TouchableWithoutFeedback onPress={() => router.push("rides/")}>
-                  <View style={styles.sidenav_content_box}>
-                    <FontAwesome name="car" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>My Rides</Text>
-                  </View>
-                </TouchableWithoutFeedback>
-                <View style={styles.sidenav_content_box}>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("rides/");
+                  }}
+                >
+                  <FontAwesome name="car" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Rides</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("delivery/");
+                  }}
+                >
+                  <FontAwesome name="car" size={20} color="#c6c6c6" />
+                  <Text style={styles.sidenav_content_text}>Deliveries</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("account/wallet");
+                  }}
+                >
                   <Entypo name="wallet" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Wallet</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
+                </TouchableOpacity>
+                {/* <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                  }}
+                >
                   <Ionicons name="pricetag" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Promotions</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
+                </TouchableOpacity> */}
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                  }}
+                >
                   <Feather name="help-circle" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Support</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                  }}
+                >
                   <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>About</Text>
-                </View>
-                <View style={styles.sidenav_content_box}>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                  }}
+                >
                   <FontAwesome name="star" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Rate us</Text>
-                </View>
+                </TouchableOpacity>
               </View>
 
               {/* Switch mode */}
@@ -201,32 +242,48 @@ const SideNav: React.FC<{
 
               {/* Side bar values */}
               <View>
-                <TouchableWithoutFeedback
-                  onPress={() => router.push("/(driver)/rides")}
+                <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("/(driver)/rides");
+                  }}
                 >
                   <View style={styles.sidenav_content_box}>
                     <FontAwesome name="car" size={20} color="#c6c6c6" />
                     <Text style={styles.sidenav_content_text}>Rides</Text>
                   </View>
-                </TouchableWithoutFeedback>
-                <TouchableWithoutFeedback
-                  onPress={() => router.push("/(driver)/earnings")}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("/(driver)/earnings");
+                  }}
                 >
                   <View style={styles.sidenav_content_box}>
                     <Entypo name="wallet" size={20} color="#c6c6c6" />
                     <Text style={styles.sidenav_content_text}>Earnings</Text>
                   </View>
-                </TouchableWithoutFeedback>
+                </TouchableOpacity>
 
-                <View style={styles.sidenav_content_box}>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                  }}
+                >
                   <Feather name="help-circle" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Support</Text>
-                </View>
+                </TouchableOpacity>
 
-                <View style={styles.sidenav_content_box}>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                  }}
+                >
                   <FontAwesome name="star" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Rate us</Text>
-                </View>
+                </TouchableOpacity>
               </View>
 
               {/* Switch mode */}

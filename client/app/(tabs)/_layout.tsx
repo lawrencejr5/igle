@@ -18,6 +18,7 @@ const TabsLayout = () => {
     (segments[1] === "account" && segments[2] === "saved_places") ||
     (segments[1] === "account" && segments[2] === "notifications") ||
     (segments[1] === "account" && segments[2] === "security");
+  segments[1] === "account" && segments[2] === "wallet";
 
   // animated value for smooth transitions
   const tabOpacity = useMemo(() => new Animated.Value(1), []);
