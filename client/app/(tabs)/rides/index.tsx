@@ -263,7 +263,7 @@ const EmptyState = ({
               marginTop: 10,
             }}
             onPress={() => {
-              router.push("../home");
+              router.push("../(book)/ride");
               setRideStatus("booking");
               setPickupTime("later");
             }}
@@ -282,9 +282,7 @@ const EmptyState = ({
               marginTop: 10,
             }}
             onPress={() => {
-              router.push("../home");
-              setRideStatus("booking");
-              setPickupTime("now");
+              router.push("../(book)/book_ride");
             }}
           >
             <Text style={{ fontFamily: "raleway-bold", textAlign: "center" }}>
@@ -338,7 +336,7 @@ const OngoingRide = ({ data }: { data: any }) => {
   const retry_ride = async () => {
     try {
       await retryRideRequest();
-      router.push("../home");
+      router.push("../(book)/book_ride");
     } catch (error: any) {
       showNotification(error.message, "error");
     }
@@ -358,7 +356,7 @@ const OngoingRide = ({ data }: { data: any }) => {
   };
 
   const track_ride = () => {
-    router.push("../(tabs)/home");
+    router.push("../(book)/book_ride");
     setRideStatus("track_ride");
     setTimeout(() => {
       if (mapRef.current && ongoingRideData)
@@ -1128,7 +1126,7 @@ const CancelledRides = ({ data }: { data: any }) => {
     setRebookingId(ride_id);
     try {
       await rebookRideRequest(ride_id);
-      router.push("../home");
+      router.push("../(book)/book_ride");
     } catch (error: any) {
       console.log(error.message);
     } finally {

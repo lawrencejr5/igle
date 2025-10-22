@@ -21,6 +21,62 @@ import { useMapContext } from "./MapContext";
 
 export const DeliverContext = createContext<DeliverContextType | null>(null);
 
+// Shared UI/helper utilities for delivery components
+export const formatRelativeTime = (date?: string | Date | null) => {
+  if (!date) return "";
+  const now = new Date();
+  const time = new Date(date as any);
+  const diffMs = now.getTime() - time.getTime();
+
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  if (diffMins < 60) return `${diffMins}m ago`;
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+  }
+  const months = Math.floor(diffDays / 30);
+  return `${months} month${months > 1 ? "s" : ""} ago`;
+};
+
+export const getPackageIcon = (type?: DeliveryPackageType | string) => {
+  switch (type) {
+    case "document":
+      return "📄";
+    case "electronics":
+      return "📱";
+    case "food":
+      return "🍔";
+    case "clothing":
+      return "👕";
+    case "furniture":
+      return "🪑";
+    default:
+      return "📦";
+  }
+};
+
+export const getVehicleIcon = (vehicle?: string) => {
+  switch (vehicle) {
+    case "bike":
+      return "🏍️";
+    case "cab":
+      return "🚗";
+    case "van":
+      return "🚐";
+    case "truck":
+      return "🚚";
+    default:
+      return "🚗";
+  }
+};
+
 type Contact = { name?: string; phone?: string } | undefined;
 
 export type DeliveryStatus =
@@ -128,15 +184,8 @@ const API_URL = API_URLS.deliveries;
 const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext() as any;
   const { userSocket, signedIn } = useAuthContext() as any;
-  const {
-    getSuggestions,
-    getPlaceCoords,
-    getRoute,
-    mapRef,
-    pickupCoords,
-    destinationCoords,
-    region,
-  } = useMapContext();
+  const { getRoute, mapRef, pickupCoords, destinationCoords, region } =
+    useMapContext();
 
   const [deliveryData, setDeliveryData] = useState<Delivery | null>(null);
   const [ongoingDeliveryData, setOngoingDeliveryData] =
@@ -166,7 +215,6 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         // Fetch the full delivery data with driver details
         await fetchDeliveryData(delivery_id);
         setDeliveryStatus("accepted");
-        console.log("Delivery accepted:", data);
       } catch (error: any) {
         console.error("Error fetching delivery data:", error);
         showNotification("Error loading delivery details", "error");
@@ -769,6 +817,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       showNotification(data.msg || "Delivery cancelled", "success");
       resetDeliveryFlow();
       await fetchUserActiveDelivery();
+      await fetchCancelledDeliveries();
       return data.delivery;
     } catch (err: any) {
       showNotification(err?.response?.data?.msg || "Cancel failed", "error");

@@ -29,10 +29,6 @@ const BookDelivery = () => {
     deliveryDropoffMarker,
   } = useDeliverContext();
 
-  useEffect(() => {
-    console.log("route: ", deliveryRouteCoords);
-  }, []);
-
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
 
   // Stop tracking changes after the marker has loaded

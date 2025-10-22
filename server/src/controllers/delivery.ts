@@ -237,7 +237,18 @@ export const get_user_deliveries = async (
     const { status } = req.query;
     const queryObj: any = { sender: user_id };
     if (status) queryObj.status = status as string;
-    const deliveries = await Delivery.find(queryObj).sort({ createdAt: -1 });
+    const deliveries = await Delivery.find(queryObj)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
+      .populate("sender", "name phone profile_pic");
     res
       .status(200)
       .json({ msg: "success", rowCount: deliveries.length, deliveries });
@@ -255,7 +266,18 @@ export const get_user_in_transit_deliveries = async (
     const deliveries = await Delivery.find({
       sender: user_id,
       status: "in_transit",
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
+      .populate("sender", "name phone profile_pic");
     res
       .status(200)
       .json({ msg: "success", rowCount: deliveries.length, deliveries });
@@ -272,7 +294,18 @@ export const get_user_cancelled_deliveries = async (
     const deliveries = await Delivery.find({
       sender: user_id,
       status: "cancelled",
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
+      .populate("sender", "name phone profile_pic");
     res
       .status(200)
       .json({ msg: "success", rowCount: deliveries.length, deliveries });
@@ -289,7 +322,18 @@ export const get_user_delivered_deliveries = async (
     const deliveries = await Delivery.find({
       sender: user_id,
       status: "cancelled",
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
+      .populate("sender", "name phone profile_pic");
     res
       .status(200)
       .json({ msg: "success", rowCount: deliveries.length, deliveries });

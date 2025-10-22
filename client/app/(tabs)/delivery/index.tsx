@@ -5,14 +5,21 @@ import {
   ScrollView,
   Pressable,
   Image,
+  RefreshControl,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";
 import Notification from "../../../components/Notification";
 import { useNotificationContext } from "../../../context/NotificationContext";
-import { useDeliverContext } from "../../../context/DeliveryContext";
+import {
+  useDeliverContext,
+  formatRelativeTime,
+  getPackageIcon,
+  getVehicleIcon,
+} from "../../../context/DeliveryContext";
 import RideRoute from "../../../components/RideRoute";
+import { router } from "expo-router";
 
 const DeliveryRoot = () => {
   const { appLoading } = useLoading();
@@ -29,25 +36,40 @@ const DeliveryRoot = () => {
   const [category, setCategory] = useState<
     "in_transit" | "delivered" | "cancelled"
   >("in_transit");
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch data based on category
+  // Fetch all deliveries on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAllDeliveries = async () => {
       try {
-        if (category === "in_transit") {
-          await fetchUserOngoingDeliveries();
-        } else if (category === "delivered") {
-          await fetchDeliveredDeliveries();
-        } else if (category === "cancelled") {
-          await fetchCancelledDeliveries();
-        }
+        await Promise.all([
+          fetchUserOngoingDeliveries(),
+          fetchDeliveredDeliveries(),
+          fetchCancelledDeliveries(),
+        ]);
       } catch (error) {
-        console.log("Failed to fetch deliveries:", error);
+        console.log("Failed to fetch deliveries on mount:", error);
       }
     };
 
-    fetchData();
-  }, [category]);
+    fetchAllDeliveries();
+  }, []);
+
+  // Pull to refresh handler
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        fetchUserOngoingDeliveries(),
+        fetchDeliveredDeliveries(),
+        fetchCancelledDeliveries(),
+      ]);
+    } catch (error) {
+      console.log("Failed to refresh deliveries:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <>
@@ -69,31 +91,49 @@ const DeliveryRoot = () => {
             {/* Content based on category */}
             {category === "in_transit" &&
               (ongoingDeliveries && ongoingDeliveries.length > 0 ? (
-                <InTransitDeliveries data={ongoingDeliveries as any} />
+                <InTransitDeliveries
+                  data={ongoingDeliveries as any}
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
               ) : (
                 <EmptyState
                   message="You don't have any deliveries in transit currently"
                   tab="in_transit"
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
                 />
               ))}
 
             {category === "delivered" &&
               (deliveredDeliveries && deliveredDeliveries.length > 0 ? (
-                <DeliveredDeliveries data={deliveredDeliveries} />
+                <DeliveredDeliveries
+                  data={deliveredDeliveries}
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
               ) : (
                 <EmptyState
                   message="You don't have any delivered packages yet"
                   tab="delivered"
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
                 />
               ))}
 
             {category === "cancelled" &&
               (cancelledDeliveries && cancelledDeliveries.length > 0 ? (
-                <CancelledDeliveries data={cancelledDeliveries} />
+                <CancelledDeliveries
+                  data={cancelledDeliveries}
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
               ) : (
                 <EmptyState
                   message="You don't have any cancelled deliveries"
                   tab="cancelled"
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
                 />
               ))}
           </View>
@@ -169,19 +209,31 @@ const CategoryTabs = ({
 const EmptyState = ({
   message,
   tab,
+  refreshing,
+  onRefresh,
 }: {
   message: string;
   tab: "in_transit" | "cancelled" | "delivered";
+  refreshing: boolean;
+  onRefresh: () => Promise<void>;
 }) => {
   const { setDeliveryStatus } = useDeliverContext();
 
   return (
-    <View
-      style={{
+    <ScrollView
+      contentContainerStyle={{
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
       }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#fff"
+          colors={["#fff"]}
+        />
+      }
     >
       <View
         style={{ justifyContent: "center", alignItems: "center", width: "90%" }}
@@ -236,7 +288,7 @@ const EmptyState = ({
             marginTop: 10,
           }}
           onPress={() => {
-            setDeliveryStatus("details");
+            router.push("../(book)/book_delivery");
           }}
         >
           <Text
@@ -250,118 +302,33 @@ const EmptyState = ({
           </Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
-const InTransitDeliveries = ({ data }: { data: any[] }) => {
-  // Dummy data for design purposes
-  const dummyDeliveries = [
-    {
-      _id: "1",
-      pickup: { address: "123 Main Street, Downtown" },
-      dropoff: { address: "456 Oak Avenue, Uptown" },
-      to: { name: "John Doe", phone: "+1234567890" },
-      package: {
-        description: "Documents",
-        type: "document",
-        fragile: false,
-      },
-      fare: 15.5,
-      vehicle: "bike",
-      status: "in_transit",
-      driver: {
-        user: { name: "Mike Wilson" },
-        vehicle: { brand: "Honda", model: "CB300R", color: "Red" },
-        rating: 4.8,
-        current_location: { coordinates: [0, 0] },
-      },
-      timestamps: {
-        picked_up_at: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-      },
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    },
-    {
-      _id: "2",
-      pickup: { address: "789 Pine Road, Westside" },
-      dropoff: { address: "321 Elm Street, Eastside" },
-      to: { name: "Sarah Johnson", phone: "+1987654321" },
-      package: {
-        description: "Electronics - Laptop",
-        type: "electronics",
-        fragile: true,
-      },
-      fare: 28.0,
-      vehicle: "cab",
-      status: "in_transit",
-      driver: {
-        user: { name: "David Chen" },
-        vehicle: { brand: "Toyota", model: "Corolla", color: "Blue" },
-        rating: 4.9,
-        current_location: { coordinates: [0, 0] },
-      },
-      timestamps: {
-        picked_up_at: new Date(Date.now() - 45 * 60 * 1000), // 45 minutes ago
-      },
-      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
-    },
-  ];
-
-  // Use dummy data for now, will use real data later
-  const deliveriesToShow = data.length > 0 ? data : dummyDeliveries;
-
-  const formatTime = (date: Date | string) => {
-    const now = new Date();
-    const time = new Date(date);
-    const diffMs = now.getTime() - time.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-
-    if (diffMins < 60) {
-      return `${diffMins}m ago`;
-    } else {
-      const diffHours = Math.floor(diffMins / 60);
-      return `${diffHours}h ago`;
-    }
-  };
-
-  const getVehicleIcon = (vehicle: string) => {
-    switch (vehicle) {
-      case "bike":
-        return "🏍️";
-      case "cab":
-        return "🚗";
-      case "van":
-        return "🚐";
-      case "truck":
-        return "🚚";
-      default:
-        return "🚗";
-    }
-  };
-
-  const getPackageIcon = (type: string) => {
-    switch (type) {
-      case "document":
-        return "📄";
-      case "electronics":
-        return "📱";
-      case "food":
-        return "🍔";
-      case "clothing":
-        return "👕";
-      case "furniture":
-        return "🪑";
-      default:
-        return "📦";
-    }
-  };
-
+const InTransitDeliveries = ({
+  data,
+  refreshing,
+  onRefresh,
+}: {
+  data: any[];
+  refreshing: boolean;
+  onRefresh: () => Promise<void>;
+}) => {
   return (
     <ScrollView
       style={{ flex: 1, marginTop: 20 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#fff"
+          colors={["#fff"]}
+        />
+      }
     >
-      {deliveriesToShow.map((delivery, index) => (
+      {data.map((delivery, index) => (
         <View key={delivery._id || index} style={styles.delivery_card}>
           {/* Header with status and time */}
           <View style={styles.delivery_header}>
@@ -370,7 +337,7 @@ const InTransitDeliveries = ({ data }: { data: any[] }) => {
               <Text style={styles.status_text}>In Transit</Text>
             </View>
             <Text style={styles.time_text}>
-              {formatTime(
+              {formatRelativeTime(
                 delivery.timestamps?.picked_up_at || delivery.createdAt
               )}
             </Text>
@@ -409,9 +376,14 @@ const InTransitDeliveries = ({ data }: { data: any[] }) => {
           <View style={styles.driver_container}>
             <View style={styles.driver_info}>
               <View style={styles.driver_avatar}>
-                <Text style={styles.driver_initial}>
-                  {delivery.driver?.user?.name?.charAt(0) || "D"}
-                </Text>
+                <Image
+                  source={
+                    delivery.driver?.user?.profile_img
+                      ? { uri: delivery.driver?.user?.profile_img }
+                      : require("../../../assets/images/user.png")
+                  }
+                  style={{ width: 40, height: 40, borderRadius: 20 }}
+                />
               </View>
               <View style={styles.driver_details}>
                 <Text style={styles.driver_name}>
@@ -450,168 +422,29 @@ const InTransitDeliveries = ({ data }: { data: any[] }) => {
   );
 };
 
-const DeliveredDeliveries = ({ data }: { data: any[] }) => {
-  // Dummy data for design purposes
-  const dummyDeliveries = [
-    {
-      _id: "del1",
-      pickup: { address: "205 Business District, Downtown" },
-      dropoff: { address: "88 Residential Avenue, Suburbia" },
-      to: { name: "Emma Thompson", phone: "+1234567890" },
-      package: {
-        description: "Legal Documents",
-        type: "document",
-        fragile: false,
-      },
-      fare: 22.5,
-      vehicle: "bike",
-      status: "delivered",
-      driver: {
-        user: { name: "James Rodriguez" },
-        vehicle: { brand: "Yamaha", model: "MT-15", color: "Black" },
-        rating: 4.7,
-        current_location: { coordinates: [0, 0] },
-      },
-      timestamps: {
-        delivered_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        picked_up_at: new Date(
-          Date.now() - 2 * 24 * 60 * 60 * 1000 - 45 * 60 * 1000
-        ), // 2 days and 45 mins ago
-      },
-      createdAt: new Date(
-        Date.now() - 2 * 24 * 60 * 60 * 1000 - 2 * 60 * 60 * 1000
-      ), // 2 days and 2 hours ago
-      payment_status: "paid",
-    },
-    {
-      _id: "del2",
-      pickup: { address: "156 Shopping Center, Mall District" },
-      dropoff: { address: "42 Green Valley, Hillside" },
-      to: { name: "Michael Chen", phone: "+1987654321" },
-      package: {
-        description: "Birthday Gift - Watch",
-        type: "electronics",
-        fragile: true,
-      },
-      fare: 35.0,
-      vehicle: "cab",
-      status: "delivered",
-      driver: {
-        user: { name: "Sofia Martinez" },
-        vehicle: { brand: "Honda", model: "Civic", color: "White" },
-        rating: 4.9,
-        current_location: { coordinates: [0, 0] },
-      },
-      timestamps: {
-        delivered_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-        picked_up_at: new Date(
-          Date.now() - 5 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000
-        ), // 5 days and 30 mins ago
-      },
-      createdAt: new Date(
-        Date.now() - 5 * 24 * 60 * 60 * 1000 - 1 * 60 * 60 * 1000
-      ), // 5 days and 1 hour ago
-      payment_status: "paid",
-    },
-    {
-      _id: "del3",
-      pickup: { address: "78 Restaurant Row, Food District" },
-      dropoff: { address: "234 Oak Street, Northside" },
-      to: { name: "Lisa Johnson", phone: "+1555123456" },
-      package: {
-        description: "Dinner for Two",
-        type: "food",
-        fragile: false,
-      },
-      fare: 18.75,
-      vehicle: "bike",
-      status: "delivered",
-      driver: {
-        user: { name: "Alex Kumar" },
-        vehicle: { brand: "Honda", model: "CB125R", color: "Red" },
-        rating: 4.6,
-        current_location: { coordinates: [0, 0] },
-      },
-      timestamps: {
-        delivered_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-        picked_up_at: new Date(
-          Date.now() - 7 * 24 * 60 * 60 * 1000 - 25 * 60 * 1000
-        ), // 1 week and 25 mins ago
-      },
-      createdAt: new Date(
-        Date.now() - 7 * 24 * 60 * 60 * 1000 - 40 * 60 * 1000
-      ), // 1 week and 40 mins ago
-      payment_status: "paid",
-    },
-  ];
-
-  // Use dummy data for now, will use real data later
-  const deliveriesToShow = data.length > 0 ? data : dummyDeliveries;
-
-  const formatDeliveryTime = (date: Date | string) => {
-    const now = new Date();
-    const time = new Date(date);
-    const diffMs = now.getTime() - time.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      if (diffHours === 0) {
-        const diffMins = Math.floor(diffMs / (1000 * 60));
-        return `${diffMins}m ago`;
-      }
-      return `${diffHours}h ago`;
-    } else if (diffDays === 1) {
-      return "Yesterday";
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
-    } else if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7);
-      return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-    } else {
-      const months = Math.floor(diffDays / 30);
-      return `${months} month${months > 1 ? "s" : ""} ago`;
-    }
-  };
-
-  const getVehicleIcon = (vehicle: string) => {
-    switch (vehicle) {
-      case "bike":
-        return "🏍️";
-      case "cab":
-        return "🚗";
-      case "van":
-        return "🚐";
-      case "truck":
-        return "🚚";
-      default:
-        return "🚗";
-    }
-  };
-
-  const getPackageIcon = (type: string) => {
-    switch (type) {
-      case "document":
-        return "📄";
-      case "electronics":
-        return "📱";
-      case "food":
-        return "🍔";
-      case "clothing":
-        return "👕";
-      case "furniture":
-        return "🪑";
-      default:
-        return "📦";
-    }
-  };
-
+const DeliveredDeliveries = ({
+  data,
+  refreshing,
+  onRefresh,
+}: {
+  data: any[];
+  refreshing: boolean;
+  onRefresh: () => Promise<void>;
+}) => {
   return (
     <ScrollView
       style={{ flex: 1, marginTop: 20 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#fff"
+          colors={["#fff"]}
+        />
+      }
     >
-      {deliveriesToShow.map((delivery, index) => (
+      {data.map((delivery, index) => (
         <View key={delivery._id || index} style={styles.delivery_card}>
           {/* Header with status and time */}
           <View style={styles.delivery_header}>
@@ -624,7 +457,7 @@ const DeliveredDeliveries = ({ data }: { data: any[] }) => {
               </Text>
             </View>
             <Text style={styles.time_text}>
-              {formatDeliveryTime(
+              {formatRelativeTime(
                 delivery.timestamps?.delivered_at || delivery.createdAt
               )}
             </Text>
@@ -663,9 +496,14 @@ const DeliveredDeliveries = ({ data }: { data: any[] }) => {
           <View style={styles.driver_container}>
             <View style={styles.driver_info}>
               <View style={styles.driver_avatar}>
-                <Text style={styles.driver_initial}>
-                  {delivery.driver?.user?.name?.charAt(0) || "D"}
-                </Text>
+                <Image
+                  source={
+                    delivery.driver?.user?.profile_img
+                      ? { uri: delivery.driver?.user?.profile_img }
+                      : require("../../../assets/images/user.png")
+                  }
+                  style={{ width: 40, height: 40, borderRadius: 20 }}
+                />
               </View>
               <View style={styles.driver_details}>
                 <Text style={styles.driver_name}>
@@ -705,120 +543,29 @@ const DeliveredDeliveries = ({ data }: { data: any[] }) => {
   );
 };
 
-const CancelledDeliveries = ({ data }: { data: any[] }) => {
-  // Dummy data for design purposes
-  const dummyCancelledDeliveries = [
-    {
-      _id: "can1",
-      dropoff: { address: "456 Oak Avenue, Uptown" },
-      package: {
-        description: "Office Supplies",
-        type: "document",
-      },
-      status: "cancelled",
-      timestamps: {
-        cancelled_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-      },
-      createdAt: new Date(
-        Date.now() - 3 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000
-      ), // 3 days and 30 mins ago
-      cancelled: {
-        by: "sender",
-        reason: "Changed mind",
-      },
-    },
-    {
-      _id: "can2",
-      dropoff: { address: "789 Pine Road, Westside" },
-      package: {
-        description: "Mobile Phone",
-        type: "electronics",
-      },
-      status: "cancelled",
-      timestamps: {
-        cancelled_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-      },
-      createdAt: new Date(
-        Date.now() - 7 * 24 * 60 * 60 * 1000 - 15 * 60 * 1000
-      ), // 1 week and 15 mins ago
-      cancelled: {
-        by: "driver",
-        reason: "Vehicle breakdown",
-      },
-    },
-    {
-      _id: "can3",
-      dropoff: { address: "321 Elm Street, Downtown" },
-      package: {
-        description: "Birthday Cake",
-        type: "food",
-      },
-      status: "cancelled",
-      timestamps: {
-        cancelled_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 2 weeks ago
-      },
-      createdAt: new Date(
-        Date.now() - 14 * 24 * 60 * 60 * 1000 - 45 * 60 * 1000
-      ), // 2 weeks and 45 mins ago
-      cancelled: {
-        by: "sender",
-        reason: "Event postponed",
-      },
-    },
-  ];
-
-  // Use dummy data for now, will use real data later
-  const deliveriesToShow = data.length > 0 ? data : dummyCancelledDeliveries;
-
-  const formatCancelTime = (date: Date | string) => {
-    const now = new Date();
-    const time = new Date(date);
-    const diffMs = now.getTime() - time.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      if (diffHours === 0) {
-        const diffMins = Math.floor(diffMs / (1000 * 60));
-        return `${diffMins}m ago`;
-      }
-      return `${diffHours}h ago`;
-    } else if (diffDays === 1) {
-      return "Yesterday";
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
-    } else if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7);
-      return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-    } else {
-      const months = Math.floor(diffDays / 30);
-      return `${months} month${months > 1 ? "s" : ""} ago`;
-    }
-  };
-
-  const getPackageIcon = (type: string) => {
-    switch (type) {
-      case "document":
-        return "📄";
-      case "electronics":
-        return "📱";
-      case "food":
-        return "🍔";
-      case "clothing":
-        return "👕";
-      case "furniture":
-        return "🪑";
-      default:
-        return "📦";
-    }
-  };
-
+const CancelledDeliveries = ({
+  data,
+  refreshing,
+  onRefresh,
+}: {
+  data: any[];
+  refreshing: boolean;
+  onRefresh: () => Promise<void>;
+}) => {
   return (
     <ScrollView
       style={{ flex: 1, marginTop: 20 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#fff"
+          colors={["#fff"]}
+        />
+      }
     >
-      {deliveriesToShow.map((delivery, index) => (
+      {data.map((delivery, index) => (
         <View key={delivery._id || index} style={styles.cancelled_card}>
           {/* Header with status and time */}
           <View style={styles.cancelled_header}>
@@ -831,7 +578,7 @@ const CancelledDeliveries = ({ data }: { data: any[] }) => {
               </Text>
             </View>
             <Text style={styles.time_text}>
-              {formatCancelTime(
+              {formatRelativeTime(
                 delivery.timestamps?.cancelled_at || delivery.createdAt
               )}
             </Text>
@@ -862,18 +609,6 @@ const CancelledDeliveries = ({ data }: { data: any[] }) => {
               </Text>
             </View>
           </View>
-
-          {/* Cancellation reason */}
-          {delivery.cancelled?.reason && (
-            <View style={styles.cancellation_reason}>
-              <Text style={styles.reason_label}>
-                Cancelled by {delivery.cancelled.by}:
-              </Text>
-              <Text style={styles.reason_text}>
-                {delivery.cancelled.reason}
-              </Text>
-            </View>
-          )}
         </View>
       ))}
     </ScrollView>
