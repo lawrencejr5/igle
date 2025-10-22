@@ -72,9 +72,21 @@ const DriverRideModal = () => {
       driverSocket.on("new_ride_request", new_ride_func);
       driverSocket.on("ride_taken", ride_taken_func);
 
+      // Notify driver when rider pays for the ride (from server)
+      const paidForRideHandler = (data: any) => {
+        try {
+          showNotification("Rider has paid for ride", "success");
+        } catch (e) {
+          console.log("Error handling paid_for_ride event:", e);
+        }
+      };
+
+      driverSocket.on("paid_for_ride", paidForRideHandler);
+
       return () => {
         driverSocket.off("new_ride_request", new_ride_func);
         driverSocket.off("ride_taken", ride_taken_func);
+        driverSocket.off("paid_for_ride", paidForRideHandler);
       };
     }
   }, [driver?.is_available, driveStatus, driverSocket]);
