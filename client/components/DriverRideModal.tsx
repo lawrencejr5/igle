@@ -234,7 +234,7 @@ const IncomingModal = () => {
     acceptRideRequest,
   } = useDriverContext();
 
-  const [countDown, setCountDown] = useState<number>(900);
+  const [countDown, setCountDown] = useState<number>(30);
   const [accepting, setAccepting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -411,7 +411,11 @@ const AcceptedModal = () => {
           {/* User */}
           <View style={styles.userInfo}>
             <Image
-              source={require("../assets/images/black-profile.jpeg")}
+              source={
+                ongoingRideData?.rider?.profile_pic
+                  ? { uri: ongoingRideData?.rider?.profile_pic } // remote image from backend
+                  : require("../assets/images/user.png")
+              }
               style={styles.userImage}
             />
             <View>

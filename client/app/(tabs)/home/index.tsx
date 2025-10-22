@@ -27,6 +27,8 @@ import { useAuthContext } from "../../../context/AuthContext";
 import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import { useMapContext } from "../../../context/MapContext";
+import Notification from "../../../components/Notification";
+import { useNotificationContext } from "../../../context/NotificationContext";
 
 const Home = () => {
   const insets = useSafeAreaInsets();
@@ -152,6 +154,7 @@ const Home = () => {
   }, [signedIn]);
 
   const { appLoading } = useLoading();
+  const { notification } = useNotificationContext();
 
   return (
     <>
@@ -159,6 +162,7 @@ const Home = () => {
         <AppLoading />
       ) : (
         <>
+          <Notification notification={notification} />
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={[styles.container, { paddingTop: insets.top + 10 }]}

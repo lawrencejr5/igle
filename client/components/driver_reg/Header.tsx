@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View, TouchableWithoutFeedback } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+} from "react-native";
 import React from "react";
 
 import { FontAwesome5 } from "@expo/vector-icons";
@@ -12,12 +18,12 @@ const Header = () => {
   return (
     <View style={styles.header}>
       <Text style={styles.header_text}>Driver Registration</Text>
-      <TouchableWithoutFeedback
+      <TouchableOpacity
         onPress={() => router.push("../../(tabs)/home")}
-        style={{ padding: 20 }}
+        style={{ paddingLeft: 20 }}
       >
         <FontAwesome5 name="times" size={24} color="#fff" />
-      </TouchableWithoutFeedback>
+      </TouchableOpacity>
     </View>
   );
 };

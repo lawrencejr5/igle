@@ -180,12 +180,9 @@ const SideNav: React.FC<{
               <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
                 <TouchableWithoutFeedback onPress={go_to_driver}>
                   <View style={styles.switch_btn}>
-                    <Text style={styles.switch_btn_text}>Driver mode</Text>
-                    {/* <FontAwesome6
-                      name="arrow-right-arrow-left"
-                      size={18}
-                      color="black"
-                    /> */}
+                    <Text style={styles.switch_btn_text}>
+                      {signedIn?.is_driver ? "Driver mode" : "Become a driver"}
+                    </Text>
                   </View>
                 </TouchableWithoutFeedback>
               </View>
