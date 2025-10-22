@@ -732,20 +732,20 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         ride.payment_status = "paid";
         ride.payment_method = "wallet";
         yield ride.save();
-        // Notify driver about payment
+        // Emit socket event to assigned driver (if connected)
         try {
-            const driverTokens = (ride === null || ride === void 0 ? void 0 : ride.driver)
-                ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
-                : [];
-            if (driverTokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(driverTokens, "Ride paid", `Rider has paid for ride ${ride._id}`, {
-                    type: "ride_paid",
-                    rideId: ride._id,
+            const driver_socket = (ride === null || ride === void 0 ? void 0 : ride.driver)
+                ? yield (0, get_id_1.get_driver_socket_id)(ride.driver)
+                : null;
+            if (driver_socket) {
+                server_1.io.to(driver_socket).emit("paid_for_ride", {
+                    ride_id: ride._id,
+                    msg: "Rider has paid for ride",
                 });
             }
         }
         catch (e) {
-            console.error("Failed to send payment push to driver:", e);
+            console.error("Failed to emit paid_for_ride socket to driver:", e);
         }
         res.status(200).json({ msg: "Payment successful", transaction });
     }

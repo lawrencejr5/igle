@@ -231,7 +231,17 @@ const get_user_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, func
         const queryObj = { sender: user_id };
         if (status)
             queryObj.status = status;
-        const deliveries = yield delivery_1.default.find(queryObj).sort({ createdAt: -1 });
+        const deliveries = yield delivery_1.default.find(queryObj)
+            .sort({ createdAt: -1 })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        })
+            .populate("sender", "name phone profile_pic");
         res
             .status(200)
             .json({ msg: "success", rowCount: deliveries.length, deliveries });
@@ -248,7 +258,17 @@ const get_user_in_transit_deliveries = (req, res) => __awaiter(void 0, void 0, v
         const deliveries = yield delivery_1.default.find({
             sender: user_id,
             status: "in_transit",
-        }).sort({ createdAt: -1 });
+        })
+            .sort({ createdAt: -1 })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        })
+            .populate("sender", "name phone profile_pic");
         res
             .status(200)
             .json({ msg: "success", rowCount: deliveries.length, deliveries });
@@ -265,7 +285,17 @@ const get_user_cancelled_deliveries = (req, res) => __awaiter(void 0, void 0, vo
         const deliveries = yield delivery_1.default.find({
             sender: user_id,
             status: "cancelled",
-        }).sort({ createdAt: -1 });
+        })
+            .sort({ createdAt: -1 })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        })
+            .populate("sender", "name phone profile_pic");
         res
             .status(200)
             .json({ msg: "success", rowCount: deliveries.length, deliveries });
@@ -282,7 +312,17 @@ const get_user_delivered_deliveries = (req, res) => __awaiter(void 0, void 0, vo
         const deliveries = yield delivery_1.default.find({
             sender: user_id,
             status: "cancelled",
-        }).sort({ createdAt: -1 });
+        })
+            .sort({ createdAt: -1 })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        })
+            .populate("sender", "name phone profile_pic");
         res
             .status(200)
             .json({ msg: "success", rowCount: deliveries.length, deliveries });
