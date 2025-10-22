@@ -67,15 +67,15 @@ const DeliveryRoot = () => {
             />
 
             {/* Content based on category */}
-            {/* {category === "in_transit" &&
-              (ongoingDeliveries && ongoingDeliveries.length > 0 ? ( */}
-            <InTransitDeliveries data={ongoingDeliveries as any} />
-            {/* ) : (
+            {category === "in_transit" &&
+              (ongoingDeliveries && ongoingDeliveries.length > 0 ? (
+                <InTransitDeliveries data={ongoingDeliveries as any} />
+              ) : (
                 <EmptyState
                   message="You don't have any deliveries in transit currently"
                   tab="in_transit"
                 />
-              ))} */}
+              ))}
 
             {category === "delivered" &&
               (deliveredDeliveries && deliveredDeliveries.length > 0 ? (
@@ -451,22 +451,432 @@ const InTransitDeliveries = ({ data }: { data: any[] }) => {
 };
 
 const DeliveredDeliveries = ({ data }: { data: any[] }) => {
+  // Dummy data for design purposes
+  const dummyDeliveries = [
+    {
+      _id: "del1",
+      pickup: { address: "205 Business District, Downtown" },
+      dropoff: { address: "88 Residential Avenue, Suburbia" },
+      to: { name: "Emma Thompson", phone: "+1234567890" },
+      package: {
+        description: "Legal Documents",
+        type: "document",
+        fragile: false,
+      },
+      fare: 22.5,
+      vehicle: "bike",
+      status: "delivered",
+      driver: {
+        user: { name: "James Rodriguez" },
+        vehicle: { brand: "Yamaha", model: "MT-15", color: "Black" },
+        rating: 4.7,
+        current_location: { coordinates: [0, 0] },
+      },
+      timestamps: {
+        delivered_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        picked_up_at: new Date(
+          Date.now() - 2 * 24 * 60 * 60 * 1000 - 45 * 60 * 1000
+        ), // 2 days and 45 mins ago
+      },
+      createdAt: new Date(
+        Date.now() - 2 * 24 * 60 * 60 * 1000 - 2 * 60 * 60 * 1000
+      ), // 2 days and 2 hours ago
+      payment_status: "paid",
+    },
+    {
+      _id: "del2",
+      pickup: { address: "156 Shopping Center, Mall District" },
+      dropoff: { address: "42 Green Valley, Hillside" },
+      to: { name: "Michael Chen", phone: "+1987654321" },
+      package: {
+        description: "Birthday Gift - Watch",
+        type: "electronics",
+        fragile: true,
+      },
+      fare: 35.0,
+      vehicle: "cab",
+      status: "delivered",
+      driver: {
+        user: { name: "Sofia Martinez" },
+        vehicle: { brand: "Honda", model: "Civic", color: "White" },
+        rating: 4.9,
+        current_location: { coordinates: [0, 0] },
+      },
+      timestamps: {
+        delivered_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        picked_up_at: new Date(
+          Date.now() - 5 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000
+        ), // 5 days and 30 mins ago
+      },
+      createdAt: new Date(
+        Date.now() - 5 * 24 * 60 * 60 * 1000 - 1 * 60 * 60 * 1000
+      ), // 5 days and 1 hour ago
+      payment_status: "paid",
+    },
+    {
+      _id: "del3",
+      pickup: { address: "78 Restaurant Row, Food District" },
+      dropoff: { address: "234 Oak Street, Northside" },
+      to: { name: "Lisa Johnson", phone: "+1555123456" },
+      package: {
+        description: "Dinner for Two",
+        type: "food",
+        fragile: false,
+      },
+      fare: 18.75,
+      vehicle: "bike",
+      status: "delivered",
+      driver: {
+        user: { name: "Alex Kumar" },
+        vehicle: { brand: "Honda", model: "CB125R", color: "Red" },
+        rating: 4.6,
+        current_location: { coordinates: [0, 0] },
+      },
+      timestamps: {
+        delivered_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+        picked_up_at: new Date(
+          Date.now() - 7 * 24 * 60 * 60 * 1000 - 25 * 60 * 1000
+        ), // 1 week and 25 mins ago
+      },
+      createdAt: new Date(
+        Date.now() - 7 * 24 * 60 * 60 * 1000 - 40 * 60 * 1000
+      ), // 1 week and 40 mins ago
+      payment_status: "paid",
+    },
+  ];
+
+  // Use dummy data for now, will use real data later
+  const deliveriesToShow = data.length > 0 ? data : dummyDeliveries;
+
+  const formatDeliveryTime = (date: Date | string) => {
+    const now = new Date();
+    const time = new Date(date);
+    const diffMs = now.getTime() - time.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours === 0) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return `${diffMins}m ago`;
+      }
+      return `${diffHours}h ago`;
+    } else if (diffDays === 1) {
+      return "Yesterday";
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    } else {
+      const months = Math.floor(diffDays / 30);
+      return `${months} month${months > 1 ? "s" : ""} ago`;
+    }
+  };
+
+  const getVehicleIcon = (vehicle: string) => {
+    switch (vehicle) {
+      case "bike":
+        return "🏍️";
+      case "cab":
+        return "🚗";
+      case "van":
+        return "🚐";
+      case "truck":
+        return "🚚";
+      default:
+        return "🚗";
+    }
+  };
+
+  const getPackageIcon = (type: string) => {
+    switch (type) {
+      case "document":
+        return "📄";
+      case "electronics":
+        return "📱";
+      case "food":
+        return "🍔";
+      case "clothing":
+        return "👕";
+      case "furniture":
+        return "🪑";
+      default:
+        return "📦";
+    }
+  };
+
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={{ color: "#fff", textAlign: "center", marginTop: 50 }}>
-        Delivered deliveries will be shown here ({data.length} deliveries)
-      </Text>
-    </View>
+    <ScrollView
+      style={{ flex: 1, marginTop: 20 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {deliveriesToShow.map((delivery, index) => (
+        <View key={delivery._id || index} style={styles.delivery_card}>
+          {/* Header with status and time */}
+          <View style={styles.delivery_header}>
+            <View style={styles.status_container}>
+              <View
+                style={[styles.status_dot, { backgroundColor: "#00ff88" }]}
+              />
+              <Text style={[styles.status_text, { color: "#00ff88" }]}>
+                Delivered
+              </Text>
+            </View>
+            <Text style={styles.time_text}>
+              {formatDeliveryTime(
+                delivery.timestamps?.delivered_at || delivery.createdAt
+              )}
+            </Text>
+          </View>
+
+          {/* Route Information */}
+          <RideRoute
+            from={delivery.pickup?.address || "Pickup location"}
+            to={delivery.dropoff?.address || "Dropoff location"}
+          />
+
+          {/* Package and Recipient Info */}
+          <View style={styles.info_container}>
+            <View style={styles.package_info}>
+              <Text style={styles.package_icon}>
+                {getPackageIcon(delivery.package?.type)}
+              </Text>
+              <View style={styles.package_details}>
+                <Text style={styles.package_description} numberOfLines={1}>
+                  {delivery.package?.description || "Package"}
+                </Text>
+                {delivery.package?.fragile && (
+                  <Text style={styles.fragile_text}>⚠️ Fragile</Text>
+                )}
+              </View>
+            </View>
+            <View style={styles.recipient_info}>
+              <Text style={styles.recipient_label}>Delivered to:</Text>
+              <Text style={styles.recipient_name}>
+                {delivery.to?.name || "Recipient"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Driver and Vehicle Info */}
+          <View style={styles.driver_container}>
+            <View style={styles.driver_info}>
+              <View style={styles.driver_avatar}>
+                <Text style={styles.driver_initial}>
+                  {delivery.driver?.user?.name?.charAt(0) || "D"}
+                </Text>
+              </View>
+              <View style={styles.driver_details}>
+                <Text style={styles.driver_name}>
+                  {delivery.driver?.user?.name || "Driver"}
+                </Text>
+                <Text style={styles.vehicle_info}>
+                  {getVehicleIcon(delivery.vehicle)}{" "}
+                  {delivery.driver?.vehicle?.brand}{" "}
+                  {delivery.driver?.vehicle?.model}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.rating_container}>
+              <Text style={styles.rating_star}>⭐</Text>
+              <Text style={styles.rating_text}>
+                {delivery.driver?.rating?.toFixed(1) || "4.5"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Footer with fare and status */}
+          <View style={styles.delivery_footer}>
+            <View style={styles.fare_container}>
+              <Text style={styles.fare_label}>Total Paid</Text>
+              <Text style={styles.fare_amount}>
+                ${delivery.fare?.toFixed(2) || "0.00"}
+              </Text>
+            </View>
+            <View style={styles.delivered_status}>
+              <Text style={styles.delivered_check}>✓</Text>
+              <Text style={styles.delivered_text}>Completed</Text>
+            </View>
+          </View>
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
 const CancelledDeliveries = ({ data }: { data: any[] }) => {
+  // Dummy data for design purposes
+  const dummyCancelledDeliveries = [
+    {
+      _id: "can1",
+      dropoff: { address: "456 Oak Avenue, Uptown" },
+      package: {
+        description: "Office Supplies",
+        type: "document",
+      },
+      status: "cancelled",
+      timestamps: {
+        cancelled_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      },
+      createdAt: new Date(
+        Date.now() - 3 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000
+      ), // 3 days and 30 mins ago
+      cancelled: {
+        by: "sender",
+        reason: "Changed mind",
+      },
+    },
+    {
+      _id: "can2",
+      dropoff: { address: "789 Pine Road, Westside" },
+      package: {
+        description: "Mobile Phone",
+        type: "electronics",
+      },
+      status: "cancelled",
+      timestamps: {
+        cancelled_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+      },
+      createdAt: new Date(
+        Date.now() - 7 * 24 * 60 * 60 * 1000 - 15 * 60 * 1000
+      ), // 1 week and 15 mins ago
+      cancelled: {
+        by: "driver",
+        reason: "Vehicle breakdown",
+      },
+    },
+    {
+      _id: "can3",
+      dropoff: { address: "321 Elm Street, Downtown" },
+      package: {
+        description: "Birthday Cake",
+        type: "food",
+      },
+      status: "cancelled",
+      timestamps: {
+        cancelled_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 2 weeks ago
+      },
+      createdAt: new Date(
+        Date.now() - 14 * 24 * 60 * 60 * 1000 - 45 * 60 * 1000
+      ), // 2 weeks and 45 mins ago
+      cancelled: {
+        by: "sender",
+        reason: "Event postponed",
+      },
+    },
+  ];
+
+  // Use dummy data for now, will use real data later
+  const deliveriesToShow = data.length > 0 ? data : dummyCancelledDeliveries;
+
+  const formatCancelTime = (date: Date | string) => {
+    const now = new Date();
+    const time = new Date(date);
+    const diffMs = now.getTime() - time.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours === 0) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return `${diffMins}m ago`;
+      }
+      return `${diffHours}h ago`;
+    } else if (diffDays === 1) {
+      return "Yesterday";
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    } else {
+      const months = Math.floor(diffDays / 30);
+      return `${months} month${months > 1 ? "s" : ""} ago`;
+    }
+  };
+
+  const getPackageIcon = (type: string) => {
+    switch (type) {
+      case "document":
+        return "📄";
+      case "electronics":
+        return "📱";
+      case "food":
+        return "🍔";
+      case "clothing":
+        return "👕";
+      case "furniture":
+        return "🪑";
+      default:
+        return "📦";
+    }
+  };
+
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={{ color: "#fff", textAlign: "center", marginTop: 50 }}>
-        Cancelled deliveries will be shown here ({data.length} deliveries)
-      </Text>
-    </View>
+    <ScrollView
+      style={{ flex: 1, marginTop: 20 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {deliveriesToShow.map((delivery, index) => (
+        <View key={delivery._id || index} style={styles.cancelled_card}>
+          {/* Header with status and time */}
+          <View style={styles.cancelled_header}>
+            <View style={styles.status_container}>
+              <View
+                style={[styles.status_dot, { backgroundColor: "#ff6b6b" }]}
+              />
+              <Text style={[styles.status_text, { color: "#ff6b6b" }]}>
+                Cancelled
+              </Text>
+            </View>
+            <Text style={styles.time_text}>
+              {formatCancelTime(
+                delivery.timestamps?.cancelled_at || delivery.createdAt
+              )}
+            </Text>
+          </View>
+
+          {/* Package Info */}
+          <View style={styles.cancelled_content}>
+            <View style={styles.cancelled_package}>
+              <Text style={styles.package_icon}>
+                {getPackageIcon(delivery.package?.type)}
+              </Text>
+              <View style={styles.cancelled_package_details}>
+                <Text style={styles.cancelled_package_name} numberOfLines={1}>
+                  {delivery.package?.description || "Package"}
+                </Text>
+                <Text style={styles.cancelled_package_type}>
+                  {delivery.package?.type?.charAt(0).toUpperCase() +
+                    delivery.package?.type?.slice(1) || "Package"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Destination */}
+            <View style={styles.cancelled_destination}>
+              <Text style={styles.destination_label}>To:</Text>
+              <Text style={styles.destination_address} numberOfLines={2}>
+                {delivery.dropoff?.address || "Destination"}
+              </Text>
+            </View>
+          </View>
+
+          {/* Cancellation reason */}
+          {delivery.cancelled?.reason && (
+            <View style={styles.cancellation_reason}>
+              <Text style={styles.reason_label}>
+                Cancelled by {delivery.cancelled.by}:
+              </Text>
+              <Text style={styles.reason_text}>
+                {delivery.cancelled.reason}
+              </Text>
+            </View>
+          )}
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
@@ -686,5 +1096,100 @@ const styles = StyleSheet.create({
     color: "#000",
     fontFamily: "raleway-semibold",
     fontSize: 14,
+  },
+  delivered_status: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2a2a2a",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  delivered_check: {
+    color: "#00ff88",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginRight: 6,
+  },
+  delivered_text: {
+    color: "#00ff88",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+  },
+  // Cancelled delivery card styles
+  cancelled_card: {
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#4b4b4bff",
+    width: "100%",
+    borderRadius: 12,
+    marginBottom: 12,
+    padding: 16,
+    backgroundColor: "#1e1e1e",
+  },
+  cancelled_header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  cancelled_content: {
+    marginBottom: 12,
+  },
+  cancelled_package: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  cancelled_package_details: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  cancelled_package_name: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  cancelled_package_type: {
+    color: "#888",
+    fontFamily: "raleway-regular",
+    fontSize: 12,
+  },
+  cancelled_destination: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#2a2a2a",
+    borderRadius: 8,
+  },
+  destination_label: {
+    color: "#888",
+    fontFamily: "raleway-regular",
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  destination_address: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 13,
+  },
+  cancellation_reason: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#2d1f1f",
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#ff6b6b",
+  },
+  reason_label: {
+    color: "#ff6b6b",
+    fontFamily: "raleway-regular",
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  reason_text: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 12,
   },
 });
