@@ -181,12 +181,6 @@ const HomePage = () => {
               <Feather name="menu" size={22} color="white" />
             </View>
           </TouchableWithoutFeedback>
-
-          <TouchableWithoutFeedback onPress={() => setOpenNotification(true)}>
-            <View style={styles.nav_box}>
-              <Feather name="bell" size={22} color="white" />
-            </View>
-          </TouchableWithoutFeedback>
         </View>
 
         {/* Side nav */}
@@ -194,12 +188,6 @@ const HomePage = () => {
           open={sideNavOpen}
           setSideNavOpen={setSideNavOpen}
           mode="driver"
-        />
-
-        {/* Notification screen */}
-        <NotificationScreen
-          open={openNotification}
-          setOpen={setOpenNotification}
         />
 
         {/* Location Update Modal */}

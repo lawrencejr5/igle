@@ -162,7 +162,7 @@ const Home = () => {
         <AppLoading />
       ) : (
         <>
-          <Notification notification={notification} />
+          {notification.visible && <Notification notification={notification} />}
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={[styles.container, { paddingTop: insets.top + 10 }]}
