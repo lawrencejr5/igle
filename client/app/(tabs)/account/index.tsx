@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -171,10 +172,13 @@ const Account = () => {
                 <Entypo name="location-pin" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Saved places</Text>
               </Pressable>
-              <View style={styles.setting_box}>
+              <TouchableOpacity
+                onPress={() => router.push("./account/feedback")}
+                style={styles.setting_box}
+              >
                 <Feather name="help-circle" size={20} color="#c6c6c6" />
-                <Text style={styles.setting_text}>Help and support</Text>
-              </View>
+                <Text style={styles.setting_text}>Help and Feedback</Text>
+              </TouchableOpacity>
               <View style={styles.setting_box}>
                 <FontAwesome name="star" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Rate us</Text>
