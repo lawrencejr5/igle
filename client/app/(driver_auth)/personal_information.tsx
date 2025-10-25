@@ -23,6 +23,7 @@ import { useNotificationContext } from "../../context/NotificationContext";
 import Notification from "../../components/Notification";
 import * as ImagePicker from "expo-image-picker";
 import { ActivityIndicator, Image, Pressable } from "react-native";
+import { useAuthContext } from "../../context/AuthContext";
 
 const PersonalInformation = () => {
   const styles = driver_reg_styles();
@@ -35,10 +36,11 @@ const PersonalInformation = () => {
     removingPic,
     driver,
   } = useDriverAuthContext();
+  const { signedIn } = useAuthContext();
 
   const [imageUri, setImageUri] = useState<string>("");
-  const [fullName, setFullName] = useState<string>("Oputa Lawrence");
-  const [email, setEmail] = useState<string>("oputalawrence@gmail.com");
+  const [fullName, setFullName] = useState<string>(signedIn?.name!);
+  const [email, setEmail] = useState<string>(signedIn?.email!);
   const [dateOfBirth, setDateOfBirth] = useState<string>("");
   const [dateObj, setDateObj] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);

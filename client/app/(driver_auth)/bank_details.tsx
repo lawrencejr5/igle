@@ -19,6 +19,7 @@ import Header from "../../components/driver_reg/Header";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import { useAuthContext } from "../../context/AuthContext";
 import { useNotificationContext } from "../../context/NotificationContext";
+import FeedbackTypeDropdown from "../../components/FeedbackTypeDropdown";
 import Notification from "../../components/Notification";
 
 const BankDetails = () => {
@@ -30,13 +31,35 @@ const BankDetails = () => {
   const [bankName, setBankName] = useState<string>("");
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [accountName, setAccountName] = useState<string>("");
-  const [bankCode, setBankCode] = useState<string>("");
+  const [bankCode, setBankCode] = useState<string>("058");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const BANK = [
+    { key: "058", label: "GTBank" },
+    { key: "044", label: "Access Bank" },
+    { key: "057", label: "Zenith Bank" },
+    { key: "033", label: "UBA" },
+    { key: "011", label: "First Bank" },
+    { key: "070", label: "Fidelity" },
+    { key: "076", label: "Polaris" },
+    { key: "035", label: "Wema" },
+    { key: "232", label: "Sterling" },
+    { key: "032", label: "Union Bank" },
+    { key: "50515", label: "Moniepoint MFB" },
+    { key: "999992", label: "Opay (Paycom)" },
+    { key: "999991", label: "PalmPay" },
+    { key: "50211", label: "Kuda" },
+  ];
+
+  // initialize bankName from selected code
+  const [selectedBankName, setSelectedBankName] = useState<string>(
+    BANK.find((b) => b.key === bankCode)?.label || ""
+  );
+
   const handleNext = async (): Promise<void> => {
     if (
-      !bankName.trim() ||
+      !selectedBankName ||
       !accountNumber.trim() ||
       !accountName.trim() ||
       !bankCode.trim()
@@ -108,18 +131,23 @@ const BankDetails = () => {
 
           {/* Form */}
           <View style={{ marginTop: 20 }}>
+            {/* Bank name removed - using dropdown to select bank and code */}
+
             <View style={styles.inp_container}>
-              <Text style={styles.inp_label}>Bank Name</Text>
-              <View style={styles.inp_holder}>
+              <Text style={styles.inp_label}>Bank</Text>
+              <View style={[styles.inp_holder, { paddingVertical: 0 }]}>
                 <FontAwesome name="university" size={20} color="white" />
-                <TextInput
-                  style={styles.text_input}
-                  autoCapitalize="words"
-                  placeholder="e.g. First Bank, GT Bank"
-                  placeholderTextColor="#c5c5c5"
-                  value={bankName}
-                  onChangeText={setBankName}
-                />
+                <View style={{ flex: 1 }}>
+                  <FeedbackTypeDropdown
+                    options={BANK}
+                    value={bankCode}
+                    onChange={(k) => {
+                      setBankCode(k);
+                      const b = BANK.find((x) => x.key === k);
+                      if (b) setSelectedBankName(b.label);
+                    }}
+                  />
+                </View>
               </View>
             </View>
 
@@ -151,23 +179,6 @@ const BankDetails = () => {
                   placeholderTextColor="#c5c5c5"
                   value={accountName}
                   onChangeText={setAccountName}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inp_container}>
-              <Text style={styles.inp_label}>Bank Code</Text>
-              <View style={styles.inp_holder}>
-                <FontAwesome name="code" size={20} color="white" />
-                <TextInput
-                  style={styles.text_input}
-                  autoCapitalize="none"
-                  keyboardType="numeric"
-                  placeholder="e.g. GTB - 058"
-                  placeholderTextColor="#c5c5c5"
-                  value={bankCode}
-                  onChangeText={setBankCode}
-                  maxLength={3}
                 />
               </View>
             </View>

@@ -108,7 +108,7 @@ const VehicleInformation = () => {
     }
 
     if (
-      !brand.trim() ||
+      (driver?.vehicle_type !== "keke" && !brand.trim()) ||
       !model.trim() ||
       !color.trim() ||
       !year.trim() ||

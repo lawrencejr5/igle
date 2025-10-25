@@ -16,6 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFeedbackContext } from "../../../context/FeedbackContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
+import FeedbackTypeDropdown from "../../../components/FeedbackTypeDropdown";
 
 const FEEDBACK_TYPES = [
   { key: "bug", label: "Bug report" },
@@ -28,7 +29,6 @@ const Feedback = () => {
   const [message, setMessage] = useState<string>("");
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [showDropdown, setShowDropdown] = useState<boolean>(false);
 
   const { sendFeedback, sending } = useFeedbackContext();
   const { showNotification } = useNotificationContext();
@@ -98,34 +98,11 @@ const Feedback = () => {
         </View>
 
         <Text style={styles.label}>Type</Text>
-        <View style={styles.dropdownContainer}>
-          <Pressable
-            style={styles.dropdownToggle}
-            onPress={() => setShowDropdown((s) => !s)}
-            android_ripple={{ color: "#2b2b2b" }}
-          >
-            <Text style={styles.dropdownText}>
-              {FEEDBACK_TYPES.find((f) => f.key === type)?.label}
-            </Text>
-            <AntDesign name="down" size={14} color="#d7d7d7" />
-          </Pressable>
-          {showDropdown && (
-            <View style={styles.dropdownList}>
-              {FEEDBACK_TYPES.map((f) => (
-                <Pressable
-                  key={f.key}
-                  onPress={() => {
-                    setType(f.key);
-                    setShowDropdown(false);
-                  }}
-                  style={styles.dropdownItem}
-                >
-                  <Text style={styles.dropdownItemText}>{f.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
-        </View>
+        <FeedbackTypeDropdown
+          options={FEEDBACK_TYPES}
+          value={type}
+          onChange={(k) => setType(k)}
+        />
 
         <Text style={styles.label}>Message</Text>
         <TextInput
