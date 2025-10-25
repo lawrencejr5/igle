@@ -377,65 +377,36 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setDeliveryStatus("route");
       return true;
     }
-    if (deliveryStatus === "expired") {
-      setDeliveryStatus("vehicle");
-      return true;
-    }
-    if (deliveryStatus === "accepted") {
-      setDeliveryStatus("vehicle");
-      return true;
-    }
     if (deliveryStatus === "track_driver") {
       setDeliveryStatus("accepted");
-      return true;
-    }
-    if (deliveryStatus === "arrived") {
-      setDeliveryStatus("track_driver");
       return true;
     }
     if (deliveryStatus === "paying") {
       setDeliveryStatus("arrived");
       return true;
     }
-    if (deliveryStatus === "paid") {
-      setDeliveryStatus("paying");
-      return true;
-    }
-    if (deliveryStatus === "picked_up") {
-      setDeliveryStatus("paid");
-      return true;
-    }
-    if (deliveryStatus === "in_transit") {
-      setDeliveryStatus("picked_up");
-      return true;
-    }
     if (deliveryStatus === "track_delivery") {
       setDeliveryStatus("paid");
       return true;
     }
-    if (deliveryStatus === "rating") {
-      setDeliveryStatus("in_transit");
-      return true;
-    }
-
     return false;
   };
 
-  // useEffect(() => {
-  //   // Handles navigation back (iOS + Android header back + swipe)
-  //   const subNav = navigation.addListener("beforeRemove", handleBackAction);
+  useEffect(() => {
+    // Handles navigation back (iOS + Android header back + swipe)
+    const subNav = navigation.addListener("beforeRemove", handleBackAction);
 
-  //   // Handles hardware back (Android only)
-  //   const subHW =
-  //     Platform.OS === "android"
-  //       ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
-  //       : null;
+    // Handles hardware back (Android only)
+    const subHW =
+      Platform.OS === "android"
+        ? BackHandler.addEventListener("hardwareBackPress", handleBackAction)
+        : null;
 
-  //   return () => {
-  //     subNav();
-  //     if (subHW) subHW.remove();
-  //   };
-  // }, [navigation, deliveryStatus]);
+    return () => {
+      subNav();
+      if (subHW) subHW.remove();
+    };
+  }, [navigation, deliveryStatus]);
 
   const [userDeliveries, setUserDeliveries] = useState<Delivery[] | null>(null);
   const [ongoingDeliveries, setOngoingDeliveries] = useState<Delivery[] | null>(
