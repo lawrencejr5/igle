@@ -14,6 +14,8 @@ import { AntDesign } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFeedbackContext } from "../../../context/FeedbackContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
 
 const FEEDBACK_TYPES = [
   { key: "bug", label: "Bug report" },
@@ -28,15 +30,15 @@ const Feedback = () => {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
 
+  const { sendFeedback, sending } = useFeedbackContext();
+  const { showNotification } = useNotificationContext();
+
   const pickImage = async () => {
     try {
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          "Permission required",
-          "Permission to access photos is required."
-        );
+        showNotification("Permission to access photos is required.", "error");
         return;
       }
 
@@ -51,7 +53,7 @@ const Feedback = () => {
       }
     } catch (e) {
       console.log(e);
-      Alert.alert("Error", "Could not pick image");
+      showNotification("Could not pick image", "error");
     }
   };
 
@@ -61,26 +63,24 @@ const Feedback = () => {
 
   const submit = async () => {
     if (!message.trim()) {
-      Alert.alert(
-        "Please write your feedback",
-        "A short message helps us understand the issue."
+      showNotification(
+        "Please write your feedback. A short message helps us understand the issue.",
+        "error"
       );
       return;
     }
-
     setSubmitting(true);
     try {
-      // Placeholder: no network call by default. Replace with API call if needed.
-      console.log({ type, message, images });
-      setTimeout(() => {
-        setSubmitting(false);
-        Alert.alert("Thanks!", "Your feedback has been recorded.");
-        router.back();
-      }, 700);
+      // convert image URIs to objects expected by context
+      const imageObjects = images.map((uri) => ({ uri }));
+      await sendFeedback({ type: type as any, message, images: imageObjects });
+      setSubmitting(false);
+      showNotification("Thanks for your feedback", "success");
+      router.back();
     } catch (e) {
       console.log(e);
       setSubmitting(false);
-      Alert.alert("Error", "Failed to submit feedback");
+      showNotification("Failed to submit feedback", "error");
     }
   };
 
@@ -165,11 +165,11 @@ const Feedback = () => {
         <TouchableOpacity
           style={[styles.submitBtn, styles.submitBtnWhite]}
           onPress={submit}
-          disabled={submitting}
+          disabled={submitting || sending}
           activeOpacity={0.8}
         >
           <Text style={[styles.submitText, styles.submitTextDark]}>
-            {submitting ? "Sending..." : "Send feedback"}
+            {submitting || sending ? "Sending..." : "Send feedback"}
           </Text>
         </TouchableOpacity>
       </ScrollView>

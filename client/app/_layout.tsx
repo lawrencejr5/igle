@@ -24,6 +24,7 @@ import RatingProvider from "../context/RatingContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TransactionContextProvider from "../context/TransactionContext";
 import DeliverProvider from "../context/DeliveryContext";
+import FeedbackProvider from "../context/FeedbackContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -59,11 +60,13 @@ const RootLayout = () => {
                             <DriverContextPrvider>
                               <RideContextProvider>
                                 <DeliverProvider>
-                                  <Stack
-                                    screenOptions={{
-                                      headerShown: false,
-                                    }}
-                                  />
+                                  <FeedbackProvider>
+                                    <Stack
+                                      screenOptions={{
+                                        headerShown: false,
+                                      }}
+                                    />
+                                  </FeedbackProvider>
                                 </DeliverProvider>
                               </RideContextProvider>
                             </DriverContextPrvider>
