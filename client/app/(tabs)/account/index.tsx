@@ -23,6 +23,8 @@ import { useNotificationContext } from "../../../context/NotificationContext";
 import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import { router } from "expo-router";
+import * as Linking from "expo-linking";
+import { Alert } from "react-native";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
@@ -31,6 +33,18 @@ const Account = () => {
   const { userWalletBal, walletLoading } = useWalletContext();
   const { notification } = useNotificationContext();
   const { appLoading } = useLoading();
+
+  const handleRateUs = async () => {
+    const url =
+      "https://play.google.com/store/apps/details?id=com.lawrencejr.igle";
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert("Error", "Can't open the Play Store right now");
+    }
+  };
 
   return (
     <>
@@ -143,35 +157,35 @@ const Account = () => {
               >
                 Account settings
               </Text>
-              <Pressable
+              <TouchableOpacity
                 style={styles.setting_box}
                 onPress={() => router.push("./account/personal_details")}
               >
                 <FontAwesome name="user" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Personal details</Text>
-              </Pressable>
-              <Pressable
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => router.push("./account/notifications")}
                 style={styles.setting_box}
               >
                 <Feather name="bell" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Notifications</Text>
-              </Pressable>
+              </TouchableOpacity>
 
-              <Pressable
+              <TouchableOpacity
                 onPress={() => router.push("./account/security")}
                 style={styles.setting_box}
               >
                 <Feather name="lock" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Security</Text>
-              </Pressable>
-              <Pressable
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => router.push("./account/saved_places")}
                 style={styles.setting_box}
               >
                 <Entypo name="location-pin" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Saved places</Text>
-              </Pressable>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push("./account/feedback")}
                 style={styles.setting_box}
@@ -179,10 +193,13 @@ const Account = () => {
                 <Feather name="help-circle" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Help and Feedback</Text>
               </TouchableOpacity>
-              <View style={styles.setting_box}>
+              <TouchableOpacity
+                onPress={handleRateUs}
+                style={styles.setting_box}
+              >
                 <FontAwesome name="star" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Rate us</Text>
-              </View>
+              </TouchableOpacity>
               <TouchableWithoutFeedback onPress={logout}>
                 <View style={styles.setting_box}>
                   <Feather name="log-out" size={20} color="#ca1d1d" />
