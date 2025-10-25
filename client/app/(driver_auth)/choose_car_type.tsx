@@ -1,5 +1,6 @@
 import {
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableWithoutFeedback,
@@ -17,7 +18,6 @@ const ChooseCarType = () => {
   const { showNotification, notification } = useNotificationContext()!;
   const [carType, setCarType] = useState<"keke" | "cab" | "suv" | "">("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const handleContinue = async (): Promise<void> => {
     if (!carType) {
@@ -28,7 +28,6 @@ const ChooseCarType = () => {
     setLoading(true);
     try {
       await createDriver(carType);
-      setSuccess(true);
       showNotification("Driver profile created successfully", "success");
       setTimeout(() => {
         router.push("/personal_information");
@@ -49,7 +48,7 @@ const ChooseCarType = () => {
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         <Header />
 
-        <View style={{ paddingHorizontal: 20 }}>
+        <ScrollView style={{ paddingHorizontal: 20 }}>
           <View style={{ marginTop: 25 }}>
             <Text style={styles.question_header}>
               What type of driver are you?
@@ -57,6 +56,26 @@ const ChooseCarType = () => {
           </View>
 
           <View style={styles.role_container}>
+            <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
+              <View
+                style={[
+                  styles.role_card,
+                  carType === "keke" && styles.role_card_active,
+                ]}
+              >
+                <Image
+                  source={require("../../assets/images/icons/motorcycle-icon.png")}
+                  style={{ width: 70, height: 70 }}
+                />
+                <View>
+                  <Text style={styles.role_text}>Bike Rider</Text>
+                  <Text style={styles.role_description}>
+                    I just drive a normal keke na pep
+                  </Text>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+
             <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
               <View
                 style={[
@@ -116,6 +135,44 @@ const ChooseCarType = () => {
                 </View>
               </View>
             </TouchableWithoutFeedback>
+            <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
+              <View
+                style={[
+                  styles.role_card,
+                  carType === "suv" && styles.role_card_active,
+                ]}
+              >
+                <Image
+                  source={require("../../assets/images/icons/van-icon.png")}
+                  style={{ width: 70, height: 70 }}
+                />
+                <View>
+                  <Text style={styles.role_text}>Van Driver</Text>
+                  <Text style={styles.role_description}>
+                    I just drive a normal keke na pep
+                  </Text>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+            <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
+              <View
+                style={[
+                  styles.role_card,
+                  carType === "suv" && styles.role_card_active,
+                ]}
+              >
+                <Image
+                  source={require("../../assets/images/icons/truck-icon.png")}
+                  style={{ width: 70, height: 70 }}
+                />
+                <View>
+                  <Text style={styles.role_text}>Truck Driver</Text>
+                  <Text style={styles.role_description}>
+                    I just drive a normal keke na pep
+                  </Text>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
 
           <TouchableWithoutFeedback onPress={handleContinue} disabled={loading}>
@@ -125,7 +182,7 @@ const ChooseCarType = () => {
               </Text>
             </View>
           </TouchableWithoutFeedback>
-        </View>
+        </ScrollView>
       </View>
     </>
   );
@@ -171,7 +228,7 @@ const styles = StyleSheet.create({
     width: "95%",
   },
   continue_btn: {
-    marginTop: 30,
+    marginVertical: 30,
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 30,

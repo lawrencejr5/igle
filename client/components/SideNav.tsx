@@ -35,7 +35,7 @@ const SideNav: React.FC<{
       else if (signedIn?.driver_application === "rejected")
         router.push("../(driver_auth)/choose_car_type");
       else if (signedIn?.driver_application === "submitted")
-        router.push("../(driver_auth)/bank_details");
+        router.push("../(driver_auth)/reviewing_message");
       else router.push("../(tabs)/home");
     }
   };

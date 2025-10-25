@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "transparent",
   },
-  toggleText: { color: "#fff", fontFamily: "raleway-regular" },
+  toggleText: { color: "#fff", fontFamily: "raleway-semibold" },
   // Backdrop covers full screen to allow outside press to close
   backdrop: {
     ...StyleSheet.absoluteFillObject,

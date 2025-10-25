@@ -12,6 +12,8 @@ import {
   Pressable,
   ActivityIndicator,
   Linking,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
@@ -411,221 +413,245 @@ const DetailsModal = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: 12 }]}>
-      <Text style={[styles.header, { marginBottom: 12 }]}>Recipient info</Text>
-
-      <View style={{ marginBottom: 14 }}>
-        <Text
-          style={{
-            color: "#cfcfcf",
-            marginBottom: 6,
-            fontFamily: "raleway-semibold",
-          }}
-        >
-          Name
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={"padding"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 5,
+          paddingTop: 12,
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[styles.header, { marginBottom: 12 }]}>
+          Recipient info
         </Text>
-        <TextInput
-          placeholder="Recipient full name"
-          placeholderTextColor="#b0b0b0"
-          value={recipientName}
-          onChangeText={setRecipientName}
-          style={styles.text_input}
-          selectionColor="#fff"
-        />
-      </View>
 
-      <View style={{ marginBottom: 18 }}>
-        <Text
-          style={{
-            color: "#cfcfcf",
-            marginBottom: 6,
-            fontFamily: "raleway-semibold",
-          }}
-        >
-          Phone
-        </Text>
-        <TextInput
-          placeholder="Recipient phone number"
-          placeholderTextColor="#b0b0b0"
-          value={recipientPhone}
-          onChangeText={setRecipientPhone}
-          keyboardType="phone-pad"
-          style={styles.text_input}
-          selectionColor="#fff"
-        />
-      </View>
-
-      <View
-        style={{ height: 1, backgroundColor: "#2a2a2a", marginVertical: 8 }}
-      />
-
-      <Text style={[styles.header, { marginVertical: 12 }]}>
-        Package details
-      </Text>
-
-      <View style={{ marginBottom: 12 }}>
-        <Text
-          style={{
-            color: "#cfcfcf",
-            marginBottom: 12,
-            fontFamily: "raleway-semibold",
-          }}
-        >
-          Type
-        </Text>
-        <View
-          style={{
-            backgroundColor: "#515151",
-            borderRadius: 8,
-            paddingHorizontal: 8,
-          }}
-        >
-          <CustomDropdown
-            options={PACKAGE_TYPES}
-            value={pkgType}
-            onChange={(k) => setPkgType(k)}
+        <View style={{ marginBottom: 14 }}>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              marginBottom: 6,
+              fontFamily: "raleway-semibold",
+            }}
+          >
+            Name
+          </Text>
+          <TextInput
+            placeholder="Recipient full name"
+            placeholderTextColor="#b0b0b0"
+            value={recipientName}
+            onChangeText={setRecipientName}
+            style={styles.text_input}
+            selectionColor="#fff"
           />
         </View>
-      </View>
 
-      <View style={{ marginBottom: 12 }}>
-        <Text
-          style={{
-            color: "#cfcfcf",
-            marginBottom: 6,
-            fontFamily: "raleway-semibold",
-          }}
-        >
-          Description
-        </Text>
-        <TextInput
-          placeholder=" e.g. iPhone XR, Bag of oranges"
-          placeholderTextColor="#b0b0b0"
-          value={description}
-          onChangeText={setDescription}
-          style={[styles.text_input]}
-          multiline
-          selectionColor="#fff"
-        />
-      </View>
+        <View style={{ marginBottom: 18 }}>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              marginBottom: 6,
+              fontFamily: "raleway-semibold",
+            }}
+          >
+            Phone
+          </Text>
+          <TextInput
+            placeholder="Recipient phone number"
+            placeholderTextColor="#b0b0b0"
+            value={recipientPhone}
+            onChangeText={setRecipientPhone}
+            keyboardType="phone-pad"
+            style={styles.text_input}
+            selectionColor="#fff"
+          />
+        </View>
 
-      <View style={{ marginVertical: 12 }}>
         <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 30,
-            justifyContent: "space-between",
-          }}
-        >
-          <View>
-            <Text
-              style={{
-                color: "#cfcfcf",
-                marginBottom: 6,
-                fontFamily: "raleway-bold",
-              }}
-            >
-              Fragile?
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                flex: 1,
-              }}
-            >
-              <Pressable
-                onPress={() => setFragile(true)}
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-              >
-                <View
-                  style={{
-                    height: 18,
-                    width: 18,
-                    borderRadius: 9,
-                    borderWidth: 1,
-                    borderColor: fragile ? "#fff" : "#8d8d8d",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: fragile ? "#fff" : "transparent",
-                  }}
-                />
-                <Text style={{ color: "#fff" }}>Yes</Text>
-              </Pressable>
+          style={{ height: 1, backgroundColor: "#2a2a2a", marginVertical: 8 }}
+        />
 
-              <Pressable
-                onPress={() => setFragile(false)}
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-              >
-                <View
-                  style={{
-                    height: 18,
-                    width: 18,
-                    borderRadius: 9,
-                    borderWidth: 1,
-                    borderColor: !fragile ? "#fff" : "#8d8d8d",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: !fragile ? "#fff" : "transparent",
-                  }}
-                />
-                <Text style={{ color: "#fff" }}>No</Text>
-              </Pressable>
-            </View>
-          </View>
+        <Text style={[styles.header, { marginVertical: 12 }]}>
+          Package details
+        </Text>
 
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                color: "#cfcfcf",
-                marginBottom: 6,
-                fontFamily: "raleway-semibold",
-              }}
-            >
-              Amount
-            </Text>
-            <TextInput
-              placeholder="Amount"
-              placeholderTextColor="#b0b0b0"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-              style={[styles.text_input]}
-              selectionColor="#fff"
+        <View style={{ marginBottom: 12 }}>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              marginBottom: 12,
+              fontFamily: "raleway-semibold",
+            }}
+          >
+            Type
+          </Text>
+          <View
+            style={{
+              backgroundColor: "#515151",
+              borderRadius: 8,
+              paddingHorizontal: 8,
+            }}
+          >
+            <CustomDropdown
+              options={PACKAGE_TYPES}
+              value={pkgType}
+              onChange={(k) => setPkgType(k)}
             />
           </View>
         </View>
-      </View>
 
-      <View style={{ flexDirection: "row", gap: 12, marginTop: 25 }}>
-        <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={submit}>
-          <Text style={[styles.btnText, { textAlign: "center" }]}>
-            Continue
+        <View style={{ marginBottom: 12 }}>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              marginBottom: 6,
+              fontFamily: "raleway-semibold",
+            }}
+          >
+            Description
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.btn,
-            {
-              paddingHorizontal: 20,
-              backgroundColor: "transparent",
-              borderColor: "#fff",
-              borderWidth: 1,
-            },
-          ]}
-          onPress={() => {
-            setDeliveryStatus("");
-            setDeliveryData(null);
+          <TextInput
+            placeholder=" e.g. iPhone XR, Bag of oranges"
+            placeholderTextColor="#b0b0b0"
+            value={description}
+            onChangeText={setDescription}
+            style={[styles.text_input]}
+            multiline
+            selectionColor="#fff"
+          />
+        </View>
+
+        <View style={{ marginVertical: 12 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 30,
+              justifyContent: "space-between",
+            }}
+          >
+            <View>
+              <Text
+                style={{
+                  color: "#cfcfcf",
+                  marginBottom: 6,
+                  fontFamily: "raleway-bold",
+                }}
+              >
+                Fragile?
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  flex: 1,
+                }}
+              >
+                <Pressable
+                  onPress={() => setFragile(true)}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                >
+                  <View
+                    style={{
+                      height: 18,
+                      width: 18,
+                      borderRadius: 9,
+                      borderWidth: 1,
+                      borderColor: fragile ? "#fff" : "#8d8d8d",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: fragile ? "#fff" : "transparent",
+                    }}
+                  />
+                  <Text style={{ color: "#fff" }}>Yes</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setFragile(false)}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                >
+                  <View
+                    style={{
+                      height: 18,
+                      width: 18,
+                      borderRadius: 9,
+                      borderWidth: 1,
+                      borderColor: !fragile ? "#fff" : "#8d8d8d",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: !fragile ? "#fff" : "transparent",
+                    }}
+                  />
+                  <Text style={{ color: "#fff" }}>No</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: "#cfcfcf",
+                  marginBottom: 6,
+                  fontFamily: "raleway-semibold",
+                }}
+              >
+                Amount
+              </Text>
+              <TextInput
+                placeholder="Amount"
+                placeholderTextColor="#b0b0b0"
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="numeric"
+                style={[styles.text_input]}
+                selectionColor="#fff"
+              />
+            </View>
+          </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 12,
+            marginTop: 25,
+            marginBottom: 20,
           }}
         >
-          <Text style={{ fontFamily: "raleway-semibold", color: "#fff" }}>
-            Close
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={submit}>
+            <Text style={[styles.btnText, { textAlign: "center" }]}>
+              Continue
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.btn,
+              {
+                paddingHorizontal: 20,
+                backgroundColor: "transparent",
+                borderColor: "#fff",
+                borderWidth: 1,
+              },
+            ]}
+            onPress={() => {
+              setDeliveryStatus("");
+              setDeliveryData(null);
+            }}
+          >
+            <Text style={{ fontFamily: "raleway-semibold", color: "#fff" }}>
+              Close
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
