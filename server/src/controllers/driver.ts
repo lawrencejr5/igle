@@ -12,6 +12,17 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 import { uploadToCloudinary } from "../utils/upload_file";
+import { unlink } from "fs/promises";
+
+// helper to safely delete temp files created by multer
+const safeUnlink = async (path?: string | null) => {
+  if (!path) return;
+  try {
+    await unlink(path);
+  } catch (err) {
+    console.error("Failed to delete temp file:", path, err);
+  }
+};
 
 // Create a new driver
 export const create_driver = async (
@@ -85,10 +96,17 @@ export const upload_driver_profile_pic = async (
       return;
     }
 
-    const uploaded = await uploadToCloudinary(
-      file.path,
-      "igle_images/driver_profile"
-    );
+    const filePath = file.path;
+    let uploaded: any = null;
+    try {
+      uploaded = await uploadToCloudinary(
+        filePath,
+        "igle_images/driver_profile"
+      );
+    } finally {
+      // remove multer temp file
+      await safeUnlink(filePath);
+    }
 
     if (!uploaded || !uploaded.url) {
       res.status(500).json({ msg: "Failed to upload image" });
@@ -309,11 +327,16 @@ export const update_vehicle_info = async (
       files.vehicle_exterior[0] &&
       files.vehicle_exterior[0].path
     ) {
-      const uploaded = await uploadToCloudinary(
-        files.vehicle_exterior[0].path,
-        "igle_images/vehicle"
-      );
-      if (uploaded && uploaded.url) exterior_image_url = uploaded.url;
+      const filePath = files.vehicle_exterior[0].path;
+      try {
+        const uploaded = await uploadToCloudinary(
+          filePath,
+          "igle_images/vehicle"
+        );
+        if (uploaded && uploaded.url) exterior_image_url = uploaded.url;
+      } finally {
+        await safeUnlink(filePath);
+      }
     }
 
     // Upload interior if file provided
@@ -323,11 +346,16 @@ export const update_vehicle_info = async (
       files.vehicle_interior[0] &&
       files.vehicle_interior[0].path
     ) {
-      const uploaded = await uploadToCloudinary(
-        files.vehicle_interior[0].path,
-        "igle_images/vehicle"
-      );
-      if (uploaded && uploaded.url) interior_image_url = uploaded.url;
+      const filePath = files.vehicle_interior[0].path;
+      try {
+        const uploaded = await uploadToCloudinary(
+          filePath,
+          "igle_images/vehicle"
+        );
+        if (uploaded && uploaded.url) interior_image_url = uploaded.url;
+      } finally {
+        await safeUnlink(filePath);
+      }
     }
 
     const driver = await Driver.findByIdAndUpdate(
@@ -397,11 +425,16 @@ export const update_driver_license = async (
       files.license_front[0] &&
       files.license_front[0].path
     ) {
-      const uploaded = await uploadToCloudinary(
-        files.license_front[0].path,
-        "igle_images/driver_license"
-      );
-      if (uploaded && uploaded.url) front_image_url = uploaded.url;
+      const filePath = files.license_front[0].path;
+      try {
+        const uploaded = await uploadToCloudinary(
+          filePath,
+          "igle_images/driver_license"
+        );
+        if (uploaded && uploaded.url) front_image_url = uploaded.url;
+      } finally {
+        await safeUnlink(filePath);
+      }
     }
 
     // upload back image if provided
@@ -410,22 +443,32 @@ export const update_driver_license = async (
       files.license_back[0] &&
       files.license_back[0].path
     ) {
-      const uploaded = await uploadToCloudinary(
-        files.license_back[0].path,
-        "igle_images/driver_license"
-      );
-      if (uploaded && uploaded.url) back_image_url = uploaded.url;
+      const filePath = files.license_back[0].path;
+      try {
+        const uploaded = await uploadToCloudinary(
+          filePath,
+          "igle_images/driver_license"
+        );
+        if (uploaded && uploaded.url) back_image_url = uploaded.url;
+      } finally {
+        await safeUnlink(filePath);
+      }
     }
 
     // upload selfie with licence if provided (accept either field name variant)
     const selfieFile =
       files.selfie_with_license && files.selfie_with_license[0];
     if (selfieFile && selfieFile.path) {
-      const uploaded = await uploadToCloudinary(
-        selfieFile.path,
-        "igle_images/driver_license"
-      );
-      if (uploaded && uploaded.url) selfie_image_url = uploaded.url;
+      const filePath = selfieFile.path;
+      try {
+        const uploaded = await uploadToCloudinary(
+          filePath,
+          "igle_images/driver_license"
+        );
+        if (uploaded && uploaded.url) selfie_image_url = uploaded.url;
+      } finally {
+        await safeUnlink(filePath);
+      }
     }
 
     const driver = await Driver.findByIdAndUpdate(

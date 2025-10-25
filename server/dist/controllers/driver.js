@@ -22,6 +22,18 @@ const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const upload_file_1 = require("../utils/upload_file");
+const promises_1 = require("fs/promises");
+// helper to safely delete temp files created by multer
+const safeUnlink = (path) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!path)
+        return;
+    try {
+        yield (0, promises_1.unlink)(path);
+    }
+    catch (err) {
+        console.error("Failed to delete temp file:", path, err);
+    }
+});
 // Create a new driver
 const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -82,7 +94,15 @@ const upload_driver_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0
             res.status(400).json({ msg: "No file provided" });
             return;
         }
-        const uploaded = yield (0, upload_file_1.uploadToCloudinary)(file.path, "igle_images/driver_profile");
+        const filePath = file.path;
+        let uploaded = null;
+        try {
+            uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_profile");
+        }
+        finally {
+            // remove multer temp file
+            yield safeUnlink(filePath);
+        }
         if (!uploaded || !uploaded.url) {
             res.status(500).json({ msg: "Failed to upload image" });
             return;
@@ -258,18 +278,30 @@ const update_vehicle_info = (req, res) => __awaiter(void 0, void 0, void 0, func
             Array.isArray(files.vehicle_exterior) &&
             files.vehicle_exterior[0] &&
             files.vehicle_exterior[0].path) {
-            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.vehicle_exterior[0].path, "igle_images/vehicle");
-            if (uploaded && uploaded.url)
-                exterior_image_url = uploaded.url;
+            const filePath = files.vehicle_exterior[0].path;
+            try {
+                const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/vehicle");
+                if (uploaded && uploaded.url)
+                    exterior_image_url = uploaded.url;
+            }
+            finally {
+                yield safeUnlink(filePath);
+            }
         }
         // Upload interior if file provided
         if (files.vehicle_interior &&
             Array.isArray(files.vehicle_interior) &&
             files.vehicle_interior[0] &&
             files.vehicle_interior[0].path) {
-            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.vehicle_interior[0].path, "igle_images/vehicle");
-            if (uploaded && uploaded.url)
-                interior_image_url = uploaded.url;
+            const filePath = files.vehicle_interior[0].path;
+            try {
+                const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/vehicle");
+                if (uploaded && uploaded.url)
+                    interior_image_url = uploaded.url;
+            }
+            finally {
+                yield safeUnlink(filePath);
+            }
         }
         const driver = yield driver_1.default.findByIdAndUpdate(driver_id, {
             vehicle: {
@@ -318,24 +350,42 @@ const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, fu
         if (files.license_front &&
             files.license_front[0] &&
             files.license_front[0].path) {
-            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.license_front[0].path, "igle_images/driver_license");
-            if (uploaded && uploaded.url)
-                front_image_url = uploaded.url;
+            const filePath = files.license_front[0].path;
+            try {
+                const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
+                if (uploaded && uploaded.url)
+                    front_image_url = uploaded.url;
+            }
+            finally {
+                yield safeUnlink(filePath);
+            }
         }
         // upload back image if provided
         if (files.license_back &&
             files.license_back[0] &&
             files.license_back[0].path) {
-            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(files.license_back[0].path, "igle_images/driver_license");
-            if (uploaded && uploaded.url)
-                back_image_url = uploaded.url;
+            const filePath = files.license_back[0].path;
+            try {
+                const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
+                if (uploaded && uploaded.url)
+                    back_image_url = uploaded.url;
+            }
+            finally {
+                yield safeUnlink(filePath);
+            }
         }
         // upload selfie with licence if provided (accept either field name variant)
         const selfieFile = files.selfie_with_license && files.selfie_with_license[0];
         if (selfieFile && selfieFile.path) {
-            const uploaded = yield (0, upload_file_1.uploadToCloudinary)(selfieFile.path, "igle_images/driver_license");
-            if (uploaded && uploaded.url)
-                selfie_image_url = uploaded.url;
+            const filePath = selfieFile.path;
+            try {
+                const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
+                if (uploaded && uploaded.url)
+                    selfie_image_url = uploaded.url;
+            }
+            finally {
+                yield safeUnlink(filePath);
+            }
         }
         const driver = yield driver_1.default.findByIdAndUpdate(driver_id, {
             driver_licence: {
