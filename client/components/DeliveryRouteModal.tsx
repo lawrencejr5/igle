@@ -30,6 +30,7 @@ import { useAuthContext } from "../context/AuthContext";
 import { useWalletContext } from "../context/WalletContext";
 import { useRatingContext } from "../context/RatingContext";
 import RideRoute from "./RideRoute";
+import CustomDropdown from "./CustomDropdown";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -286,6 +287,29 @@ const DetailsModal = () => {
   const fragile = deliveryData?.package?.fragile || false;
   const amount = deliveryData?.package?.amount?.toString() || "";
 
+  <Picker
+    selectedValue={pkgType}
+    onValueChange={(v) => setPkgType(v)}
+    style={{ color: "#fff" }}
+    itemStyle={{ color: "#fff" }}
+  >
+    <Picker.Item label="Document" value="document" />
+    <Picker.Item label="Electronics" value="electronics" />
+    <Picker.Item label="Clothing" value="clothing" />
+    <Picker.Item label="Food" value="food" />
+    <Picker.Item label="Furniture" value="furniture" />
+    <Picker.Item label="Other" value="other" />
+  </Picker>;
+
+  const PACKAGE_TYPES = [
+    { key: "document", label: "Document" },
+    { key: "electronics", label: "Electronics" },
+    { key: "clothing", label: "Clothing" },
+    { key: "food", label: "Food" },
+    { key: "furniture", label: "Furniture" },
+    { key: "other", label: "Other" },
+  ];
+
   const setRecipientName = (value: string) => {
     setDeliveryData(
       (prev) =>
@@ -451,24 +475,16 @@ const DetailsModal = () => {
         </Text>
         <View
           style={{
-            backgroundColor: "#2a2a2a",
+            backgroundColor: "#515151",
             borderRadius: 8,
             paddingHorizontal: 8,
           }}
         >
-          <Picker
-            selectedValue={pkgType}
-            onValueChange={(v) => setPkgType(v)}
-            style={{ color: "#fff" }}
-            itemStyle={{ color: "#fff" }}
-          >
-            <Picker.Item label="Document" value="document" />
-            <Picker.Item label="Electronics" value="electronics" />
-            <Picker.Item label="Clothing" value="clothing" />
-            <Picker.Item label="Food" value="food" />
-            <Picker.Item label="Furniture" value="furniture" />
-            <Picker.Item label="Other" value="other" />
-          </Picker>
+          <CustomDropdown
+            options={PACKAGE_TYPES}
+            value={pkgType}
+            onChange={(k) => setPkgType(k)}
+          />
         </View>
       </View>
 

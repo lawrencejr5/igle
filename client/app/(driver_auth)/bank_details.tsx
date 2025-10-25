@@ -19,7 +19,7 @@ import Header from "../../components/driver_reg/Header";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import { useAuthContext } from "../../context/AuthContext";
 import { useNotificationContext } from "../../context/NotificationContext";
-import FeedbackTypeDropdown from "../../components/FeedbackTypeDropdown";
+import CustomDropdown from "../../components/CustomDropdown";
 import Notification from "../../components/Notification";
 
 const BankDetails = () => {
@@ -27,13 +27,6 @@ const BankDetails = () => {
   const { saveBankInfo } = useDriverAuthContext();
   const { getUserData, updateDriverApplication } = useAuthContext();
   const { showNotification, notification } = useNotificationContext()!;
-
-  const [bankName, setBankName] = useState<string>("");
-  const [accountNumber, setAccountNumber] = useState<string>("");
-  const [accountName, setAccountName] = useState<string>("");
-  const [bankCode, setBankCode] = useState<string>("058");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const BANK = [
     { key: "058", label: "GTBank" },
@@ -53,13 +46,17 @@ const BankDetails = () => {
   ];
 
   // initialize bankName from selected code
-  const [selectedBankName, setSelectedBankName] = useState<string>(
+  const [bankName, setBankName] = useState<string>(
     BANK.find((b) => b.key === bankCode)?.label || ""
   );
+  const [accountNumber, setAccountNumber] = useState<string>("");
+  const [accountName, setAccountName] = useState<string>("");
+  const [bankCode, setBankCode] = useState<string>("058");
+  const [loading, setLoading] = useState(false);
 
   const handleNext = async (): Promise<void> => {
     if (
-      !selectedBankName ||
+      !bankName ||
       !accountNumber.trim() ||
       !accountName.trim() ||
       !bankCode.trim()
@@ -80,7 +77,6 @@ const BankDetails = () => {
       await saveBankInfo(bankInfo);
       await updateDriverApplication("submitted");
       await getUserData();
-      setSuccess(true);
       setTimeout(() => {
         router.push("/reviewing_message");
       }, 1500);
@@ -138,13 +134,13 @@ const BankDetails = () => {
               <View style={[styles.inp_holder, { paddingVertical: 0 }]}>
                 <FontAwesome name="university" size={20} color="white" />
                 <View style={{ flex: 1 }}>
-                  <FeedbackTypeDropdown
+                  <CustomDropdown
                     options={BANK}
                     value={bankCode}
                     onChange={(k) => {
                       setBankCode(k);
                       const b = BANK.find((x) => x.key === k);
-                      if (b) setSelectedBankName(b.label);
+                      if (b) setBankName(b.label);
                     }}
                   />
                 </View>

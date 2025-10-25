@@ -16,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFeedbackContext } from "../../../context/FeedbackContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
-import FeedbackTypeDropdown from "../../../components/FeedbackTypeDropdown";
+import CustomDropdown from "../../../components/CustomDropdown";
 
 const FEEDBACK_TYPES = [
   { key: "bug", label: "Bug report" },
@@ -98,11 +98,14 @@ const Feedback = () => {
         </View>
 
         <Text style={styles.label}>Type</Text>
-        <FeedbackTypeDropdown
-          options={FEEDBACK_TYPES}
-          value={type}
-          onChange={(k) => setType(k)}
-        />
+
+        <View style={{ backgroundColor: "#1f1f1f", borderRadius: 7 }}>
+          <CustomDropdown
+            options={FEEDBACK_TYPES}
+            value={type}
+            onChange={(k) => setType(k)}
+          />
+        </View>
 
         <Text style={styles.label}>Message</Text>
         <TextInput

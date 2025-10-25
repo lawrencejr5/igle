@@ -17,11 +17,7 @@ interface Props {
   onChange: (key: string) => void;
 }
 
-const FeedbackTypeDropdown: React.FC<Props> = ({
-  options,
-  value,
-  onChange,
-}) => {
+const CustomDropdown: React.FC<Props> = ({ options, value, onChange }) => {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<View | null>(null);
   const [anchor, setAnchor] = useState<{
@@ -136,4 +132,4 @@ const styles = StyleSheet.create({
   itemText: { color: "#d7d7d7", fontFamily: "raleway-regular" },
 });
 
-export default FeedbackTypeDropdown;
+export default CustomDropdown;
