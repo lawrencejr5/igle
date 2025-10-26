@@ -4,7 +4,7 @@ export interface DriverType extends Document {
   user: mongoose.Types.ObjectId;
   profile_img: string;
   socket_id: string;
-  vehicle_type: string;
+  vehicle_type: "bike" | "keke" | "cab" | "suv" | "van" | "truck";
   vehicle: {
     exterior_image: string;
     interior_image: string;
@@ -49,7 +49,11 @@ const DriverSchema = new Schema<DriverType>({
   },
   profile_img: String,
   socket_id: { type: String, default: null },
-  vehicle_type: { type: String, required: true },
+  vehicle_type: {
+    type: String,
+    enum: ["bike", "keke", "cab", "suv", "van", "truck"],
+    required: true,
+  },
   vehicle: {
     exterior_image: { type: String },
     interior_image: { type: String },

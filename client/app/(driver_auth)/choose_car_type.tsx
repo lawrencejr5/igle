@@ -16,7 +16,9 @@ import Notification from "../../components/Notification";
 const ChooseCarType = () => {
   const { createDriver } = useDriverAuthContext();
   const { showNotification, notification } = useNotificationContext()!;
-  const [carType, setCarType] = useState<"keke" | "cab" | "suv" | "">("");
+  const [carType, setCarType] = useState<
+    "bike" | "keke" | "cab" | "suv" | "van" | "truck" | ""
+  >("");
   const [loading, setLoading] = useState(false);
 
   const handleContinue = async (): Promise<void> => {
@@ -56,11 +58,11 @@ const ChooseCarType = () => {
           </View>
 
           <View style={styles.role_container}>
-            <TouchableWithoutFeedback onPress={() => setCarType("keke")}>
+            <TouchableWithoutFeedback onPress={() => setCarType("bike")}>
               <View
                 style={[
                   styles.role_card,
-                  carType === "keke" && styles.role_card_active,
+                  carType === "bike" && styles.role_card_active,
                 ]}
               >
                 <Image
@@ -68,9 +70,10 @@ const ChooseCarType = () => {
                   style={{ width: 70, height: 70 }}
                 />
                 <View>
-                  <Text style={styles.role_text}>Bike Rider</Text>
+                  <Text style={styles.role_text}>Bike Rider - (delivery)</Text>
                   <Text style={styles.role_description}>
-                    I just drive a normal keke na pep
+                    Quick delivery using a bike — ideal for parcels and small
+                    items.
                   </Text>
                 </View>
               </View>
@@ -88,9 +91,9 @@ const ChooseCarType = () => {
                   style={{ width: 70, height: 70 }}
                 />
                 <View>
-                  <Text style={styles.role_text}>Keke Driver</Text>
+                  <Text style={styles.role_text}>Keke Driver - (ride)</Text>
                   <Text style={styles.role_description}>
-                    I just drive a normal keke na pep
+                    Three-wheeler driver for short-distance passenger trips.
                   </Text>
                 </View>
               </View>
@@ -108,9 +111,12 @@ const ChooseCarType = () => {
                   style={{ width: 70, height: 70 }}
                 />
                 <View>
-                  <Text style={styles.role_text}>Cab Driver</Text>
+                  <Text style={styles.role_text}>
+                    Cab Driver - (ride/delivery)
+                  </Text>
                   <Text style={styles.role_description}>
-                    I just drive a normal keke na pep
+                    Sedan driver for passengers and occasional dispatch
+                    deliveries.
                   </Text>
                 </View>
               </View>
@@ -128,18 +134,18 @@ const ChooseCarType = () => {
                   style={{ width: 70, height: 70 }}
                 />
                 <View>
-                  <Text style={styles.role_text}>SUV Driver</Text>
+                  <Text style={styles.role_text}>SUV Driver - (ride)</Text>
                   <Text style={styles.role_description}>
-                    I just drive a normal keke na pep
+                    Larger car for comfortable passenger rides and luggage.
                   </Text>
                 </View>
               </View>
             </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
+            <TouchableWithoutFeedback onPress={() => setCarType("van")}>
               <View
                 style={[
                   styles.role_card,
-                  carType === "suv" && styles.role_card_active,
+                  carType === "van" && styles.role_card_active,
                 ]}
               >
                 <Image
@@ -147,18 +153,18 @@ const ChooseCarType = () => {
                   style={{ width: 70, height: 70 }}
                 />
                 <View>
-                  <Text style={styles.role_text}>Van Driver</Text>
+                  <Text style={styles.role_text}>Van Driver - (delivery)</Text>
                   <Text style={styles.role_description}>
-                    I just drive a normal keke na pep
+                    Cargo van for deliveries and larger loads.
                   </Text>
                 </View>
               </View>
             </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback onPress={() => setCarType("suv")}>
+            <TouchableWithoutFeedback onPress={() => setCarType("truck")}>
               <View
                 style={[
                   styles.role_card,
-                  carType === "suv" && styles.role_card_active,
+                  carType === "truck" && styles.role_card_active,
                 ]}
               >
                 <Image
@@ -166,9 +172,11 @@ const ChooseCarType = () => {
                   style={{ width: 70, height: 70 }}
                 />
                 <View>
-                  <Text style={styles.role_text}>Truck Driver</Text>
+                  <Text style={styles.role_text}>
+                    Truck Driver - (delivery)
+                  </Text>
                   <Text style={styles.role_description}>
-                    I just drive a normal keke na pep
+                    Heavy-duty truck for bulk transport and logistics.
                   </Text>
                 </View>
               </View>
@@ -207,6 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginVertical: 20,
+    flexShrink: 1,
   },
   role_card_active: {
     borderColor: "#ffffff",
@@ -225,7 +234,7 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-regular",
     color: "#e1e1e1",
     fontSize: 12,
-    width: "95%",
+    width: 200,
   },
   continue_btn: {
     marginVertical: 30,
