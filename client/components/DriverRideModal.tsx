@@ -24,6 +24,7 @@ import {
   MaterialIcons,
   FontAwesome,
   FontAwesome5,
+  Feather,
 } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
 import { useDriverContext } from "../context/DriverContext";
@@ -136,7 +137,7 @@ const DriverRideModal = () => {
       <View style={styles.main_modal_container}>
         {driver?.is_available && (
           <View style={styles.availableContainer}>
-            {driveStatus === "searching" && <SearchingModal />}
+            {driveStatus === "searching" && <DeliveryDeliveredModal />}
             {/*  */}
             {driveStatus === "incoming" && incomingRideData && (
               <IncomingModal />
@@ -788,19 +789,6 @@ const DeliveryIncomingModal = () => {
               </Text>
             </View>
           </View>
-          {dummyDeliveryData.package?.amount && (
-            <Text
-              style={{
-                color: "#10b804ff",
-                fontFamily: "poppins-semibold",
-                fontSize: 14,
-                marginTop: 8,
-              }}
-            >
-              Package Value: ₦
-              {dummyDeliveryData.package.amount.toLocaleString()}
-            </Text>
-          )}
         </View>
 
         {/* Delivery route */}
@@ -1089,8 +1077,8 @@ const DeliveryAcceptedModal = () => {
   );
 };
 
-const DeliveryArrivedModal = () => {
-  const [pickingUp, setPickingUp] = useState<boolean>(false);
+const DeliveryArrivingModal = () => {
+  const [arriving, setArriving] = useState<boolean>(false);
 
   const dummyDeliveryData = {
     _id: "DEL123456",
@@ -1111,6 +1099,72 @@ const DeliveryArrivedModal = () => {
       type: "electronics" as const,
       fragile: true,
     },
+    duration_mins: 12,
+    distance_km: 5.2,
+  };
+
+  const markAsArrived = async () => {
+    setArriving(true);
+    try {
+      // API call to update delivery status to "arrived"
+      console.log("Marking as arrived at pickup location");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setArriving(false);
+    }
+  };
+
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <FontAwesome5 name="directions" color={"#fff"} size={30} />
+        <Text style={styles.directionsText}>
+          Head to the pickup location at {dummyDeliveryData.pickup.address}
+        </Text>
+      </View>
+
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback onPress={markAsArrived} disabled={arriving}>
+          <View style={[styles.arrivedBtn, { opacity: arriving ? 0.5 : 1 }]}>
+            <Text style={styles.arrivedBtnText}>
+              {arriving ? "Confirming..." : "I've Arrived at Pickup"}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
+  );
+};
+
+const DeliveryArrivedModal = () => {
+  const [pickingUp, setPickingUp] = useState<boolean>(false);
+  const [isPackageExpanded, setIsPackageExpanded] = useState<boolean>(false);
+
+  const dummyDeliveryData = {
+    _id: "DEL123456",
+    sender: {
+      name: "John Doe",
+      phone: "+2348012345678",
+    },
+    pickup: {
+      address: "123 Lagos Street, Ikeja, Lagos",
+      coordinates: [6.5244, 3.3792] as [number, number],
+    },
+    dropoff: {
+      address: "456 Victoria Island, Lagos",
+      coordinates: [6.4281, 3.4219] as [number, number],
+    },
+    to: {
+      name: "Jane Smith",
+      phone: "+2348087654321",
+    },
+    package: {
+      description: "Electronic gadgets",
+      type: "electronics" as const,
+      fragile: true,
+      amount: 45000,
+    },
     fare: 3500,
   };
 
@@ -1126,49 +1180,208 @@ const DeliveryArrivedModal = () => {
     }
   };
 
+  // Get package icon
+  const getPackageIcon = (type?: string) => {
+    switch (type) {
+      case "document":
+        return "📄";
+      case "electronics":
+        return "📱";
+      case "food":
+        return "🍔";
+      case "clothing":
+        return "👕";
+      case "furniture":
+        return "🪑";
+      default:
+        return "📦";
+    }
+  };
+
+  // Get vehicle icon based on vehicle type
+  const getVehicleIcon = (vehicle: string) => {
+    switch (vehicle) {
+      case "bike":
+      case "motorcycle":
+        return require("../assets/images/icons/motorcycle-icon.png");
+      case "cab":
+      case "car":
+        return require("../assets/images/icons/sedan-icon.png");
+      case "van":
+        return require("../assets/images/icons/van-icon.png");
+      case "truck":
+        return require("../assets/images/icons/truck-icon.png");
+      default:
+        return require("../assets/images/icons/motorcycle-icon.png");
+    }
+  };
+
   return (
     <View style={styles.navigationContainer}>
       <View style={styles.directionsRow}>
-        <MaterialIcons name="location-on" color={"#4CAF50"} size={30} />
         <Text style={styles.directionsText}>
           You've arrived at the pickup location
         </Text>
       </View>
 
-      {/* Pickup details */}
-      <View
+      {/* Package details card (expandable) */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => setIsPackageExpanded(!isPackageExpanded)}
         style={{
-          backgroundColor: "#2a2a2a",
-          padding: 15,
-          borderRadius: 8,
-          marginVertical: 15,
+          padding: 14,
+          borderRadius: 12,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+          marginTop: 20,
         }}
       >
-        <Text style={styles.userName}>Pickup Details</Text>
-        <Text style={[styles.userRides, { marginTop: 5 }]}>
-          {dummyDeliveryData.pickup.address}
-        </Text>
-        <Text style={[styles.userRides, { marginTop: 8 }]}>
-          Sender: {dummyDeliveryData.sender.name}
-        </Text>
-        <Text style={[styles.userRides, { marginTop: 2 }]}>
-          Phone: {dummyDeliveryData.sender.phone}
-        </Text>
-        <Text style={[styles.userRides, { marginTop: 8 }]}>
-          Package: {dummyDeliveryData.package.description}
-        </Text>
-        {dummyDeliveryData.package.fragile && (
-          <Text
+        {/* ID at the top */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <View
             style={{
-              color: "#ff9800",
-              fontFamily: "raleway-bold",
-              marginTop: 5,
+              backgroundColor: "#2a2a2a",
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 6,
             }}
           >
-            ⚠️ Handle with care - Fragile item
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "poppins-regular",
+                fontSize: 10,
+              }}
+            >
+              ID: #{dummyDeliveryData._id.slice(-9).toUpperCase()}
+            </Text>
+          </View>
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "poppins-bold",
+              fontSize: 14,
+            }}
+          >
+            NGN {dummyDeliveryData.fare.toLocaleString()}
           </Text>
+        </View>
+
+        {/* Main content */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 8,
+              backgroundColor: "#2a2a2a",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ fontSize: 24 }}>
+              {getPackageIcon(dummyDeliveryData.package?.type)}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
+              {dummyDeliveryData.package?.type
+                ? dummyDeliveryData.package.type.charAt(0).toUpperCase() +
+                  dummyDeliveryData.package.type.slice(1)
+                : "Other"}{" "}
+              Package
+            </Text>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 12,
+                marginTop: 2,
+              }}
+            >
+              {dummyDeliveryData.package?.description || "Package"}
+              {dummyDeliveryData.package?.fragile ? " • Fragile" : ""}
+            </Text>
+          </View>
+          <Feather
+            name={isPackageExpanded ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#cfcfcf"
+          />
+        </View>
+
+        {/* Expanded content - package details */}
+        {isPackageExpanded && (
+          <View
+            style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTopWidth: 0.5,
+              borderTopColor: "#2a2a2a",
+            }}
+          >
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 11,
+              }}
+            >
+              Recipient: {dummyDeliveryData.to?.name || "Unknown"}
+            </Text>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 11,
+                marginTop: 2,
+              }}
+            >
+              Phone: {dummyDeliveryData.to?.phone || "N/A"}
+            </Text>
+            {dummyDeliveryData.package?.fragile && (
+              <View
+                style={{
+                  marginTop: 10,
+                  backgroundColor: "#ff980020",
+                  padding: 8,
+                  borderRadius: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#ff9800",
+                    fontFamily: "raleway-bold",
+                    textAlign: "center",
+                    fontSize: 12,
+                  }}
+                >
+                  ⚠️ Handle with care - Fragile item
+                </Text>
+              </View>
+            )}
+            <View style={{ marginTop: 10 }}>
+              <Text
+                style={{
+                  color: "#cfcfcf",
+                  fontFamily: "poppins-regular",
+                  fontSize: 11,
+                }}
+              >
+                Delivery to: {dummyDeliveryData.dropoff.address}
+              </Text>
+            </View>
+          </View>
         )}
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.arrivedBtnRow}>
         <TouchableWithoutFeedback onPress={confirmPickup} disabled={pickingUp}>
@@ -1184,6 +1397,9 @@ const DeliveryArrivedModal = () => {
 };
 
 const DeliveryInTransitModal = () => {
+  const [isDeliveryExpanded, setIsDeliveryExpanded] = useState<boolean>(false);
+  const [delivering, setDelivering] = useState<boolean>(false);
+
   const dummyDeliveryData = {
     _id: "DEL123456",
     dropoff: {
@@ -1203,6 +1419,48 @@ const DeliveryInTransitModal = () => {
     duration_mins: 15,
   };
 
+  // Get package icon
+  const getPackageIcon = (type?: string) => {
+    switch (type) {
+      case "document":
+        return "📄";
+      case "electronics":
+        return "📱";
+      case "food":
+        return "🍔";
+      case "clothing":
+        return "👕";
+      case "furniture":
+        return "🪑";
+      default:
+        return "📦";
+    }
+  };
+
+  const callRecipient = async () => {
+    try {
+      const url = `tel:${dummyDeliveryData.to.phone}`;
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (e) {
+      console.log("Failed to initiate call");
+    }
+  };
+
+  const confirmDelivered = async () => {
+    setDelivering(true);
+    try {
+      // API call to mark delivery as delivered
+      console.log("Confirming package delivered");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setDelivering(false);
+    }
+  };
+
   return (
     <View style={styles.navigationContainer}>
       <View style={styles.directionsRow}>
@@ -1212,199 +1470,338 @@ const DeliveryInTransitModal = () => {
         </Text>
       </View>
 
-      {/* Delivery details */}
+      {/* Delivery details card (expandable) */}
       <View
         style={{
-          backgroundColor: "#2a2a2a",
-          padding: 15,
-          borderRadius: 8,
+          padding: 14,
+          borderRadius: 12,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
           marginVertical: 15,
         }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={styles.userName}>Dropoff Location</Text>
-            <Text style={[styles.userRides, { marginTop: 5 }]}>
-              {dummyDeliveryData.dropoff.address}
-            </Text>
-          </View>
+        {/* Main content - Collapsed state */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View
             style={{
-              backgroundColor: "#10b804ff",
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 15,
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: "#2a2a2a",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
-              {dummyDeliveryData.duration_mins} mins
-            </Text>
+            <MaterialIcons name="location-on" color={"#f44336"} size={24} />
           </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 10,
+              }}
+            >
+              Delivering to
+            </Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-semibold",
+                fontSize: 13,
+                marginTop: 2,
+              }}
+            >
+              {dummyDeliveryData.to.name}
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: 4,
+                gap: 4,
+              }}
+            >
+              <MaterialIcons name="access-time" color={"#10b804ff"} size={12} />
+              <Text
+                style={{
+                  color: "#10b804ff",
+                  fontFamily: "poppins-semibold",
+                  fontSize: 11,
+                }}
+              >
+                {dummyDeliveryData.duration_mins} mins
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            onPress={callRecipient}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              width: 40,
+              height: 40,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="call" size={18} color="#121212" />
+          </TouchableOpacity>
         </View>
 
-        <View
-          style={{
-            marginTop: 15,
-            paddingTop: 15,
-            borderTopWidth: 1,
-            borderTopColor: "#3b3b3b",
-          }}
-        >
-          <Text style={styles.userName}>Recipient Details</Text>
-          <Text style={[styles.userRides, { marginTop: 5 }]}>
-            {dummyDeliveryData.to.name}
-          </Text>
-          <Text style={[styles.userRides, { marginTop: 2 }]}>
-            {dummyDeliveryData.to.phone}
-          </Text>
-        </View>
-
-        {dummyDeliveryData.package.fragile && (
+        {/* Expanded content - Full delivery details */}
+        {isDeliveryExpanded && (
           <View
             style={{
               marginTop: 12,
-              backgroundColor: "#ff980020",
-              padding: 10,
-              borderRadius: 6,
+              paddingTop: 12,
+              borderTopWidth: 0.5,
+              borderTopColor: "#2a2a2a",
             }}
           >
-            <Text
+            {/* Dropoff address */}
+            <View style={{ marginBottom: 12 }}>
+              <Text
+                style={{
+                  color: "#cfcfcf",
+                  fontFamily: "poppins-regular",
+                  fontSize: 10,
+                }}
+              >
+                Dropoff Address
+              </Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-semibold",
+                  fontSize: 12,
+                  marginTop: 2,
+                }}
+              >
+                {dummyDeliveryData.dropoff.address}
+              </Text>
+            </View>
+
+            {/* Recipient contact */}
+            <View
               style={{
-                color: "#ff9800",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
+                marginBottom: 12,
+                paddingBottom: 12,
+                borderBottomWidth: 0.5,
+                borderBottomColor: "#2a2a2a",
               }}
             >
-              ⚠️ Fragile - Handle with care
-            </Text>
+              <Text
+                style={{
+                  color: "#cfcfcf",
+                  fontFamily: "poppins-regular",
+                  fontSize: 10,
+                }}
+              >
+                Recipient Contact
+              </Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-semibold",
+                  fontSize: 12,
+                  marginTop: 2,
+                }}
+              >
+                {dummyDeliveryData.to.phone}
+              </Text>
+            </View>
+
+            {/* Package details */}
+            <View style={{ marginBottom: 12 }}>
+              <Text
+                style={{
+                  color: "#cfcfcf",
+                  fontFamily: "poppins-regular",
+                  fontSize: 10,
+                  marginBottom: 8,
+                }}
+              >
+                Package Details
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  backgroundColor: "#2a2a2a",
+                  padding: 10,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ fontSize: 24 }}>
+                  {getPackageIcon(dummyDeliveryData.package?.type)}
+                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-semibold",
+                      fontSize: 12,
+                    }}
+                  >
+                    {dummyDeliveryData.package?.type
+                      ? dummyDeliveryData.package.type.charAt(0).toUpperCase() +
+                        dummyDeliveryData.package.type.slice(1)
+                      : "Other"}
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#cfcfcf",
+                      fontFamily: "poppins-regular",
+                      fontSize: 11,
+                      marginTop: 2,
+                    }}
+                  >
+                    {dummyDeliveryData.package?.description || "Package"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Fragile warning */}
+            {dummyDeliveryData.package?.fragile && (
+              <View
+                style={{
+                  backgroundColor: "#ff980020",
+                  padding: 10,
+                  borderRadius: 8,
+                  marginBottom: 12,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#ff9800",
+                    fontFamily: "raleway-bold",
+                    textAlign: "center",
+                    fontSize: 12,
+                  }}
+                >
+                  ⚠️ Fragile - Handle with care
+                </Text>
+              </View>
+            )}
+
+            {/* Delivery ID and Fare */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingTop: 12,
+                borderTopWidth: 0.5,
+                borderTopColor: "#2a2a2a",
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: "#2a2a2a",
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontFamily: "poppins-regular",
+                    fontSize: 10,
+                  }}
+                >
+                  ID: #{dummyDeliveryData._id.slice(-9).toUpperCase()}
+                </Text>
+              </View>
+              <Text
+                style={{
+                  color: "#10b804ff",
+                  fontFamily: "poppins-bold",
+                  fontSize: 16,
+                }}
+              >
+                NGN {dummyDeliveryData.fare.toLocaleString()}
+              </Text>
+            </View>
           </View>
         )}
+
+        {/* See more/less button */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setIsDeliveryExpanded(!isDeliveryExpanded)}
+          style={{
+            marginTop: 12,
+            paddingTop: 12,
+            borderTopWidth: 0.5,
+            borderTopColor: "#2a2a2a",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+          }}
+        >
+          <Text
+            style={{
+              color: "#cfcfcf",
+              fontFamily: "raleway-semibold",
+              fontSize: 12,
+            }}
+          >
+            {isDeliveryExpanded ? "See less" : "See more"}
+          </Text>
+          <Feather
+            name={isDeliveryExpanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color="#cfcfcf"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Confirm delivery button */}
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback
+          onPress={confirmDelivered}
+          disabled={delivering}
+        >
+          <View style={[styles.arrivedBtn, { opacity: delivering ? 0.5 : 1 }]}>
+            <Text style={styles.arrivedBtnText}>
+              {delivering ? "Confirming..." : "I have delivered the package"}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
       </View>
     </View>
   );
 };
 
 const DeliveryDeliveredModal = () => {
-  const [completing, setCompleting] = useState<boolean>(false);
-
-  const dummyDeliveryData = {
-    _id: "DEL123456",
-    dropoff: {
-      address: "456 Victoria Island, Lagos",
-    },
-    to: {
-      name: "Jane Smith",
-      phone: "+2348087654321",
-    },
-    package: {
-      description: "Electronic gadgets",
-    },
-    fare: 3500,
-  };
-
-  const confirmDelivery = async () => {
-    setCompleting(true);
-    try {
-      // API call to mark delivery as delivered
-      console.log("Confirming delivery completion");
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setCompleting(false);
-    }
+  const start_searching = () => {
+    // Reset delivery state and start searching for new deliveries
+    console.log("Searching for new deliveries");
   };
 
   return (
     <View style={styles.navigationContainer}>
       <View style={styles.directionsRow}>
-        <MaterialIcons name="location-on" color={"#f44336"} size={30} />
+        <MaterialIcons name="celebration" color={"#fff"} size={24} />
         <Text style={styles.directionsText}>
-          You've arrived at the dropoff location
+          You have completed this delivery
         </Text>
       </View>
-
-      {/* Delivery completion details */}
-      <View
-        style={{
-          backgroundColor: "#2a2a2a",
-          padding: 15,
-          borderRadius: 8,
-          marginVertical: 15,
-        }}
-      >
-        <Text style={styles.userName}>Delivery Details</Text>
-        <Text style={[styles.userRides, { marginTop: 5 }]}>
-          {dummyDeliveryData.dropoff.address}
-        </Text>
-
-        <View style={{ marginTop: 12 }}>
-          <Text style={styles.userRides}>
-            Hand over package to: {dummyDeliveryData.to.name}
-          </Text>
-          <Text style={[styles.userRides, { marginTop: 2 }]}>
-            Contact: {dummyDeliveryData.to.phone}
-          </Text>
-        </View>
-
-        <View
-          style={{
-            marginTop: 15,
-            paddingTop: 15,
-            borderTopWidth: 1,
-            borderTopColor: "#3b3b3b",
-          }}
-        >
-          <Text style={styles.userRides}>Package</Text>
-          <Text style={[styles.userName, { marginTop: 5 }]}>
-            {dummyDeliveryData.package.description}
-          </Text>
-        </View>
-
-        <View
-          style={{
-            marginTop: 15,
-            paddingTop: 15,
-            borderTopWidth: 1,
-            borderTopColor: "#3b3b3b",
-          }}
-        >
-          <Text style={styles.userRides}>Delivery Fee</Text>
-          <Text style={[styles.priceText, { marginTop: 5 }]}>
-            NGN {dummyDeliveryData.fare.toLocaleString()}
-          </Text>
-        </View>
-      </View>
-
       <View style={styles.arrivedBtnRow}>
-        <TouchableWithoutFeedback
-          onPress={confirmDelivery}
-          disabled={completing}
-        >
-          <View style={[styles.arrivedBtn, { opacity: completing ? 0.5 : 1 }]}>
+        <TouchableWithoutFeedback onPress={start_searching}>
+          <View style={styles.arrivedBtn}>
             <Text style={styles.arrivedBtnText}>
-              {completing ? "Completing..." : "Confirm Delivery Completed"}
+              Search for another delivery
             </Text>
           </View>
         </TouchableWithoutFeedback>
       </View>
-
-      <Text
-        style={{
-          color: "#b0b0b0",
-          fontFamily: "raleway-regular",
-          fontSize: 12,
-          textAlign: "center",
-          marginTop: 10,
-        }}
-      >
-        Confirm only after recipient has received the package
-      </Text>
     </View>
   );
 };
