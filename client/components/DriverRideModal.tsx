@@ -232,7 +232,9 @@ const OfflineMode = ({
 const SearchingModal = () => {
   return (
     <View>
-      <Text style={styles.searchingText}>Searching for new ride offers...</Text>
+      <Text style={styles.searchingText}>
+        Searching for new ride/delivery offers...
+      </Text>
     </View>
   );
 };
@@ -636,6 +638,773 @@ const CompletedModal = () => {
           </View>
         </TouchableWithoutFeedback>
       </View>
+    </View>
+  );
+};
+
+// ============================================
+// DELIVERY MODALS
+// ============================================
+
+const DeliveryIncomingModal = () => {
+  // Dummy delivery data based on Delivery interface from DeliveryContext
+  const dummyDeliveryData = {
+    _id: "DEL123456",
+    sender: {
+      _id: "USER001",
+      name: "John Doe",
+      phone: "+2348012345678",
+    },
+    pickup: {
+      address: "123 Lagos Street, Ikeja, Lagos",
+      coordinates: [6.5244, 3.3792] as [number, number],
+    },
+    dropoff: {
+      address: "456 Victoria Island, Lagos",
+      coordinates: [6.4281, 3.4219] as [number, number],
+    },
+    to: {
+      name: "Jane Smith",
+      phone: "+2348087654321",
+    },
+    package: {
+      description: "Electronic gadgets",
+      type: "electronics" as const,
+      fragile: true,
+      amount: 45000,
+    },
+    fare: 3500,
+    vehicle: "bike",
+    distance_km: 8.5,
+    duration_mins: 25,
+    status: "pending" as const,
+  };
+
+  const [countDown, setCountDown] = useState<number>(30);
+  const [accepting, setAccepting] = useState<boolean>(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountDown((prev) => {
+        if (prev === 1) {
+          // Reset to searching state
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const acceptDelivery = async () => {
+    setAccepting(true);
+    try {
+      // API call would go here
+      console.log("Accepting delivery:", dummyDeliveryData._id);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setAccepting(false);
+    }
+  };
+
+  const rejectDelivery = () => {
+    console.log("Rejecting delivery:", dummyDeliveryData._id);
+  };
+
+  // Get package icon
+  const getPackageIcon = (type?: string) => {
+    switch (type) {
+      case "document":
+        return "📄";
+      case "electronics":
+        return "📱";
+      case "food":
+        return "🍔";
+      case "clothing":
+        return "👕";
+      case "furniture":
+        return "🪑";
+      default:
+        return "📦";
+    }
+  };
+
+  return (
+    <>
+      <Text style={styles.rideStatusText}>Incoming delivery request</Text>
+
+      <View style={styles.rideRequestCard}>
+        {/* Header with sender info */}
+        <View style={styles.rideRequestHeader}>
+          <View style={styles.userInfo}>
+            <Image
+              source={require("../assets/images/user.png")}
+              style={styles.userImage}
+            />
+            <View>
+              <Text style={styles.userName}>
+                {typeof dummyDeliveryData.sender === "object"
+                  ? dummyDeliveryData.sender.name
+                  : "Unknown Sender"}
+              </Text>
+              <Text style={styles.userRides}>Sender</Text>
+            </View>
+          </View>
+
+          <Text style={styles.timeoutText}>{countDown}s</Text>
+        </View>
+
+        {/* Estimated time and distance */}
+        <View style={styles.timeRow}>
+          <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
+          <Text style={styles.timeText}>
+            {dummyDeliveryData.duration_mins} mins (
+            {dummyDeliveryData.distance_km} km)
+          </Text>
+        </View>
+
+        {/* Package info */}
+        <View
+          style={{
+            backgroundColor: "#2a2a2a",
+            padding: 12,
+            borderRadius: 8,
+            marginVertical: 10,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Text style={{ fontSize: 24 }}>
+              {getPackageIcon(dummyDeliveryData.package?.type)}
+            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userName}>
+                {dummyDeliveryData.package?.description || "Package"}
+              </Text>
+              <Text style={styles.userRides}>
+                {dummyDeliveryData.package?.type || "other"} •{" "}
+                {dummyDeliveryData.package?.fragile ? "Fragile" : "Standard"}
+              </Text>
+            </View>
+          </View>
+          {dummyDeliveryData.package?.amount && (
+            <Text
+              style={{
+                color: "#10b804ff",
+                fontFamily: "poppins-semibold",
+                fontSize: 14,
+                marginTop: 8,
+              }}
+            >
+              Package Value: ₦
+              {dummyDeliveryData.package.amount.toLocaleString()}
+            </Text>
+          )}
+        </View>
+
+        {/* Delivery route */}
+        <View style={{ marginVertical: 10 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "flex-start",
+              gap: 10,
+              marginBottom: 8,
+            }}
+          >
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: "#4CAF50",
+                marginTop: 6,
+              }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userRides}>Pickup</Text>
+              <Text style={styles.userName}>
+                {dummyDeliveryData.pickup.address}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={{
+              width: 2,
+              height: 20,
+              backgroundColor: "#3b3b3b",
+              marginLeft: 3,
+            }}
+          />
+          <View
+            style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}
+          >
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: "#f44336",
+                marginTop: 6,
+              }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userRides}>Dropoff</Text>
+              <Text style={styles.userName}>
+                {dummyDeliveryData.dropoff.address}
+              </Text>
+              {dummyDeliveryData.to && (
+                <Text style={[styles.userRides, { marginTop: 4 }]}>
+                  Recipient: {dummyDeliveryData.to.name} (
+                  {dummyDeliveryData.to.phone})
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* Price */}
+        <Text style={styles.priceText}>
+          NGN {dummyDeliveryData.fare.toLocaleString()}
+        </Text>
+
+        {/* Action buttons */}
+        <View style={styles.actionBtnsRow}>
+          <TouchableWithoutFeedback
+            onPress={acceptDelivery}
+            disabled={accepting}
+          >
+            <View style={[styles.acceptBtn, { opacity: accepting ? 0.5 : 1 }]}>
+              <Text style={styles.acceptBtnText}>
+                {accepting ? "Accepting..." : "Accept"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+
+          <TouchableWithoutFeedback onPress={rejectDelivery}>
+            <View style={styles.cancelBtn}>
+              <Text style={styles.cancelBtnText}>Decline</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </View>
+    </>
+  );
+};
+
+const DeliveryAcceptedModal = () => {
+  // Dummy accepted delivery data
+  const dummyDeliveryData = {
+    _id: "DEL123456",
+    sender: {
+      _id: "USER001",
+      name: "John Doe",
+      phone: "+2348012345678",
+    },
+    pickup: {
+      address: "123 Lagos Street, Ikeja, Lagos",
+      coordinates: [6.5244, 3.3792] as [number, number],
+    },
+    dropoff: {
+      address: "456 Victoria Island, Lagos",
+      coordinates: [6.4281, 3.4219] as [number, number],
+    },
+    to: {
+      name: "Jane Smith",
+      phone: "+2348087654321",
+    },
+    package: {
+      description: "Electronic gadgets",
+      type: "electronics" as const,
+      fragile: true,
+      amount: 45000,
+    },
+    fare: 3500,
+    vehicle: "bike",
+    distance_km: 8.5,
+    duration_mins: 25,
+    status: "accepted" as const,
+  };
+
+  const getPackageIcon = (type?: string) => {
+    switch (type) {
+      case "document":
+        return "📄";
+      case "electronics":
+        return "📱";
+      case "food":
+        return "🍔";
+      case "clothing":
+        return "👕";
+      case "furniture":
+        return "🪑";
+      default:
+        return "📦";
+    }
+  };
+
+  const navigateToPickup = () => {
+    console.log("Navigating to pickup location");
+  };
+
+  return (
+    <>
+      <Text style={styles.rideStatusText}>Ongoing delivery</Text>
+
+      <View style={styles.rideRequestCard}>
+        {/* Header with sender info */}
+        <View style={styles.rideRequestHeader}>
+          <View style={styles.userInfo}>
+            <Image
+              source={require("../assets/images/user.png")}
+              style={styles.userImage}
+            />
+            <View>
+              <Text style={styles.userName}>
+                {typeof dummyDeliveryData.sender === "object"
+                  ? dummyDeliveryData.sender.name
+                  : "Unknown Sender"}
+              </Text>
+              <Text style={styles.userRides}>Sender</Text>
+            </View>
+          </View>
+
+          <TouchableWithoutFeedback
+            onPress={() =>
+              typeof dummyDeliveryData.sender === "object" &&
+              Linking.openURL(`tel:${dummyDeliveryData.sender.phone}`)
+            }
+          >
+            <View style={styles.callBtn}>
+              <Ionicons name="call" size={20} color="#121212" />
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+
+        {/* Estimated time and distance */}
+        <View style={styles.timeRow}>
+          <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
+          <Text style={styles.timeText}>
+            {dummyDeliveryData.duration_mins} mins (
+            {dummyDeliveryData.distance_km} km)
+          </Text>
+        </View>
+
+        {/* Package info */}
+        <View
+          style={{
+            backgroundColor: "#2a2a2a",
+            padding: 12,
+            borderRadius: 8,
+            marginVertical: 10,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Text style={{ fontSize: 24 }}>
+              {getPackageIcon(dummyDeliveryData.package?.type)}
+            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userName}>
+                {dummyDeliveryData.package?.description || "Package"}
+              </Text>
+              <Text style={styles.userRides}>
+                {dummyDeliveryData.package?.type || "other"} •{" "}
+                {dummyDeliveryData.package?.fragile ? "Fragile" : "Standard"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Delivery route */}
+        <View style={{ marginVertical: 10 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "flex-start",
+              gap: 10,
+              marginBottom: 8,
+            }}
+          >
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: "#4CAF50",
+                marginTop: 6,
+              }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userRides}>Pickup</Text>
+              <Text style={styles.userName}>
+                {dummyDeliveryData.pickup.address}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={{
+              width: 2,
+              height: 20,
+              backgroundColor: "#3b3b3b",
+              marginLeft: 3,
+            }}
+          />
+          <View
+            style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}
+          >
+            <View
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: "#f44336",
+                marginTop: 6,
+              }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userRides}>Dropoff</Text>
+              <Text style={styles.userName}>
+                {dummyDeliveryData.dropoff.address}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Price */}
+        <Text style={styles.priceText}>
+          {dummyDeliveryData.fare.toLocaleString()} NGN
+        </Text>
+
+        {/* Navigate to pickup button */}
+        <View style={styles.navigateBtnRow}>
+          <TouchableWithoutFeedback onPress={navigateToPickup}>
+            <View style={styles.navigateBtn}>
+              <Text style={styles.navigateBtnText}>Navigate to Pickup</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </View>
+    </>
+  );
+};
+
+const DeliveryArrivedModal = () => {
+  const [pickingUp, setPickingUp] = useState<boolean>(false);
+
+  const dummyDeliveryData = {
+    _id: "DEL123456",
+    sender: {
+      name: "John Doe",
+      phone: "+2348012345678",
+    },
+    pickup: {
+      address: "123 Lagos Street, Ikeja, Lagos",
+      coordinates: [6.5244, 3.3792] as [number, number],
+    },
+    dropoff: {
+      address: "456 Victoria Island, Lagos",
+      coordinates: [6.4281, 3.4219] as [number, number],
+    },
+    package: {
+      description: "Electronic gadgets",
+      type: "electronics" as const,
+      fragile: true,
+    },
+    fare: 3500,
+  };
+
+  const confirmPickup = async () => {
+    setPickingUp(true);
+    try {
+      // API call to update delivery status to "picked_up"
+      console.log("Confirming package pickup");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setPickingUp(false);
+    }
+  };
+
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <MaterialIcons name="location-on" color={"#4CAF50"} size={30} />
+        <Text style={styles.directionsText}>
+          You've arrived at the pickup location
+        </Text>
+      </View>
+
+      {/* Pickup details */}
+      <View
+        style={{
+          backgroundColor: "#2a2a2a",
+          padding: 15,
+          borderRadius: 8,
+          marginVertical: 15,
+        }}
+      >
+        <Text style={styles.userName}>Pickup Details</Text>
+        <Text style={[styles.userRides, { marginTop: 5 }]}>
+          {dummyDeliveryData.pickup.address}
+        </Text>
+        <Text style={[styles.userRides, { marginTop: 8 }]}>
+          Sender: {dummyDeliveryData.sender.name}
+        </Text>
+        <Text style={[styles.userRides, { marginTop: 2 }]}>
+          Phone: {dummyDeliveryData.sender.phone}
+        </Text>
+        <Text style={[styles.userRides, { marginTop: 8 }]}>
+          Package: {dummyDeliveryData.package.description}
+        </Text>
+        {dummyDeliveryData.package.fragile && (
+          <Text
+            style={{
+              color: "#ff9800",
+              fontFamily: "raleway-bold",
+              marginTop: 5,
+            }}
+          >
+            ⚠️ Handle with care - Fragile item
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback onPress={confirmPickup} disabled={pickingUp}>
+          <View style={[styles.arrivedBtn, { opacity: pickingUp ? 0.5 : 1 }]}>
+            <Text style={styles.arrivedBtnText}>
+              {pickingUp ? "Confirming..." : "Confirm Package Pickup"}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
+  );
+};
+
+const DeliveryInTransitModal = () => {
+  const dummyDeliveryData = {
+    _id: "DEL123456",
+    dropoff: {
+      address: "456 Victoria Island, Lagos",
+      coordinates: [6.4281, 3.4219] as [number, number],
+    },
+    to: {
+      name: "Jane Smith",
+      phone: "+2348087654321",
+    },
+    package: {
+      description: "Electronic gadgets",
+      type: "electronics" as const,
+      fragile: true,
+    },
+    fare: 3500,
+    duration_mins: 15,
+  };
+
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <FontAwesome5 name="directions" color={"#fff"} size={30} />
+        <Text style={styles.directionsText}>
+          Package picked up! Head to the dropoff location
+        </Text>
+      </View>
+
+      {/* Delivery details */}
+      <View
+        style={{
+          backgroundColor: "#2a2a2a",
+          padding: 15,
+          borderRadius: 8,
+          marginVertical: 15,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.userName}>Dropoff Location</Text>
+            <Text style={[styles.userRides, { marginTop: 5 }]}>
+              {dummyDeliveryData.dropoff.address}
+            </Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: "#10b804ff",
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 15,
+            }}
+          >
+            <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
+              {dummyDeliveryData.duration_mins} mins
+            </Text>
+          </View>
+        </View>
+
+        <View
+          style={{
+            marginTop: 15,
+            paddingTop: 15,
+            borderTopWidth: 1,
+            borderTopColor: "#3b3b3b",
+          }}
+        >
+          <Text style={styles.userName}>Recipient Details</Text>
+          <Text style={[styles.userRides, { marginTop: 5 }]}>
+            {dummyDeliveryData.to.name}
+          </Text>
+          <Text style={[styles.userRides, { marginTop: 2 }]}>
+            {dummyDeliveryData.to.phone}
+          </Text>
+        </View>
+
+        {dummyDeliveryData.package.fragile && (
+          <View
+            style={{
+              marginTop: 12,
+              backgroundColor: "#ff980020",
+              padding: 10,
+              borderRadius: 6,
+            }}
+          >
+            <Text
+              style={{
+                color: "#ff9800",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              ⚠️ Fragile - Handle with care
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
+
+const DeliveryDeliveredModal = () => {
+  const [completing, setCompleting] = useState<boolean>(false);
+
+  const dummyDeliveryData = {
+    _id: "DEL123456",
+    dropoff: {
+      address: "456 Victoria Island, Lagos",
+    },
+    to: {
+      name: "Jane Smith",
+      phone: "+2348087654321",
+    },
+    package: {
+      description: "Electronic gadgets",
+    },
+    fare: 3500,
+  };
+
+  const confirmDelivery = async () => {
+    setCompleting(true);
+    try {
+      // API call to mark delivery as delivered
+      console.log("Confirming delivery completion");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <MaterialIcons name="location-on" color={"#f44336"} size={30} />
+        <Text style={styles.directionsText}>
+          You've arrived at the dropoff location
+        </Text>
+      </View>
+
+      {/* Delivery completion details */}
+      <View
+        style={{
+          backgroundColor: "#2a2a2a",
+          padding: 15,
+          borderRadius: 8,
+          marginVertical: 15,
+        }}
+      >
+        <Text style={styles.userName}>Delivery Details</Text>
+        <Text style={[styles.userRides, { marginTop: 5 }]}>
+          {dummyDeliveryData.dropoff.address}
+        </Text>
+
+        <View style={{ marginTop: 12 }}>
+          <Text style={styles.userRides}>
+            Hand over package to: {dummyDeliveryData.to.name}
+          </Text>
+          <Text style={[styles.userRides, { marginTop: 2 }]}>
+            Contact: {dummyDeliveryData.to.phone}
+          </Text>
+        </View>
+
+        <View
+          style={{
+            marginTop: 15,
+            paddingTop: 15,
+            borderTopWidth: 1,
+            borderTopColor: "#3b3b3b",
+          }}
+        >
+          <Text style={styles.userRides}>Package</Text>
+          <Text style={[styles.userName, { marginTop: 5 }]}>
+            {dummyDeliveryData.package.description}
+          </Text>
+        </View>
+
+        <View
+          style={{
+            marginTop: 15,
+            paddingTop: 15,
+            borderTopWidth: 1,
+            borderTopColor: "#3b3b3b",
+          }}
+        >
+          <Text style={styles.userRides}>Delivery Fee</Text>
+          <Text style={[styles.priceText, { marginTop: 5 }]}>
+            NGN {dummyDeliveryData.fare.toLocaleString()}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback
+          onPress={confirmDelivery}
+          disabled={completing}
+        >
+          <View style={[styles.arrivedBtn, { opacity: completing ? 0.5 : 1 }]}>
+            <Text style={styles.arrivedBtnText}>
+              {completing ? "Completing..." : "Confirm Delivery Completed"}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+
+      <Text
+        style={{
+          color: "#b0b0b0",
+          fontFamily: "raleway-regular",
+          fontSize: 12,
+          textAlign: "center",
+          marginTop: 10,
+        }}
+      >
+        Confirm only after recipient has received the package
+      </Text>
     </View>
   );
 };
