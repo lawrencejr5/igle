@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
 import Delivery from "../models/delivery";
+import Driver from "../models/driver";
 import { calculate_commission } from "../utils/calc_commision";
 import { io } from "../server";
 import {
   get_user_socket_id,
   get_driver_socket_id,
   get_driver_id,
+  get_driver_push_tokens,
 } from "../utils/get_id";
+import { sendExpoPush } from "../utils/expo_push";
 import { Types } from "mongoose";
 
 // expire delivery helper
@@ -78,11 +81,50 @@ export const request_delivery = async (
         : null,
     });
 
-    // notify drivers (simple emit, you may filter by vehicle type client-side)
-    io.emit("delivery_request", {
-      delivery_id: new_delivery._id,
-      msg: "New delivery request",
-    });
+    // notify drivers. If a vehicle type was specified, only notify drivers of that type
+    try {
+      if (vehicle) {
+        // find drivers with the requested vehicle type
+        const drivers = await Driver.find({ vehicle_type: vehicle });
+
+        // notify connected drivers via sockets and offline via push
+        await Promise.all(
+          drivers.map(async (d) => {
+            try {
+              const driverId = String((d as any)._id);
+              const driverSocket = await get_driver_socket_id(driverId);
+              if (driverSocket) {
+                io.to(driverSocket).emit("delivery_request", {
+                  delivery_id: new_delivery._id,
+                });
+              } else {
+                const tokens = await get_driver_push_tokens(driverId);
+                if (tokens.length) {
+                  await sendExpoPush(
+                    tokens,
+                    "New delivery request",
+                    "A nearby sender needs a delivery",
+                    {
+                      type: "delivery_request",
+                      deliveryId: new_delivery._id,
+                    }
+                  );
+                }
+              }
+            } catch (e) {
+              console.error("Failed to notify driver", d._id, e);
+            }
+          })
+        );
+      } else {
+        // fallback: notify all drivers
+        io.emit("delivery_request", { delivery_id: new_delivery._id });
+      }
+    } catch (notifyErr) {
+      console.error("Error notifying drivers for delivery request:", notifyErr);
+      // fallback to global emit
+      io.emit("delivery_request", { delivery_id: new_delivery._id });
+    }
 
     // expiration timeout (30s similar to rides)
     setTimeout(
