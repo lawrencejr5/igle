@@ -388,6 +388,9 @@ export const accept_delivery = async (
         driver_id,
       });
 
+    // Notify all drivers that this delivery has been taken so they drop the card
+    io.emit("delivery_taken", { delivery_id });
+
     delivery.timestamps = {
       ...(delivery.timestamps as any),
       accepted_at: new Date(),
@@ -586,11 +589,40 @@ export const pay_for_delivery = async (
     delivery.payment_method = "wallet" as any;
     await delivery.save();
 
+    // Notify the assigned driver that payment succeeded
+    if (delivery.driver) {
+      const driver_socket = await get_driver_socket_id(
+        delivery.driver.toString()
+      );
+      if (driver_socket) {
+        io.to(driver_socket).emit("delivery_paid", { delivery_id });
+      }
+    }
+
     res.status(200).json({ msg: "Payment successful", transaction });
   } catch (err: any) {
     console.error(err);
     res
       .status(500)
       .json({ msg: "Failed to pay for delivery", err: err.message });
+  }
+};
+
+export const get_driver_active_delivery = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const delivery = await Delivery.findOne({
+      driver: driver_id,
+      status: { $in: ["accepted", "arrived", "picked_up", "in_transit"] },
+    })
+      .sort({ createdAt: -1 })
+      .populate("sender", "name phone profile_pic");
+
+    res.status(200).json({ msg: "success", delivery });
+  } catch (err: any) {
+    res.status(500).json({ msg: "Server error." });
   }
 };

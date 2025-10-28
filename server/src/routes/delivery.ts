@@ -15,6 +15,7 @@ import {
   get_user_in_transit_deliveries,
   get_user_cancelled_deliveries,
   get_user_delivered_deliveries,
+  get_driver_active_delivery,
 } from "../controllers/delivery";
 
 const DeliveryRouter = Router();
@@ -22,6 +23,7 @@ const DeliveryRouter = Router();
 DeliveryRouter.use(auth);
 
 DeliveryRouter.get("/active", get_user_active_delivery);
+DeliveryRouter.get("/driver/active", get_driver_active_delivery);
 DeliveryRouter.get("/in_transit", get_user_in_transit_deliveries);
 DeliveryRouter.get("/delivered", get_user_delivered_deliveries);
 DeliveryRouter.get("/cancelled", get_user_cancelled_deliveries);

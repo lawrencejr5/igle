@@ -30,7 +30,9 @@ const HomePage = () => {
   const { getDriverProfile } = useDriverAuthContext();
   const { driveStatus } = useDriverContext();
   const {
+    jobType,
     ongoingRideData,
+    ongoingDeliveryData,
     toPickupRouteCoords,
     toDestinationRouteCoords,
     mapRef,
@@ -64,6 +66,32 @@ const HomePage = () => {
     [toDestinationRouteCoords]
   );
 
+  // Derive pickup and destination coordinates based on current job type
+  const pickupCoordsArr: [number, number] | null = useMemo(() => {
+    if (jobType === "ride") {
+      return ongoingRideData?.pickup?.coordinates || null;
+    }
+    if (jobType === "delivery") {
+      return ongoingDeliveryData?.pickup?.coordinates || null;
+    }
+    return null;
+  }, [jobType, ongoingRideData, ongoingDeliveryData]);
+
+  const destinationCoordsArr: [number, number] | null = useMemo(() => {
+    if (jobType === "ride") {
+      return ongoingRideData?.destination?.coordinates || null;
+    }
+    if (jobType === "delivery") {
+      return ongoingDeliveryData?.dropoff?.coordinates || null;
+    }
+    return null;
+  }, [jobType, ongoingRideData, ongoingDeliveryData]);
+
+  const hasPickup =
+    Array.isArray(pickupCoordsArr) && pickupCoordsArr.length === 2;
+  const hasDestination =
+    Array.isArray(destinationCoordsArr) && destinationCoordsArr.length === 2;
+
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
 
   // Stop tracking changes after the marker has loaded
@@ -85,16 +113,10 @@ const HomePage = () => {
             customMapStyle={darkMapStyle}
             onMapLoaded={loadMap}
           >
+            {/* Driver's current position */}
             <Marker
               tracksViewChanges={tracksViewChanges}
-              coordinate={
-                driveStatus === "arrived" || driveStatus === "ongoing"
-                  ? {
-                      latitude: ongoingRideData?.pickup.coordinates[0],
-                      longitude: ongoingRideData?.pickup.coordinates[1],
-                    }
-                  : region
-              }
+              coordinate={region}
               title="You are here!"
               anchor={{ x: 0.2, y: 0.2 }}
             >
@@ -106,36 +128,36 @@ const HomePage = () => {
               </View>
             </Marker>
 
-            {ongoingRideData &&
-              ongoingRideData.pickup &&
-              driveStatus === "arriving" && (
+            {/* Pickup marker (for both rides and deliveries) */}
+            {hasPickup && driveStatus === "arriving" && (
+              <Marker
+                coordinate={{
+                  latitude: pickupCoordsArr![0],
+                  longitude: pickupCoordsArr![1],
+                }}
+                title={jobType === "delivery" ? "Pickup" : "Pickup"}
+                anchor={{ x: 0.2, y: 0.2 }}
+              >
+                <View style={styles.markerIcon}>
+                  <Image
+                    source={require("../../assets/images/user.png")}
+                    style={styles.markerImage}
+                  />
+                </View>
+              </Marker>
+            )}
+
+            {/* Destination/Dropoff marker */}
+            {hasDestination &&
+              ((jobType === "ride" &&
+                (driveStatus === "arrived" || driveStatus === "ongoing")) ||
+                (jobType === "delivery" && driveStatus === "ongoing")) && (
                 <Marker
-                  // tracksViewChanges={tracksViewChanges}
                   coordinate={{
-                    latitude: ongoingRideData.pickup.coordinates[0],
-                    longitude: ongoingRideData.pickup.coordinates[1],
+                    latitude: destinationCoordsArr![0],
+                    longitude: destinationCoordsArr![1],
                   }}
-                  title="Pickup"
-                  anchor={{ x: 0.2, y: 0.2 }}
-                >
-                  <View style={styles.markerIcon}>
-                    <Image
-                      source={require("../../assets/images/user.png")}
-                      style={styles.markerImage}
-                    />
-                  </View>
-                </Marker>
-              )}
-            {ongoingRideData &&
-              ongoingRideData.destination &&
-              (driveStatus === "arrived" || driveStatus === "ongoing") && (
-                <Marker
-                  // tracksViewChanges={tracksViewChanges}
-                  coordinate={{
-                    latitude: ongoingRideData.destination.coordinates[0],
-                    longitude: ongoingRideData.destination.coordinates[1],
-                  }}
-                  title="Destination"
+                  title={jobType === "delivery" ? "Dropoff" : "Destination"}
                   anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <View
@@ -156,21 +178,23 @@ const HomePage = () => {
                 </Marker>
               )}
 
-            {toPickupRouteCoords && (
-              <Polyline
-                coordinates={memoizedPickupRouteCoords}
-                strokeColor="#fff"
-                strokeWidth={2}
-              />
-            )}
+            {Array.isArray(memoizedPickupRouteCoords) &&
+              memoizedPickupRouteCoords.length > 1 && (
+                <Polyline
+                  coordinates={memoizedPickupRouteCoords}
+                  strokeColor="#fff"
+                  strokeWidth={2}
+                />
+              )}
 
-            {toDestinationRouteCoords && (
-              <Polyline
-                coordinates={memoizedDestinationRouteCoords}
-                strokeColor="#fff"
-                strokeWidth={3}
-              />
-            )}
+            {Array.isArray(memoizedDestinationRouteCoords) &&
+              memoizedDestinationRouteCoords.length > 1 && (
+                <Polyline
+                  coordinates={memoizedDestinationRouteCoords}
+                  strokeColor="#fff"
+                  strokeWidth={3}
+                />
+              )}
           </MapView>
         )}
 

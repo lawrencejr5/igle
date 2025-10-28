@@ -47,6 +47,19 @@ const DriverRideModal = () => {
     setIncomingRideData,
     ongoingRideData,
     setLocationModalOpen,
+    // delivery
+    jobType,
+    setJobType,
+    fetchActiveDelivery,
+    fetchIncomingDeliveryData,
+    incomingDeliveryData,
+    setIncomingDeliveryData,
+    acceptDeliveryRequest,
+    ongoingDeliveryData: ongoingDelivery,
+    updateDeliveryStatus,
+    setOngoingDeliveryData: setOngoingDelivery,
+    setToPickupRouteCoords,
+    setToDestinationRouteCoords,
   } = useDriverContext();
   const { showNotification } = useNotificationContext();
 
@@ -56,6 +69,7 @@ const DriverRideModal = () => {
   useEffect(() => {
     if (driver?.is_available && driveStatus === "searching" && driverSocket) {
       const new_ride_func = async (data: any) => {
+        setJobType("ride");
         setDriveStatus("incoming");
         await fetchIncomingRideData(data.ride_id);
       };
@@ -84,10 +98,68 @@ const DriverRideModal = () => {
 
       driverSocket.on("paid_for_ride", paidForRideHandler);
 
+      // Delivery sockets
+      const new_delivery_func = async (data: any) => {
+        setJobType("delivery");
+        setDriveStatus("incoming");
+        await fetchIncomingDeliveryData(data.delivery_id);
+      };
+
+      const delivery_taken_func = (data: any) => {
+        setIncomingDeliveryData((prev: any) => {
+          if (prev?._id === data.delivery_id) {
+            showNotification("Delivery has been claimed", "error");
+            return null;
+          }
+          return prev;
+        });
+      };
+
+      const delivery_expired_func = (data: any) => {
+        setIncomingDeliveryData((prev: any) => {
+          if (prev?._id === data.delivery_id) {
+            showNotification("Delivery request expired", "error");
+            setDriveStatus("searching");
+            return null;
+          }
+          return prev;
+        });
+      };
+
+      const delivery_cancel_func = (data: any) => {
+        // reset if this is the active delivery
+        if (
+          ongoingDelivery?._id === data.delivery_id ||
+          incomingDeliveryData?._id === data.delivery_id
+        ) {
+          showNotification("Delivery cancelled", "error");
+          setIncomingDeliveryData(null);
+          setOngoingDelivery(null as any);
+          setDriveStatus("searching");
+          setJobType("");
+        }
+      };
+
+      const delivery_paid_func = (_data: any) => {
+        showNotification("Sender has paid for delivery", "success");
+      };
+
+      driverSocket.on("delivery_request", new_delivery_func);
+      driverSocket.on("delivery_taken", delivery_taken_func);
+      driverSocket.on("delivery_request_expired", delivery_expired_func);
+      driverSocket.on("delivery_cancel", delivery_cancel_func);
+      driverSocket.on("delivery_paid", delivery_paid_func);
+
       return () => {
         driverSocket.off("new_ride_request", new_ride_func);
         driverSocket.off("ride_taken", ride_taken_func);
         driverSocket.off("paid_for_ride", paidForRideHandler);
+
+        driverSocket.off("delivery_request", new_delivery_func);
+        driverSocket.off("delivery_taken", delivery_taken_func);
+        driverSocket.off("delivery_request_expired", delivery_expired_func);
+        driverSocket.off("delivery_cancel", delivery_cancel_func);
+        driverSocket.off("delivery_paid", delivery_paid_func);
       };
     }
   }, [driver?.is_available, driveStatus, driverSocket]);
@@ -96,14 +168,17 @@ const DriverRideModal = () => {
     if (!driver?.is_available) {
       setDriveStatus("searching");
       setIncomingRideData(null);
+      setIncomingDeliveryData(null);
+      setJobType("");
     }
   }, [driver?.is_available]);
 
   useEffect(() => {
-    // On mount, check for active ride
-    fetchActiveRide().then(() => {
+    // On mount, check for active ride or delivery
+    (async () => {
+      await Promise.all([fetchActiveRide(), fetchActiveDelivery()]);
       if (ongoingRideData) {
-        // Set the drive status based on the ride's status
+        setJobType("ride");
         switch (ongoingRideData.status) {
           case "accepted":
             setDriveStatus("accepted");
@@ -115,8 +190,24 @@ const DriverRideModal = () => {
             setDriveStatus("ongoing");
             break;
         }
+      } else if (ongoingDelivery) {
+        setJobType("delivery");
+        switch (ongoingDelivery.status) {
+          case "accepted":
+            setDriveStatus("accepted");
+            break;
+          case "arrived":
+            setDriveStatus("arrived");
+            break;
+          case "picked_up":
+          case "in_transit":
+            setDriveStatus("ongoing");
+            break;
+        }
+      } else {
+        setJobType("");
       }
-    });
+    })();
   }, []);
 
   return (
@@ -137,21 +228,37 @@ const DriverRideModal = () => {
       <View style={styles.main_modal_container}>
         {driver?.is_available && (
           <View style={styles.availableContainer}>
-            {driveStatus === "searching" && <DeliveryDeliveredModal />}
-            {/*  */}
-            {driveStatus === "incoming" && incomingRideData && (
-              <IncomingModal />
+            {/* RIDE MODALS */}
+            {jobType !== "delivery" && (
+              <>
+                {driveStatus === "searching" && <SearchingModal />}
+                {driveStatus === "incoming" && incomingRideData && (
+                  <IncomingModal />
+                )}
+                {driveStatus === "accepted" && ongoingRideData && (
+                  <AcceptedModal />
+                )}
+                {driveStatus === "arriving" && <ArrivingModal />}
+                {driveStatus === "arrived" && <ArrivedModal />}
+                {driveStatus === "ongoing" && <OngoingModal />}
+                {driveStatus === "completed" && <CompletedModal />}
+              </>
             )}
-            {/*  */}
-            {driveStatus === "accepted" && ongoingRideData && <AcceptedModal />}
-            {/*  */}
-            {driveStatus === "arriving" && <ArrivingModal />}
-            {/*  */}
-            {driveStatus === "arrived" && <ArrivedModal />}
-            {/*  */}
-            {driveStatus === "ongoing" && <OngoingModal />}
-            {/*  */}
-            {driveStatus === "completed" && <CompletedModal />}
+
+            {/* DELIVERY MODALS */}
+            {jobType === "delivery" && (
+              <>
+                {driveStatus === "searching" && <SearchingModal />}
+                {driveStatus === "incoming" && incomingDeliveryData && (
+                  <DeliveryIncomingModal />
+                )}
+                {driveStatus === "accepted" && <DeliveryAcceptedModal />}
+                {driveStatus === "arriving" && <DeliveryArrivingModal />}
+                {driveStatus === "arrived" && <DeliveryArrivedModal />}
+                {driveStatus === "ongoing" && <DeliveryInTransitModal />}
+                {driveStatus === "completed" && <DeliveryDeliveredModal />}
+              </>
+            )}
           </View>
         )}
         <>
@@ -174,7 +281,10 @@ const DriverRideModal = () => {
   );
 };
 
-// Modify OfflineMode to accept openEarnings
+// ============================================
+// RIDE MODALS
+// ============================================
+
 const OfflineMode = ({
   setEarningsOpen,
   setAccountOpen,
@@ -648,38 +758,12 @@ const CompletedModal = () => {
 // ============================================
 
 const DeliveryIncomingModal = () => {
-  // Dummy delivery data based on Delivery interface from DeliveryContext
-  const dummyDeliveryData = {
-    _id: "DEL123456",
-    sender: {
-      _id: "USER001",
-      name: "John Doe",
-      phone: "+2348012345678",
-    },
-    pickup: {
-      address: "123 Lagos Street, Ikeja, Lagos",
-      coordinates: [6.5244, 3.3792] as [number, number],
-    },
-    dropoff: {
-      address: "456 Victoria Island, Lagos",
-      coordinates: [6.4281, 3.4219] as [number, number],
-    },
-    to: {
-      name: "Jane Smith",
-      phone: "+2348087654321",
-    },
-    package: {
-      description: "Electronic gadgets",
-      type: "electronics" as const,
-      fragile: true,
-      amount: 45000,
-    },
-    fare: 3500,
-    vehicle: "bike",
-    distance_km: 8.5,
-    duration_mins: 25,
-    status: "pending" as const,
-  };
+  const {
+    incomingDeliveryData,
+    setIncomingDeliveryData,
+    setDriveStatus,
+    acceptDeliveryRequest,
+  } = useDriverContext();
 
   const [countDown, setCountDown] = useState<number>(30);
   const [accepting, setAccepting] = useState<boolean>(false);
@@ -688,7 +772,8 @@ const DeliveryIncomingModal = () => {
     const timer = setInterval(() => {
       setCountDown((prev) => {
         if (prev === 1) {
-          // Reset to searching state
+          setDriveStatus("searching");
+          setIncomingDeliveryData(null);
           return 30;
         }
         return prev - 1;
@@ -701,17 +786,18 @@ const DeliveryIncomingModal = () => {
   const acceptDelivery = async () => {
     setAccepting(true);
     try {
-      // API call would go here
-      console.log("Accepting delivery:", dummyDeliveryData._id);
+      await acceptDeliveryRequest();
+      setDriveStatus("accepted");
     } catch (error) {
-      console.log(error);
+      setDriveStatus("searching");
     } finally {
       setAccepting(false);
     }
   };
 
   const rejectDelivery = () => {
-    console.log("Rejecting delivery:", dummyDeliveryData._id);
+    setDriveStatus("searching");
+    setIncomingDeliveryData(null);
   };
 
   // Get package icon
@@ -732,6 +818,8 @@ const DeliveryIncomingModal = () => {
     }
   };
 
+  if (!incomingDeliveryData) return null;
+
   return (
     <>
       <Text style={styles.rideStatusText}>Incoming delivery request</Text>
@@ -746,9 +834,9 @@ const DeliveryIncomingModal = () => {
             />
             <View>
               <Text style={styles.userName}>
-                {typeof dummyDeliveryData.sender === "object"
-                  ? dummyDeliveryData.sender.name
-                  : "Unknown Sender"}
+                {typeof incomingDeliveryData.sender === "object"
+                  ? incomingDeliveryData.sender?.name
+                  : "Sender"}
               </Text>
               <Text style={styles.userRides}>Sender</Text>
             </View>
@@ -761,8 +849,8 @@ const DeliveryIncomingModal = () => {
         <View style={styles.timeRow}>
           <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
           <Text style={styles.timeText}>
-            {dummyDeliveryData.duration_mins} mins (
-            {dummyDeliveryData.distance_km} km)
+            {incomingDeliveryData.duration_mins} mins (
+            {incomingDeliveryData.distance_km} km)
           </Text>
         </View>
 
@@ -777,15 +865,15 @@ const DeliveryIncomingModal = () => {
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Text style={{ fontSize: 24 }}>
-              {getPackageIcon(dummyDeliveryData.package?.type)}
+              {getPackageIcon(incomingDeliveryData.package?.type)}
             </Text>
             <View style={{ flex: 1 }}>
               <Text style={styles.userName}>
-                {dummyDeliveryData.package?.description || "Package"}
+                {incomingDeliveryData.package?.description || "Package"}
               </Text>
               <Text style={styles.userRides}>
-                {dummyDeliveryData.package?.type || "other"} •{" "}
-                {dummyDeliveryData.package?.fragile ? "Fragile" : "Standard"}
+                {incomingDeliveryData.package?.type || "other"} •{" "}
+                {incomingDeliveryData.package?.fragile ? "Fragile" : "Standard"}
               </Text>
             </View>
           </View>
@@ -813,7 +901,7 @@ const DeliveryIncomingModal = () => {
             <View style={{ flex: 1 }}>
               <Text style={styles.userRides}>Pickup</Text>
               <Text style={styles.userName}>
-                {dummyDeliveryData.pickup.address}
+                {incomingDeliveryData.pickup.address}
               </Text>
             </View>
           </View>
@@ -840,12 +928,12 @@ const DeliveryIncomingModal = () => {
             <View style={{ flex: 1 }}>
               <Text style={styles.userRides}>Dropoff</Text>
               <Text style={styles.userName}>
-                {dummyDeliveryData.dropoff.address}
+                {incomingDeliveryData.dropoff.address}
               </Text>
-              {dummyDeliveryData.to && (
+              {incomingDeliveryData.to && (
                 <Text style={[styles.userRides, { marginTop: 4 }]}>
-                  Recipient: {dummyDeliveryData.to.name} (
-                  {dummyDeliveryData.to.phone})
+                  Recipient: {incomingDeliveryData.to.name} (
+                  {incomingDeliveryData.to.phone})
                 </Text>
               )}
             </View>
@@ -854,7 +942,7 @@ const DeliveryIncomingModal = () => {
 
         {/* Price */}
         <Text style={styles.priceText}>
-          NGN {dummyDeliveryData.fare.toLocaleString()}
+          NGN {incomingDeliveryData.fare.toLocaleString()}
         </Text>
 
         {/* Action buttons */}
@@ -882,38 +970,7 @@ const DeliveryIncomingModal = () => {
 };
 
 const DeliveryAcceptedModal = () => {
-  // Dummy accepted delivery data
-  const dummyDeliveryData = {
-    _id: "DEL123456",
-    sender: {
-      _id: "USER001",
-      name: "John Doe",
-      phone: "+2348012345678",
-    },
-    pickup: {
-      address: "123 Lagos Street, Ikeja, Lagos",
-      coordinates: [6.5244, 3.3792] as [number, number],
-    },
-    dropoff: {
-      address: "456 Victoria Island, Lagos",
-      coordinates: [6.4281, 3.4219] as [number, number],
-    },
-    to: {
-      name: "Jane Smith",
-      phone: "+2348087654321",
-    },
-    package: {
-      description: "Electronic gadgets",
-      type: "electronics" as const,
-      fragile: true,
-      amount: 45000,
-    },
-    fare: 3500,
-    vehicle: "bike",
-    distance_km: 8.5,
-    duration_mins: 25,
-    status: "accepted" as const,
-  };
+  const { ongoingDeliveryData, setDriveStatus } = useDriverContext();
 
   const getPackageIcon = (type?: string) => {
     switch (type) {
@@ -933,7 +990,7 @@ const DeliveryAcceptedModal = () => {
   };
 
   const navigateToPickup = () => {
-    console.log("Navigating to pickup location");
+    setDriveStatus("arriving");
   };
 
   return (
@@ -950,9 +1007,9 @@ const DeliveryAcceptedModal = () => {
             />
             <View>
               <Text style={styles.userName}>
-                {typeof dummyDeliveryData.sender === "object"
-                  ? dummyDeliveryData.sender.name
-                  : "Unknown Sender"}
+                {typeof ongoingDeliveryData?.sender === "object"
+                  ? ongoingDeliveryData?.sender?.name
+                  : "Sender"}
               </Text>
               <Text style={styles.userRides}>Sender</Text>
             </View>
@@ -960,8 +1017,8 @@ const DeliveryAcceptedModal = () => {
 
           <TouchableWithoutFeedback
             onPress={() =>
-              typeof dummyDeliveryData.sender === "object" &&
-              Linking.openURL(`tel:${dummyDeliveryData.sender.phone}`)
+              typeof ongoingDeliveryData?.sender === "object" &&
+              Linking.openURL(`tel:${ongoingDeliveryData?.sender?.phone}`)
             }
           >
             <View style={styles.callBtn}>
@@ -974,8 +1031,8 @@ const DeliveryAcceptedModal = () => {
         <View style={styles.timeRow}>
           <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
           <Text style={styles.timeText}>
-            {dummyDeliveryData.duration_mins} mins (
-            {dummyDeliveryData.distance_km} km)
+            {ongoingDeliveryData?.duration_mins} mins (
+            {ongoingDeliveryData?.distance_km} km)
           </Text>
         </View>
 
@@ -990,15 +1047,15 @@ const DeliveryAcceptedModal = () => {
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Text style={{ fontSize: 24 }}>
-              {getPackageIcon(dummyDeliveryData.package?.type)}
+              {getPackageIcon(ongoingDeliveryData?.package?.type)}
             </Text>
             <View style={{ flex: 1 }}>
               <Text style={styles.userName}>
-                {dummyDeliveryData.package?.description || "Package"}
+                {ongoingDeliveryData?.package?.description || "Package"}
               </Text>
               <Text style={styles.userRides}>
-                {dummyDeliveryData.package?.type || "other"} •{" "}
-                {dummyDeliveryData.package?.fragile ? "Fragile" : "Standard"}
+                {ongoingDeliveryData?.package?.type || "other"} •{" "}
+                {ongoingDeliveryData?.package?.fragile ? "Fragile" : "Standard"}
               </Text>
             </View>
           </View>
@@ -1026,7 +1083,7 @@ const DeliveryAcceptedModal = () => {
             <View style={{ flex: 1 }}>
               <Text style={styles.userRides}>Pickup</Text>
               <Text style={styles.userName}>
-                {dummyDeliveryData.pickup.address}
+                {ongoingDeliveryData?.pickup.address}
               </Text>
             </View>
           </View>
@@ -1053,7 +1110,7 @@ const DeliveryAcceptedModal = () => {
             <View style={{ flex: 1 }}>
               <Text style={styles.userRides}>Dropoff</Text>
               <Text style={styles.userName}>
-                {dummyDeliveryData.dropoff.address}
+                {ongoingDeliveryData?.dropoff.address}
               </Text>
             </View>
           </View>
@@ -1061,7 +1118,7 @@ const DeliveryAcceptedModal = () => {
 
         {/* Price */}
         <Text style={styles.priceText}>
-          {dummyDeliveryData.fare.toLocaleString()} NGN
+          {ongoingDeliveryData?.fare.toLocaleString()} NGN
         </Text>
 
         {/* Navigate to pickup button */}
@@ -1078,36 +1135,20 @@ const DeliveryAcceptedModal = () => {
 };
 
 const DeliveryArrivingModal = () => {
+  const {
+    ongoingDeliveryData,
+    updateDeliveryStatus,
+    setDriveStatus,
+    setToPickupRouteCoords,
+  } = useDriverContext();
   const [arriving, setArriving] = useState<boolean>(false);
-
-  const dummyDeliveryData = {
-    _id: "DEL123456",
-    sender: {
-      name: "John Doe",
-      phone: "+2348012345678",
-    },
-    pickup: {
-      address: "123 Lagos Street, Ikeja, Lagos",
-      coordinates: [6.5244, 3.3792] as [number, number],
-    },
-    dropoff: {
-      address: "456 Victoria Island, Lagos",
-      coordinates: [6.4281, 3.4219] as [number, number],
-    },
-    package: {
-      description: "Electronic gadgets",
-      type: "electronics" as const,
-      fragile: true,
-    },
-    duration_mins: 12,
-    distance_km: 5.2,
-  };
 
   const markAsArrived = async () => {
     setArriving(true);
     try {
-      // API call to update delivery status to "arrived"
-      console.log("Marking as arrived at pickup location");
+      await updateDeliveryStatus("arrived");
+      setDriveStatus("arrived");
+      setToPickupRouteCoords([]);
     } catch (error) {
       console.log(error);
     } finally {
@@ -1120,7 +1161,7 @@ const DeliveryArrivingModal = () => {
       <View style={styles.directionsRow}>
         <FontAwesome5 name="directions" color={"#fff"} size={30} />
         <Text style={styles.directionsText}>
-          Head to the pickup location at {dummyDeliveryData.pickup.address}
+          Head to the pickup location at {ongoingDeliveryData?.pickup.address}
         </Text>
       </View>
 
@@ -1138,41 +1179,16 @@ const DeliveryArrivingModal = () => {
 };
 
 const DeliveryArrivedModal = () => {
+  const { ongoingDeliveryData, updateDeliveryStatus, setDriveStatus } =
+    useDriverContext();
   const [pickingUp, setPickingUp] = useState<boolean>(false);
   const [isPackageExpanded, setIsPackageExpanded] = useState<boolean>(false);
-
-  const dummyDeliveryData = {
-    _id: "DEL123456",
-    sender: {
-      name: "John Doe",
-      phone: "+2348012345678",
-    },
-    pickup: {
-      address: "123 Lagos Street, Ikeja, Lagos",
-      coordinates: [6.5244, 3.3792] as [number, number],
-    },
-    dropoff: {
-      address: "456 Victoria Island, Lagos",
-      coordinates: [6.4281, 3.4219] as [number, number],
-    },
-    to: {
-      name: "Jane Smith",
-      phone: "+2348087654321",
-    },
-    package: {
-      description: "Electronic gadgets",
-      type: "electronics" as const,
-      fragile: true,
-      amount: 45000,
-    },
-    fare: 3500,
-  };
 
   const confirmPickup = async () => {
     setPickingUp(true);
     try {
-      // API call to update delivery status to "picked_up"
-      console.log("Confirming package pickup");
+      await updateDeliveryStatus("picked_up");
+      setDriveStatus("ongoing");
     } catch (error) {
       console.log(error);
     } finally {
@@ -1261,7 +1277,7 @@ const DeliveryArrivedModal = () => {
                 fontSize: 10,
               }}
             >
-              ID: #{dummyDeliveryData._id.slice(-9).toUpperCase()}
+              ID: #{(ongoingDeliveryData?._id || "").slice(-9).toUpperCase()}
             </Text>
           </View>
           <Text
@@ -1271,7 +1287,7 @@ const DeliveryArrivedModal = () => {
               fontSize: 14,
             }}
           >
-            NGN {dummyDeliveryData.fare.toLocaleString()}
+            NGN {ongoingDeliveryData?.fare.toLocaleString()}
           </Text>
         </View>
 
@@ -1288,14 +1304,14 @@ const DeliveryArrivedModal = () => {
             }}
           >
             <Text style={{ fontSize: 24 }}>
-              {getPackageIcon(dummyDeliveryData.package?.type)}
+              {getPackageIcon(ongoingDeliveryData?.package?.type)}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
-              {dummyDeliveryData.package?.type
-                ? dummyDeliveryData.package.type.charAt(0).toUpperCase() +
-                  dummyDeliveryData.package.type.slice(1)
+              {ongoingDeliveryData?.package?.type
+                ? ongoingDeliveryData.package.type.charAt(0).toUpperCase() +
+                  ongoingDeliveryData.package.type.slice(1)
                 : "Other"}{" "}
               Package
             </Text>
@@ -1307,8 +1323,8 @@ const DeliveryArrivedModal = () => {
                 marginTop: 2,
               }}
             >
-              {dummyDeliveryData.package?.description || "Package"}
-              {dummyDeliveryData.package?.fragile ? " • Fragile" : ""}
+              {ongoingDeliveryData?.package?.description || "Package"}
+              {ongoingDeliveryData?.package?.fragile ? " • Fragile" : ""}
             </Text>
           </View>
           <Feather
@@ -1335,7 +1351,7 @@ const DeliveryArrivedModal = () => {
                 fontSize: 11,
               }}
             >
-              Recipient: {dummyDeliveryData.to?.name || "Unknown"}
+              Recipient: {ongoingDeliveryData?.to?.name || "Unknown"}
             </Text>
             <Text
               style={{
@@ -1345,9 +1361,9 @@ const DeliveryArrivedModal = () => {
                 marginTop: 2,
               }}
             >
-              Phone: {dummyDeliveryData.to?.phone || "N/A"}
+              Phone: {ongoingDeliveryData?.to?.phone || "N/A"}
             </Text>
-            {dummyDeliveryData.package?.fragile && (
+            {ongoingDeliveryData?.package?.fragile && (
               <View
                 style={{
                   marginTop: 10,
@@ -1376,7 +1392,7 @@ const DeliveryArrivedModal = () => {
                   fontSize: 11,
                 }}
               >
-                Delivery to: {dummyDeliveryData.dropoff.address}
+                Delivery to: {ongoingDeliveryData?.dropoff.address}
               </Text>
             </View>
           </View>
@@ -1397,27 +1413,10 @@ const DeliveryArrivedModal = () => {
 };
 
 const DeliveryInTransitModal = () => {
+  const { ongoingDeliveryData, updateDeliveryStatus, setDriveStatus } =
+    useDriverContext();
   const [isDeliveryExpanded, setIsDeliveryExpanded] = useState<boolean>(false);
   const [delivering, setDelivering] = useState<boolean>(false);
-
-  const dummyDeliveryData = {
-    _id: "DEL123456",
-    dropoff: {
-      address: "456 Victoria Island, Lagos",
-      coordinates: [6.4281, 3.4219] as [number, number],
-    },
-    to: {
-      name: "Jane Smith",
-      phone: "+2348087654321",
-    },
-    package: {
-      description: "Electronic gadgets",
-      type: "electronics" as const,
-      fragile: true,
-    },
-    fare: 3500,
-    duration_mins: 15,
-  };
 
   // Get package icon
   const getPackageIcon = (type?: string) => {
@@ -1439,7 +1438,7 @@ const DeliveryInTransitModal = () => {
 
   const callRecipient = async () => {
     try {
-      const url = `tel:${dummyDeliveryData.to.phone}`;
+      const url = `tel:${ongoingDeliveryData?.to?.phone}`;
       const supported = await Linking.canOpenURL(url);
       if (supported) {
         await Linking.openURL(url);
@@ -1452,8 +1451,8 @@ const DeliveryInTransitModal = () => {
   const confirmDelivered = async () => {
     setDelivering(true);
     try {
-      // API call to mark delivery as delivered
-      console.log("Confirming package delivered");
+      await updateDeliveryStatus("delivered");
+      setDriveStatus("completed");
     } catch (error) {
       console.log(error);
     } finally {
@@ -1513,7 +1512,7 @@ const DeliveryInTransitModal = () => {
                 marginTop: 2,
               }}
             >
-              {dummyDeliveryData.to.name}
+              {ongoingDeliveryData?.to?.name}
             </Text>
             <View
               style={{
@@ -1531,7 +1530,7 @@ const DeliveryInTransitModal = () => {
                   fontSize: 11,
                 }}
               >
-                {dummyDeliveryData.duration_mins} mins
+                {ongoingDeliveryData?.duration_mins} mins
               </Text>
             </View>
           </View>
@@ -1579,7 +1578,7 @@ const DeliveryInTransitModal = () => {
                   marginTop: 2,
                 }}
               >
-                {dummyDeliveryData.dropoff.address}
+                {ongoingDeliveryData?.dropoff.address}
               </Text>
             </View>
 
@@ -1609,7 +1608,7 @@ const DeliveryInTransitModal = () => {
                   marginTop: 2,
                 }}
               >
-                {dummyDeliveryData.to.phone}
+                {ongoingDeliveryData?.to?.phone}
               </Text>
             </View>
 
@@ -1636,7 +1635,7 @@ const DeliveryInTransitModal = () => {
                 }}
               >
                 <Text style={{ fontSize: 24 }}>
-                  {getPackageIcon(dummyDeliveryData.package?.type)}
+                  {getPackageIcon(ongoingDeliveryData?.package?.type)}
                 </Text>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -1646,9 +1645,11 @@ const DeliveryInTransitModal = () => {
                       fontSize: 12,
                     }}
                   >
-                    {dummyDeliveryData.package?.type
-                      ? dummyDeliveryData.package.type.charAt(0).toUpperCase() +
-                        dummyDeliveryData.package.type.slice(1)
+                    {ongoingDeliveryData?.package?.type
+                      ? ongoingDeliveryData.package.type
+                          .charAt(0)
+                          .toUpperCase() +
+                        ongoingDeliveryData.package.type.slice(1)
                       : "Other"}
                   </Text>
                   <Text
@@ -1659,14 +1660,14 @@ const DeliveryInTransitModal = () => {
                       marginTop: 2,
                     }}
                   >
-                    {dummyDeliveryData.package?.description || "Package"}
+                    {ongoingDeliveryData?.package?.description || "Package"}
                   </Text>
                 </View>
               </View>
             </View>
 
             {/* Fragile warning */}
-            {dummyDeliveryData.package?.fragile && (
+            {ongoingDeliveryData?.package?.fragile && (
               <View
                 style={{
                   backgroundColor: "#ff980020",
@@ -1714,7 +1715,8 @@ const DeliveryInTransitModal = () => {
                     fontSize: 10,
                   }}
                 >
-                  ID: #{dummyDeliveryData._id.slice(-9).toUpperCase()}
+                  ID: #
+                  {(ongoingDeliveryData?._id || "").slice(-9).toUpperCase()}
                 </Text>
               </View>
               <Text
@@ -1724,7 +1726,7 @@ const DeliveryInTransitModal = () => {
                   fontSize: 16,
                 }}
               >
-                NGN {dummyDeliveryData.fare.toLocaleString()}
+                NGN {ongoingDeliveryData?.fare.toLocaleString()}
               </Text>
             </View>
           </View>
@@ -1780,9 +1782,30 @@ const DeliveryInTransitModal = () => {
 };
 
 const DeliveryDeliveredModal = () => {
+  const {
+    setToDestinationRouteCoords,
+    setToPickupRouteCoords,
+    setDriveStatus,
+    setOngoingDeliveryData,
+    setIncomingDeliveryData,
+    setJobType,
+  } = useDriverContext() as any;
+
+  const { region, mapRef } = useMapContext();
+
   const start_searching = () => {
-    // Reset delivery state and start searching for new deliveries
-    console.log("Searching for new deliveries");
+    setToDestinationRouteCoords([]);
+    setToPickupRouteCoords([]);
+    setDriveStatus("searching");
+    setOngoingDeliveryData(null);
+    setIncomingDeliveryData(null);
+    setJobType("");
+
+    setTimeout(() => {
+      if (region && mapRef.current) {
+        mapRef.current.animateToRegion(region, 1000);
+      }
+    }, 1000);
   };
 
   return (
