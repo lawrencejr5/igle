@@ -68,6 +68,7 @@ const DriverRideModal = () => {
   const [openAccount, setOpenAccount] = useState(false);
 
   useEffect(() => {
+    // While searching, listen for new incoming jobs and related offer lifecycle events
     if (driver?.is_available && driveStatus === "searching" && driverSocket) {
       const new_ride_func = async (data: any) => {
         setJobType("ride");
@@ -87,17 +88,6 @@ const DriverRideModal = () => {
 
       driverSocket.on("new_ride_request", new_ride_func);
       driverSocket.on("ride_taken", ride_taken_func);
-
-      // Notify driver when rider pays for the ride (from server)
-      const paidForRideHandler = (data: any) => {
-        try {
-          showNotification("Rider has paid for ride", "success");
-        } catch (e) {
-          console.log("Error handling paid_for_ride event:", e);
-        }
-      };
-
-      driverSocket.on("paid_for_ride", paidForRideHandler);
 
       // Delivery sockets
       const new_delivery_func = async (data: any) => {
@@ -127,43 +117,62 @@ const DriverRideModal = () => {
         });
       };
 
-      const delivery_cancel_func = (data: any) => {
-        // reset if this is the active delivery
-        if (
-          ongoingDelivery?._id === data.delivery_id ||
-          incomingDeliveryData?._id === data.delivery_id
-        ) {
-          showNotification("Delivery cancelled", "error");
-          setIncomingDeliveryData(null);
-          setOngoingDelivery(null as any);
-          setDriveStatus("searching");
-          setJobType("");
-        }
-      };
-
-      const delivery_paid_func = (_data: any) => {
-        showNotification("Sender has paid for delivery", "success");
-      };
-
       driverSocket.on("delivery_request", new_delivery_func);
       driverSocket.on("delivery_taken", delivery_taken_func);
       driverSocket.on("delivery_request_expired", delivery_expired_func);
-      driverSocket.on("delivery_cancel", delivery_cancel_func);
-      driverSocket.on("delivery_paid", delivery_paid_func);
+      // Note: delivery_cancel and delivery_paid are handled in a persistent effect
 
       return () => {
         driverSocket.off("new_ride_request", new_ride_func);
         driverSocket.off("ride_taken", ride_taken_func);
-        driverSocket.off("paid_for_ride", paidForRideHandler);
 
         driverSocket.off("delivery_request", new_delivery_func);
         driverSocket.off("delivery_taken", delivery_taken_func);
         driverSocket.off("delivery_request_expired", delivery_expired_func);
-        driverSocket.off("delivery_cancel", delivery_cancel_func);
-        driverSocket.off("delivery_paid", delivery_paid_func);
       };
     }
   }, [driver?.is_available, driveStatus, driverSocket]);
+
+  useEffect(() => {
+    // Persist critical notifications regardless of driveStatus
+    if (!driverSocket) return;
+
+    const paidForRideHandler = (_data: any) => {
+      try {
+        showNotification("Rider has paid for ride", "success");
+      } catch (e) {
+        console.log("Error handling paid_for_ride event:", e);
+      }
+    };
+
+    const delivery_paid_func = (_data: any) => {
+      showNotification("Sender has paid for delivery", "success");
+    };
+
+    const delivery_cancel_func = (data: any) => {
+      // Reset if this is the active or incoming delivery
+      if (
+        ongoingDelivery?._id === data.delivery_id ||
+        incomingDeliveryData?._id === data.delivery_id
+      ) {
+        showNotification("Delivery cancelled", "error");
+        setIncomingDeliveryData(null);
+        setOngoingDelivery(null as any);
+        setDriveStatus("searching");
+        setJobType("");
+      }
+    };
+
+    driverSocket.on("paid_for_ride", paidForRideHandler);
+    driverSocket.on("delivery_paid", delivery_paid_func);
+    driverSocket.on("delivery_cancel", delivery_cancel_func);
+
+    return () => {
+      driverSocket.off("paid_for_ride", paidForRideHandler);
+      driverSocket.off("delivery_paid", delivery_paid_func);
+      driverSocket.off("delivery_cancel", delivery_cancel_func);
+    };
+  }, [driverSocket, ongoingDelivery, incomingDeliveryData]);
 
   useEffect(() => {
     if (!driver?.is_available) {
@@ -296,7 +305,8 @@ const OfflineMode = ({
   setAccountOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const { driver } = useDriverAuthContext();
-  const { setAvailability } = useDriverContext();
+  const { setAvailability, ongoingDeliveryData, ongoingRideData } =
+    useDriverContext();
 
   return (
     <View style={styles.main_modal}>
@@ -316,6 +326,7 @@ const OfflineMode = ({
       {driver?.is_available ? (
         <TouchableOpacity
           activeOpacity={0.7}
+          disabled={!!ongoingDeliveryData || !!ongoingRideData}
           onPress={async () => await setAvailability()}
           style={[styles.status, { backgroundColor: "#40863456" }]}
         >
@@ -552,7 +563,7 @@ const AcceptedModal = () => {
             />
             <View>
               <Text style={styles.userName}>{ongoingRideData?.rider.name}</Text>
-              <Text style={styles.userRides}>No rides completed</Text>
+              <Text style={styles.userRides}>Passenger</Text>
             </View>
           </View>
 
@@ -1463,18 +1474,19 @@ const DeliveryInTransitModal = () => {
 
   return (
     <View style={styles.navigationContainer}>
-      <TouchableOpacity
-        onPress={() => setIsCardVisible(!isCardVisible)}
-        style={{ marginLeft: "auto" }}
-      >
-        <Feather
-          name={isCardVisible ? "chevron-down" : "chevron-up"}
-          size={30}
-          color="#fff"
-        />
-      </TouchableOpacity>
       <View style={styles.directionsRow}>
-        <FontAwesome5 name="directions" color={"#fff"} size={30} />
+        {/* <FontAwesome5 name="directions" color={"#fff"} size={30} /> */}
+
+        <TouchableOpacity
+          onPress={() => setIsCardVisible(!isCardVisible)}
+          style={{}}
+        >
+          <Feather
+            name={isCardVisible ? "chevron-down" : "chevron-up"}
+            size={30}
+            color="#fff"
+          />
+        </TouchableOpacity>
         <Text style={styles.directionsText}>
           Package picked up! Head to the dropoff location
         </Text>

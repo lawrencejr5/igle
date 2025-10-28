@@ -248,6 +248,14 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   // Driver status functions
   const setAvailability = async (): Promise<void> => {
     try {
+      // Prevent going offline when an active ride or delivery exists
+      if (driver?.is_available && (ongoingRideData || ongoingDeliveryData)) {
+        showNotification(
+          "You have an active ride/delivery. Complete it before going offline.",
+          "error"
+        );
+        return;
+      }
       const token = await AsyncStorage.getItem("token");
       await axios.patch(
         `${API_URL}/available`,
@@ -490,6 +498,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      if (status === "completed") setToDestinationRouteCoords([]);
       setOngoingRideData((prev: any) => ({ ...prev, status }));
     } catch (error: any) {
       const errMsg = error.response.data.msg;
