@@ -179,10 +179,53 @@ const retry_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function*
             return res.status(400).json({ msg: "Delivery not expired" });
         delivery.status = delivery.scheduled_time ? "scheduled" : "pending";
         yield delivery.save();
-        server_1.io.emit("delivery_request", {
-            delivery_id: delivery._id,
-            msg: "Retrying delivery request",
-        });
+        // Notify drivers: if a vehicle type was specified, only notify drivers of that type
+        try {
+            if (delivery.vehicle) {
+                const drivers = yield driver_1.default.find({
+                    vehicle_type: delivery.vehicle,
+                });
+                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                    try {
+                        const driverId = String(d._id);
+                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
+                        if (driverSocket) {
+                            server_1.io.to(driverSocket).emit("delivery_request", {
+                                delivery_id: delivery._id,
+                                msg: "Retrying delivery request",
+                            });
+                        }
+                        else {
+                            const tokens = yield (0, get_id_1.get_driver_push_tokens)(driverId);
+                            if (tokens.length) {
+                                yield (0, expo_push_1.sendExpoPush)(tokens, "New delivery request", "A nearby sender needs a delivery", {
+                                    type: "delivery_request",
+                                    deliveryId: delivery._id,
+                                });
+                            }
+                        }
+                    }
+                    catch (e) {
+                        console.error("Failed to notify driver", d._id, e);
+                    }
+                })));
+            }
+            else {
+                // fallback: notify all drivers
+                server_1.io.emit("delivery_request", {
+                    delivery_id: delivery._id,
+                    msg: "Retrying delivery request",
+                });
+            }
+        }
+        catch (notifyErr) {
+            console.error("Error notifying drivers for delivery retry:", notifyErr);
+            // fallback to global emit
+            server_1.io.emit("delivery_request", {
+                delivery_id: delivery._id,
+                msg: "Retrying delivery request",
+            });
+        }
         setTimeout(() => expire_delivery(delivery._id, delivery.sender.toString()), 30000);
         res.status(200).json({ msg: "Retrying delivery request...", delivery });
     }
@@ -214,10 +257,53 @@ const rebook_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
             status: "pending",
             scheduled: false,
         });
-        server_1.io.emit("delivery_request", {
-            delivery_id: new_delivery._id,
-            msg: "Delivery rebooked",
-        });
+        // Notify drivers: if a vehicle type was specified for the rebooked delivery, only notify drivers of that type
+        try {
+            if (new_delivery.vehicle) {
+                const drivers = yield driver_1.default.find({
+                    vehicle_type: new_delivery.vehicle,
+                });
+                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                    try {
+                        const driverId = String(d._id);
+                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
+                        if (driverSocket) {
+                            server_1.io.to(driverSocket).emit("delivery_request", {
+                                delivery_id: new_delivery._id,
+                                msg: "Delivery rebooked",
+                            });
+                        }
+                        else {
+                            const tokens = yield (0, get_id_1.get_driver_push_tokens)(driverId);
+                            if (tokens.length) {
+                                yield (0, expo_push_1.sendExpoPush)(tokens, "New delivery request", "A nearby sender needs a delivery", {
+                                    type: "delivery_request",
+                                    deliveryId: new_delivery._id,
+                                });
+                            }
+                        }
+                    }
+                    catch (e) {
+                        console.error("Failed to notify driver", d._id, e);
+                    }
+                })));
+            }
+            else {
+                // fallback: notify all drivers
+                server_1.io.emit("delivery_request", {
+                    delivery_id: new_delivery._id,
+                    msg: "Delivery rebooked",
+                });
+            }
+        }
+        catch (notifyErr) {
+            console.error("Error notifying drivers for delivery rebook:", notifyErr);
+            // fallback to global emit
+            server_1.io.emit("delivery_request", {
+                delivery_id: new_delivery._id,
+                msg: "Delivery rebooked",
+            });
+        }
         setTimeout(() => expire_delivery(new_delivery._id, new_delivery.sender.toString()), 30000);
         res
             .status(201)

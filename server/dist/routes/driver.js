@@ -26,6 +26,7 @@ DriverRouter.patch("/online", driver_1.set_driver_online_status);
 DriverRouter.patch("/rating", driver_1.update_driver_rating);
 DriverRouter.patch("/info", driver_1.update_driver_info);
 DriverRouter.get("/ride/active", driver_1.get_driver_active_ride);
+DriverRouter.get("/delivery/active", driver_1.get_driver_active_delivery);
 DriverRouter.get("/rides/completed", driver_1.get_driver_completed_rides);
 DriverRouter.get("/rides/cancelled", driver_1.get_driver_cancelled_rides);
 DriverRouter.get("/rides/history", driver_1.get_driver_rides_history);

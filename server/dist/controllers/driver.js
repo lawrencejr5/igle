@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.upload_driver_profile_pic = exports.create_driver = void 0;
+exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_delivery = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.upload_driver_profile_pic = exports.create_driver = void 0;
 const driver_1 = __importDefault(require("../models/driver"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const ride_1 = __importDefault(require("../models/ride"));
+const delivery_1 = __importDefault(require("../models/delivery"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const get_id_1 = require("../utils/get_id");
 const axios_1 = __importDefault(require("axios"));
@@ -194,6 +195,38 @@ const get_driver_active_ride = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.get_driver_active_ride = get_driver_active_ride;
+// Get driver's active delivery
+const get_driver_active_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        // Find the delivery where driver is assigned and status is active (accepted/arrived/in_transit)
+        const activeDelivery = yield delivery_1.default.findOne({
+            driver: driver_id,
+            status: { $in: ["accepted", "arrived", "picked_up", "in_transit"] },
+        })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone",
+            },
+        })
+            .populate("sender", "name phone profile_pic");
+        if (!activeDelivery) {
+            res
+                .status(404)
+                .json({ msg: "No active delivery found for this driver." });
+            return;
+        }
+        res.status(200).json({ msg: "success", delivery: activeDelivery });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_active_delivery = get_driver_active_delivery;
 // Get driver transactions
 const get_driver_transactions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

@@ -83,6 +83,8 @@ const DeliverySchema = new mongoose_1.Schema({
         default: "pending",
     },
     fare: { type: Number, required: true },
+    distance_km: { type: Number, required: true },
+    duration_mins: { type: Number, required: true },
     vehicle: {
         type: String,
         enum: ["bike", "cab", "van", "truck"],
