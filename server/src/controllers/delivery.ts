@@ -10,6 +10,7 @@ import {
   get_driver_push_tokens,
 } from "../utils/get_id";
 import { sendExpoPush } from "../utils/expo_push";
+import { complete_delivery } from "../utils/complete_delivery";
 import { Types } from "mongoose";
 
 // expire delivery helper
@@ -576,13 +577,24 @@ export const update_delivery_status = async (
           });
         }
 
-        delivery.status = "delivered" as any;
+        // set delivered timestamp
         delivery.timestamps = {
           ...(delivery.timestamps as any),
           delivered_at: new Date(),
         } as any;
+
+        // attempt to complete delivery (credit driver, record commission, etc.)
+        const result = await complete_delivery(delivery as any);
+        if (!result.success) {
+          return res
+            .status(result.statusCode || 500)
+            .json({ msg: result.message });
+        }
+
+        // notify sender that delivery completed
         if (sender_socket)
           io.to(sender_socket).emit("delivery_completed", { delivery_id });
+
         break;
       default:
         return res.status(400).json({ msg: "Invalid status" });

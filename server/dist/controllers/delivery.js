@@ -45,11 +45,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pay_for_delivery = exports.update_delivery_status = exports.cancel_delivery = exports.accept_delivery = exports.get_user_active_delivery = exports.get_user_delivered_deliveries = exports.get_user_cancelled_deliveries = exports.get_user_in_transit_deliveries = exports.get_user_deliveries = exports.get_delivery_data = exports.get_available_deliveries = exports.rebook_delivery = exports.retry_delivery = exports.request_delivery = void 0;
+exports.get_driver_active_delivery = exports.pay_for_delivery = exports.update_delivery_status = exports.cancel_delivery = exports.accept_delivery = exports.get_user_active_delivery = exports.get_user_delivered_deliveries = exports.get_user_cancelled_deliveries = exports.get_user_in_transit_deliveries = exports.get_user_deliveries = exports.get_delivery_data = exports.get_available_deliveries = exports.rebook_delivery = exports.retry_delivery = exports.request_delivery = void 0;
 const delivery_1 = __importDefault(require("../models/delivery"));
+const driver_1 = __importDefault(require("../models/driver"));
 const calc_commision_1 = require("../utils/calc_commision");
 const server_1 = require("../server");
 const get_id_1 = require("../utils/get_id");
+const expo_push_1 = require("../utils/expo_push");
+const complete_delivery_1 = require("../utils/complete_delivery");
 const mongoose_1 = require("mongoose");
 // expire delivery helper
 const expire_delivery = (delivery_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -108,11 +111,46 @@ const request_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 ? new Date(scheduled_time)
                 : null,
         });
-        // notify drivers (simple emit, you may filter by vehicle type client-side)
-        server_1.io.emit("delivery_request", {
-            delivery_id: new_delivery._id,
-            msg: "New delivery request",
-        });
+        // notify drivers. If a vehicle type was specified, only notify drivers of that type
+        try {
+            if (vehicle) {
+                // find drivers with the requested vehicle type
+                const drivers = yield driver_1.default.find({ vehicle_type: vehicle });
+                // notify connected drivers via sockets and offline via push
+                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                    try {
+                        const driverId = String(d._id);
+                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
+                        if (driverSocket) {
+                            server_1.io.to(driverSocket).emit("delivery_request", {
+                                delivery_id: new_delivery._id,
+                            });
+                        }
+                        else {
+                            const tokens = yield (0, get_id_1.get_driver_push_tokens)(driverId);
+                            if (tokens.length) {
+                                yield (0, expo_push_1.sendExpoPush)(tokens, "New delivery request", "A nearby sender needs a delivery", {
+                                    type: "delivery_request",
+                                    deliveryId: new_delivery._id,
+                                });
+                            }
+                        }
+                    }
+                    catch (e) {
+                        console.error("Failed to notify driver", d._id, e);
+                    }
+                })));
+            }
+            else {
+                // fallback: notify all drivers
+                server_1.io.emit("delivery_request", { delivery_id: new_delivery._id });
+            }
+        }
+        catch (notifyErr) {
+            console.error("Error notifying drivers for delivery request:", notifyErr);
+            // fallback to global emit
+            server_1.io.emit("delivery_request", { delivery_id: new_delivery._id });
+        }
         // expiration timeout (30s similar to rides)
         setTimeout(() => expire_delivery(new_delivery._id, new_delivery.sender.toString()), 30000);
         res.status(201).json({
@@ -367,6 +405,8 @@ const accept_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
                 delivery_id,
                 driver_id,
             });
+        // Notify all drivers that this delivery has been taken so they drop the card
+        server_1.io.emit("delivery_taken", { delivery_id });
         delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { accepted_at: new Date() });
         yield delivery.save();
         res.status(200).json({ msg: "Delivery accepted successfully", delivery });
@@ -477,8 +517,16 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         msg: "Delivery must be 'in_transit' before it can be marked delivered",
                     });
                 }
-                delivery.status = "delivered";
+                // set delivered timestamp
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { delivered_at: new Date() });
+                // attempt to complete delivery (credit driver, record commission, etc.)
+                const result = yield (0, complete_delivery_1.complete_delivery)(delivery);
+                if (!result.success) {
+                    return res
+                        .status(result.statusCode || 500)
+                        .json({ msg: result.message });
+                }
+                // notify sender that delivery completed
                 if (sender_socket)
                     server_1.io.to(sender_socket).emit("delivery_completed", { delivery_id });
                 break;
@@ -520,6 +568,13 @@ const pay_for_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
         delivery.payment_status = "paid";
         delivery.payment_method = "wallet";
         yield delivery.save();
+        // Notify the assigned driver that payment succeeded
+        if (delivery.driver) {
+            const driver_socket = yield (0, get_id_1.get_driver_socket_id)(delivery.driver.toString());
+            if (driver_socket) {
+                server_1.io.to(driver_socket).emit("delivery_paid", { delivery_id });
+            }
+        }
         res.status(200).json({ msg: "Payment successful", transaction });
     }
     catch (err) {
@@ -530,3 +585,20 @@ const pay_for_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.pay_for_delivery = pay_for_delivery;
+const get_driver_active_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const delivery = yield delivery_1.default.findOne({
+            driver: driver_id,
+            status: { $in: ["accepted", "arrived", "picked_up", "in_transit"] },
+        })
+            .sort({ createdAt: -1 })
+            .populate("sender", "name phone profile_pic");
+        res.status(200).json({ msg: "success", delivery });
+    }
+    catch (err) {
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_active_delivery = get_driver_active_delivery;

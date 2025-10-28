@@ -43,7 +43,11 @@ const DriverSchema = new mongoose_1.Schema({
     },
     profile_img: String,
     socket_id: { type: String, default: null },
-    vehicle_type: { type: String, required: true },
+    vehicle_type: {
+        type: String,
+        enum: ["bike", "keke", "cab", "suv", "van", "truck"],
+        required: true,
+    },
     vehicle: {
         exterior_image: { type: String },
         interior_image: { type: String },

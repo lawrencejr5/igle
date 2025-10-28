@@ -6,6 +6,7 @@ const delivery_1 = require("../controllers/delivery");
 const DeliveryRouter = (0, express_1.Router)();
 DeliveryRouter.use(auth_1.auth);
 DeliveryRouter.get("/active", delivery_1.get_user_active_delivery);
+DeliveryRouter.get("/driver/active", delivery_1.get_driver_active_delivery);
 DeliveryRouter.get("/in_transit", delivery_1.get_user_in_transit_deliveries);
 DeliveryRouter.get("/delivered", delivery_1.get_user_delivered_deliveries);
 DeliveryRouter.get("/cancelled", delivery_1.get_user_cancelled_deliveries);
