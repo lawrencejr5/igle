@@ -17,6 +17,7 @@ import {
 } from "../sockets/socketService";
 import { useWalletContext } from "./WalletContext";
 import { API_URLS } from "../data/constants";
+import { useLoading } from "./LoadingContext";
 
 // Types for driver data
 interface Vehicle {
@@ -120,6 +121,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isDriver, setIsDriver] = useState(false);
   const { showNotification } = useNotificationContext();
   const { getWalletBalance } = useWalletContext();
+  const { setDriverLoading } = useLoading();
 
   // API base URL
   const API_URL = API_URLS.drivers;
@@ -202,6 +204,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   // Profile retrieval functions
   const [driverSocket, setDriverSocket] = useState<any>(null);
   const getDriverProfile = async (): Promise<void> => {
+    setDriverLoading(true);
     try {
       const data = await getDriverInfo();
 
@@ -213,6 +216,8 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       throw new Error(errMsg || "Error getting driver profile");
+    } finally {
+      setDriverLoading(false);
     }
   };
 

@@ -175,43 +175,40 @@ const DriverRideModal = () => {
   }, [driver?.is_available]);
 
   useEffect(() => {
-    // On mount, check for active ride or delivery
-    (async () => {
-      await Promise.all([fetchActiveRide(), fetchActiveDelivery()]);
-      if (ongoingRideData) {
-        setJobType("ride");
-        switch (ongoingRideData.status) {
-          case "accepted":
-            setDriveStatus("accepted");
-            break;
-          case "arrived":
-            setDriveStatus("arrived");
-            break;
-          case "ongoing":
-            setDriveStatus("ongoing");
-            break;
-        }
-      } else if (ongoingDelivery) {
-        setJobType("delivery");
-        switch (ongoingDelivery.status) {
-          case "accepted":
-            setDriveStatus("accepted");
-            break;
-          case "arrived":
-            setDriveStatus("arrived");
-            break;
-          case "picked_up":
-            setDriveStatus("picked_up");
-            break;
-          case "in_transit":
-            setDriveStatus("ongoing");
-            break;
-        }
-      } else {
-        setJobType("");
+    // When active data is available, set local UI state accordingly
+    if (ongoingRideData) {
+      setJobType("ride");
+      switch (ongoingRideData.status) {
+        case "accepted":
+          setDriveStatus("accepted");
+          break;
+        case "arrived":
+          setDriveStatus("arrived");
+          break;
+        case "ongoing":
+          setDriveStatus("ongoing");
+          break;
       }
-    })();
-  }, []);
+    } else if (ongoingDelivery) {
+      setJobType("delivery");
+      switch (ongoingDelivery.status) {
+        case "accepted":
+          setDriveStatus("accepted");
+          break;
+        case "arrived":
+          setDriveStatus("arrived");
+          break;
+        case "picked_up":
+          setDriveStatus("picked_up");
+          break;
+        case "in_transit":
+          setDriveStatus("ongoing");
+          break;
+      }
+    } else {
+      setJobType("");
+    }
+  }, [ongoingRideData, ongoingDelivery]);
 
   return (
     <View style={{ flex: 1, width: "100%", position: "absolute", bottom: 0 }}>
@@ -291,10 +288,6 @@ const DriverRideModal = () => {
   );
 };
 
-// ============================================
-// RIDE MODALS
-// ============================================
-
 const OfflineMode = ({
   setEarningsOpen,
   setAccountOpen,
@@ -359,6 +352,10 @@ const SearchingModal = () => {
     </View>
   );
 };
+
+// ============================================
+// RIDE MODALS
+// ============================================
 
 const IncomingModal = () => {
   const {
@@ -881,65 +878,14 @@ const DeliveryIncomingModal = () => {
         </View>
 
         {/* Delivery route */}
-        <View style={{ marginVertical: 10 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              gap: 10,
-              marginBottom: 8,
-            }}
-          >
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: "#4CAF50",
-                marginTop: 6,
-              }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.userRides}>Pickup</Text>
-              <Text style={styles.userName}>
-                {incomingDeliveryData.pickup.address}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={{
-              width: 2,
-              height: 20,
-              backgroundColor: "#3b3b3b",
-              marginLeft: 3,
-            }}
+
+        {/* Use RideRoute component (same as rides) */}
+        {incomingDeliveryData && (
+          <RideRoute
+            from={incomingDeliveryData?.pickup?.address || ""}
+            to={incomingDeliveryData?.dropoff?.address || ""}
           />
-          <View
-            style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}
-          >
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: "#f44336",
-                marginTop: 6,
-              }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.userRides}>Dropoff</Text>
-              <Text style={styles.userName}>
-                {incomingDeliveryData.dropoff.address}
-              </Text>
-              {incomingDeliveryData.to && (
-                <Text style={[styles.userRides, { marginTop: 4 }]}>
-                  Recipient: {incomingDeliveryData.to.name} (
-                  {incomingDeliveryData.to.phone})
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
+        )}
 
         {/* Price */}
         <Text style={styles.priceText}>
@@ -1063,59 +1009,12 @@ const DeliveryAcceptedModal = () => {
         </View>
 
         {/* Delivery route */}
-        <View style={{ marginVertical: 10 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              gap: 10,
-              marginBottom: 8,
-            }}
-          >
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: "#4CAF50",
-                marginTop: 6,
-              }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.userRides}>Pickup</Text>
-              <Text style={styles.userName}>
-                {ongoingDeliveryData?.pickup.address}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={{
-              width: 2,
-              height: 20,
-              backgroundColor: "#3b3b3b",
-              marginLeft: 3,
-            }}
+        {ongoingDeliveryData && (
+          <RideRoute
+            from={ongoingDeliveryData?.pickup?.address || ""}
+            to={ongoingDeliveryData?.dropoff?.address || ""}
           />
-          <View
-            style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}
-          >
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: "#f44336",
-                marginTop: 6,
-              }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.userRides}>Dropoff</Text>
-              <Text style={styles.userName}>
-                {ongoingDeliveryData?.dropoff.address}
-              </Text>
-            </View>
-          </View>
-        </View>
+        )}
 
         {/* Price */}
         <Text style={styles.priceText}>

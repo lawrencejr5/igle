@@ -16,6 +16,7 @@ import { useDriverAuthContext } from "./DriverAuthContext";
 import { useNotificationContext } from "./NotificationContext";
 import { useWalletContext } from "./WalletContext";
 import { useMapContext } from "./MapContext";
+import { useLoading } from "./LoadingContext";
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -122,6 +123,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext();
   const { driver, setDriver } = useDriverAuthContext();
   const { getRoute, region, mapPadding } = useMapContext();
+  const { setDriverLoading } = useLoading();
 
   const [driveStatus, setDriveStatus] = useState<ModalStatusType>("searching");
 
@@ -234,8 +236,11 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, [jobType, ongoingDeliveryData, driveStatus]);
 
   useEffect(() => {
-    (async () => await fetchActiveRide())();
-  }, []);
+    (async () => {
+      await fetchActiveRide();
+      await fetchActiveDelivery();
+    })();
+  }, [driver]);
 
   const API_URL = API_URLS.drivers;
   const DELIVERY_API = API_URLS.deliveries;
@@ -444,19 +449,6 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
-  const fetchActiveDelivery = async (): Promise<void> => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(`${DELIVERY_API}/driver/active`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (data.delivery) setOngoingDeliveryData(data.delivery);
-      else setOngoingDeliveryData(null);
-    } catch (error) {
-      setOngoingDeliveryData(null);
-    }
-  };
-
   const acceptRideRequest = async () => {
     const token = await AsyncStorage.getItem("token");
     const ride_id = incomingRideData?._id;
@@ -512,6 +504,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   // Fetch driver's active ride
   const fetchActiveRide = async (): Promise<void> => {
     try {
+      setDriverLoading(true);
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.get(`${API_URL}/ride/active`, {
         headers: {
@@ -525,6 +518,25 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
     } catch (error: any) {
       setOngoingRideData(null);
+    } finally {
+      setDriverLoading(false);
+    }
+  };
+
+  // Fetching driver's active delivery
+  const fetchActiveDelivery = async (): Promise<void> => {
+    try {
+      setDriverLoading(true);
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(`${API_URL}/delivery/active`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.delivery) setOngoingDeliveryData(data.delivery);
+      else setOngoingDeliveryData(null);
+    } catch (error) {
+      setOngoingDeliveryData(null);
+    } finally {
+      setDriverLoading(false);
     }
   };
 

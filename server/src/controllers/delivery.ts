@@ -168,10 +168,56 @@ export const retry_delivery = async (
     delivery.status = delivery.scheduled_time ? "scheduled" : "pending";
     await delivery.save();
 
-    io.emit("delivery_request", {
-      delivery_id: delivery._id,
-      msg: "Retrying delivery request",
-    });
+    // Notify drivers: if a vehicle type was specified, only notify drivers of that type
+    try {
+      if ((delivery as any).vehicle) {
+        const drivers = await Driver.find({
+          vehicle_type: (delivery as any).vehicle,
+        });
+        await Promise.all(
+          drivers.map(async (d) => {
+            try {
+              const driverId = String((d as any)._id);
+              const driverSocket = await get_driver_socket_id(driverId);
+              if (driverSocket) {
+                io.to(driverSocket).emit("delivery_request", {
+                  delivery_id: delivery._id,
+                  msg: "Retrying delivery request",
+                });
+              } else {
+                const tokens = await get_driver_push_tokens(driverId);
+                if (tokens.length) {
+                  await sendExpoPush(
+                    tokens,
+                    "New delivery request",
+                    "A nearby sender needs a delivery",
+                    {
+                      type: "delivery_request",
+                      deliveryId: delivery._id,
+                    }
+                  );
+                }
+              }
+            } catch (e) {
+              console.error("Failed to notify driver", d._id, e);
+            }
+          })
+        );
+      } else {
+        // fallback: notify all drivers
+        io.emit("delivery_request", {
+          delivery_id: delivery._id,
+          msg: "Retrying delivery request",
+        });
+      }
+    } catch (notifyErr) {
+      console.error("Error notifying drivers for delivery retry:", notifyErr);
+      // fallback to global emit
+      io.emit("delivery_request", {
+        delivery_id: delivery._id,
+        msg: "Retrying delivery request",
+      });
+    }
 
     setTimeout(
       () => expire_delivery(delivery._id as string, delivery.sender.toString()),
@@ -212,10 +258,56 @@ export const rebook_delivery = async (
       scheduled: false,
     });
 
-    io.emit("delivery_request", {
-      delivery_id: new_delivery._id,
-      msg: "Delivery rebooked",
-    });
+    // Notify drivers: if a vehicle type was specified for the rebooked delivery, only notify drivers of that type
+    try {
+      if ((new_delivery as any).vehicle) {
+        const drivers = await Driver.find({
+          vehicle_type: (new_delivery as any).vehicle,
+        });
+        await Promise.all(
+          drivers.map(async (d) => {
+            try {
+              const driverId = String((d as any)._id);
+              const driverSocket = await get_driver_socket_id(driverId);
+              if (driverSocket) {
+                io.to(driverSocket).emit("delivery_request", {
+                  delivery_id: new_delivery._id,
+                  msg: "Delivery rebooked",
+                });
+              } else {
+                const tokens = await get_driver_push_tokens(driverId);
+                if (tokens.length) {
+                  await sendExpoPush(
+                    tokens,
+                    "New delivery request",
+                    "A nearby sender needs a delivery",
+                    {
+                      type: "delivery_request",
+                      deliveryId: new_delivery._id,
+                    }
+                  );
+                }
+              }
+            } catch (e) {
+              console.error("Failed to notify driver", d._id, e);
+            }
+          })
+        );
+      } else {
+        // fallback: notify all drivers
+        io.emit("delivery_request", {
+          delivery_id: new_delivery._id,
+          msg: "Delivery rebooked",
+        });
+      }
+    } catch (notifyErr) {
+      console.error("Error notifying drivers for delivery rebook:", notifyErr);
+      // fallback to global emit
+      io.emit("delivery_request", {
+        delivery_id: new_delivery._id,
+        msg: "Delivery rebooked",
+      });
+    }
 
     setTimeout(
       () =>

@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import Driver from "../models/driver";
 import Wallet from "../models/wallet";
 import Ride from "../models/ride";
+import Delivery from "../models/delivery";
 import Transaction from "../models/transaction";
 
 import { get_driver_id } from "../utils/get_id";
@@ -209,6 +210,41 @@ export const get_driver_active_ride = async (
       return;
     }
     res.status(200).json({ msg: "success", ride: activeRide });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Get driver's active delivery
+export const get_driver_active_delivery = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    // Find the delivery where driver is assigned and status is active (accepted/arrived/in_transit)
+    const activeDelivery = await Delivery.findOne({
+      driver: driver_id,
+      status: { $in: ["accepted", "arrived", "picked_up", "in_transit"] },
+    })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone",
+        },
+      })
+      .populate("sender", "name phone profile_pic");
+
+    if (!activeDelivery) {
+      res
+        .status(404)
+        .json({ msg: "No active delivery found for this driver." });
+      return;
+    }
+    res.status(200).json({ msg: "success", delivery: activeDelivery });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
   }

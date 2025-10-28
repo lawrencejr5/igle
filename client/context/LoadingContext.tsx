@@ -12,6 +12,7 @@ const LoadingContext = createContext<LoadingContextType | null>(null);
 
 const LoadingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [appLoading, setAppLoading] = useState<boolean>(false);
+  const [driverLoading, setDriverLoading] = useState<boolean>(false);
   const [rideDetailsLoading, setRideDetailsLoading] = useState<boolean>(false);
   const [loadingState, setLoadingState] = useState<{
     location: boolean;
@@ -25,6 +26,8 @@ const LoadingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <LoadingContext.Provider
       value={{
+        driverLoading,
+        setDriverLoading,
         appLoading,
         setAppLoading,
         loadingState,
@@ -52,6 +55,9 @@ interface LoadingContextType {
   setAppLoading: Dispatch<SetStateAction<boolean>>;
   rideDetailsLoading: boolean;
   setRideDetailsLoading: Dispatch<SetStateAction<boolean>>;
+
+  driverLoading: boolean;
+  setDriverLoading: Dispatch<SetStateAction<boolean>>;
 
   loadingState: {
     location: boolean;

@@ -39,6 +39,8 @@ export interface DeliveryType extends Document {
     | "cancelled"
     | "expired";
   fare: number;
+  distance_km: number;
+  duration_mins: number;
   vehicle: "bike" | "cab" | "van" | "truck";
   payment_status: "unpaid" | "paid";
   payment_method: "cash" | "card" | "wallet";
@@ -107,6 +109,8 @@ const DeliverySchema = new Schema<DeliveryType>(
       default: "pending",
     },
     fare: { type: Number, required: true },
+    distance_km: { type: Number, required: true },
+    duration_mins: { type: Number, required: true },
     vehicle: {
       type: String,
       enum: ["bike", "cab", "van", "truck"],
