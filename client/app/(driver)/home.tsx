@@ -27,7 +27,7 @@ import DriverRideModal from "../../components/DriverRideModal";
 
 const HomePage = () => {
   const { notification } = useNotificationContext();
-  const { getDriverProfile } = useDriverAuthContext();
+  const { getDriverProfile, driver } = useDriverAuthContext();
   const { driveStatus } = useDriverContext();
   const {
     jobType,
@@ -52,9 +52,12 @@ const HomePage = () => {
   const [openNotification, setOpenNotification] = useState<boolean>(false);
 
   useEffect(() => {
-    if (region && mapRef.current) {
-      mapRef.current.animateToRegion(region, 1000);
-    }
+    const timeout = setTimeout(() => {
+      if (region && mapRef.current) {
+        mapRef.current.animateToRegion(region, 1000);
+      }
+    }, 1000);
+    return () => clearTimeout(timeout);
   }, [region]);
 
   // When returning to searching (after completing/cancelling), re-center map after layout settles
@@ -109,6 +112,43 @@ const HomePage = () => {
     setTracksViewChanges(false);
   };
 
+  // Determine driver's current position on map
+  // When arrived at pickup (for both rides and deliveries), show driver at pickup location
+  // Otherwise show at current region
+  const driverMarkerCoordinate = useMemo(() => {
+    if (
+      hasPickup &&
+      (driveStatus === "arrived" ||
+        driveStatus === "picked_up" ||
+        driveStatus === "ongoing")
+    ) {
+      return {
+        latitude: pickupCoordsArr![0],
+        longitude: pickupCoordsArr![1],
+      };
+    }
+    return region;
+  }, [hasPickup, pickupCoordsArr, driveStatus, region]);
+
+  // Get vehicle icon based on driver's vehicle type
+  const getDriverVehicleIcon = () => {
+    switch (driver?.vehicle_type) {
+      case "bike":
+        return require("../../assets/images/icons/motorcycle-icon.png");
+      case "keke":
+        return require("../../assets/images/icons/keke-icon.png");
+      case "van":
+        return require("../../assets/images/icons/van-icon.png");
+      case "truck":
+        return require("../../assets/images/icons/truck-icon.png");
+      case "suv":
+        return require("../../assets/images/icons/suv-icon.png");
+      case "cab":
+      default:
+        return require("../../assets/images/icons/sedan-icon.png");
+    }
+  };
+
   return (
     <>
       {notification.visible && <Notification notification={notification} />}
@@ -128,19 +168,19 @@ const HomePage = () => {
             {/* Driver's current position */}
             <Marker
               // tracksViewChanges={tracksViewChanges}
-              coordinate={region}
+              coordinate={driverMarkerCoordinate}
               title="You are here!"
               anchor={{ x: 0.3, y: 0.4 }}
             >
               <View style={styles.markerIcon}>
                 <Image
-                  source={require("../../assets/images/icons/sedan-icon.png")}
+                  source={getDriverVehicleIcon()}
                   style={styles.markerImage}
                 />
               </View>
             </Marker>
 
-            {/* Pickup marker (for both rides and deliveries) */}
+            {/* Pickup marker (for both rides and deliveries) - only show when arriving */}
             {hasPickup && driveStatus === "arriving" && (
               <Marker
                 coordinate={{
@@ -148,7 +188,7 @@ const HomePage = () => {
                   longitude: pickupCoordsArr![1],
                 }}
                 title={jobType === "delivery" ? "Pickup" : "Pickup"}
-                anchor={{ x: 0.2, y: 0.2 }}
+                anchor={{ x: 0.3, y: 0.4 }}
               >
                 <View style={styles.markerIcon}>
                   <Image

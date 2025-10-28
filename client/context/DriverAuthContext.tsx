@@ -62,7 +62,7 @@ interface DriverType {
   vehicle_model: string;
   vehicle_color: string;
   socket_id?: string;
-  vehicle_type?: "cab" | "keke" | "suv";
+  vehicle_type?: "cab" | "keke" | "suv" | "bike" | "van" | "truck";
   vehicle?: Vehicle;
   driver_licence?: DriverLicence;
   driver_licence_number?: number;

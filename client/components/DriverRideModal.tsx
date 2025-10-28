@@ -232,7 +232,7 @@ const DriverRideModal = () => {
         style={styles.main_modal_container}
         onLayout={(e) => {
           const h = Math.ceil(e.nativeEvent.layout.height || 0);
-          setMapPadding((prev: any) => ({ ...prev, bottom: h }));
+          setMapPadding((prev: any) => ({ ...prev, bottom: h - 20 }));
         }}
       >
         {driver?.is_available && (
@@ -1493,10 +1493,32 @@ const DeliveryPickedUpModal = () => {
 };
 
 const DeliveryInTransitModal = () => {
-  const { ongoingDeliveryData, updateDeliveryStatus, setDriveStatus } =
-    useDriverContext();
+  const {
+    ongoingDeliveryData,
+    updateDeliveryStatus,
+    setDriveStatus,
+    toDestinationRouteCoords,
+    mapRef,
+  } = useDriverContext();
   const [isDeliveryExpanded, setIsDeliveryExpanded] = useState<boolean>(false);
   const [delivering, setDelivering] = useState<boolean>(false);
+  const [isCardVisible, setIsCardVisible] = useState<boolean>(true);
+
+  // Fit map to route coordinates when card visibility changes
+  useEffect(() => {
+    if (
+      toDestinationRouteCoords &&
+      toDestinationRouteCoords.length > 1 &&
+      mapRef.current
+    ) {
+      setTimeout(() => {
+        mapRef.current?.fitToCoordinates(toDestinationRouteCoords, {
+          edgePadding: { top: 50, left: 50, right: 50, bottom: 50 },
+          animated: true,
+        });
+      }, 100);
+    }
+  }, [isCardVisible]);
 
   // Get package icon
   const getPackageIcon = (type?: string) => {
@@ -1542,6 +1564,16 @@ const DeliveryInTransitModal = () => {
 
   return (
     <View style={styles.navigationContainer}>
+      <TouchableOpacity
+        onPress={() => setIsCardVisible(!isCardVisible)}
+        style={{ marginLeft: "auto" }}
+      >
+        <Feather
+          name={isCardVisible ? "chevron-down" : "chevron-up"}
+          size={30}
+          color="#fff"
+        />
+      </TouchableOpacity>
       <View style={styles.directionsRow}>
         <FontAwesome5 name="directions" color={"#fff"} size={30} />
         <Text style={styles.directionsText}>
@@ -1549,98 +1581,33 @@ const DeliveryInTransitModal = () => {
         </Text>
       </View>
 
-      {/* Delivery details card (expandable) */}
-      <View
-        style={{
-          padding: 14,
-          borderRadius: 12,
-          backgroundColor: "#1e1e1e",
-          borderWidth: 0.5,
-          borderColor: "#2a2a2a",
-          marginVertical: 15,
-        }}
-      >
-        {/* Main content - Collapsed state */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 24,
-              backgroundColor: "#2a2a2a",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <MaterialIcons name="location-on" color={"#f44336"} size={24} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                color: "#cfcfcf",
-                fontFamily: "poppins-regular",
-                fontSize: 10,
-              }}
-            >
-              Delivering to
-            </Text>
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-semibold",
-                fontSize: 13,
-                marginTop: 2,
-              }}
-            >
-              {ongoingDeliveryData?.to?.name}
-            </Text>
+      {/* Delivery details card (collapsible) */}
+      {isCardVisible && (
+        <View
+          style={{
+            padding: 14,
+            borderRadius: 12,
+            backgroundColor: "#1e1e1e",
+            borderWidth: 0.5,
+            borderColor: "#2a2a2a",
+            marginVertical: 15,
+          }}
+        >
+          {/* Main content - Collapsed state */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             <View
               style={{
-                flexDirection: "row",
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: "#2a2a2a",
                 alignItems: "center",
-                marginTop: 4,
-                gap: 4,
+                justifyContent: "center",
               }}
             >
-              <MaterialIcons name="access-time" color={"#10b804ff"} size={12} />
-              <Text
-                style={{
-                  color: "#10b804ff",
-                  fontFamily: "poppins-semibold",
-                  fontSize: 11,
-                }}
-              >
-                {ongoingDeliveryData?.duration_mins} mins
-              </Text>
+              <MaterialIcons name="location-on" color={"#f44336"} size={24} />
             </View>
-          </View>
-          <TouchableOpacity
-            onPress={callRecipient}
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 20,
-              width: 40,
-              height: 40,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name="call" size={18} color="#121212" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Expanded content - Full delivery details */}
-        {isDeliveryExpanded && (
-          <View
-            style={{
-              marginTop: 12,
-              paddingTop: 12,
-              borderTopWidth: 0.5,
-              borderTopColor: "#2a2a2a",
-            }}
-          >
-            {/* Dropoff address */}
-            <View style={{ marginBottom: 12 }}>
+            <View style={{ flex: 1 }}>
               <Text
                 style={{
                   color: "#cfcfcf",
@@ -1648,201 +1615,238 @@ const DeliveryInTransitModal = () => {
                   fontSize: 10,
                 }}
               >
-                Dropoff Address
+                Delivering to
               </Text>
               <Text
                 style={{
                   color: "#fff",
                   fontFamily: "raleway-semibold",
-                  fontSize: 12,
+                  fontSize: 13,
                   marginTop: 2,
                 }}
+              >
+                {ongoingDeliveryData?.to?.name}
+              </Text>
+              <Text
+                style={{
+                  color: "#a8a8a8",
+                  fontFamily: "poppins-regular",
+                  fontSize: 11,
+                  marginTop: 4,
+                }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
                 {ongoingDeliveryData?.dropoff.address}
               </Text>
             </View>
-
-            {/* Recipient contact */}
-            <View
+            <TouchableOpacity
+              onPress={callRecipient}
               style={{
-                marginBottom: 12,
-                paddingBottom: 12,
-                borderBottomWidth: 0.5,
-                borderBottomColor: "#2a2a2a",
+                backgroundColor: "#fff",
+                borderRadius: 20,
+                width: 40,
+                height: 40,
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <Text
-                style={{
-                  color: "#cfcfcf",
-                  fontFamily: "poppins-regular",
-                  fontSize: 10,
-                }}
-              >
-                Recipient Contact
-              </Text>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-semibold",
-                  fontSize: 12,
-                  marginTop: 2,
-                }}
-              >
-                {ongoingDeliveryData?.to?.phone}
-              </Text>
-            </View>
+              <Ionicons name="call" size={18} color="#121212" />
+            </TouchableOpacity>
+          </View>
 
-            {/* Package details */}
-            <View style={{ marginBottom: 12 }}>
-              <Text
-                style={{
-                  color: "#cfcfcf",
-                  fontFamily: "poppins-regular",
-                  fontSize: 10,
-                  marginBottom: 8,
-                }}
-              >
-                Package Details
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  backgroundColor: "#2a2a2a",
-                  padding: 10,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ fontSize: 24 }}>
-                  {getPackageIcon(ongoingDeliveryData?.package?.type)}
-                </Text>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontFamily: "raleway-semibold",
-                      fontSize: 12,
-                    }}
-                  >
-                    {ongoingDeliveryData?.package?.type
-                      ? ongoingDeliveryData.package.type
-                          .charAt(0)
-                          .toUpperCase() +
-                        ongoingDeliveryData.package.type.slice(1)
-                      : "Other"}
-                  </Text>
-                  <Text
-                    style={{
-                      color: "#cfcfcf",
-                      fontFamily: "poppins-regular",
-                      fontSize: 11,
-                      marginTop: 2,
-                    }}
-                  >
-                    {ongoingDeliveryData?.package?.description || "Package"}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Fragile warning */}
-            {ongoingDeliveryData?.package?.fragile && (
-              <View
-                style={{
-                  backgroundColor: "#ff980020",
-                  padding: 10,
-                  borderRadius: 8,
-                  marginBottom: 12,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#ff9800",
-                    fontFamily: "raleway-bold",
-                    textAlign: "center",
-                    fontSize: 12,
-                  }}
-                >
-                  ⚠️ Fragile - Handle with care
-                </Text>
-              </View>
-            )}
-
-            {/* Delivery ID and Fare */}
+          {/* Expanded content - Full delivery details */}
+          {isDeliveryExpanded && (
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
+                marginTop: 12,
                 paddingTop: 12,
                 borderTopWidth: 0.5,
                 borderTopColor: "#2a2a2a",
               }}
             >
+              {/* Recipient contact */}
               <View
                 style={{
-                  backgroundColor: "#2a2a2a",
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 6,
+                  marginBottom: 12,
+                  paddingBottom: 12,
+                  borderBottomWidth: 0.5,
+                  borderBottomColor: "#2a2a2a",
                 }}
               >
                 <Text
                   style={{
-                    color: "#fff",
+                    color: "#cfcfcf",
                     fontFamily: "poppins-regular",
                     fontSize: 10,
                   }}
                 >
-                  ID: #
-                  {(ongoingDeliveryData?._id || "").slice(-9).toUpperCase()}
+                  Recipient Contact
+                </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontFamily: "raleway-semibold",
+                    fontSize: 12,
+                    marginTop: 2,
+                  }}
+                >
+                  {ongoingDeliveryData?.to?.phone}
                 </Text>
               </View>
-              <Text
+
+              {/* Package details */}
+              <View style={{ marginBottom: 12 }}>
+                <Text
+                  style={{
+                    color: "#cfcfcf",
+                    fontFamily: "poppins-regular",
+                    fontSize: 10,
+                    marginBottom: 8,
+                  }}
+                >
+                  Package Details
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    backgroundColor: "#2a2a2a",
+                    padding: 10,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text style={{ fontSize: 24 }}>
+                    {getPackageIcon(ongoingDeliveryData?.package?.type)}
+                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "raleway-semibold",
+                        fontSize: 12,
+                      }}
+                    >
+                      {ongoingDeliveryData?.package?.type
+                        ? ongoingDeliveryData.package.type
+                            .charAt(0)
+                            .toUpperCase() +
+                          ongoingDeliveryData.package.type.slice(1)
+                        : "Other"}
+                    </Text>
+                    <Text
+                      style={{
+                        color: "#cfcfcf",
+                        fontFamily: "poppins-regular",
+                        fontSize: 11,
+                        marginTop: 2,
+                      }}
+                    >
+                      {ongoingDeliveryData?.package?.description || "Package"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Fragile warning */}
+              {ongoingDeliveryData?.package?.fragile && (
+                <View
+                  style={{
+                    backgroundColor: "#ff980020",
+                    padding: 10,
+                    borderRadius: 8,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#ff9800",
+                      fontFamily: "raleway-bold",
+                      textAlign: "center",
+                      fontSize: 12,
+                    }}
+                  >
+                    ⚠️ Fragile - Handle with care
+                  </Text>
+                </View>
+              )}
+
+              {/* Delivery ID and Fare */}
+              <View
                 style={{
-                  color: "#10b804ff",
-                  fontFamily: "poppins-bold",
-                  fontSize: 16,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingTop: 12,
+                  borderTopWidth: 0.5,
+                  borderTopColor: "#2a2a2a",
                 }}
               >
-                NGN {ongoingDeliveryData?.fare.toLocaleString()}
-              </Text>
+                <View
+                  style={{
+                    backgroundColor: "#2a2a2a",
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "poppins-regular",
+                      fontSize: 10,
+                    }}
+                  >
+                    ID: #
+                    {(ongoingDeliveryData?._id || "").slice(-9).toUpperCase()}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    color: "#10b804ff",
+                    fontFamily: "poppins-bold",
+                    fontSize: 16,
+                  }}
+                >
+                  NGN {ongoingDeliveryData?.fare.toLocaleString()}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/* See more/less button */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => setIsDeliveryExpanded(!isDeliveryExpanded)}
-          style={{
-            marginTop: 12,
-            paddingTop: 12,
-            borderTopWidth: 0.5,
-            borderTopColor: "#2a2a2a",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-          }}
-        >
-          <Text
+          {/* See more/less button */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setIsDeliveryExpanded(!isDeliveryExpanded)}
             style={{
-              color: "#cfcfcf",
-              fontFamily: "raleway-semibold",
-              fontSize: 12,
+              marginTop: 5,
+              paddingTop: 5,
+              borderTopWidth: 0.5,
+              borderTopColor: "#2a2a2a",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
             }}
           >
-            {isDeliveryExpanded ? "See less" : "See more"}
-          </Text>
-          <Feather
-            name={isDeliveryExpanded ? "chevron-up" : "chevron-down"}
-            size={16}
-            color="#cfcfcf"
-          />
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "raleway-semibold",
+                fontSize: 12,
+              }}
+            >
+              {isDeliveryExpanded ? "See less" : "See more"}
+            </Text>
+            <Feather
+              name={isDeliveryExpanded ? "chevron-up" : "chevron-down"}
+              size={16}
+              color="#cfcfcf"
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Confirm delivery button */}
       <View style={styles.arrivedBtnRow}>

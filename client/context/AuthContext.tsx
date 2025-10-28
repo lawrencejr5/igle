@@ -312,9 +312,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   // Google login (backend verifies tokenId and returns jwt + user)
   const googleLogin = async (tokenId: string): Promise<void> => {
+    console.log("entered");
     try {
       const { data } = await axios.post(`${API_URL}/google_auth`, { tokenId });
 
+      console.log("came out");
       await AsyncStorage.setItem("token", data.token);
 
       const is_driver = data.user.is_driver;
