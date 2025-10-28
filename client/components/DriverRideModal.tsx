@@ -200,6 +200,8 @@ const DriverRideModal = () => {
             setDriveStatus("arrived");
             break;
           case "picked_up":
+            setDriveStatus("picked_up");
+            break;
           case "in_transit":
             setDriveStatus("ongoing");
             break;
@@ -255,6 +257,7 @@ const DriverRideModal = () => {
                 {driveStatus === "accepted" && <DeliveryAcceptedModal />}
                 {driveStatus === "arriving" && <DeliveryArrivingModal />}
                 {driveStatus === "arrived" && <DeliveryArrivedModal />}
+                {driveStatus === "picked_up" && <DeliveryPickedUpModal />}
                 {driveStatus === "ongoing" && <DeliveryInTransitModal />}
                 {driveStatus === "completed" && <DeliveryDeliveredModal />}
               </>
@@ -1188,7 +1191,7 @@ const DeliveryArrivedModal = () => {
     setPickingUp(true);
     try {
       await updateDeliveryStatus("picked_up");
-      setDriveStatus("ongoing");
+      setDriveStatus("picked_up");
     } catch (error) {
       console.log(error);
     } finally {
@@ -1404,6 +1407,85 @@ const DeliveryArrivedModal = () => {
           <View style={[styles.arrivedBtn, { opacity: pickingUp ? 0.5 : 1 }]}>
             <Text style={styles.arrivedBtnText}>
               {pickingUp ? "Confirming..." : "Confirm Package Pickup"}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
+  );
+};
+
+const DeliveryPickedUpModal = () => {
+  const { ongoingDeliveryData, updateDeliveryStatus, setDriveStatus } =
+    useDriverContext();
+  const [startingTransit, setStartingTransit] = useState<boolean>(false);
+
+  const startTransit = async () => {
+    setStartingTransit(true);
+    try {
+      await updateDeliveryStatus("in_transit");
+      setDriveStatus("ongoing");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setStartingTransit(false);
+    }
+  };
+
+  return (
+    <View style={styles.navigationContainer}>
+      <View style={styles.directionsRow}>
+        <FontAwesome5 name="box" color={"#fff"} size={26} />
+        <Text style={styles.directionsText}>
+          Package picked up. You can start transit to the dropoff location.
+        </Text>
+      </View>
+
+      {/* Summary */}
+      <View
+        style={{
+          padding: 12,
+          borderRadius: 12,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+          marginTop: 12,
+        }}
+      >
+        <Text
+          style={{
+            color: "#cfcfcf",
+            fontFamily: "poppins-regular",
+            fontSize: 11,
+          }}
+        >
+          Dropoff: {ongoingDeliveryData?.dropoff.address}
+        </Text>
+        {ongoingDeliveryData?.to?.name ? (
+          <Text
+            style={{
+              color: "#cfcfcf",
+              fontFamily: "poppins-regular",
+              fontSize: 11,
+              marginTop: 4,
+            }}
+          >
+            Recipient: {ongoingDeliveryData?.to?.name} (
+            {ongoingDeliveryData?.to?.phone})
+          </Text>
+        ) : null}
+      </View>
+
+      <View style={styles.arrivedBtnRow}>
+        <TouchableWithoutFeedback
+          onPress={startTransit}
+          disabled={startingTransit}
+        >
+          <View
+            style={[styles.arrivedBtn, { opacity: startingTransit ? 0.5 : 1 }]}
+          >
+            <Text style={styles.arrivedBtnText}>
+              {startingTransit ? "Starting..." : "Start transit"}
             </Text>
           </View>
         </TouchableWithoutFeedback>

@@ -27,6 +27,7 @@ type ModalStatusType =
   | "accepted"
   | "arriving"
   | "arrived"
+  | "picked_up"
   | "ongoing"
   | "completed"
   | "";
