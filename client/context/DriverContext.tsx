@@ -121,7 +121,7 @@ const DriverContext = createContext<DriverConextType | null>(null);
 const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { showNotification } = useNotificationContext();
   const { driver, setDriver } = useDriverAuthContext();
-  const { getRoute, region } = useMapContext();
+  const { getRoute, region, mapPadding } = useMapContext();
 
   const [driveStatus, setDriveStatus] = useState<ModalStatusType>("searching");
 
@@ -173,6 +173,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       );
       if (coords) {
         setToDestinationRouteCoords(coords);
+        // Clear pickup route only after destination route is ready to avoid blank state
+        setToPickupRouteCoords([]);
         mapRef.current?.fitToCoordinates(coords, {
           edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
           animated: true,
@@ -227,7 +229,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
 
     if (jobType === "delivery" && ongoingDeliveryData) {
       if (driveStatus === "arriving") fetchPickupRoute();
-      if (driveStatus === "ongoing") fetchDropoffRoute();
+      if (driveStatus === "arrived") fetchDropoffRoute();
     }
   }, [jobType, ongoingDeliveryData, driveStatus]);
 
@@ -432,6 +434,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
             : prev
         );
       }
+      if (status === "delivered") setToDestinationRouteCoords([]);
     } catch (error: any) {
       const errMsg =
         error.response?.data?.msg ||

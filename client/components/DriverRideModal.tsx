@@ -31,13 +31,14 @@ import { useDriverContext } from "../context/DriverContext";
 import { useNotificationContext } from "../context/NotificationContext";
 
 import RideRoute from "./RideRoute";
-import { useMapContext } from "../context/MapContext";
 
 import EarningsModal from "./screens/DriverEarnings";
 import UserAccountModal from "./screens/UserAccountModal";
+import { useMapContext } from "../context/MapContext";
 
 const DriverRideModal = () => {
   const { driver, driverSocket } = useDriverAuthContext();
+  const { setMapPadding } = useMapContext();
   const {
     fetchActiveRide,
     setDriveStatus,
@@ -227,7 +228,13 @@ const DriverRideModal = () => {
           </View>
         </TouchableWithoutFeedback>
       </View>
-      <View style={styles.main_modal_container}>
+      <View
+        style={styles.main_modal_container}
+        onLayout={(e) => {
+          const h = Math.ceil(e.nativeEvent.layout.height || 0);
+          setMapPadding((prev: any) => ({ ...prev, bottom: h }));
+        }}
+      >
         {driver?.is_available && (
           <View style={styles.availableContainer}>
             {/* RIDE MODALS */}
@@ -614,7 +621,6 @@ const ArrivingModal = () => {
     try {
       await updateRideStatus("arrived");
       setDriveStatus("arrived");
-      setToPickupRouteCoords([]);
     } catch (error) {
       console.log(error);
     } finally {
@@ -724,20 +730,12 @@ const CompletedModal = () => {
     setIncomingRideData,
   } = useDriverContext();
 
-  const { region, mapRef } = useMapContext();
-
   const start_searching = () => {
     setToDestinationRouteCoords([]);
     setToPickupRouteCoords([]);
     setDriveStatus("searching");
     setOngoingRideData(null);
     setIncomingRideData(null);
-
-    setTimeout(() => {
-      if (region && mapRef.current) {
-        mapRef.current.animateToRegion(region, 1000);
-      }
-    }, 1000);
   };
   return (
     <View style={styles.navigationContainer}>
@@ -1882,12 +1880,7 @@ const DeliveryDeliveredModal = () => {
     setOngoingDeliveryData(null);
     setIncomingDeliveryData(null);
     setJobType("");
-
-    setTimeout(() => {
-      if (region && mapRef.current) {
-        mapRef.current.animateToRegion(region, 1000);
-      }
-    }, 1000);
+    // Recentering is handled by a stable effect in Home when driveStatus === 'searching'
   };
 
   return (

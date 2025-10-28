@@ -39,7 +39,7 @@ const HomePage = () => {
     locationModalOpen,
     setLocationModalOpen,
   } = useDriverContext();
-  const { region } = useMapContext();
+  const { region, mapPadding } = useMapContext();
 
   useEffect(() => {
     getDriverProfile();
@@ -56,6 +56,16 @@ const HomePage = () => {
       mapRef.current.animateToRegion(region, 1000);
     }
   }, [region]);
+
+  // When returning to searching (after completing/cancelling), re-center map after layout settles
+  useEffect(() => {
+    if (driveStatus === "searching" && region && mapRef.current) {
+      const timeout = setTimeout(() => {
+        mapRef.current?.animateToRegion(region, 1000);
+      }, 350);
+      return () => clearTimeout(timeout);
+    }
+  }, [driveStatus, region]);
 
   const memoizedPickupRouteCoords = useMemo(
     () => toPickupRouteCoords,
@@ -111,14 +121,16 @@ const HomePage = () => {
             ref={mapRef}
             initialRegion={region}
             customMapStyle={darkMapStyle}
+            paddingAdjustmentBehavior="always"
+            mapPadding={mapPadding}
             onMapLoaded={loadMap}
           >
             {/* Driver's current position */}
             <Marker
-              tracksViewChanges={tracksViewChanges}
+              // tracksViewChanges={tracksViewChanges}
               coordinate={region}
               title="You are here!"
-              anchor={{ x: 0.2, y: 0.2 }}
+              anchor={{ x: 0.3, y: 0.4 }}
             >
               <View style={styles.markerIcon}>
                 <Image
@@ -141,7 +153,7 @@ const HomePage = () => {
                 <View style={styles.markerIcon}>
                   <Image
                     source={require("../../assets/images/user.png")}
-                    style={styles.markerImage}
+                    style={[styles.markerImage, { height: 30, width: 30 }]}
                   />
                 </View>
               </Marker>
@@ -151,7 +163,9 @@ const HomePage = () => {
             {hasDestination &&
               ((jobType === "ride" &&
                 (driveStatus === "arrived" || driveStatus === "ongoing")) ||
-                (jobType === "delivery" && driveStatus === "ongoing")) && (
+                (jobType === "delivery" &&
+                  driveStatus !== "completed" &&
+                  memoizedDestinationRouteCoords)) && (
                 <Marker
                   coordinate={{
                     latitude: destinationCoordsArr![0],
