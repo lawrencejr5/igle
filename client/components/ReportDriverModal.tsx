@@ -9,6 +9,8 @@ import {
   Dimensions,
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
+import { useReportContext } from "../context/ReportContext";
+import { useNotificationContext } from "../context/NotificationContext";
 
 interface ReportDriverModalProps {
   visible: boolean;
@@ -72,20 +74,38 @@ const ReportDriverModal: FC<ReportDriverModalProps> = ({
   rideId,
 }) => {
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const [reasonDescription, setReasonDescription] = useState<string | null>(
+    null
+  );
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const { submitReport } = useReportContext();
+  const { showNotification } = useNotificationContext();
+
+  const handleSubmit = async () => {
     if (!selectedReason) return;
+    if (!driverId) {
+      showNotification("Driver not available", "error");
+      return;
+    }
 
-    // TODO: Implement report submission logic here
-    console.log("Reporting driver:", {
-      driverId,
-      rideId,
-      reason: selectedReason,
-    });
-
-    // Reset and close
-    setSelectedReason(null);
-    onClose();
+    setSubmitting(true);
+    try {
+      await submitReport(
+        driverId,
+        rideId || null,
+        selectedReason,
+        reasonDescription!,
+        true
+      );
+      showNotification("Report submitted. Thank you.", "success");
+      setSelectedReason(null);
+      onClose();
+    } catch (err: any) {
+      showNotification(err.message || "Failed to submit report", "error");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -132,7 +152,10 @@ const ReportDriverModal: FC<ReportDriverModalProps> = ({
                   styles.reasonOption,
                   selectedReason === reason.id && styles.reasonOptionSelected,
                 ]}
-                onPress={() => setSelectedReason(reason.id)}
+                onPress={() => {
+                  setSelectedReason(reason.id);
+                  setReasonDescription(reason.label);
+                }}
                 activeOpacity={0.7}
               >
                 <View style={styles.reasonContent}>

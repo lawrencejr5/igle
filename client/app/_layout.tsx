@@ -11,6 +11,7 @@ import SplashScreen from "./splash_screen";
 import LoadingProvider from "../context/LoadingContext";
 import AuthProvider from "../context/AuthContext";
 import NotificationProvider from "../context/NotificationContext";
+import ReportProvider from "../context/ReportContext";
 import DriverAuthProvider from "../context/DriverAuthContext";
 import RideContextProvider from "../context/RideContext";
 import MapContextProvider from "../context/MapContext";
@@ -48,37 +49,39 @@ const RootLayout = () => {
     <GestureHandlerRootView>
       <LoadingProvider>
         <NotificationProvider>
-          <ActivityProvider>
-            <WalletProvider>
-              <TransactionContextProvider>
-                <MapContextProvider>
-                  <SavedPlaceProvider>
-                    <HistoryProvider>
-                      <RatingProvider>
-                        <DriverAuthProvider>
-                          <AuthProvider>
-                            <DriverContextPrvider>
-                              <RideContextProvider>
-                                <DeliverProvider>
-                                  <FeedbackProvider>
-                                    <Stack
-                                      screenOptions={{
-                                        headerShown: false,
-                                      }}
-                                    />
-                                  </FeedbackProvider>
-                                </DeliverProvider>
-                              </RideContextProvider>
-                            </DriverContextPrvider>
-                          </AuthProvider>
-                        </DriverAuthProvider>
-                      </RatingProvider>
-                    </HistoryProvider>
-                  </SavedPlaceProvider>
-                </MapContextProvider>
-              </TransactionContextProvider>
-            </WalletProvider>
-          </ActivityProvider>
+          <ReportProvider>
+            <ActivityProvider>
+              <WalletProvider>
+                <TransactionContextProvider>
+                  <MapContextProvider>
+                    <SavedPlaceProvider>
+                      <HistoryProvider>
+                        <RatingProvider>
+                          <DriverAuthProvider>
+                            <AuthProvider>
+                              <DriverContextPrvider>
+                                <RideContextProvider>
+                                  <DeliverProvider>
+                                    <FeedbackProvider>
+                                      <Stack
+                                        screenOptions={{
+                                          headerShown: false,
+                                        }}
+                                      />
+                                    </FeedbackProvider>
+                                  </DeliverProvider>
+                                </RideContextProvider>
+                              </DriverContextPrvider>
+                            </AuthProvider>
+                          </DriverAuthProvider>
+                        </RatingProvider>
+                      </HistoryProvider>
+                    </SavedPlaceProvider>
+                  </MapContextProvider>
+                </TransactionContextProvider>
+              </WalletProvider>
+            </ActivityProvider>
+          </ReportProvider>
         </NotificationProvider>
       </LoadingProvider>
     </GestureHandlerRootView>
