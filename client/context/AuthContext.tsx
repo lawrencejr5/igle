@@ -312,7 +312,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   // Google login (backend verifies tokenId and returns jwt + user)
   const googleLogin = async (tokenId: string): Promise<void> => {
-    console.log("entered");
+    console.log("entered, ", tokenId);
     try {
       const { data } = await axios.post(`${API_URL}/google_auth`, { tokenId });
 

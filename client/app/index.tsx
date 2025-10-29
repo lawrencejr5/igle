@@ -8,9 +8,13 @@ import { router } from "expo-router";
 
 import { useAuthContext } from "../context/AuthContext";
 import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 
 import { useNotificationContext } from "../context/NotificationContext";
+
+// Important for web and to stabilize redirect completion
+WebBrowser.maybeCompleteAuthSession();
 
 const StartScreen = () => {
   const { isAuthenticated, signedIn, googleLogin } = useAuthContext()!;
@@ -31,15 +35,25 @@ const StartScreen = () => {
   const [googleAuthLoading, setGoogleAuthLoading] = useState<boolean>(false);
 
   React.useEffect(() => {
-    if (response?.type === "success") {
-      const idToken = response.params?.id_token;
-      if (idToken) {
-        googleLogin(idToken)
-          .catch((e: unknown) =>
-            showNotification("Signin failed, try again", "error")
-          )
-          .finally(() => setGoogleAuthLoading(false));
+    if (!response) return;
+
+    if (response.type === "success") {
+      // Prefer authentication.idToken on native, fallback to params for web
+      const idToken =
+        (response as any).authentication?.idToken || response.params?.id_token;
+
+      if (!idToken) {
+        setGoogleAuthLoading(false);
+        showNotification("Google sign-in failed: missing id token", "error");
+        return;
       }
+      setGoogleAuthLoading(true);
+      googleLogin(idToken)
+        .catch(() => showNotification("Signin failed, try again", "error"))
+        .finally(() => setGoogleAuthLoading(false));
+    } else if (response.type === "dismiss" || response.type === "cancel") {
+      // Clear loading if user canceled/closes the tab
+      setGoogleAuthLoading(false);
     }
   }, [response]);
 
@@ -115,14 +129,16 @@ const StartScreen = () => {
         </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={0.7}
-          disabled={!request}
+          disabled={!request || googleAuthLoading}
           style={[styles.sign_btn, { opacity: googleAuthLoading ? 0.8 : 1 }]}
-          onPress={() => {
+          onPress={async () => {
             try {
               setGoogleAuthLoading(true);
               promptAsync();
             } catch (err) {
               console.log("promptAsync error", err);
+              setGoogleAuthLoading(false);
+              showNotification("Google sign-in failed to start", "error");
             }
           }}
         >

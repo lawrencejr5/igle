@@ -59,7 +59,7 @@ const HomePage = () => {
       if (region && mapRef.current) {
         mapRef.current.animateToRegion(region, 1000);
       }
-    }, 1000);
+    }, 3000);
     return () => clearTimeout(timeout);
   }, [region]);
 
