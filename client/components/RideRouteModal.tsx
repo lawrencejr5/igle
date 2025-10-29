@@ -47,6 +47,7 @@ import * as Linking from "expo-linking";
 
 import RideRoute from "./RideRoute";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import ReportDriverModal from "./ReportDriverModal";
 
 import { router, useNavigation } from "expo-router";
 import { useSavedPlaceContext } from "../context/SavedPlaceContext";
@@ -218,7 +219,7 @@ const RideRouteModal = () => {
         case "paying":
           return 1;
         case "paid":
-          return 0;
+          return 1;
         case "track_ride":
           return 0;
         case "rating":
@@ -1257,6 +1258,7 @@ const PaidModal = () => {
   const { pickupTime, scheduledTimeDif, setRideStatus, ongoingRideData } =
     useRideContext();
   const { mapRef } = useMapContext();
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const track_ride = () => {
     setRideStatus("track_ride");
@@ -1324,11 +1326,29 @@ const PaidModal = () => {
           </Text>
         </TouchableOpacity>
       )}
+
+      <TouchableOpacity
+        onPress={() => setReportModalOpen(true)}
+        style={{ marginTop: 10 }}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.reportDriverText}>Report driver</Text>
+      </TouchableOpacity>
+
+      <ReportDriverModal
+        visible={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        driverId={ongoingRideData?.driver._id}
+        rideId={ongoingRideData?._id}
+      />
     </>
   );
 };
 
 const TrackRide = () => {
+  const { ongoingRideData } = useRideContext();
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
@@ -2268,5 +2288,11 @@ const styles = StyleSheet.create({
     width: 10,
     borderRadius: 5,
     backgroundColor: "#ffffff",
+  },
+  reportDriverText: {
+    textAlign: "center",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+    color: "#ff4444",
   },
 });

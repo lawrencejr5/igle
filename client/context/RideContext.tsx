@@ -308,7 +308,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       routeModalRef.current?.snapToIndex(1);
     }
     if (rideStatus === "paid") {
-      routeModalRef.current?.snapToIndex(0);
+      routeModalRef.current?.snapToIndex(1);
     }
     if (rideStatus === "track_ride") {
       routeModalRef.current?.snapToIndex(0);
