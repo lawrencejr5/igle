@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
+import * as Linking from "expo-linking";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -17,6 +18,7 @@ import { router } from "expo-router";
 
 import { useAuthContext } from "../context/AuthContext";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
+import { useNotificationContext } from "../context/NotificationContext";
 
 const SideNav: React.FC<{
   mode: "driver" | "rider";
@@ -25,6 +27,7 @@ const SideNav: React.FC<{
 }> = ({ open, setSideNavOpen, mode }) => {
   const { signedIn } = useAuthContext();
   const { driver } = useDriverAuthContext();
+  const { showNotification } = useNotificationContext();
 
   const go_to_driver = () => {
     if (signedIn?.is_driver) {
@@ -61,6 +64,19 @@ const SideNav: React.FC<{
       duration: 300,
       useNativeDriver: true,
     }).start(() => setVisible(false));
+  };
+
+  const handleRateUs = async () => {
+    closeSideNav();
+    const url =
+      "https://play.google.com/store/apps/details?id=com.lawrencejr.igle";
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      showNotification("Couldn't open playstore", "error");
+    }
   };
 
   if (!visible) return null;
@@ -112,7 +128,7 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
-                    router.push("rides/");
+                    router.replace("/(tabs)/rides");
                   }}
                 >
                   <FontAwesome name="car" size={20} color="#c6c6c6" />
@@ -122,7 +138,7 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
-                    router.push("delivery/");
+                    router.replace("/(tabs)/delivery");
                   }}
                 >
                   <FontAwesome name="car" size={20} color="#c6c6c6" />
@@ -151,6 +167,7 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
+                    router.push("/(tabs)/account/feedback");
                   }}
                 >
                   <Feather name="help-circle" size={20} color="#c6c6c6" />
@@ -167,9 +184,7 @@ const SideNav: React.FC<{
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.sidenav_content_box}
-                  onPress={() => {
-                    closeSideNav();
-                  }}
+                  onPress={handleRateUs}
                 >
                   <FontAwesome name="star" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Rate us</Text>

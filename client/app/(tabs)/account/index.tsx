@@ -32,7 +32,7 @@ const Account = () => {
 
   const { logout, signedIn, getUserData } = useAuthContext();
   const { userWalletBal, walletLoading, getWalletBalance } = useWalletContext();
-  const { notification } = useNotificationContext();
+  const { notification, showNotification } = useNotificationContext();
   const { appLoading } = useLoading();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -53,7 +53,7 @@ const Account = () => {
     if (supported) {
       await Linking.openURL(url);
     } else {
-      Alert.alert("Error", "Can't open the Play Store right now");
+      showNotification("Couldn't open playstore", "error");
     }
   };
 
