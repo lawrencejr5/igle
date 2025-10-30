@@ -303,6 +303,19 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
       await getUserData();
 
+      // If user hasn't added a phone number, navigate to phone update
+      const hasPhone = !!data.user?.phone;
+      if (!hasPhone) {
+        router.push("/(auth)/phone");
+      } else {
+        // Navigate based on role
+        if (data.user.is_driver) {
+          router.push("/(driver)/home");
+        } else {
+          router.push("/(tabs)/home");
+        }
+      }
+
       showNotification("Login successful.", "success");
     } catch (err: any) {
       showNotification(err.response?.data?.msg || "Login failed", "error");
@@ -320,6 +333,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await AsyncStorage.setItem("token", data.token);
 
       const is_driver = data.user.is_driver;
+      const hasPhone = !!data.user?.phone;
 
       showNotification(
         data.isNew ? "Account created" : "Login successful.",
@@ -328,14 +342,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       await getUserData();
 
-      if (data.isNew) {
+      // New accounts or accounts without phone must update phone first
+      if (data.isNew || !hasPhone) {
         router.push("/(auth)/phone");
+      } else if (is_driver) {
+        router.push("/(driver)/home");
       } else {
-        if (is_driver) {
-          router.push("/(driver)/home");
-        } else {
-          router.push("/(tabs)/home");
-        }
+        router.push("/(tabs)/home");
       }
     } catch (err: any) {
       showNotification(
@@ -524,7 +537,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     showNotification("User logged out", "error");
 
     setTimeout(() => {
-      router.push("/");
+      // Replace history so the user cannot go back into the app after logout
+      router.replace("/");
       setSignedIn(null);
       setDriver(null);
     }, 500);

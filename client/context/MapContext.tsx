@@ -18,10 +18,12 @@ import Polyline from "@mapbox/polyline";
 import MapView from "react-native-maps";
 
 import * as Location from "expo-location";
+import { useNotificationContext } from "./NotificationContext";
 
 const MapContext = createContext<MapContextType | null>(null);
 
 const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const { showNotification } = useNotificationContext();
   const [region, setRegion] = useState<any>({
     latitude: 0,
     longitude: 0,
@@ -177,7 +179,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setCityAddress(city);
       }
     } catch (error) {
-      console.error("Error fetching place name", error);
+      showNotification("Couldn't get ur location, refresh!", "error");
     } finally {
       setLocationLoading(false);
     }
