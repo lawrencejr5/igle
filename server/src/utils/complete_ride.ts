@@ -10,6 +10,7 @@ import { credit_wallet } from "../utils/wallet";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 
 import { RideType } from "../models/ride";
+import { incrementUserTasksProgress } from "./task_progress";
 
 export const complete_ride = async (ride: RideType) => {
   try {
@@ -51,6 +52,15 @@ export const complete_ride = async (ride: RideType) => {
     ride.status = "completed";
     ride.driver_paid = true;
     await ride.save();
+
+    // Update rider task progress for all active 'ride' tasks
+    try {
+      if (ride.rider) {
+        await incrementUserTasksProgress(ride.rider, "ride");
+      }
+    } catch (progressErr) {
+      console.error("Failed to increment rider task progress:", progressErr);
+    }
 
     return { success: true };
   } catch (err: any) {

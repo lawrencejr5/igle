@@ -19,7 +19,6 @@ const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const wallet_2 = require("../utils/wallet");
-const mongoose_1 = require("mongoose");
 // get current user's tasks
 const get_user_tasks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -142,7 +141,7 @@ const claim_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         // create pending transaction and then credit via existing util
         const reference = (0, gen_unique_ref_1.generate_unique_reference)();
         yield transaction_1.default.create({
-            wallet_id: new mongoose_1.Types.ObjectId(wallet._id),
+            wallet_id: wallet._id,
             type: "funding",
             amount: Number(task.rewardAmount || 0),
             status: "pending",

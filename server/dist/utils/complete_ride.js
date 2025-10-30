@@ -20,6 +20,7 @@ const commission_1 = __importDefault(require("../models/commission"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const wallet_2 = require("../utils/wallet");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
+const task_progress_1 = require("./task_progress");
 const complete_ride = (ride) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wallet = yield wallet_1.default.findOne({ owner_id: ride.driver });
@@ -52,6 +53,15 @@ const complete_ride = (ride) => __awaiter(void 0, void 0, void 0, function* () {
         ride.status = "completed";
         ride.driver_paid = true;
         yield ride.save();
+        // Update rider task progress for all active 'ride' tasks
+        try {
+            if (ride.rider) {
+                yield (0, task_progress_1.incrementUserTasksProgress)(ride.rider, "ride");
+            }
+        }
+        catch (progressErr) {
+            console.error("Failed to increment rider task progress:", progressErr);
+        }
         return { success: true };
     }
     catch (err) {

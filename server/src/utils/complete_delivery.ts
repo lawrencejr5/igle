@@ -10,6 +10,7 @@ import { credit_wallet } from "../utils/wallet";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 
 import { DeliveryType } from "../models/delivery";
+import { incrementUserTasksProgress } from "./task_progress";
 
 export const complete_delivery = async (delivery: DeliveryType) => {
   try {
@@ -53,6 +54,15 @@ export const complete_delivery = async (delivery: DeliveryType) => {
     // mark driver paid flag if present
     (delivery as any).driver_paid = true;
     await delivery.save();
+
+    // Update sender task progress for all active 'delivery' tasks
+    try {
+      if (delivery.sender) {
+        await incrementUserTasksProgress(delivery.sender, "delivery");
+      }
+    } catch (progressErr) {
+      console.error("Failed to increment sender task progress:", progressErr);
+    }
 
     return { success: true };
   } catch (err: any) {

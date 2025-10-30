@@ -20,6 +20,7 @@ const commission_1 = __importDefault(require("../models/commission"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const wallet_2 = require("../utils/wallet");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
+const task_progress_1 = require("./task_progress");
 const complete_delivery = (delivery) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wallet = yield wallet_1.default.findOne({ owner_id: delivery.driver });
@@ -54,6 +55,15 @@ const complete_delivery = (delivery) => __awaiter(void 0, void 0, void 0, functi
         // mark driver paid flag if present
         delivery.driver_paid = true;
         yield delivery.save();
+        // Update sender task progress for all active 'delivery' tasks
+        try {
+            if (delivery.sender) {
+                yield (0, task_progress_1.incrementUserTasksProgress)(delivery.sender, "delivery");
+            }
+        }
+        catch (progressErr) {
+            console.error("Failed to increment sender task progress:", progressErr);
+        }
         return { success: true };
     }
     catch (err) {

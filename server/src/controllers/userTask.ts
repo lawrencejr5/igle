@@ -125,7 +125,7 @@ export const claim_task = async (req: Request, res: Response) => {
     // create pending transaction and then credit via existing util
     const reference = generate_unique_reference();
     await Transaction.create({
-      wallet_id: new Types.ObjectId(wallet._id as any),
+      wallet_id: wallet._id as any,
       type: "funding",
       amount: Number((task as any).rewardAmount || 0),
       status: "pending",
