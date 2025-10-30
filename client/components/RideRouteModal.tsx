@@ -1531,7 +1531,11 @@ const RateModal = () => {
       >
         <View style={{ alignItems: "center" }}>
           <Image
-            source={require("../assets/images/black-profile.jpeg")}
+            source={
+              (ongoingRideData?.driver as any)?.profile_img
+                ? { uri: (ongoingRideData?.driver as any).profile_img }
+                : require("../assets/images/user.png")
+            }
             style={{
               width: 70,
               height: 70,

@@ -21,6 +21,7 @@ import HistoryProvider from "../context/HistoryContext";
 import SavedPlaceProvider from "../context/SavedPlaceContext";
 import ActivityProvider from "../context/ActivityContext";
 import RatingProvider from "../context/RatingContext";
+import TaskProvider from "../context/TaskContext";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TransactionContextProvider from "../context/TransactionContext";
@@ -63,11 +64,13 @@ const RootLayout = () => {
                                 <RideContextProvider>
                                   <DeliverProvider>
                                     <FeedbackProvider>
-                                      <Stack
-                                        screenOptions={{
-                                          headerShown: false,
-                                        }}
-                                      />
+                                      <TaskProvider>
+                                        <Stack
+                                          screenOptions={{
+                                            headerShown: false,
+                                          }}
+                                        />
+                                      </TaskProvider>
                                     </FeedbackProvider>
                                   </DeliverProvider>
                                 </RideContextProvider>

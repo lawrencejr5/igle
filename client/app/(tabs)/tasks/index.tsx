@@ -12,96 +12,28 @@ import { useLoading } from "../../../context/LoadingContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import Notification from "../../../components/Notification";
 import RewardCard from "../../../components/RewardCard";
-import type { RewardInstance } from "../../../types/rewards";
+import { useTaskContext } from "../../../context/TaskContext";
 
-// Mock data - will be replaced with real API data later
-const MOCK_REWARDS: RewardInstance[] = [
-  {
-    id: "rides-10-bonus",
-    title: "First 10 Rides",
-    description:
-      "Complete your first 10 rides and get a bonus credited to your wallet!",
-    target: 10,
-    progress: 7,
-    source: "rides_completed",
-    status: "in_progress",
-    action: { type: "credit_wallet", currency: "NGN", amount: 2000 },
-    terms: "New users only. One-time bonus. Valid for completed paid rides.",
-    icon: "🚗",
-  },
-  {
-    id: "weekly-streak-5",
-    title: "5-Week Streak",
-    description: "Ride at least once per week for 5 consecutive weeks.",
-    target: 5,
-    progress: 5,
-    source: "weekly_streak",
-    status: "completed",
-    action: { type: "promo_code", code: "STREAK5X" },
-    terms: "Minimum 1 ride per week. Streak resets if you miss a week.",
-    icon: "🔥",
-  },
-  {
-    id: "deliveries-20",
-    title: "20 Deliveries",
-    description:
-      "Complete 20 deliveries to unlock a special discount on your next ride.",
-    target: 20,
-    progress: 12,
-    source: "deliveries_completed",
-    status: "in_progress",
-    action: { type: "discount", percentage: 25 },
-    terms:
-      "Valid for completed deliveries only. Discount applies to next ride.",
-    icon: "📦",
-  },
-  {
-    id: "referrals-3",
-    title: "Refer 3 Friends",
-    description: "Invite 3 friends who complete at least one paid ride.",
-    target: 3,
-    progress: 1,
-    source: "referrals",
-    status: "in_progress",
-    action: { type: "credit_wallet", currency: "NGN", amount: 5000 },
-    terms:
-      "Friends must complete at least one paid ride. No limit on referrals.",
-    icon: "👥",
-  },
-  {
-    id: "early-bird",
-    title: "Early Bird Special",
-    description: "You claimed this bonus during our early access program!",
-    target: 1,
-    progress: 1,
-    source: "rides_completed",
-    status: "claimed",
-    action: { type: "credit_wallet", currency: "NGN", amount: 1000 },
-    icon: "🎉",
-  },
-];
+// Removed mock data; using TaskContext instead
 
 const RewardRoot = () => {
   const { appLoading } = useLoading();
   const { notification } = useNotificationContext();
   const [refreshing, setRefreshing] = useState(false);
-  const [rewards] = useState<RewardInstance[]>(MOCK_REWARDS);
+  const { tasks, refresh, claimTask } = useTaskContext();
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    // TODO: Fetch rewards from API
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await refresh();
+    setRefreshing(false);
   };
 
-  const handleClaim = (id: string) => {
-    // TODO: Implement claim logic with API
-    console.log("Claiming reward:", id);
+  const handleClaim = async (id: string) => {
+    await claimTask(id);
   };
 
-  const activeRewards = rewards.filter((r) => r.status !== "claimed");
-  const claimedRewards = rewards.filter((r) => r.status === "claimed");
+  const activeRewards = tasks.filter((r) => r.status !== "claimed");
+  const claimedRewards = tasks.filter((r) => r.status === "claimed");
 
   return (
     <>
@@ -125,15 +57,15 @@ const RewardRoot = () => {
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={onRefresh}
-                  tintColor="#22C55E"
-                  colors={["#22C55E"]}
+                  tintColor="#121212"
+                  colors={["#121212"]}
                 />
               }
             >
               {/* Active Rewards */}
               {activeRewards.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Available Rewards</Text>
+                  <Text style={styles.sectionTitle}>Available Tasks</Text>
                   {activeRewards.map((reward) => (
                     <RewardCard
                       key={reward.id}
@@ -147,7 +79,7 @@ const RewardRoot = () => {
               {/* Claimed Rewards */}
               {claimedRewards.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Claimed Rewards</Text>
+                  <Text style={styles.sectionTitle}>Claimed Tasks</Text>
                   {claimedRewards.map((reward) => (
                     <RewardCard
                       key={reward.id}
@@ -159,7 +91,7 @@ const RewardRoot = () => {
               )}
 
               {/* Empty State */}
-              {rewards.length === 0 && (
+              {tasks.length === 0 && (
                 <View style={styles.emptyState}>
                   <Image
                     source={require("../../../assets/images/icons/task-icon.png")}

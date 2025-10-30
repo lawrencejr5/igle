@@ -11,6 +11,8 @@ export const API_URLS = {
   deliveries: "http://192.168.142.123:5000/api/v1/delivery",
   feeedback: "http://192.168.142.123:5000/api/v1/feedback",
   report: "http://192.168.142.123:5000/api/v1/report",
+  tasks: "http://192.168.142.123:5000/api/v1/tasks",
+  user_tasks: "http://192.168.142.123:5000/api/v1/user_tasks",
 };
 
 export const SOCKET_URL = "http://192.168.142.123:5000";
