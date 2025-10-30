@@ -205,8 +205,8 @@ const styles = StyleSheet.create({
   },
   claimButton: {
     backgroundColor: "#FFFFFF",
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 10,
+    borderRadius: 7,
     alignItems: "center",
   },
   claimButtonDisabled: {
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   },
   claimButtonText: {
     color: "#121212",
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "raleway-bold",
   },
   claimButtonTextDisabled: {
