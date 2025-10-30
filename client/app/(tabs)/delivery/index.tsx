@@ -230,8 +230,8 @@ const EmptyState = ({
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor="#fff"
-          colors={["#fff"]}
+          tintColor="#121212"
+          colors={["#121212"]}
         />
       }
     >
@@ -323,8 +323,8 @@ const InTransitDeliveries = ({
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor="#fff"
-          colors={["#fff"]}
+          tintColor="#121212"
+          colors={["#121212"]}
         />
       }
     >
@@ -439,8 +439,8 @@ const DeliveredDeliveries = ({
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor="#fff"
-          colors={["#fff"]}
+          tintColor="#121212"
+          colors={["#121212"]}
         />
       }
     >
@@ -560,8 +560,8 @@ const CancelledDeliveries = ({
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor="#fff"
-          colors={["#fff"]}
+          tintColor="#121212"
+          colors={["#121212"]}
         />
       }
     >

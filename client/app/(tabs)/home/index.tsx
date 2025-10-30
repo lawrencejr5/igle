@@ -7,6 +7,7 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 
@@ -47,7 +48,7 @@ const Home = () => {
     }
   };
 
-  const { signedIn } = useAuthContext();
+  const { signedIn, getUserData } = useAuthContext();
   const {
     setRideStatus,
     setModalUp,
@@ -62,8 +63,23 @@ const Home = () => {
     fetchUserActiveDelivery,
     fetchUserOngoingDeliveries,
   } = useDeliverContext();
-  const { locationLoading, getPlaceName, region, cityAddress } =
+  const { locationLoading, getPlaceName, cityAddress, region } =
     useMapContext();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await Promise.all([
+        getUserData(),
+        region?.latitude && region?.longitude
+          ? getPlaceName(region.latitude, region.longitude)
+          : Promise.resolve(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Logic to determine ongoing activity priority
   const getOngoingActivity = (): {
@@ -166,6 +182,14 @@ const Home = () => {
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={[styles.container, { paddingTop: insets.top + 10 }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#121212"
+                colors={["#121212"]}
+              />
+            }
           >
             <View>
               <View style={styles.nav_container}>

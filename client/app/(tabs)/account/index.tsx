@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback,
   Pressable,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -29,10 +30,20 @@ import { Alert } from "react-native";
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
 
-  const { logout, signedIn } = useAuthContext();
-  const { userWalletBal, walletLoading } = useWalletContext();
+  const { logout, signedIn, getUserData } = useAuthContext();
+  const { userWalletBal, walletLoading, getWalletBalance } = useWalletContext();
   const { notification } = useNotificationContext();
   const { appLoading } = useLoading();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await Promise.all([getUserData(), getWalletBalance("User")]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleRateUs = async () => {
     const url =
@@ -62,6 +73,14 @@ const Account = () => {
               paddingBottom: 30,
               paddingHorizontal: 20,
             }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#121212"
+                colors={["#121212"]}
+              />
+            }
           >
             {/* Account name */}
             <Pressable
