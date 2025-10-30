@@ -84,8 +84,6 @@ const RewardCard: React.FC<Props> = ({ reward, onClaim }) => {
 
       {/* Footer */}
       <View style={styles.footer}>
-        {reward.terms && <Text style={styles.terms}>{reward.terms}</Text>}
-
         <TouchableOpacity
           disabled={!canClaim}
           onPress={() => onClaim(reward.id)}

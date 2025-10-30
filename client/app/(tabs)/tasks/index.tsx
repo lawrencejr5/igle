@@ -4,6 +4,7 @@ import {
   View,
   ScrollView,
   RefreshControl,
+  Image,
 } from "react-native";
 import React, { useState } from "react";
 import AppLoading from "../../../loadings/AppLoading";
@@ -111,7 +112,7 @@ const RewardRoot = () => {
           {notification.visible && <Notification notification={notification} />}
           <View style={styles.container}>
             <View style={styles.header}>
-              <Text style={styles.headerText}>Rewards</Text>
+              <Text style={styles.headerText}>Tasks</Text>
               <Text style={styles.headerSubtext}>
                 Complete challenges to earn bonuses and discounts
               </Text>
@@ -160,8 +161,11 @@ const RewardRoot = () => {
               {/* Empty State */}
               {rewards.length === 0 && (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyEmoji}>🎁</Text>
-                  <Text style={styles.emptyTitle}>No Rewards Yet</Text>
+                  <Image
+                    source={require("../../../assets/images/icons/task-icon.png")}
+                    style={styles.emptyEmoji}
+                  />
+                  <Text style={styles.emptyTitle}>No Tasks Yet</Text>
                   <Text style={styles.emptyText}>
                     Complete rides and deliveries to unlock exciting rewards!
                   </Text>
@@ -218,7 +222,9 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyEmoji: {
-    fontSize: 64,
+    height: 100,
+    width: 100,
+    tintColor: "#fff",
     marginBottom: 16,
   },
   emptyTitle: {
@@ -232,5 +238,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     paddingHorizontal: 40,
+    fontFamily: "raleway-regular",
   },
 });

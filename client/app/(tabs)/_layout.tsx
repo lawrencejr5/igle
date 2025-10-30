@@ -124,15 +124,15 @@ const TabsLayout = () => {
           }}
         />
         <Tabs.Screen
-          name="rewards"
+          name="tasks"
           options={{
-            title: "Rewards",
+            title: "Tasks",
             tabBarIcon: ({ focused }) => (
               <Image
-                source={require("../../assets/images/icons/diamond.png")}
+                source={require("../../assets/images/icons/task-icon.png")}
                 style={{
-                  height: 25,
-                  width: 25,
+                  height: 22,
+                  width: 22,
                   tintColor: focused ? "#fff" : "#797979",
                 }}
                 resizeMode="contain"

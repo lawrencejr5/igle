@@ -2,7 +2,7 @@ import { View, useColorScheme } from "react-native";
 import React from "react";
 import { Stack } from "expo-router";
 
-const RewardLayout = () => {
+const TasksLayout = () => {
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
       <Stack
@@ -15,4 +15,4 @@ const RewardLayout = () => {
   );
 };
 
-export default RewardLayout;
+export default TasksLayout;
