@@ -91,7 +91,10 @@ const Feedback = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerRow}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.replace("/(tabs)/account")}
+          >
             <AntDesign name="arrowleft" size={22} color="#fff" />
           </Pressable>
           <Text style={styles.title}>Help & Feedback</Text>

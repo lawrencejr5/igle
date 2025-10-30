@@ -66,7 +66,9 @@ const RideDetails = () => {
             }}
           >
             {/* Back btn */}
-            <TouchableWithoutFeedback onPress={() => router.back()}>
+            <TouchableWithoutFeedback
+              onPress={() => router.replace("/(tabs)/rides")}
+            >
               <View
                 style={{
                   backgroundColor: "#121212",

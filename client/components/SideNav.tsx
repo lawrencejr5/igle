@@ -132,7 +132,7 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
-                    router.push("account/wallet");
+                    router.push("/(tabs)/account/wallet");
                   }}
                 >
                   <Entypo name="wallet" size={20} color="#c6c6c6" />

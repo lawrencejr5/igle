@@ -38,7 +38,7 @@ const AccountNotification = () => {
       <View>
         <Pressable
           style={{ paddingVertical: 15, paddingRight: 15 }}
-          onPress={() => router.back()}
+          onPress={() => router.replace("/(tabs)/account")}
         >
           <AntDesign name="arrowleft" size={26} color={"#fff"} />
         </Pressable>

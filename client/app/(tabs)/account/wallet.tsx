@@ -31,7 +31,8 @@ const WalletPage: FC = () => {
     try {
       await fundWallet("wallet", Number(amount));
       setBtnLoading(false);
-      router.back();
+      // Ensure Account tab shows its root after funding
+      router.replace("/(tabs)/account");
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {
@@ -64,7 +65,7 @@ const WalletPage: FC = () => {
             >
               Wallet
             </Text>
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => router.replace("/(tabs)/account")}>
               <FontAwesome5 name="times" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -223,7 +224,7 @@ const Suggestion: FC<{ value: number }> = ({ value }) => {
   const fundWalletFunc = async () => {
     try {
       await fundWallet("wallet", Number(value));
-      router.back();
+      router.replace("/(tabs)/account");
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {

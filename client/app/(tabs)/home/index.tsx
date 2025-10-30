@@ -795,7 +795,7 @@ const RecentActivities: React.FC = () => {
           </Text>
           {items.length > 0 && (
             <TouchableOpacity
-              onPress={() => router.push("../account/notifications")}
+              onPress={() => router.push("/(tabs)/account/notifications")}
               style={styles.seeMoreRow}
             >
               <Text style={styles.seeMoreText}>See more</Text>
