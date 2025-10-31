@@ -99,7 +99,11 @@ const DeliveryRouteModal: FC = () => {
         setDeliveryStatus("accepted");
       }
       if (ongoingDeliveryData.status === "arrived") {
-        setDeliveryStatus("arrived");
+        if (ongoingDeliveryData.payment_status === "paid") {
+          setDeliveryStatus("paid");
+        } else {
+          setDeliveryStatus("arrived");
+        }
       }
       if (ongoingDeliveryData.status === "picked_up") {
         setDeliveryStatus("picked_up");

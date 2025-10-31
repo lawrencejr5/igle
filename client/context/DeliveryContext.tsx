@@ -473,7 +473,6 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         deliveryStatus === "in_transit" ||
         deliveryStatus === "track_delivery") // Show route for delivery flow states
     ) {
-      console.log(ongoingDeliveryData?.pickup?.coordinates);
       fetchDeliveryRoute(
         ongoingDeliveryData.pickup.coordinates,
         ongoingDeliveryData.dropoff.coordinates

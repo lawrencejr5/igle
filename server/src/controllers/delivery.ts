@@ -488,7 +488,18 @@ export const get_user_active_delivery = async (
       status: {
         $in: ["pending", "accepted", "picked_up", "arrived", "expired"],
       },
-    }).sort({ createdAt: -1 });
+    })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
+      .populate("sender", "name phone profile_pic")
+      .sort({ createdAt: -1 });
     res.status(200).json({ msg: "success", delivery });
   } catch (err: any) {
     res.status(500).json({ msg: "Server error." });
@@ -765,6 +776,15 @@ export const get_driver_active_delivery = async (
       status: { $in: ["accepted", "arrived", "picked_up", "in_transit"] },
     })
       .sort({ createdAt: -1 })
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
       .populate("sender", "name phone profile_pic");
 
     res.status(200).json({ msg: "success", delivery });

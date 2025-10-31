@@ -30,6 +30,8 @@ export const SOCKET_URL = "http://192.168.142.123:5000";
 //   deliveries: "https://igleapi.onrender.com/api/v1/delivery",
 //   feedback: "https://igleapi.onrender.com/api/v1/feedback",
 //   report: "https://igleapi.onrender.com/api/v1/report",
+//   tasks: "https://igleapi.onrender.com/api/v1/tasks",
+//   user_tasks: "https://igleapi.onrender.com/api/v1/user_tasks",
 // };
 
 // export const SOCKET_URL = "https://igleapi.onrender.com";
