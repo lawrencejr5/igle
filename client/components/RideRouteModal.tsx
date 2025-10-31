@@ -48,6 +48,7 @@ import * as Linking from "expo-linking";
 import RideRoute from "./RideRoute";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ReportDriverModal from "./ReportDriverModal";
+import RideInfoModal from "./RideInfoModal";
 
 import { router, useNavigation } from "expo-router";
 import { useSavedPlaceContext } from "../context/SavedPlaceContext";
@@ -1348,6 +1349,7 @@ const PaidModal = () => {
 const TrackRide = () => {
   const { ongoingRideData } = useRideContext();
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [rideInfoOpen, setRideInfoOpen] = useState(false);
 
   return (
     <>
@@ -1357,9 +1359,7 @@ const TrackRide = () => {
 
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={() => {
-          router.push("../(tabs)/rides");
-        }}
+        onPress={() => setRideInfoOpen(true)}
         style={{
           marginVertical: 30,
           padding: 10,
@@ -1377,6 +1377,12 @@ const TrackRide = () => {
           See ride info
         </Text>
       </TouchableOpacity>
+
+      <RideInfoModal
+        visible={rideInfoOpen}
+        onClose={() => setRideInfoOpen(false)}
+        ride={ongoingRideData}
+      />
     </>
   );
 };

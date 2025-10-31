@@ -486,7 +486,14 @@ export const get_user_active_delivery = async (
     const delivery = await Delivery.findOne({
       sender: user_id,
       status: {
-        $in: ["pending", "accepted", "picked_up", "arrived", "expired"],
+        $in: [
+          "pending",
+          "accepted",
+          "picked_up",
+          "arrived",
+          "in_transit",
+          "expired",
+        ],
       },
     })
       .populate({

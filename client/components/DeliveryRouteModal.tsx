@@ -33,6 +33,8 @@ import { useWalletContext } from "../context/WalletContext";
 import { useRatingContext } from "../context/RatingContext";
 import RideRoute from "./RideRoute";
 import CustomDropdown from "./CustomDropdown";
+import ReportDriverModal from "./ReportDriverModal";
+import DeliveryInfoModal from "./DeliveryInfoModal";
 
 const DeliveryRouteModal: FC = () => {
   const {
@@ -107,6 +109,9 @@ const DeliveryRouteModal: FC = () => {
       }
       if (ongoingDeliveryData.status === "picked_up") {
         setDeliveryStatus("picked_up");
+      }
+      if (ongoingDeliveryData.status === "in_transit") {
+        setDeliveryStatus("in_transit");
       }
     } else {
       const t = setTimeout(() => {
@@ -2091,7 +2096,9 @@ const PayingModal = () => {
 };
 
 const PaidModal = () => {
-  const { setDeliveryStatus } = useDeliverContext();
+  const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
 
   return (
     <>
@@ -2105,9 +2112,9 @@ const PaidModal = () => {
       </Text>
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => {}}
+        onPress={() => setInfoModalOpen(true)}
         style={{
-          marginTop: 30,
+          marginTop: 16,
           padding: 12,
           borderRadius: 30,
           backgroundColor: "#fff",
@@ -2123,6 +2130,36 @@ const PaidModal = () => {
           See delivery info
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => setReportModalOpen(true)}
+        style={{ marginTop: 20 }}
+        activeOpacity={0.7}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "raleway-semibold",
+            fontSize: 14,
+            color: "#ff4444",
+          }}
+        >
+          Report dispatch rider
+        </Text>
+      </TouchableOpacity>
+
+      <ReportDriverModal
+        visible={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        driverId={ongoingDeliveryData?.driver._id}
+        rideId={undefined}
+      />
+
+      <DeliveryInfoModal
+        visible={infoModalOpen}
+        onClose={() => setInfoModalOpen(false)}
+        delivery={ongoingDeliveryData}
+      />
     </>
   );
 };

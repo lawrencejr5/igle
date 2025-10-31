@@ -463,7 +463,14 @@ const get_user_active_delivery = (req, res) => __awaiter(void 0, void 0, void 0,
         const delivery = yield delivery_1.default.findOne({
             sender: user_id,
             status: {
-                $in: ["pending", "accepted", "picked_up", "arrived", "expired"],
+                $in: [
+                    "pending",
+                    "accepted",
+                    "picked_up",
+                    "arrived",
+                    "in_transit",
+                    "expired",
+                ],
             },
         })
             .populate({
