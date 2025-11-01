@@ -264,7 +264,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setDeliveryStatus("rating");
       }
 
-      fetchUserActiveDelivery();
+      fetchDeliveredDeliveries();
     };
 
     const onDeliveryArrived = (data: any) => {
@@ -597,7 +597,6 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         { pickup, dropoff, package_data, fare, vehicle, to },
         headers
       );
-      console.log("Delivery request successful:", data.delivery._id);
       showNotification(data.msg || "Delivery requested", "success");
 
       // Store the ongoing delivery data

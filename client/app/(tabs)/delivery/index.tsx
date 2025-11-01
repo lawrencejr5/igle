@@ -329,7 +329,13 @@ const InTransitDeliveries = ({
       }
     >
       {data.map((delivery, index) => (
-        <View key={delivery._id || index} style={styles.delivery_card}>
+        <Pressable
+          key={delivery._id || index}
+          style={styles.delivery_card}
+          onPress={() =>
+            router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
+          }
+        >
           {/* Header with status and time */}
           <View style={styles.delivery_header}>
             <View style={styles.status_container}>
@@ -412,11 +418,16 @@ const InTransitDeliveries = ({
                 ${delivery.fare?.toFixed(2) || "0.00"}
               </Text>
             </View>
-            <Pressable style={styles.track_button}>
+            <Pressable
+              style={styles.track_button}
+              onPress={() =>
+                router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
+              }
+            >
               <Text style={styles.track_button_text}>Track</Text>
             </Pressable>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
@@ -445,7 +456,13 @@ const DeliveredDeliveries = ({
       }
     >
       {data.map((delivery, index) => (
-        <View key={delivery._id || index} style={styles.delivery_card}>
+        <Pressable
+          key={delivery._id || index}
+          style={styles.delivery_card}
+          onPress={() =>
+            router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
+          }
+        >
           {/* Header with status and time */}
           <View style={styles.delivery_header}>
             <View style={styles.status_container}>
@@ -534,10 +551,10 @@ const DeliveredDeliveries = ({
             </View>
             <View style={styles.delivered_status}>
               <Text style={styles.delivered_check}>✓</Text>
-              <Text style={styles.delivered_text}>Completed</Text>
+              <Text style={styles.delivered_text}>Delivered</Text>
             </View>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
@@ -566,14 +583,20 @@ const CancelledDeliveries = ({
       }
     >
       {data.map((delivery, index) => (
-        <View key={delivery._id || index} style={styles.cancelled_card}>
+        <Pressable
+          key={delivery._id || index}
+          style={styles.cancelled_card}
+          onPress={() =>
+            router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
+          }
+        >
           {/* Header with status and time */}
           <View style={styles.cancelled_header}>
             <View style={styles.status_container}>
               <View
-                style={[styles.status_dot, { backgroundColor: "#ff6b6b" }]}
+                style={[styles.status_dot, { backgroundColor: "#ff4444" }]}
               />
-              <Text style={[styles.status_text, { color: "#ff6b6b" }]}>
+              <Text style={[styles.status_text, { color: "#ff4444" }]}>
                 Cancelled
               </Text>
             </View>
@@ -603,13 +626,21 @@ const CancelledDeliveries = ({
 
             {/* Destination */}
             <View style={styles.cancelled_destination}>
-              <Text style={styles.destination_label}>To:</Text>
-              <Text style={styles.destination_address} numberOfLines={2}>
-                {delivery.dropoff?.address || "Destination"}
-              </Text>
+              <View>
+                <Text style={styles.destination_label}>From:</Text>
+                <Text style={styles.destination_address} numberOfLines={2}>
+                  {delivery.pickup?.address || "Pickup"}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.destination_label}>To:</Text>
+                <Text style={styles.destination_address} numberOfLines={2}>
+                  {delivery.dropoff?.address || "Destination"}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
@@ -858,7 +889,7 @@ const styles = StyleSheet.create({
     borderColor: "#4b4b4bff",
     width: "100%",
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 24,
     padding: 16,
     backgroundColor: "#1e1e1e",
   },
@@ -896,6 +927,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: "#2a2a2a",
     borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   destination_label: {
     color: "#888",

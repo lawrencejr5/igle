@@ -13,6 +13,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import AppLoading from "../../../../loadings/AppLoading";
 
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
 import { darkMapStyle } from "../../../../data/map.dark";
 
 import { router, useLocalSearchParams } from "expo-router";
@@ -21,6 +22,7 @@ import DriverCard from "../../../../components/DriverCard";
 import ReportDriverModal from "../../../../components/ReportDriverModal";
 import { useMapContext } from "../../../../context/MapContext";
 import { useRideContext } from "../../../../context/RideContext";
+import { formatRelativeTime } from "../../../../context/DeliveryContext";
 import { useLoading } from "../../../../context/LoadingContext";
 import Notification from "../../../../components/Notification";
 import { useNotificationContext } from "../../../../context/NotificationContext";
@@ -365,6 +367,103 @@ const RideDetails = () => {
                     </>
                   )}
                 </View>
+
+                {/* Timeline */}
+                <View
+                  style={{
+                    width: "100%",
+                    marginTop: 20,
+                    paddingTop: 20,
+                    borderColor: "#c3c3c3ff",
+                    borderTopWidth: 0.5,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "raleway-semibold",
+                      fontSize: 22,
+                    }}
+                  >
+                    Timeline
+                  </Text>
+
+                  {(() => {
+                    const t = (rideData as any)?.timestamps || {};
+                    const steps: Array<{
+                      key: string;
+                      title: string;
+                      ts?: any;
+                      icon: keyof typeof Feather.glyphMap;
+                      color: string;
+                    }> = [
+                      {
+                        key: "created",
+                        title: "Created",
+                        ts: rideData?.createdAt,
+                        icon: "calendar",
+                        color: "#9CA3AF",
+                      },
+                    ];
+                    if (t.accepted_at)
+                      steps.push({
+                        key: "accepted",
+                        title: "Accepted",
+                        ts: t.accepted_at,
+                        icon: "check-circle",
+                        color: "#60A5FA",
+                      });
+                    if (t.arrived_at)
+                      steps.push({
+                        key: "arrived",
+                        title: "Arrived",
+                        ts: t.arrived_at,
+                        icon: "map-pin",
+                        color: "#F59E0B",
+                      });
+                    if (t.started_at)
+                      steps.push({
+                        key: "started",
+                        title: "Started",
+                        ts: t.started_at,
+                        icon: "navigation",
+                        color: "#A78BFA",
+                      });
+                    if (t.completed_at)
+                      steps.push({
+                        key: "completed",
+                        title: "Completed",
+                        ts: t.completed_at,
+                        icon: "check-circle",
+                        color: "#10B981",
+                      });
+                    if (t.cancelled_at)
+                      steps.push({
+                        key: "cancelled",
+                        title: "Cancelled",
+                        ts: t.cancelled_at,
+                        icon: "x-circle",
+                        color: "#EF4444",
+                      });
+
+                    return (
+                      <View style={{ marginTop: 20 }}>
+                        {steps.map((s, i) => (
+                          <TimelineItem
+                            key={s.key}
+                            title={s.title}
+                            timestamp={s.ts}
+                            icon={s.icon}
+                            color={s.color}
+                            isLast={i === steps.length - 1}
+                          />
+                        ))}
+                      </View>
+                    );
+                  })()}
+
+                  <View style={{ height: 4 }} />
+                </View>
               </View>
             </ScrollView>
           </View>
@@ -374,62 +473,104 @@ const RideDetails = () => {
   );
 };
 
-const TimeLineThread = () => {
-  return (
-    <View
-      style={{
-        width: 10,
-        marginTop: 0,
-        alignItems: "center",
-      }}
-    >
-      <View
-        style={{
-          backgroundColor: "#fff",
-          width: 10,
-          height: 10,
-          borderRadius: 10,
-        }}
-      />
-      <View
-        style={{
-          height: 35,
-          borderColor: "#fff",
-          borderStyle: "dashed",
-          borderLeftWidth: 1,
-        }}
-      />
-    </View>
-  );
-};
+// Removed old dashed-thread Timeline components in favor of compact icon-based design
 
-const Timeline: FC<{ header: string; time: string }> = ({ header, time }) => {
+export default RideDetails;
+
+// Compact, icon-based timeline item (same design as Delivery timeline)
+const TimelineItem = ({
+  title,
+  timestamp,
+  icon,
+  color,
+  isLast,
+}: {
+  title: string;
+  timestamp?: string | Date | null;
+  icon: keyof typeof Feather.glyphMap;
+  color: string;
+  isLast?: boolean;
+}) => {
+  const absolute = timestamp
+    ? new Date(timestamp as any).toLocaleString()
+    : "—";
+  const relative = timestamp ? formatRelativeTime(timestamp as any) : "";
+
   return (
-    <View style={{ flexDirection: "row" }}>
-      <TimeLineThread />
-      <View style={{ marginTop: 0, marginLeft: 10 }}>
-        <Text
+    <View style={{ flexDirection: "row", marginBottom: 10 }}>
+      {/* left rail */}
+      <View style={{ width: 26, alignItems: "center" }}>
+        <View
           style={{
-            color: "#d7d7d7",
-            fontFamily: "raleway-bold",
-            fontSize: 10,
-            textTransform: "capitalize",
+            width: 22,
+            height: 22,
+            borderRadius: 11,
+            backgroundColor: "#1f1f1f",
+            borderWidth: 1,
+            borderColor: color,
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {`${header}:`}
-        </Text>
+          <Feather name={icon} size={12} color={color} />
+        </View>
+        {!isLast && (
+          <View
+            style={{
+              width: 1,
+              flex: 1,
+              backgroundColor: "#2a2a2a",
+              marginTop: 4,
+              marginBottom: -4,
+            }}
+          />
+        )}
+      </View>
+
+      {/* content card */}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#1a1a1a",
+          borderRadius: 10,
+          paddingVertical: 8,
+          paddingHorizontal: 10,
+          borderWidth: 1,
+          borderColor: "#2a2a2a",
+        }}
+      >
         <Text
           style={{
-            color: "#d7d7d7",
-            fontFamily: "poppins-regular",
+            color: "#fff",
+            fontFamily: "raleway-semibold",
             fontSize: 12,
           }}
         >
-          {time}
+          {title}
+        </Text>
+        {relative ? (
+          <Text
+            style={{
+              color: "#b0b0b0",
+              fontFamily: "poppins-regular",
+              fontSize: 10,
+              marginTop: 1,
+            }}
+          >
+            {relative}
+          </Text>
+        ) : null}
+        <Text
+          style={{
+            color: "#cfcfcf",
+            fontFamily: "poppins-regular",
+            fontSize: 10,
+            marginTop: 1,
+          }}
+        >
+          {absolute}
         </Text>
       </View>
     </View>
   );
 };
-
-export default RideDetails;
