@@ -181,6 +181,7 @@ const BookRide = () => {
                   }}
                   title={"Your driver is here!"}
                   anchor={{ x: 0.2, y: 0.2 }}
+                  tracksViewChanges={false}
                 >
                   <Image
                     source={require("../../assets/images/user.png")}
@@ -200,6 +201,7 @@ const BookRide = () => {
                   }}
                   title={"You are here!"}
                   anchor={{ x: 0.2, y: 0.2 }}
+                  tracksViewChanges={false}
                 >
                   <Image
                     source={

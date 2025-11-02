@@ -220,6 +220,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (!userSocket) return;
 
+    const lastCoordRef = { current: null as [number, number] | null };
+
     const onRideAccepted = async (data: any) => {
       const { driver_id, ride_id } = data;
       showNotification("Ride has been accepted", "success");
@@ -275,7 +277,17 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         setOngoingRideData((prev: any) => {
           if (!prev) return prev;
           if (!prev.driver || prev.driver._id !== driver_id) return prev;
-          console.log(coordinates);
+          // throttle tiny/no-op movements to reduce renders
+          const [lat, lng] = coordinates as [number, number];
+          const last = lastCoordRef.current;
+          if (
+            last &&
+            Math.abs(last[0] - lat) < 0.00005 &&
+            Math.abs(last[1] - lng) < 0.00005
+          ) {
+            return prev;
+          }
+          lastCoordRef.current = [lat, lng];
           return {
             ...prev,
             driver: {

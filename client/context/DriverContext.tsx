@@ -365,80 +365,79 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, [driver]);
 
   // Emit driver location to server periodically while on an active ride/delivery
+  const emitTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     if (!driverSocket) return;
 
-    let timer: ReturnType<typeof setInterval> | null = null;
-
-    const isRideActive =
+    // compute active flags with minimal deps
+    const isRideActive = Boolean(
       ongoingRideData &&
-      ["accepted", "arriving", "arrived", "ongoing"].includes(
-        ongoingRideData.status
-      );
+        ["accepted", "arriving", "arrived", "ongoing"].includes(
+          ongoingRideData.status
+        )
+    );
 
-    const isDeliveryActive =
+    const isDeliveryActive = Boolean(
       ongoingDeliveryData &&
-      ["accepted", "arrived", "picked_up", "in_transit"].includes(
-        ongoingDeliveryData.status
-      );
+        ["accepted", "arrived", "picked_up", "in_transit"].includes(
+          ongoingDeliveryData.status
+        )
+    );
 
-    const shouldEmit = Boolean(isRideActive || isDeliveryActive);
+    // clear any existing timer before creating a new one
+    if (emitTimerRef.current) {
+      clearInterval(emitTimerRef.current);
+      emitTimerRef.current = null;
+    }
+
+    if (!(isRideActive || isDeliveryActive)) return;
 
     const emitLocation = async () => {
       try {
-        // try to get a last known position first for efficiency
         const last = await Location.getLastKnownPositionAsync();
         const pos =
           last ||
           (await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
           }));
-
         if (!pos || !pos.coords) return;
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const coordinates: [number, number] = [lat, lng];
 
+        const coordinates: [number, number] = [
+          pos.coords.latitude,
+          pos.coords.longitude,
+        ];
         const driverId = (driver as any)?._id || (driver as any)?.driver_id;
 
-        if (isRideActive && ongoingRideData) {
-          const riderId = ongoingRideData.rider?._id;
+        if (isRideActive && ongoingRideData?.rider?._id) {
           driverSocket.emit("driver_location", {
             driver_id: driverId,
-            rider_id: riderId,
+            rider_id: ongoingRideData.rider._id,
             coordinates,
           });
-        } else if (isDeliveryActive && ongoingDeliveryData) {
-          const sender = ongoingDeliveryData.sender;
-          const senderId = typeof sender === "string" ? sender : sender?._id;
+        }
+        if (isDeliveryActive && ongoingDeliveryData?.sender) {
+          const s = ongoingDeliveryData.sender;
+          const senderId = typeof s === "string" ? s : s?._id;
           driverSocket.emit("driver_location", {
             driver_id: driverId,
             rider_id: senderId,
             coordinates,
           });
         }
-      } catch (e) {
-        console.log("Error emitting driver location:", e);
-      }
+      } catch {}
     };
 
-    if (shouldEmit) {
-      // emit immediately then every 10s
-      emitLocation();
-      timer = setInterval(emitLocation, 10000);
-    }
+    // emit immediately then every 10s
+    emitLocation();
+    emitTimerRef.current = setInterval(emitLocation, 10000);
 
     return () => {
-      if (timer) clearInterval(timer);
+      if (emitTimerRef.current) {
+        clearInterval(emitTimerRef.current);
+        emitTimerRef.current = null;
+      }
     };
-  }, [
-    driverSocket,
-    ongoingRideData?.status,
-    ongoingDeliveryData?.status,
-    ongoingRideData?.rider?._id,
-    ongoingDeliveryData?.sender,
-    driver,
-  ]);
+  }, [driverSocket, ongoingRideData?.status, ongoingDeliveryData?.status]);
 
   const API_URL = API_URLS.drivers;
   const DELIVERY_API = API_URLS.deliveries;

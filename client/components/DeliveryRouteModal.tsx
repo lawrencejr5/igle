@@ -202,7 +202,7 @@ const DeliveryRouteModal: FC = () => {
       case "in_transit":
         return 3;
       case "track_delivery":
-        return 3;
+        return 2;
       case "rating":
         return 5;
       default:
@@ -248,7 +248,7 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "paying" && <PayingModal />}
         {deliveryStatus === "paid" && <PaidModal />}
         {deliveryStatus === "in_transit" && <InTransitModal />}
-        {deliveryStatus === "track_delivery" && <InTransitModal />}
+        {deliveryStatus === "track_delivery" && <PickedUpModal />}
         {deliveryStatus === "rating" && <RateModal />}
       </BottomSheetView>
     </BottomSheet>
@@ -2281,35 +2281,6 @@ const InTransitModal = () => {
         ETA • {eta} mins
       </Text>
 
-      <View style={{ marginTop: 5 }}>
-        <View
-          style={{
-            height: 10,
-            backgroundColor: "#2a2a2a",
-            borderRadius: 6,
-            overflow: "hidden",
-          }}
-        >
-          <View
-            style={{
-              width: `${Math.round(progress * 100)}%`,
-              height: 10,
-              backgroundColor: "#fff",
-            }}
-          />
-        </View>
-        <Text
-          style={{
-            color: "#cfcfcf",
-            marginTop: 8,
-            fontFamily: "poppins-regular",
-            fontSize: 12,
-          }}
-        >
-          {Math.round(progress * 100)}% completed
-        </Text>
-      </View>
-
       {/* Driver card */}
       <View
         style={{
@@ -2490,7 +2461,7 @@ const InTransitModal = () => {
         )}
       </TouchableOpacity>
 
-      <View style={{ flexDirection: "row", gap: 12, marginTop: 18 }}>
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 30 }}>
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={focusOnRider}

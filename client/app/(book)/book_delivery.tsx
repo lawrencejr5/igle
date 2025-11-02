@@ -179,6 +179,7 @@ const BookDelivery = () => {
                 }}
                 title={"Your dispatch rider is here!"}
                 anchor={{ x: 0.2, y: 0.2 }}
+                tracksViewChanges={false}
               >
                 <View
                   style={{
@@ -209,6 +210,7 @@ const BookDelivery = () => {
                 }}
                 title={"Your package is on the move"}
                 anchor={{ x: 0.2, y: 0.2 }}
+                tracksViewChanges={false}
               >
                 <View
                   style={{

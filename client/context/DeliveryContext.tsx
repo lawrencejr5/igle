@@ -204,6 +204,12 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     longitude: number;
   } | null>(null);
 
+  // Keep a ref of latest active delivery id to avoid re-registering listeners on every state change
+  const latestDeliveryIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    latestDeliveryIdRef.current = ongoingDeliveryData?._id ?? null;
+  }, [ongoingDeliveryData?._id]);
+
   useEffect(() => {
     if (!userSocket) return;
 
@@ -225,7 +231,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { delivery_id } = data;
       showNotification("Package has been picked up!", "success");
 
-      if (delivery_id === ongoingDeliveryData?._id) {
+      if (delivery_id === latestDeliveryIdRef.current) {
         setDeliveryStatus("picked_up");
       }
 
@@ -236,7 +242,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { delivery_id } = data;
       showNotification("Package is now in transit!", "success");
 
-      if (delivery_id === ongoingDeliveryData?._id) {
+      if (delivery_id === latestDeliveryIdRef.current) {
         setDeliveryStatus("in_transit");
       }
 
@@ -247,7 +253,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { delivery_id } = data;
       showNotification("Delivery request timed out", "error");
 
-      if (delivery_id === ongoingDeliveryData?._id) {
+      if (delivery_id === latestDeliveryIdRef.current) {
         setOngoingDeliveryData(
           (prev) => ({ ...prev, status: "expired" } as any)
         );
@@ -260,7 +266,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { delivery_id } = data;
       showNotification("Delivery completed successfully!", "success");
 
-      if (delivery_id === ongoingDeliveryData?._id) {
+      if (delivery_id === latestDeliveryIdRef.current) {
         setDeliveryStatus("rating");
       }
 
@@ -271,7 +277,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { delivery_id } = data;
       showNotification("Dispatch rider has arrived!", "success");
 
-      if (delivery_id === ongoingDeliveryData?._id) {
+      if (delivery_id === latestDeliveryIdRef.current) {
         setDeliveryStatus("arrived");
       }
 
@@ -279,12 +285,24 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     };
 
     // Listen for driver location updates for the active delivery
+    const lastCoordRef = { current: null as [number, number] | null };
     const onDriverLocation = (payload: any) => {
       try {
         const { driver_id, coordinates } = payload;
         setOngoingDeliveryData((prev: any) => {
           if (!prev) return prev;
           if (!prev.driver || prev.driver._id !== driver_id) return prev;
+          // throttle tiny/no-op movements to reduce renders
+          const [lat, lng] = coordinates as [number, number];
+          const last = lastCoordRef.current;
+          if (
+            last &&
+            Math.abs(last[0] - lat) < 0.00005 &&
+            Math.abs(last[1] - lng) < 0.00005
+          ) {
+            return prev;
+          }
+          lastCoordRef.current = [lat, lng];
           return {
             ...prev,
             driver: {
@@ -315,7 +333,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       userSocket.off("delivery_completed", onDeliveryCompleted);
       userSocket.off("driver_location_update", onDriverLocation);
     };
-  }, [userSocket, ongoingDeliveryData]);
+  }, [userSocket]);
 
   const deliveryModalRef = useRef<BottomSheet>(null);
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryModalStatus>("");
@@ -377,7 +395,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       deliveryModalRef.current?.snapToIndex(3);
     }
     if (deliveryStatus === "track_delivery") {
-      deliveryModalRef.current?.snapToIndex(3);
+      deliveryModalRef.current?.snapToIndex(2);
     }
     if (deliveryStatus === "rating") {
       deliveryModalRef.current?.snapToIndex(5);
