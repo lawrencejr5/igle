@@ -268,17 +268,39 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       if (region) mapRef.current.animateToRegion(region, 1000);
     };
 
+    // Listen for driver location updates for the active ride
+    const onDriverLocation = (payload: any) => {
+      try {
+        const { driver_id, coordinates } = payload;
+        setOngoingRideData((prev: any) => {
+          if (!prev) return prev;
+          if (!prev.driver || prev.driver._id !== driver_id) return prev;
+          return {
+            ...prev,
+            driver: {
+              ...prev.driver,
+              current_location: { coordinates },
+            },
+          };
+        });
+      } catch (e) {
+        console.log("Error handling driver_location_update:", e);
+      }
+    };
+
     userSocket.on("ride_accepted", onRideAccepted);
     userSocket.on("ride_timeout", onRideTimeout);
     userSocket.on("ride_arrival", onRideArrival);
     userSocket.on("ride_in_progress", onRideStarted);
     userSocket.on("ride_completed", onRideCompleted);
+    userSocket.on("driver_location_update", onDriverLocation);
     return () => {
       userSocket.off("ride_accepted", onRideAccepted);
       userSocket.off("ride_timeout", onRideTimeout);
       userSocket.off("ride_arrival", onRideArrival);
       userSocket.off("ride_in_progress", onRideStarted);
       userSocket.off("ride_completed", onRideCompleted);
+      userSocket.off("driver_location_update", onDriverLocation);
     };
   }, [userSocket]);
 

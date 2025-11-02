@@ -11,6 +11,7 @@ import React, {
 } from "react";
 
 import MapView from "react-native-maps";
+import * as Location from "expo-location";
 
 import { useDriverAuthContext } from "./DriverAuthContext";
 import { useNotificationContext } from "./NotificationContext";
@@ -362,6 +363,82 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       await fetchActiveDelivery();
     })();
   }, [driver]);
+
+  // Emit driver location to server periodically while on an active ride/delivery
+  useEffect(() => {
+    if (!driverSocket) return;
+
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const isRideActive =
+      ongoingRideData &&
+      ["accepted", "arriving", "arrived", "ongoing"].includes(
+        ongoingRideData.status
+      );
+
+    const isDeliveryActive =
+      ongoingDeliveryData &&
+      ["accepted", "arrived", "picked_up", "in_transit"].includes(
+        ongoingDeliveryData.status
+      );
+
+    const shouldEmit = Boolean(isRideActive || isDeliveryActive);
+
+    const emitLocation = async () => {
+      try {
+        // try to get a last known position first for efficiency
+        const last = await Location.getLastKnownPositionAsync();
+        const pos =
+          last ||
+          (await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          }));
+
+        if (!pos || !pos.coords) return;
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const coordinates: [number, number] = [lat, lng];
+
+        const driverId = (driver as any)?._id || (driver as any)?.driver_id;
+
+        if (isRideActive && ongoingRideData) {
+          const riderId = ongoingRideData.rider?._id;
+          driverSocket.emit("driver_location", {
+            driver_id: driverId,
+            rider_id: riderId,
+            coordinates,
+          });
+        } else if (isDeliveryActive && ongoingDeliveryData) {
+          const sender = ongoingDeliveryData.sender;
+          const senderId = typeof sender === "string" ? sender : sender?._id;
+          driverSocket.emit("driver_location", {
+            driver_id: driverId,
+            rider_id: senderId,
+            coordinates,
+          });
+        }
+      } catch (e) {
+        console.log("Error emitting driver location:", e);
+      }
+    };
+
+    if (shouldEmit) {
+      // emit immediately then every 10s
+      emitLocation();
+      timer = setInterval(emitLocation, 10000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [
+    driverSocket,
+    ongoingRideData?.status,
+    ongoingDeliveryData?.status,
+    ongoingRideData?.rider?._id,
+    ongoingDeliveryData?.sender,
+    driver,
+  ]);
 
   const API_URL = API_URLS.drivers;
   const DELIVERY_API = API_URLS.deliveries;

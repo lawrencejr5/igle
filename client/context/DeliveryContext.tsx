@@ -278,12 +278,33 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       fetchUserActiveDelivery();
     };
 
+    // Listen for driver location updates for the active delivery
+    const onDriverLocation = (payload: any) => {
+      try {
+        const { driver_id, coordinates } = payload;
+        setOngoingDeliveryData((prev: any) => {
+          if (!prev) return prev;
+          if (!prev.driver || prev.driver._id !== driver_id) return prev;
+          return {
+            ...prev,
+            driver: {
+              ...prev.driver,
+              current_location: { coordinates },
+            },
+          } as any;
+        });
+      } catch (e) {
+        console.log("Error handling driver_location_update (delivery):", e);
+      }
+    };
+
     userSocket.on("delivery_accepted", onDeliveryAccepted);
     userSocket.on("delivery_timeout", onDeliveryTimeout);
     userSocket.on("delivery_picked_up", onDeliveryPickedUp);
     userSocket.on("delivery_arrived", onDeliveryArrived);
     userSocket.on("delivery_in_transit", onDeliveryInTransit);
     userSocket.on("delivery_completed", onDeliveryCompleted);
+    userSocket.on("driver_location_update", onDriverLocation);
 
     return () => {
       userSocket.off("delivery_accepted", onDeliveryAccepted);
@@ -292,6 +313,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       userSocket.off("delivery_arrived", onDeliveryArrived);
       userSocket.off("delivery_in_transit", onDeliveryInTransit);
       userSocket.off("delivery_completed", onDeliveryCompleted);
+      userSocket.off("driver_location_update", onDriverLocation);
     };
   }, [userSocket, ongoingDeliveryData]);
 
