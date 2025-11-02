@@ -69,6 +69,18 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   }, [signedIn]);
 
   useEffect(() => {
+    if (!signedIn) {
+      router.replace("/");
+      return;
+    }
+
+    // Authenticated but missing phone: force phone capture
+    if (!signedIn.phone || signedIn.phone === "") {
+      router.replace("(auth)/phone");
+    }
+  }, [signedIn]);
+
+  useEffect(() => {
     if (!signedIn?.user_id) return;
 
     const load = async () => {
