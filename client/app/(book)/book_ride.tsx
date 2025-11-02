@@ -66,7 +66,7 @@ const BookRide = () => {
     setTracksViewChanges(false);
   };
 
-  return (
+  // Note: marker coordinates update directly from context on each socket update
     <>
       {appLoading || locationLoading ? (
         <AppLoading />
@@ -86,29 +86,31 @@ const BookRide = () => {
                 mapPadding={mapPadding}
               >
                 {/* Default user location marker - show when no route is set */}
-                {rideRouteCoords.length === 0 && (
-                  <Marker
-                    coordinate={region}
-                    title={userAddress}
-                    anchor={{ x: 0.2, y: 0.2 }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "white",
-                        padding: 5,
-                        borderRadius: 50,
-                      }}
+                {rideRouteCoords.length === 0 &&
+                  rideStatus !== "track_driver" &&
+                  rideStatus !== "track_ride" && (
+                    <Marker
+                      coordinate={region}
+                      title={userAddress}
+                      anchor={{ x: 0.2, y: 0.2 }}
                     >
                       <View
                         style={{
-                          backgroundColor: "black",
+                          backgroundColor: "white",
                           padding: 5,
                           borderRadius: 50,
                         }}
-                      />
-                    </View>
-                  </Marker>
-                )}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: "black",
+                            padding: 5,
+                            borderRadius: 50,
+                          }}
+                        />
+                      </View>
+                    </Marker>
+                  )}
 
                 {/* Pickup marker - show when route is available */}
                 {rideRouteCoords.length > 0 &&
@@ -191,8 +193,10 @@ const BookRide = () => {
                 {rideStatus === "track_ride" && ongoingRideData && (
                   <Marker
                     coordinate={{
-                      latitude: ongoingRideData.pickup.coordinates[0],
-                      longitude: ongoingRideData.pickup.coordinates[1],
+                      latitude:
+                        ongoingRideData.driver.current_location.coordinates[0],
+                      longitude:
+                        ongoingRideData.driver.current_location.coordinates[1],
                     }}
                     title={"You are here!"}
                     anchor={{ x: 0.2, y: 0.2 }}

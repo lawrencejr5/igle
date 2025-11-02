@@ -125,6 +125,9 @@ const RideRouteModal = () => {
         ongoingRideData.pickup.coordinates,
         ongoingRideData.destination.coordinates
       );
+      // Don't override if user is actively tracking driver or ride
+      if (rideStatus === "track_driver" || rideStatus === "track_ride") return;
+
       if (
         ongoingRideData.status === "pending" ||
         ongoingRideData.status === "expired"
@@ -150,7 +153,7 @@ const RideRouteModal = () => {
       }, 500);
       return () => clearTimeout(t);
     }
-  }, [ongoingRideData]);
+  }, [ongoingRideData?.status]);
 
   const windowHeight = Dimensions.get("window").height;
 

@@ -275,6 +275,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         setOngoingRideData((prev: any) => {
           if (!prev) return prev;
           if (!prev.driver || prev.driver._id !== driver_id) return prev;
+          console.log(coordinates);
           return {
             ...prev,
             driver: {
