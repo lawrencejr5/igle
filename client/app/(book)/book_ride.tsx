@@ -67,233 +67,232 @@ const BookRide = () => {
   };
 
   // Note: marker coordinates update directly from context on each socket update
-    <>
-      {appLoading || locationLoading ? (
-        <AppLoading />
-      ) : (
-        <>
-          {notification.visible && <Notification notification={notification} />}
-          <View style={{ backgroundColor: "#121212", flex: 1 }}>
-            {/* Map */}
-            {region && (
-              <MapView
-                ref={mapRef}
-                onMapLoaded={loadMap}
-                style={{ ...StyleSheet.absoluteFillObject }}
-                provider={PROVIDER_GOOGLE}
-                initialRegion={region}
-                customMapStyle={darkMapStyle}
-                mapPadding={mapPadding}
-              >
-                {/* Default user location marker - show when no route is set */}
-                {rideRouteCoords.length === 0 &&
-                  rideStatus !== "track_driver" &&
-                  rideStatus !== "track_ride" && (
-                    <Marker
-                      coordinate={region}
-                      title={userAddress}
-                      anchor={{ x: 0.2, y: 0.2 }}
+  <>
+    {appLoading || locationLoading ? (
+      <AppLoading />
+    ) : (
+      <>
+        {notification.visible && <Notification notification={notification} />}
+        <View style={{ backgroundColor: "#121212", flex: 1 }}>
+          {/* Map */}
+          {region && (
+            <MapView
+              ref={mapRef}
+              onMapLoaded={loadMap}
+              style={{ ...StyleSheet.absoluteFillObject }}
+              provider={PROVIDER_GOOGLE}
+              initialRegion={region}
+              customMapStyle={darkMapStyle}
+              mapPadding={mapPadding}
+            >
+              {/* Default user location marker - show when no route is set */}
+              {rideRouteCoords.length === 0 &&
+                rideStatus !== "track_driver" &&
+                rideStatus !== "track_ride" && (
+                  <Marker
+                    coordinate={region}
+                    title={userAddress}
+                    anchor={{ x: 0.2, y: 0.2 }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        padding: 5,
+                        borderRadius: 50,
+                      }}
                     >
                       <View
                         style={{
-                          backgroundColor: "white",
+                          backgroundColor: "black",
                           padding: 5,
                           borderRadius: 50,
                         }}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: "black",
-                            padding: 5,
-                            borderRadius: 50,
-                          }}
-                        />
-                      </View>
-                    </Marker>
-                  )}
+                      />
+                    </View>
+                  </Marker>
+                )}
 
-                {/* Pickup marker - show when route is available */}
-                {rideRouteCoords.length > 0 &&
-                  rideStatus !== "track_driver" &&
-                  rideStatus !== "track_ride" && (
-                    <Marker
-                      coordinate={ridePickupMarker || rideRouteCoords[0]}
-                      title={userAddress}
-                      anchor={{ x: 0.2, y: 0.2 }}
+              {/* Pickup marker - show when route is available */}
+              {rideRouteCoords.length > 0 &&
+                rideStatus !== "track_driver" &&
+                rideStatus !== "track_ride" && (
+                  <Marker
+                    coordinate={ridePickupMarker || rideRouteCoords[0]}
+                    title={userAddress}
+                    anchor={{ x: 0.2, y: 0.2 }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        padding: 5,
+                        borderRadius: 50,
+                      }}
                     >
                       <View
                         style={{
-                          backgroundColor: "white",
+                          backgroundColor: "black",
                           padding: 5,
                           borderRadius: 50,
                         }}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: "black",
-                            padding: 5,
-                            borderRadius: 50,
-                          }}
-                        />
-                      </View>
-                    </Marker>
-                  )}
+                      />
+                    </View>
+                  </Marker>
+                )}
 
-                {/* Destination marker - show when route is available */}
-                {rideRouteCoords.length > 0 &&
-                  destination &&
-                  rideStatus !== "track_driver" &&
-                  rideStatus !== "track_ride" && (
-                    <Marker
-                      coordinate={
-                        rideDestinationMarker ||
-                        rideRouteCoords[rideRouteCoords.length - 1]
-                      }
-                      title={destination}
-                      anchor={{ x: 0.2, y: 0.2 }}
+              {/* Destination marker - show when route is available */}
+              {rideRouteCoords.length > 0 &&
+                destination &&
+                rideStatus !== "track_driver" &&
+                rideStatus !== "track_ride" && (
+                  <Marker
+                    coordinate={
+                      rideDestinationMarker ||
+                      rideRouteCoords[rideRouteCoords.length - 1]
+                    }
+                    title={destination}
+                    anchor={{ x: 0.2, y: 0.2 }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        padding: 4,
+                        borderRadius: 2,
+                      }}
                     >
                       <View
                         style={{
-                          backgroundColor: "white",
+                          backgroundColor: "black",
                           padding: 4,
                           borderRadius: 2,
                         }}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: "black",
-                            padding: 4,
-                            borderRadius: 2,
-                          }}
-                        />
-                      </View>
-                    </Marker>
-                  )}
-
-                {/* Driver marker - show when tracking driver */}
-                {rideStatus === "track_driver" && ongoingRideData && (
-                  <Marker
-                    coordinate={{
-                      latitude:
-                        ongoingRideData.driver.current_location.coordinates[0],
-                      longitude:
-                        ongoingRideData.driver.current_location.coordinates[1],
-                    }}
-                    title={"Your driver is here!"}
-                    anchor={{ x: 0.2, y: 0.2 }}
-                  >
-                    <Image
-                      source={require("../../assets/images/user.png")}
-                      style={{ height: 35, width: 35, borderRadius: 50 }}
-                    />
+                      />
+                    </View>
                   </Marker>
                 )}
 
-                {/* User marker - show when tracking ride */}
-                {rideStatus === "track_ride" && ongoingRideData && (
-                  <Marker
-                    coordinate={{
-                      latitude:
-                        ongoingRideData.driver.current_location.coordinates[0],
-                      longitude:
-                        ongoingRideData.driver.current_location.coordinates[1],
+              {/* Driver marker - show when tracking driver */}
+              {rideStatus === "track_driver" && ongoingRideData && (
+                <Marker
+                  coordinate={{
+                    latitude:
+                      ongoingRideData.driver.current_location.coordinates[0],
+                    longitude:
+                      ongoingRideData.driver.current_location.coordinates[1],
+                  }}
+                  title={"Your driver is here!"}
+                  anchor={{ x: 0.2, y: 0.2 }}
+                >
+                  <Image
+                    source={require("../../assets/images/user.png")}
+                    style={{ height: 35, width: 35, borderRadius: 50 }}
+                  />
+                </Marker>
+              )}
+
+              {/* User marker - show when tracking ride */}
+              {rideStatus === "track_ride" && ongoingRideData && (
+                <Marker
+                  coordinate={{
+                    latitude:
+                      ongoingRideData.driver.current_location.coordinates[0],
+                    longitude:
+                      ongoingRideData.driver.current_location.coordinates[1],
+                  }}
+                  title={"You are here!"}
+                  anchor={{ x: 0.2, y: 0.2 }}
+                >
+                  <Image
+                    source={
+                      signedIn?.profile_pic
+                        ? { uri: signedIn.profile_pic }
+                        : require("../../assets/images/black-profile.jpeg")
+                    }
+                    style={{
+                      height: 35,
+                      width: 35,
+                      borderRadius: 50,
+                      borderWidth: 1,
+                      borderColor: "#fff",
                     }}
-                    title={"You are here!"}
-                    anchor={{ x: 0.2, y: 0.2 }}
-                  >
-                    <Image
-                      source={
-                        signedIn?.profile_pic
-                          ? { uri: signedIn.profile_pic }
-                          : require("../../assets/images/black-profile.jpeg")
-                      }
-                      style={{
-                        height: 35,
-                        width: 35,
-                        borderRadius: 50,
-                        borderWidth: 1,
-                        borderColor: "#fff",
-                      }}
-                    />
-                  </Marker>
+                  />
+                </Marker>
+              )}
+
+              {/* Route polyline - show when route is available */}
+              {rideRouteCoords.length > 0 &&
+                rideStatus !== "track_driver" &&
+                rideStatus !== "track_ride" && (
+                  <Polyline
+                    coordinates={rideRouteCoords}
+                    strokeColor="#fff"
+                    strokeWidth={2}
+                  />
                 )}
+            </MapView>
+          )}
 
-                {/* Route polyline - show when route is available */}
-                {rideRouteCoords.length > 0 &&
-                  rideStatus !== "track_driver" &&
-                  rideStatus !== "track_ride" && (
-                    <Polyline
-                      coordinates={rideRouteCoords}
-                      strokeColor="#fff"
-                      strokeWidth={2}
-                    />
-                  )}
-              </MapView>
-            )}
+          {/* Nav */}
+          <View style={styles.nav_container}>
+            {(() => {
+              const hiddenStatuses = [
+                "searching",
+                "accepted",
+                "pay",
+                "paid",
+                "rating",
+              ];
+              if (hiddenStatuses.includes(rideStatus as any)) return null;
 
-            {/* Nav */}
-            <View style={styles.nav_container}>
-              {(() => {
-                const hiddenStatuses = [
-                  "searching",
-                  "accepted",
-                  "pay",
-                  "paid",
-                  "rating",
-                ];
-                if (hiddenStatuses.includes(rideStatus as any)) return null;
+              return (
+                <Pressable
+                  onPress={() => {
+                    // ordered modal flow - used for stepping back through statuses
+                    const modalOrder = [
+                      "",
+                      "booking",
+                      "choosing_car",
+                      "searching",
+                      "accepted",
+                      "track_driver",
+                      "pay",
+                      "paying",
+                      "paid",
+                      "track_ride",
+                      "rating",
+                    ];
 
-                return (
-                  <Pressable
-                    onPress={() => {
-                      // ordered modal flow - used for stepping back through statuses
-                      const modalOrder = [
-                        "",
-                        "booking",
-                        "choosing_car",
-                        "searching",
-                        "accepted",
-                        "track_driver",
-                        "pay",
-                        "paying",
-                        "paid",
-                        "track_ride",
-                        "rating",
-                      ];
+                    if (rideStatus === undefined || rideStatus === "") {
+                      // no previous modal status - go to home
+                      router.push("../(tabs)/home");
+                      return;
+                    }
 
-                      if (rideStatus === undefined || rideStatus === "") {
-                        // no previous modal status - go to home
-                        router.push("../(tabs)/home");
-                        return;
+                    const idx = modalOrder.indexOf(rideStatus as any);
+                    if (idx > 0) {
+                      const prev = modalOrder[idx - 1];
+                      setRideStatus(prev as any);
+                      if (prev === "") {
+                        // moving back to start - reset ride state
+                        resetRide();
                       }
-
-                      const idx = modalOrder.indexOf(rideStatus as any);
-                      if (idx > 0) {
-                        const prev = modalOrder[idx - 1];
-                        setRideStatus(prev as any);
-                        if (prev === "") {
-                          // moving back to start - reset ride state
-                          resetRide();
-                        }
-                      } else {
-                        router.push("../(tabs)/home");
-                      }
-                    }}
-                    style={styles.nav_box}
-                  >
-                    <Feather name="arrow-left" size={22} color="white" />
-                  </Pressable>
-                );
-              })()}
-            </View>
-
-            {/* Choose route Modal */}
-            <RideRouteModal />
+                    } else {
+                      router.push("../(tabs)/home");
+                    }
+                  }}
+                  style={styles.nav_box}
+                >
+                  <Feather name="arrow-left" size={22} color="white" />
+                </Pressable>
+              );
+            })()}
           </View>
-        </>
-      )}
-    </>
-  );
+
+          {/* Choose route Modal */}
+          <RideRouteModal />
+        </View>
+      </>
+    )}
+  </>;
 };
 
 export default BookRide;

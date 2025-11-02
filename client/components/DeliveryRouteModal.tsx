@@ -69,57 +69,62 @@ const DeliveryRouteModal: FC = () => {
     return adjusted;
   }, [fontScale]);
 
+  // Keep map destination and route in sync with delivery data
   useEffect(() => {
-    if (ongoingDeliveryData) {
-      // Set destination for map view
-      if (ongoingDeliveryData.dropoff?.address) {
-        setDestination(ongoingDeliveryData.dropoff.address);
-      }
-      if (ongoingDeliveryData.dropoff?.coordinates) {
-        setDestinationCoords(ongoingDeliveryData.dropoff.coordinates);
-      }
+    if (!ongoingDeliveryData) return;
 
-      // Fetch delivery route with pickup and dropoff coordinates
-      if (
-        ongoingDeliveryData.pickup?.coordinates &&
-        ongoingDeliveryData.dropoff?.coordinates
-      ) {
-        fetchDeliveryRoute(
-          ongoingDeliveryData.pickup.coordinates,
-          ongoingDeliveryData.dropoff.coordinates
-        );
-      }
+    // Set destination for map view
+    if (ongoingDeliveryData.dropoff?.address) {
+      setDestination(ongoingDeliveryData.dropoff.address);
+    }
+    if (ongoingDeliveryData.dropoff?.coordinates) {
+      setDestinationCoords(ongoingDeliveryData.dropoff.coordinates);
+    }
 
-      // Set delivery status based on delivery status and payment status
-      if (ongoingDeliveryData.status === "pending") {
-        setDeliveryStatus("searching");
-      }
-      if (ongoingDeliveryData.status === "expired") {
-        setDeliveryStatus("expired");
-      }
-      if (ongoingDeliveryData.status === "accepted") {
-        setDeliveryStatus("accepted");
-      }
-      if (ongoingDeliveryData.status === "arrived") {
-        if (ongoingDeliveryData.payment_status === "paid") {
-          setDeliveryStatus("paid");
-        } else {
-          setDeliveryStatus("arrived");
-        }
-      }
-      if (ongoingDeliveryData.status === "picked_up") {
-        setDeliveryStatus("picked_up");
-      }
-      if (ongoingDeliveryData.status === "in_transit") {
-        setDeliveryStatus("in_transit");
-      }
-    } else {
-      const t = setTimeout(() => {
-        setDeliveryStatus("details");
-      }, 500);
+    // Fetch delivery route with pickup and dropoff coordinates
+    if (
+      ongoingDeliveryData.pickup?.coordinates &&
+      ongoingDeliveryData.dropoff?.coordinates
+    ) {
+      fetchDeliveryRoute(
+        ongoingDeliveryData.pickup.coordinates,
+        ongoingDeliveryData.dropoff.coordinates
+      );
+    }
+  }, [
+    ongoingDeliveryData?.pickup?.coordinates,
+    ongoingDeliveryData?.dropoff?.coordinates,
+    ongoingDeliveryData?.dropoff?.address,
+  ]);
+
+  // Drive modal status from server status WITHOUT overriding user tracking views
+  useEffect(() => {
+    if (!ongoingDeliveryData) {
+      const t = setTimeout(() => setDeliveryStatus("details"), 500);
       return () => clearTimeout(t);
     }
-  }, [ongoingDeliveryData]);
+
+    const status = ongoingDeliveryData.status;
+
+    // Do not override tracking screens on passive data updates
+    if (
+      (deliveryStatus === "track_driver" &&
+        (status === "accepted" || status === "arrived")) ||
+      (deliveryStatus === "track_delivery" && status === "in_transit")
+    ) {
+      return;
+    }
+
+    if (status === "pending") setDeliveryStatus("searching");
+    if (status === "expired") setDeliveryStatus("expired");
+    if (status === "accepted") setDeliveryStatus("accepted");
+    if (status === "arrived")
+      setDeliveryStatus(
+        ongoingDeliveryData.payment_status === "paid" ? "paid" : "arrived"
+      );
+    if (status === "picked_up") setDeliveryStatus("picked_up");
+    if (status === "in_transit") setDeliveryStatus("in_transit");
+  }, [ongoingDeliveryData?.status]);
 
   const handleSheetChange = (index: number) => {
     const snapValue = snapPoints[index];
@@ -1971,7 +1976,7 @@ const PickedUpModal = () => {
 
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => {}}
+        onPress={() => setDeliveryStatus("track_delivery")}
         style={{
           marginTop: 30,
           padding: 12,
@@ -2012,6 +2017,11 @@ const PayingModal = () => {
   const pay_func = async () => {
     try {
       if (delivery_id) {
+        if (userWalletBal < ongoingDeliveryData.fare) {
+          showNotification("Insuficient balance, fund wallet", "error");
+          setDeliveryStatus("arrived");
+          return;
+        }
         await payForDelivery(delivery_id);
         setDeliveryStatus("paid");
       }

@@ -62,32 +62,36 @@ const BookDelivery = () => {
             mapPadding={mapPadding}
           >
             {/* Default user location marker - show when no delivery route is set */}
-            {deliveryRouteCoords.length === 0 && (
-              <Marker
-                coordinate={region}
-                title={userAddress}
-                anchor={{ x: 0.2, y: 0.2 }}
-              >
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    padding: 5,
-                    borderRadius: 50,
-                  }}
+            {deliveryRouteCoords.length === 0 &&
+              deliveryStatus !== "track_driver" &&
+              deliveryStatus !== "track_delivery" && (
+                <Marker
+                  coordinate={region}
+                  title={userAddress}
+                  anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <View
                     style={{
-                      backgroundColor: "black",
+                      backgroundColor: "white",
                       padding: 5,
                       borderRadius: 50,
                     }}
-                  />
-                </View>
-              </Marker>
-            )}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 5,
+                        borderRadius: 50,
+                      }}
+                    />
+                  </View>
+                </Marker>
+              )}
 
             {/* Delivery pickup marker - matches ride pickup design */}
             {deliveryRouteCoords.length > 0 &&
+              deliveryStatus !== "track_driver" &&
+              deliveryStatus !== "track_delivery" &&
               deliveryPickupMarker &&
               (deliveryData?.pickup?.address ||
                 ongoingDeliveryData?.pickup?.address) && (
@@ -119,6 +123,8 @@ const BookDelivery = () => {
 
             {/* Delivery dropoff marker - matches ride destination design */}
             {deliveryRouteCoords.length > 0 &&
+              deliveryStatus !== "track_driver" &&
+              deliveryStatus !== "track_delivery" &&
               deliveryDropoffMarker &&
               (deliveryData?.dropoff?.address ||
                 ongoingDeliveryData?.dropoff?.address) && (
@@ -151,6 +157,8 @@ const BookDelivery = () => {
             {/* Delivery route polyline - matches ride polyline design */}
             {deliveryPickupMarker &&
               deliveryDropoffMarker &&
+              deliveryStatus !== "track_driver" &&
+              deliveryStatus !== "track_delivery" &&
               (deliveryData?.dropoff?.address ||
                 ongoingDeliveryData?.dropoff?.address) && (
                 <Polyline
@@ -159,6 +167,66 @@ const BookDelivery = () => {
                   strokeWidth={2}
                 />
               )}
+
+            {/* Driver marker - show when tracking driver */}
+            {deliveryStatus === "track_driver" && ongoingDeliveryData && (
+              <Marker
+                coordinate={{
+                  latitude:
+                    ongoingDeliveryData.driver.current_location.coordinates[0],
+                  longitude:
+                    ongoingDeliveryData.driver.current_location.coordinates[1],
+                }}
+                title={"Your dispatch rider is here!"}
+                anchor={{ x: 0.2, y: 0.2 }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    padding: 5,
+                    borderRadius: 50,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "black",
+                      padding: 5,
+                      borderRadius: 50,
+                    }}
+                  />
+                </View>
+              </Marker>
+            )}
+
+            {/* Driver marker - show when tracking delivery progress */}
+            {deliveryStatus === "track_delivery" && ongoingDeliveryData && (
+              <Marker
+                coordinate={{
+                  latitude:
+                    ongoingDeliveryData.driver.current_location.coordinates[0],
+                  longitude:
+                    ongoingDeliveryData.driver.current_location.coordinates[1],
+                }}
+                title={"Your package is on the move"}
+                anchor={{ x: 0.2, y: 0.2 }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    padding: 5,
+                    borderRadius: 50,
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "black",
+                      padding: 5,
+                      borderRadius: 50,
+                    }}
+                  />
+                </View>
+              </Marker>
+            )}
           </MapView>
         )}
 
