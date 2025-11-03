@@ -1,4 +1,4 @@
-import { StyleSheet, View, Pressable } from "react-native";
+import { StyleSheet, View, Pressable, Image } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
@@ -169,66 +169,76 @@ const BookDelivery = () => {
               )}
 
             {/* Driver marker - show when tracking driver */}
-            {deliveryStatus === "track_driver" && ongoingDeliveryData && (
-              <Marker
-                coordinate={{
-                  latitude:
-                    ongoingDeliveryData.driver.current_location.coordinates[0],
-                  longitude:
-                    ongoingDeliveryData.driver.current_location.coordinates[1],
-                }}
-                title={"Your dispatch rider is here!"}
-                anchor={{ x: 0.2, y: 0.2 }}
-                tracksViewChanges={false}
-              >
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    padding: 5,
-                    borderRadius: 50,
+            {deliveryStatus === "track_driver" &&
+              ongoingDeliveryData &&
+              ongoingDeliveryData.driver?.current_location?.coordinates && (
+                <Marker
+                  coordinate={{
+                    latitude:
+                      ongoingDeliveryData.driver.current_location
+                        .coordinates[0],
+                    longitude:
+                      ongoingDeliveryData.driver.current_location
+                        .coordinates[1],
                   }}
+                  title={"Your dispatch rider is here!"}
+                  anchor={{ x: 0.2, y: 0.2 }}
                 >
-                  <View
+                  <Image
+                    source={
+                      (ongoingDeliveryData.driver as any)?.profile_img
+                        ? {
+                            uri: (ongoingDeliveryData.driver as any)
+                              .profile_img,
+                          }
+                        : require("../../assets/images/user.png")
+                    }
                     style={{
-                      backgroundColor: "black",
-                      padding: 5,
+                      height: 35,
+                      width: 35,
                       borderRadius: 50,
+                      borderWidth: 1,
+                      borderColor: "#fff",
                     }}
                   />
-                </View>
-              </Marker>
-            )}
+                </Marker>
+              )}
 
             {/* Driver marker - show when tracking delivery progress */}
-            {deliveryStatus === "track_delivery" && ongoingDeliveryData && (
-              <Marker
-                coordinate={{
-                  latitude:
-                    ongoingDeliveryData.driver.current_location.coordinates[0],
-                  longitude:
-                    ongoingDeliveryData.driver.current_location.coordinates[1],
-                }}
-                title={"Your package is on the move"}
-                anchor={{ x: 0.2, y: 0.2 }}
-                tracksViewChanges={false}
-              >
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    padding: 5,
-                    borderRadius: 50,
+            {deliveryStatus === "track_delivery" &&
+              ongoingDeliveryData &&
+              ongoingDeliveryData.driver?.current_location?.coordinates && (
+                <Marker
+                  coordinate={{
+                    latitude:
+                      ongoingDeliveryData.driver.current_location
+                        .coordinates[0],
+                    longitude:
+                      ongoingDeliveryData.driver.current_location
+                        .coordinates[1],
                   }}
+                  title={"Your package is on the move"}
+                  anchor={{ x: 0.2, y: 0.2 }}
                 >
-                  <View
+                  <Image
+                    source={
+                      (ongoingDeliveryData.driver as any)?.profile_img
+                        ? {
+                            uri: (ongoingDeliveryData.driver as any)
+                              .profile_img,
+                          }
+                        : require("../../assets/images/user.png")
+                    }
                     style={{
-                      backgroundColor: "black",
-                      padding: 5,
+                      height: 35,
+                      width: 35,
                       borderRadius: 50,
+                      borderWidth: 1,
+                      borderColor: "#fff",
                     }}
                   />
-                </View>
-              </Marker>
-            )}
+                </Marker>
+              )}
           </MapView>
         )}
 

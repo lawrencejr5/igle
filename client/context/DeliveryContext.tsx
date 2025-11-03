@@ -377,7 +377,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       deliveryModalRef.current?.snapToIndex(3);
     }
     if (deliveryStatus === "track_driver") {
-      deliveryModalRef.current?.snapToIndex(2);
+      deliveryModalRef.current?.snapToIndex(0);
     }
     if (deliveryStatus === "arrived") {
       deliveryModalRef.current?.snapToIndex(2);

@@ -1416,33 +1416,23 @@ const AcceptedModal = () => {
 
   const track_rider = () => {
     setDeliveryStatus("track_driver");
-    // animate to driver location if available
     setTimeout(() => {
-      try {
-        if (mapRef?.current && ongoingDeliveryData?.driver?.current_location) {
-          const driverCoords =
-            ongoingDeliveryData.driver.current_location.coordinates;
-          const target = {
-            latitude: driverCoords[0],
-            longitude: driverCoords[1],
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02,
-          };
-          mapRef.current.animateToRegion(target, 1000);
-        } else if (mapRef?.current && region) {
-          // fall back to region if no driver location
-          const target = {
-            latitude: region.latitude || 6.5244,
-            longitude: region.longitude || 3.3792,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02,
-          };
-          mapRef.current.animateToRegion(target, 1000);
-        }
-      } catch (e) {
-        // ignore in demo
+      if (
+        mapRef?.current &&
+        ongoingDeliveryData?.driver?.current_location?.coordinates
+      ) {
+        const coords = ongoingDeliveryData.driver.current_location.coordinates;
+        mapRef.current.animateToRegion(
+          {
+            latitude: coords[0],
+            longitude: coords[1],
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          1000
+        );
       }
-    }, 800);
+    }, 1000);
   };
 
   // Extract driver data from ongoingDeliveryData
@@ -1718,6 +1708,8 @@ const TrackDriver = () => {
     : "Unknown Vehicle";
   const driverLocation = driverData?.current_location?.coordinates;
   const pickupLocation = ongoingDeliveryData?.pickup?.coordinates;
+  const driverRating = driverData?.rating || 0;
+  const totalTrips = driverData?.total_trips || 0;
 
   const see_delivery_info = () => {
     if (mapRef?.current && driverLocation) {
@@ -1751,56 +1743,41 @@ const TrackDriver = () => {
         Tracking rider...
       </Text>
 
-      <View style={{ marginTop: 20 }}>
-        <View style={{ alignItems: "center" }}>
+      <View
+        style={{
+          marginTop: 12,
+          padding: 12,
+          borderRadius: 10,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Image
             source={
               (driverData as any)?.profile_img
                 ? { uri: (driverData as any).profile_img }
                 : require("../assets/images/user.png")
             }
-            style={{ width: 70, height: 70, borderRadius: 40, marginTop: 10 }}
+            style={{ width: 50, height: 50, borderRadius: 25 }}
           />
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: "raleway-semibold",
-              marginTop: 10,
-            }}
-          >
-            {driverName}
-          </Text>
-          <Text
-            style={{
-              color: "#cfcfcf",
-              fontFamily: "poppins-regular",
-              fontSize: 12,
-            }}
-          >
-            {vehicleInfo}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: "#fff", fontFamily: "raleway-semibold" }}>
+              {driverName}
+            </Text>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontFamily: "poppins-regular",
+                fontSize: 12,
+                marginTop: 7,
+              }}
+            >
+              {vehicleInfo} • {driverRating.toFixed(1)} ★ • {totalTrips} trips
+            </Text>
+          </View>
         </View>
-
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={see_delivery_info}
-          style={{
-            marginVertical: 30,
-            padding: 10,
-            borderRadius: 30,
-            backgroundColor: "#fff",
-          }}
-        >
-          <Text
-            style={{
-              textAlign: "center",
-              fontFamily: "raleway-bold",
-              color: "#121212",
-            }}
-          >
-            See delivery info
-          </Text>
-        </TouchableOpacity>
       </View>
     </>
   );
