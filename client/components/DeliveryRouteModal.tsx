@@ -248,7 +248,7 @@ const DeliveryRouteModal: FC = () => {
         {deliveryStatus === "paying" && <PayingModal />}
         {deliveryStatus === "paid" && <PaidModal />}
         {deliveryStatus === "in_transit" && <InTransitModal />}
-        {deliveryStatus === "track_delivery" && <PickedUpModal />}
+        {deliveryStatus === "track_delivery" && <TrackDelivery />}
         {deliveryStatus === "rating" && <RateModal />}
       </BottomSheetView>
     </BottomSheet>
@@ -1783,6 +1783,359 @@ const TrackDriver = () => {
   );
 };
 
+const TrackDelivery = () => {
+  const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
+  const { mapRef } = useMapContext() as any;
+
+  // Extract delivery data
+  const driverData = ongoingDeliveryData?.driver;
+  const driverName = driverData?.user?.name || "Unknown Driver";
+  const packageData = ongoingDeliveryData?.package;
+  const packageDescription = packageData?.description || "Package";
+  const timestamps = ongoingDeliveryData?.timestamps;
+
+  // Format timestamp helper
+  const formatTimestamp = (date?: string | Date) => {
+    if (!date) return "N/A";
+    const d = new Date(date);
+    return d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const see_delivery_info = () => {
+    setDeliveryStatus("in_transit");
+  };
+
+  return (
+    <>
+      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
+        Tracking delivery...
+      </Text>
+
+      {/* Delivery and Driver Info */}
+      <View
+        style={{
+          marginTop: 16,
+          padding: 14,
+          borderRadius: 12,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+        }}
+      >
+        <View style={{ marginBottom: 12 }}>
+          <Text
+            style={{
+              color: "#9ca3af",
+              fontSize: 12,
+              fontFamily: "raleway-semibold",
+              marginBottom: 4,
+            }}
+          >
+            Package
+          </Text>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 16,
+              fontFamily: "raleway-bold",
+            }}
+          >
+            {packageDescription}
+          </Text>
+        </View>
+
+        <View
+          style={{
+            height: 1,
+            backgroundColor: "#2a2a2a",
+            marginVertical: 8,
+          }}
+        />
+
+        <View>
+          <Text
+            style={{
+              color: "#9ca3af",
+              fontSize: 12,
+              fontFamily: "raleway-semibold",
+              marginBottom: 4,
+            }}
+          >
+            Driver
+          </Text>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 16,
+              fontFamily: "raleway-bold",
+            }}
+          >
+            {driverName}
+          </Text>
+        </View>
+      </View>
+
+      {/* Timestamps */}
+      <View
+        style={{
+          marginTop: 12,
+          padding: 14,
+          borderRadius: 12,
+          backgroundColor: "#1e1e1e",
+          borderWidth: 0.5,
+          borderColor: "#2a2a2a",
+        }}
+      >
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 14,
+            fontFamily: "raleway-bold",
+            marginBottom: 12,
+          }}
+        >
+          Delivery Timeline
+        </Text>
+
+        {/* Created */}
+        <View style={{ marginBottom: 12 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 4,
+            }}
+          >
+            <Feather name="calendar" size={14} color="#9ca3af" />
+            <Text
+              style={{
+                color: "#9ca3af",
+                fontSize: 12,
+                fontFamily: "raleway-semibold",
+              }}
+            >
+              Created
+            </Text>
+          </View>
+          <Text
+            style={{
+              color: "#cfcfcf",
+              fontSize: 13,
+              fontFamily: "poppins-regular",
+              marginLeft: 22,
+            }}
+          >
+            {formatTimestamp(ongoingDeliveryData?.createdAt)}
+          </Text>
+        </View>
+
+        {/* Accepted */}
+        {timestamps?.accepted_at && (
+          <View style={{ marginBottom: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <Feather name="check-circle" size={14} color="#60a5fa" />
+              <Text
+                style={{
+                  color: "#60a5fa",
+                  fontSize: 12,
+                  fontFamily: "raleway-semibold",
+                }}
+              >
+                Accepted
+              </Text>
+            </View>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontSize: 13,
+                fontFamily: "poppins-regular",
+                marginLeft: 22,
+              }}
+            >
+              {formatTimestamp(timestamps.accepted_at)}
+            </Text>
+          </View>
+        )}
+
+        {/* Picked Up */}
+        {timestamps?.picked_up_at && (
+          <View style={{ marginBottom: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <Feather name="package" size={14} color="#fbbf24" />
+              <Text
+                style={{
+                  color: "#fbbf24",
+                  fontSize: 12,
+                  fontFamily: "raleway-semibold",
+                }}
+              >
+                Picked Up
+              </Text>
+            </View>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontSize: 13,
+                fontFamily: "poppins-regular",
+                marginLeft: 22,
+              }}
+            >
+              {formatTimestamp(timestamps.picked_up_at)}
+            </Text>
+          </View>
+        )}
+
+        {/* In Transit */}
+        {timestamps?.in_transit_at && (
+          <View style={{ marginBottom: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <Feather name="truck" size={14} color="#a78bfa" />
+              <Text
+                style={{
+                  color: "#a78bfa",
+                  fontSize: 12,
+                  fontFamily: "raleway-semibold",
+                }}
+              >
+                In Transit
+              </Text>
+            </View>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontSize: 13,
+                fontFamily: "poppins-regular",
+                marginLeft: 22,
+              }}
+            >
+              {formatTimestamp(timestamps.in_transit_at)}
+            </Text>
+          </View>
+        )}
+
+        {/* Delivered */}
+        {timestamps?.delivered_at && (
+          <View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <Feather name="check-square" size={14} color="#10b981" />
+              <Text
+                style={{
+                  color: "#10b981",
+                  fontSize: 12,
+                  fontFamily: "raleway-semibold",
+                }}
+              >
+                Delivered
+              </Text>
+            </View>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontSize: 13,
+                fontFamily: "poppins-regular",
+                marginLeft: 22,
+              }}
+            >
+              {formatTimestamp(timestamps.delivered_at)}
+            </Text>
+          </View>
+        )}
+
+        {/* Cancelled */}
+        {timestamps?.cancelled_at && (
+          <View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <Feather name="x-circle" size={14} color="#ef4444" />
+              <Text
+                style={{
+                  color: "#ef4444",
+                  fontSize: 12,
+                  fontFamily: "raleway-semibold",
+                }}
+              >
+                Cancelled
+              </Text>
+            </View>
+            <Text
+              style={{
+                color: "#cfcfcf",
+                fontSize: 13,
+                fontFamily: "poppins-regular",
+                marginLeft: 22,
+              }}
+            >
+              {formatTimestamp(timestamps.cancelled_at)}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={see_delivery_info}
+        style={{
+          marginTop: 24,
+          padding: 12,
+          borderRadius: 30,
+          backgroundColor: "#fff",
+        }}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "raleway-bold",
+            color: "#121212",
+          }}
+        >
+          Back to delivery info
+        </Text>
+      </TouchableOpacity>
+    </>
+  );
+};
+
 const ArrivedModal = () => {
   const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
 
@@ -1872,6 +2225,8 @@ const ArrivedModal = () => {
 const PickedUpModal = () => {
   const { setDeliveryStatus, ongoingDeliveryData } = useDeliverContext();
 
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+
   // Extract driver and delivery data from ongoingDeliveryData
   const driverData = ongoingDeliveryData?.driver;
   const driverName = driverData?.user?.name || "Unknown Driver";
@@ -1953,7 +2308,7 @@ const PickedUpModal = () => {
 
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => setDeliveryStatus("track_delivery")}
+        onPress={() => setInfoModalOpen(true)}
         style={{
           marginTop: 30,
           padding: 12,
@@ -1968,9 +2323,15 @@ const PickedUpModal = () => {
             color: "#121212",
           }}
         >
-          Track delivery
+          See delivery info
         </Text>
       </TouchableOpacity>
+
+      <DeliveryInfoModal
+        visible={infoModalOpen}
+        onClose={() => setInfoModalOpen(false)}
+        delivery={ongoingDeliveryData}
+      />
     </>
   );
 };
@@ -2215,23 +2576,25 @@ const InTransitModal = () => {
     }
   };
 
-  const focusOnRider = () => {
-    try {
-      if (mapRef?.current && driverLocation) {
+  const track_delivery = () => {
+    setDeliveryStatus("track_delivery");
+    setTimeout(() => {
+      if (
+        mapRef?.current &&
+        ongoingDeliveryData?.driver?.current_location?.coordinates
+      ) {
+        const coords = ongoingDeliveryData.driver.current_location.coordinates;
         mapRef.current.animateToRegion(
           {
-            latitude: driverLocation[0],
-            longitude: driverLocation[1],
+            latitude: coords[0],
+            longitude: coords[1],
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           },
-          800
+          1000
         );
-        showNotification("Focusing on rider", "success");
       }
-    } catch (e) {
-      // ignore errors
-    }
+    }, 1000);
   };
 
   const callRider = async () => {
@@ -2441,7 +2804,7 @@ const InTransitModal = () => {
       <View style={{ flexDirection: "row", gap: 12, marginTop: 30 }}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={focusOnRider}
+          onPress={track_delivery}
           style={{
             flex: 1,
             padding: 12,
@@ -2456,7 +2819,7 @@ const InTransitModal = () => {
               color: "#121212",
             }}
           >
-            Focus on rider
+            Track delivery
           </Text>
         </TouchableOpacity>
 

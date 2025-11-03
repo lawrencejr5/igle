@@ -395,7 +395,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       deliveryModalRef.current?.snapToIndex(3);
     }
     if (deliveryStatus === "track_delivery") {
-      deliveryModalRef.current?.snapToIndex(2);
+      deliveryModalRef.current?.snapToIndex(0);
     }
     if (deliveryStatus === "rating") {
       deliveryModalRef.current?.snapToIndex(5);
@@ -426,7 +426,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       return true;
     }
     if (deliveryStatus === "track_delivery") {
-      setDeliveryStatus("paid");
+      setDeliveryStatus("in_transit");
       return true;
     }
     return false;
