@@ -172,10 +172,22 @@ export const NotificationItem: FC<{
           <Feather name="phone" size={20} color={"#fff"} />
         ) : type === "ride" ? (
           <MaterialCommunityIcons name="car" size={20} color={"#fff"} />
-        ) : type === "ride_payment" ? (
+        ) : type === "delivery" ? (
+          <MaterialCommunityIcons
+            name="truck-delivery"
+            size={20}
+            color={"#fff"}
+          />
+        ) : type === "ride_payment" || type === "delivery_payment" ? (
           <MaterialIcons name="payment" size={20} color={"#fff"} />
         ) : type === "cancelled_ride" ? (
           <MaterialCommunityIcons name="car-off" size={20} color={"#fff"} />
+        ) : type === "cancelled_delivery" ? (
+          <MaterialCommunityIcons
+            name="clipboard-off"
+            size={20}
+            color={"#fff"}
+          />
         ) : type === "scheduled_ride" ? (
           <MaterialCommunityIcons name="car-clock" size={20} color={"#fff"} />
         ) : (

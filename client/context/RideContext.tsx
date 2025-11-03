@@ -679,7 +679,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
       await createActivity(
         "ride_payment",
-        "Payment for ride",
+        "Paid for ride",
         `${ongoingRideData?.fare} was debitted from ur wallet`
       );
 

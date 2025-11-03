@@ -12,6 +12,7 @@ import {
 import { sendExpoPush } from "../utils/expo_push";
 import { complete_delivery } from "../utils/complete_delivery";
 import { Types } from "mongoose";
+import Activity from "../models/activity";
 
 // expire delivery helper
 const expire_delivery = async (delivery_id: string, user_id?: string) => {
@@ -702,8 +703,16 @@ export const update_delivery_status = async (
         }
 
         // notify sender that delivery completed
-        if (sender_socket)
+        if (sender_socket) {
           io.to(sender_socket).emit("delivery_completed", { delivery_id });
+          await Activity.create({
+            type: "delivery",
+            user: delivery.sender,
+            title: "Delivery completed",
+            message: `Your delivery to ${delivery.dropoff.address} has been delivered`,
+            metadata: { delivery_id: delivery._id, driver_id: delivery.driver },
+          });
+        }
 
         break;
       default:

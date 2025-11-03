@@ -17,6 +17,7 @@ import {
 } from "../utils/paystack";
 import { sendExpoPush } from "../utils/expo_push";
 import { get_user_push_tokens, get_driver_push_tokens } from "../utils/get_id";
+import Activity from "../models/activity";
 
 export const fund_wallet = async (req: Request, res: Response) => {
   try {
@@ -114,6 +115,14 @@ export const verify_payment = async (req: any, res: any) => {
           } else if (ownerType === "Driver") {
             tokens = await get_driver_push_tokens(ownerId as any);
           }
+
+          await Activity.create({
+            type: "wallet_funding",
+            user: req.user?.id,
+            title: "Wallet funded",
+            message: `Your wallet was creditted with NGN ${transaction.amount}`,
+            metadata: { owner_id: ownerId },
+          });
 
           if (tokens.length) {
             await sendExpoPush(

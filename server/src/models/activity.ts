@@ -3,10 +3,13 @@ import { Types, Schema, model, Document } from "mongoose";
 interface ActivitySchemaType extends Document {
   type:
     | "ride"
+    | "delivery"
     | "cancelled_ride"
+    | "cancelled_delivery"
     | "scheduled_ride"
     | "wallet_funding"
     | "ride_payment"
+    | "delivery_payment"
     | "system"
     | "security"
     | "email_update"
@@ -24,10 +27,13 @@ const ActivitySchema = new Schema<ActivitySchemaType>(
       type: String,
       enum: [
         "ride",
+        "delivery",
         "cancelled_ride",
+        "cancelled_delivery",
         "scheduled_ride",
         "wallet_funding",
         "ride_payment",
+        "delivery_payment",
         "system",
         "security",
         "phone_update",

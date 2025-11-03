@@ -54,6 +54,7 @@ const get_id_1 = require("../utils/get_id");
 const expo_push_1 = require("../utils/expo_push");
 const complete_delivery_1 = require("../utils/complete_delivery");
 const mongoose_1 = require("mongoose");
+const activity_1 = __importDefault(require("../models/activity"));
 // expire delivery helper
 const expire_delivery = (delivery_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
     const delivery = yield delivery_1.default.findById(delivery_id);
@@ -630,8 +631,16 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         .json({ msg: result.message });
                 }
                 // notify sender that delivery completed
-                if (sender_socket)
+                if (sender_socket) {
                     server_1.io.to(sender_socket).emit("delivery_completed", { delivery_id });
+                    yield activity_1.default.create({
+                        type: "delivery",
+                        user: delivery.sender,
+                        title: "Delivery completed",
+                        message: `Your delivery to ${delivery.dropoff.address} has been delivered`,
+                        metadata: { delivery_id: delivery._id, driver_id: delivery.driver },
+                    });
+                }
                 break;
             default:
                 return res.status(400).json({ msg: "Invalid status" });

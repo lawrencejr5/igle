@@ -6,15 +6,9 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import React, { FC, useEffect } from "react";
+import React, { useEffect } from "react";
 
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import Feather from "@expo/vector-icons/Feather";
-
-import {
-  useActivityContext,
-  ActivityType,
-} from "../../../context/ActivityContext";
+import { useActivityContext } from "../../../context/ActivityContext";
 
 import { FlatList } from "react-native-gesture-handler";
 import { AntDesign } from "@expo/vector-icons";

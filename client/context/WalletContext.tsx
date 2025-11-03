@@ -128,14 +128,6 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (!data) throw new Error("An error occurred");
       showNotification(data.msg, "success");
 
-      const amount = data.transaction.amount;
-
-      await createActivity(
-        "wallet_funding",
-        "Wallet funded",
-        `Your wallet was funded with NGN ${amount}`
-      );
-
       console.log("funded");
     } catch (error: any) {
       const errMsg = error.response?.data?.msg || "Verification failed";

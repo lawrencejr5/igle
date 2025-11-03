@@ -24,6 +24,7 @@ const axios_1 = __importDefault(require("axios"));
 const paystack_1 = require("../utils/paystack");
 const expo_push_1 = require("../utils/expo_push");
 const get_id_2 = require("../utils/get_id");
+const activity_1 = __importDefault(require("../models/activity"));
 const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -88,6 +89,7 @@ const paystack_redirect = (req, res) => {
 };
 exports.paystack_redirect = paystack_redirect;
 const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { reference } = req.query;
         const result = yield (0, paystack_1.verify_paystack_transaction)(reference);
@@ -112,6 +114,13 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     else if (ownerType === "Driver") {
                         tokens = yield (0, get_id_2.get_driver_push_tokens)(ownerId);
                     }
+                    yield activity_1.default.create({
+                        type: "wallet_funding",
+                        user: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
+                        title: "Wallet funded",
+                        message: `Your wallet was creditted with NGN ${transaction.amount}`,
+                        metadata: { owner_id: ownerId },
+                    });
                     if (tokens.length) {
                         yield (0, expo_push_1.sendExpoPush)(tokens, "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
                             type: "wallet_funded",

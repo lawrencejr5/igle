@@ -18,10 +18,13 @@ export interface ActivityType {
   _id: string;
   type:
     | "ride"
+    | "delivery"
     | "cancelled_ride"
+    | "cancelled_delivery"
     | "scheduled_ride"
     | "wallet_funding"
     | "ride_payment"
+    | "delivery_payment"
     | "system"
     | "security"
     | "email_update"

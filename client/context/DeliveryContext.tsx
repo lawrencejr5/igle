@@ -18,6 +18,7 @@ import BottomSheet from "@gorhom/bottom-sheet";
 import { BackHandler, Platform } from "react-native";
 import { useNavigation } from "expo-router";
 import { useMapContext } from "./MapContext";
+import { useActivityContext } from "./ActivityContext";
 
 export const DeliverContext = createContext<DeliverContextType | null>(null);
 
@@ -186,6 +187,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { userSocket, signedIn } = useAuthContext() as any;
   const { getRoute, mapRef, pickupCoords, destinationCoords, region } =
     useMapContext();
+  const { createActivity } = useActivityContext();
 
   const [deliveryData, setDeliveryData] = useState<Delivery | null>(null);
   const [ongoingDeliveryData, setOngoingDeliveryData] =
@@ -800,6 +802,11 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         headers
       );
       showNotification(data.msg || "Payment successful", "success");
+      await createActivity(
+        "delivery_payment",
+        "Paid for delivery",
+        `${ongoingDeliveryData?.fare} was debitted from ur wallet`
+      );
       await fetchUserActiveDelivery();
       return data.transaction;
     } catch (err: any) {
@@ -825,6 +832,14 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
       showNotification(data.msg || "Delivery cancelled", "success");
       resetDeliveryFlow();
+
+      await createActivity(
+        "cancelled_delivery",
+        "Cancelled delivery",
+        `You cancelled your delivery to ${data.delivery.dropoff.address}`,
+        { delivery_id: data.delivery._id }
+      );
+
       await fetchUserActiveDelivery();
       await fetchCancelledDeliveries();
       return data.delivery;

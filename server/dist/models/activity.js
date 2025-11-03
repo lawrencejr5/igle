@@ -6,10 +6,13 @@ const ActivitySchema = new mongoose_1.Schema({
         type: String,
         enum: [
             "ride",
+            "delivery",
             "cancelled_ride",
+            "cancelled_delivery",
             "scheduled_ride",
             "wallet_funding",
             "ride_payment",
+            "delivery_payment",
             "system",
             "security",
             "phone_update",
