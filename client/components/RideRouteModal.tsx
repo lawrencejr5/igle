@@ -109,13 +109,6 @@ const RideRouteModal = () => {
         })();
   }, [destination]);
 
-  // useEffect(() => {
-  //   const t = setTimeout(() => {
-  //     setRideStatus("booking");
-  //   }, 500);
-  //   return () => clearTimeout(t);
-  // }, []);
-
   useEffect(() => {
     if (ongoingRideData) {
       setDestination(ongoingRideData.destination.address);
@@ -148,6 +141,9 @@ const RideRouteModal = () => {
         setRideStatus("paid");
       }
     } else {
+      // Don't override if user is already in choosing_car state (e.g., from saved places)
+      if (rideStatus === "choosing_car") return;
+
       const t = setTimeout(() => {
         setRideStatus("booking");
       }, 500);

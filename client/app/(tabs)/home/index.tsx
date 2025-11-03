@@ -169,7 +169,6 @@ const Home = () => {
     }
   }, [signedIn]);
 
-
   const { appLoading } = useLoading();
   const { notification } = useNotificationContext();
 
@@ -592,7 +591,40 @@ const OngoingCard = ({
 
 const SavedPlaces = () => {
   const { homePlace, officePlace, otherPlaces } = useSavedPlaceContext();
-  const { set_destination_func } = useRideContext();
+  const { setRideStatus, setModalUp } = useRideContext();
+  const {
+    region,
+    getPlaceCoords,
+    setPickupCoords,
+    setDestinationCoords,
+    setDestination,
+  } = useMapContext();
+
+  const handleSavedPlaceClick = async (place: {
+    place_id: string;
+    place_name: string;
+  }) => {
+    try {
+      // Set the pickup location to current location
+      if (region?.latitude && region?.longitude) {
+        setPickupCoords([region.latitude, region.longitude]);
+      }
+
+      // Set the destination
+      setDestination(place.place_name);
+      const coords = await getPlaceCoords(place.place_id);
+      if (coords) {
+        setDestinationCoords(coords);
+      }
+
+      // Navigate to book ride with choosing_car status
+      setRideStatus("choosing_car");
+      setModalUp(true);
+      router.push("../(book)/book_ride");
+    } catch (error) {
+      console.error("Error setting saved place:", error);
+    }
+  };
 
   return (
     <View style={{ marginTop: 10 }}>
@@ -606,11 +638,10 @@ const SavedPlaces = () => {
           activeOpacity={0.7}
           onPress={() => {
             homePlace
-              ? set_destination_func(
-                  homePlace.place_id,
-                  homePlace.place_name,
-                  homePlace.place_sub_name
-                )
+              ? handleSavedPlaceClick({
+                  place_id: homePlace.place_id,
+                  place_name: homePlace.place_name,
+                })
               : router.push("../../account/saved_places");
           }}
           style={{
@@ -657,11 +688,10 @@ const SavedPlaces = () => {
           activeOpacity={0.7}
           onPress={() => {
             officePlace
-              ? set_destination_func(
-                  officePlace.place_id,
-                  officePlace.place_name,
-                  officePlace.place_sub_name
-                )
+              ? handleSavedPlaceClick({
+                  place_id: officePlace.place_id,
+                  place_name: officePlace.place_name,
+                })
               : router.push("../../account/saved_places");
           }}
           style={{
@@ -709,11 +739,10 @@ const SavedPlaces = () => {
             key={item._id}
             activeOpacity={0.7}
             onPress={() => {
-              set_destination_func(
-                item.place_id,
-                item.place_name,
-                item.place_sub_name
-              );
+              handleSavedPlaceClick({
+                place_id: item.place_id,
+                place_name: item.place_name,
+              });
             }}
             style={{
               flexDirection: "row",
