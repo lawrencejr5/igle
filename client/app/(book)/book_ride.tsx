@@ -242,58 +242,59 @@ const BookRide = () => {
 
             {/* Nav */}
             <View style={styles.nav_container}>
-              {(() => {
-                const hiddenStatuses = [
-                  "searching",
-                  "accepted",
-                  "pay",
-                  "paid",
-                  "rating",
-                ];
-                if (hiddenStatuses.includes(rideStatus as any)) return null;
+              <Pressable
+                onPress={() => {
+                  // Statuses where back button should just go back without modal navigation
+                  const directBackStatuses = [
+                    "searching",
+                    "accepted",
+                    "pay",
+                    "paid",
+                    "rating",
+                  ];
 
-                return (
-                  <Pressable
-                    onPress={() => {
-                      // ordered modal flow - used for stepping back through statuses
-                      const modalOrder = [
-                        "",
-                        "booking",
-                        "choosing_car",
-                        "searching",
-                        "accepted",
-                        "track_driver",
-                        "pay",
-                        "paying",
-                        "paid",
-                        "track_ride",
-                        "rating",
-                      ];
+                  if (directBackStatuses.includes(rideStatus as any)) {
+                    router.back();
+                    return;
+                  }
 
-                      if (rideStatus === undefined || rideStatus === "") {
-                        // no previous modal status - go to home
-                        router.push("../(tabs)/home");
-                        return;
-                      }
+                  // ordered modal flow - used for stepping back through statuses
+                  const modalOrder = [
+                    "",
+                    "booking",
+                    "choosing_car",
+                    "searching",
+                    "accepted",
+                    "track_driver",
+                    "pay",
+                    "paying",
+                    "paid",
+                    "track_ride",
+                    "rating",
+                  ];
 
-                      const idx = modalOrder.indexOf(rideStatus as any);
-                      if (idx > 0) {
-                        const prev = modalOrder[idx - 1];
-                        setRideStatus(prev as any);
-                        if (prev === "") {
-                          // moving back to start - reset ride state
-                          resetRide();
-                        }
-                      } else {
-                        router.push("../(tabs)/home");
-                      }
-                    }}
-                    style={styles.nav_box}
-                  >
-                    <Feather name="arrow-left" size={22} color="white" />
-                  </Pressable>
-                );
-              })()}
+                  if (rideStatus === undefined || rideStatus === "") {
+                    // no previous modal status - go to home
+                    router.push("../(tabs)/home");
+                    return;
+                  }
+
+                  const idx = modalOrder.indexOf(rideStatus as any);
+                  if (idx > 0) {
+                    const prev = modalOrder[idx - 1];
+                    setRideStatus(prev as any);
+                    if (prev === "") {
+                      // moving back to start - reset ride state
+                      resetRide();
+                    }
+                  } else {
+                    router.push("../(tabs)/home");
+                  }
+                }}
+                style={styles.nav_box}
+              >
+                <Feather name="arrow-left" size={22} color="white" />
+              </Pressable>
             </View>
 
             {/* Choose route Modal */}

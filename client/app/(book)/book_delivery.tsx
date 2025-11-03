@@ -243,62 +243,62 @@ const BookDelivery = () => {
         )}
 
         <View style={styles.nav_container}>
-          {(() => {
-            // Only show back button for specific delivery statuses
-            const allowedStatuses = [
-              "",
-              "details",
-              "route",
-              "vehicle",
-              "track_driver",
-              "paying",
-              "track_delivery",
-            ];
+          <Pressable
+            onPress={() => {
+              // Statuses where back button should just go back without modal navigation
+              const directBackStatuses = [
+                "searching",
+                "expired",
+                "accepted",
+                "arrived",
+                "paid",
+                "picked_up",
+                "in_transit",
+                "rating",
+              ];
 
-            if (!allowedStatuses.includes(deliveryStatus as any)) return null;
+              if (directBackStatuses.includes(deliveryStatus as any)) {
+                router.back();
+                return;
+              }
 
-            return (
-              <Pressable
-                onPress={() => {
-                  // ordered modal flow - used for stepping back through statuses
-                  const modalOrder = [
-                    "",
-                    "details",
-                    "route",
-                    "vehicle",
-                    "searching",
-                    "expired",
-                    "accepted",
-                    "track_driver",
-                    "arrived",
-                    "paying",
-                    "paid",
-                    "picked_up",
-                    "in_transit",
-                    "track_delivery",
-                    "rating",
-                  ];
+              // ordered modal flow - used for stepping back through statuses
+              const modalOrder = [
+                "",
+                "details",
+                "route",
+                "vehicle",
+                "searching",
+                "expired",
+                "accepted",
+                "track_driver",
+                "arrived",
+                "paying",
+                "paid",
+                "picked_up",
+                "in_transit",
+                "track_delivery",
+                "rating",
+              ];
 
-                  if (!deliveryStatus) {
-                    // no previous modal status - go to home
-                    router.push("../(tabs)/home");
-                    return;
-                  }
+              if (!deliveryStatus) {
+                // no previous modal status - go to home
+                router.push("../(tabs)/home");
+                return;
+              }
 
-                  const idx = modalOrder.indexOf(deliveryStatus as any);
-                  if (idx > 0) {
-                    const prev = modalOrder[idx - 1];
-                    setDeliveryStatus(prev as any);
-                  } else {
-                    router.push("../(tabs)/home");
-                  }
-                }}
-                style={styles.nav_box}
-              >
-                <Feather name="arrow-left" size={22} color="white" />
-              </Pressable>
-            );
-          })()}
+              const idx = modalOrder.indexOf(deliveryStatus as any);
+              if (idx > 0) {
+                const prev = modalOrder[idx - 1];
+                setDeliveryStatus(prev as any);
+              } else {
+                router.push("../(tabs)/home");
+              }
+            }}
+            style={styles.nav_box}
+          >
+            <Feather name="arrow-left" size={22} color="white" />
+          </Pressable>
         </View>
 
         <DeliveryRouteModal />
