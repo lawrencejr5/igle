@@ -533,11 +533,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     // Unregister push token for this device (best-effort)
-    // try {
     //   await unregisterPushToken();
-    // } catch (e) {
-    //   console.log("Error unregistering push token:", e);
-    // }
 
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");

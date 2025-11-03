@@ -31,15 +31,15 @@ const SideNav: React.FC<{
 
   const go_to_driver = () => {
     if (signedIn?.is_driver) {
-      router.push("../(driver)/home");
+      router.replace("../(driver)/home");
     } else {
       if (signedIn?.driver_application === "none")
-        router.push("../(driver_auth)/choose_car_type");
+        router.replace("../(driver_auth)/choose_car_type");
       else if (signedIn?.driver_application === "rejected")
-        router.push("../(driver_auth)/choose_car_type");
+        router.replace("../(driver_auth)/choose_car_type");
       else if (signedIn?.driver_application === "submitted")
-        router.push("../(driver_auth)/reviewing_message");
-      else router.push("../(tabs)/home");
+        router.replace("../(driver_auth)/reviewing_message");
+      else router.replace("../(tabs)/home");
     }
   };
 
@@ -302,7 +302,7 @@ const SideNav: React.FC<{
               <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
                 <Pressable
                   style={styles.switch_btn}
-                  onPress={() => router.push("../(tabs)/home")}
+                  onPress={() => router.replace("../(tabs)/home")}
                 >
                   <Text style={styles.switch_btn_text}>Rider mode</Text>
                 </Pressable>
