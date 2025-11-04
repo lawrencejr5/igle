@@ -30,5 +30,7 @@ DriverRouter.get("/delivery/active", driver_1.get_driver_active_delivery);
 DriverRouter.get("/rides/completed", driver_1.get_driver_completed_rides);
 DriverRouter.get("/rides/cancelled", driver_1.get_driver_cancelled_rides);
 DriverRouter.get("/rides/history", driver_1.get_driver_rides_history);
+DriverRouter.get("/deliveries/delivered", driver_1.get_driver_delivered_deliveries);
+DriverRouter.get("/deliveries/cancelled", driver_1.get_driver_cancelled_deliveries);
 DriverRouter.get("/transactions", driver_1.get_driver_transactions);
 exports.default = DriverRouter;

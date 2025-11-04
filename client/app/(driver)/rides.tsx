@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
+  ScrollView,
+  Pressable,
 } from "react-native";
 import React, { useState, useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,8 +17,9 @@ import RideRoute from "../../components/RideRoute";
 import { useDriverContext } from "../../context/DriverContext";
 
 const RidesPage = () => {
-  const [activeTab, setActiveTab] = useState("ongoing");
-  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "ongoing" | "completed" | "cancelled"
+  >("ongoing");
 
   const {
     ongoingRideData,
@@ -24,11 +27,7 @@ const RidesPage = () => {
     driverCancelledRides,
     fetchActiveRide,
     fetchCompletedRides,
-    fetchMoreCompletedRides,
-    completedLoadingMore,
     fetchCancelledRides,
-    fetchMoreCancelledRides,
-    cancelledLoadingMore,
   } = useDriverContext();
 
   // Load data when component mounts
@@ -40,137 +39,6 @@ const RidesPage = () => {
     };
     loadData();
   }, []);
-
-  // Get the appropriate data based on active tab
-  const getCurrentTabData = () => {
-    switch (activeTab) {
-      case "ongoing":
-        return ongoingRideData ? [ongoingRideData] : [];
-      case "completed":
-        return driverCompletedRides || [];
-      case "cancelled":
-        return driverCancelledRides || [];
-      default:
-        return [];
-    }
-  };
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      switch (activeTab) {
-        case "ongoing":
-          await fetchActiveRide();
-          break;
-        case "completed":
-          await fetchCompletedRides(true);
-          break;
-        case "cancelled":
-          await fetchCancelledRides(true);
-          break;
-      }
-    } catch (error) {
-      console.log("Error refreshing data:", error);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [activeTab]);
-
-  const onEndReached = async () => {
-    if (activeTab === "completed") {
-      await fetchMoreCompletedRides();
-    } else if (activeTab === "cancelled") {
-      await fetchMoreCancelledRides();
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ongoing":
-        return "#e6a518ff";
-      case "completed":
-        return "#4CAF50";
-      case "cancelled":
-        return "#F44336";
-      default:
-        return "#757575";
-    }
-  };
-
-  const renderRideCard = ({ item }: any) => (
-    <View style={styles.rideCard}>
-      <View style={styles.rideHeader}>
-        <View style={styles.customerInfo}>
-          <Image
-            source={require("../../assets/images/user.png")}
-            style={styles.customerImage}
-          />
-          <Text style={styles.customerName}>
-            {item.rider?.name || "Unknown"}
-          </Text>
-        </View>
-        <Text
-          style={[styles.rideStatus, { color: getStatusColor(item.status) }]}
-        >
-          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-        </Text>
-      </View>
-
-      <View style={styles.rideDetails}>
-        {item.status === "cancelled" ? (
-          <View style={styles.cancelledDestination}>
-            <Ionicons name="location" size={20} color="#fff" />
-            <Text style={styles.destinationText}>
-              {item.destination?.address}
-            </Text>
-          </View>
-        ) : item.status === "completed" ? (
-          <View
-            style={{
-              paddingHorizontal: 10,
-              borderRadius: 5,
-              backgroundColor: "#313131",
-            }}
-          >
-            <RideRoute
-              from={item.pickup?.address}
-              to={item.destination?.address}
-            />
-          </View>
-        ) : (
-          <RideRoute
-            from={item.pickup?.address}
-            to={item.destination?.address}
-          />
-        )}
-      </View>
-
-      <View style={styles.rideFooter}>
-        {item.status !== "cancelled" && (
-          <Text style={styles.amount}>
-            ₦{item.fare?.toLocaleString() || "0"}
-          </Text>
-        )}
-
-        <Text style={styles.time}>
-          {new Date(item.createdAt || item.updatedAt).toLocaleString()}
-        </Text>
-      </View>
-    </View>
-  );
-
-  const TabButton = ({ title, isActive, onPress }: any) => (
-    <TouchableOpacity
-      style={[styles.tabButton, isActive && styles.activeTabButton]}
-      onPress={onPress}
-    >
-      <Text
-        style={[styles.tabButtonText, isActive && styles.activeTabButtonText]}
-      >
-        {title}
-      </Text>
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -185,50 +53,377 @@ const RidesPage = () => {
         <Text style={styles.headerTitle}>My Rides</Text>
       </View>
 
-      <View style={styles.tabsContainer}>
-        <TabButton
-          title="Ongoing"
-          isActive={activeTab === "ongoing"}
-          onPress={() => setActiveTab("ongoing")}
-        />
-        <TabButton
-          title="Completed"
-          isActive={activeTab === "completed"}
-          onPress={() => setActiveTab("completed")}
-        />
-        <TabButton
-          title="Cancelled"
-          isActive={activeTab === "cancelled"}
-          onPress={() => setActiveTab("cancelled")}
-        />
-      </View>
+      <CategoryTabs
+        category={activeTab}
+        setCategory={setActiveTab}
+        driverCancelledRides={driverCancelledRides}
+      />
 
+      {/* Ongoing rides */}
+      {activeTab === "ongoing" &&
+        (ongoingRideData ? (
+          <OngoingRide data={ongoingRideData} />
+        ) : (
+          <EmptyState message="You don't have any ongoing rides" />
+        ))}
+
+      {/* Completed rides */}
+      {activeTab === "completed" &&
+        (driverCompletedRides && driverCompletedRides.length > 0 ? (
+          <CompletedRides data={driverCompletedRides} />
+        ) : (
+          <EmptyState message="You haven't completed any rides yet" />
+        ))}
+
+      {/* Cancelled rides */}
+      {activeTab === "cancelled" &&
+        (driverCancelledRides && driverCancelledRides.length > 0 ? (
+          <CancelledRides data={driverCancelledRides} />
+        ) : (
+          <EmptyState message="You haven't cancelled any rides yet" />
+        ))}
+    </SafeAreaView>
+  );
+};
+
+const CategoryTabs = ({
+  category,
+  setCategory,
+  driverCancelledRides,
+}: {
+  category: "ongoing" | "completed" | "cancelled";
+  setCategory: (cat: "ongoing" | "completed" | "cancelled") => void;
+  driverCancelledRides: any;
+}) => {
+  const tabs = React.useMemo(() => {
+    const baseTabs: Array<"ongoing" | "completed" | "cancelled"> = [
+      "ongoing",
+      "completed",
+    ];
+
+    if (driverCancelledRides && driverCancelledRides.length > 0) {
+      baseTabs.push("cancelled");
+    }
+
+    return baseTabs;
+  }, [driverCancelledRides]);
+
+  return (
+    <View>
+      <ScrollView
+        contentContainerStyle={styles.tabsContainer}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+      >
+        {tabs.map((tab) => (
+          <Pressable
+            key={tab}
+            onPress={() => setCategory(tab)}
+            style={[
+              styles.tabButton,
+              category === tab && styles.activeTabButton,
+            ]}
+          >
+            <Text
+              style={[
+                styles.tabButtonText,
+                category === tab && styles.activeTabButtonText,
+              ]}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+const EmptyState = ({ message }: { message: string }) => {
+  return (
+    <View style={styles.emptyState}>
+      <Ionicons name="car-outline" size={64} color="#757575" />
+      <Text style={styles.emptyStateText}>{message}</Text>
+    </View>
+  );
+};
+
+const OngoingRide = ({ data }: { data: any }) => {
+  const { fetchActiveRide } = useDriverContext();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchActiveRide();
+    } catch (error) {
+      console.log("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchActiveRide]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ongoing":
+        return "#e6a518ff";
+      case "completed":
+        return "#4CAF50";
+      case "cancelled":
+        return "#F44336";
+      default:
+        return "#757575";
+    }
+  };
+
+  return (
+    <ScrollView
+      style={{ flex: 1 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#FFFFFF"
+          colors={["#FFFFFF"]}
+        />
+      }
+    >
+      <View style={styles.ridesList}>
+        <View style={styles.rideCard}>
+          <View style={styles.rideHeader}>
+            <View style={styles.customerInfo}>
+              <Image
+                source={require("../../assets/images/user.png")}
+                style={styles.customerImage}
+              />
+              <Text style={styles.customerName}>
+                {data.rider?.name || "Unknown"}
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.rideStatus,
+                { color: getStatusColor(data.status) },
+              ]}
+            >
+              {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+            </Text>
+          </View>
+
+          <View style={styles.rideDetails}>
+            <RideRoute
+              from={data.pickup?.address}
+              to={data.destination?.address}
+            />
+          </View>
+
+          <View style={styles.rideFooter}>
+            <Text style={styles.amount}>
+              ₦{data.fare?.toLocaleString() || "0"}
+            </Text>
+            <Text style={styles.time}>
+              {new Date(data.createdAt || data.updatedAt).toLocaleString()}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+const CompletedRides = ({ data }: { data: any }) => {
+  const { fetchCompletedRides, fetchMoreCompletedRides, completedLoadingMore } =
+    useDriverContext();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchCompletedRides(true);
+    } catch (error) {
+      console.log("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchCompletedRides]);
+
+  const onEndReached = async () => {
+    await fetchMoreCompletedRides();
+  };
+
+  const getStatusColor = (status: string) => {
+    return "#4CAF50";
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
       <FlatList
-        data={getCurrentTabData()}
-        renderItem={renderRideCard}
+        data={data}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.ridesList}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FFFFFF"
+            colors={["#FFFFFF"]}
+          />
         }
+        contentContainerStyle={styles.ridesList}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.6}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyState}>
-            <Ionicons name="car-outline" size={64} color="#757575" />
-            <Text style={styles.emptyStateText}>No {activeTab} rides</Text>
+        renderItem={({ item }: any) => (
+          <View style={styles.rideCard}>
+            <View style={styles.rideHeader}>
+              <View style={styles.customerInfo}>
+                <Image
+                  source={require("../../assets/images/user.png")}
+                  style={styles.customerImage}
+                />
+                <Text style={styles.customerName}>
+                  {item.rider?.name || "Unknown"}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.rideStatus,
+                  { color: getStatusColor(item.status) },
+                ]}
+              >
+                Completed
+              </Text>
+            </View>
+
+            <View style={styles.rideDetails}>
+              <View
+                style={{
+                  paddingHorizontal: 10,
+                  borderRadius: 5,
+                  backgroundColor: "#313131",
+                }}
+              >
+                <RideRoute
+                  from={item.pickup?.address}
+                  to={item.destination?.address}
+                />
+              </View>
+            </View>
+
+            <View style={styles.rideFooter}>
+              <Text style={styles.amount}>
+                ₦{item.fare?.toLocaleString() || "0"}
+              </Text>
+              <Text style={styles.time}>
+                {new Date(item.createdAt || item.updatedAt).toLocaleString()}
+              </Text>
+            </View>
           </View>
         )}
         ListFooterComponent={() =>
-          (activeTab === "completed" && completedLoadingMore) ||
-          (activeTab === "cancelled" && cancelledLoadingMore) ? (
+          completedLoadingMore ? (
             <View style={{ padding: 12, alignItems: "center" }}>
-              <Text style={{ color: "#757575" }}>Loading...</Text>
+              <Text style={{ color: "#757575", fontFamily: "raleway-regular" }}>
+                Loading more...
+              </Text>
             </View>
           ) : null
         }
       />
-    </SafeAreaView>
+    </View>
+  );
+};
+
+const CancelledRides = ({ data }: { data: any }) => {
+  const { fetchCancelledRides, fetchMoreCancelledRides, cancelledLoadingMore } =
+    useDriverContext();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchCancelledRides(true);
+    } catch (error) {
+      console.log("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchCancelledRides]);
+
+  const onEndReached = async () => {
+    await fetchMoreCancelledRides();
+  };
+
+  const getStatusColor = (status: string) => {
+    return "#F44336";
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item._id}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FFFFFF"
+            colors={["#FFFFFF"]}
+          />
+        }
+        contentContainerStyle={styles.ridesList}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.6}
+        renderItem={({ item }: any) => (
+          <View style={styles.rideCard}>
+            <View style={styles.rideHeader}>
+              <View style={styles.customerInfo}>
+                <Image
+                  source={require("../../assets/images/user.png")}
+                  style={styles.customerImage}
+                />
+                <Text style={styles.customerName}>
+                  {item.rider?.name || "Unknown"}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.rideStatus,
+                  { color: getStatusColor(item.status) },
+                ]}
+              >
+                Cancelled
+              </Text>
+            </View>
+
+            <View style={styles.rideDetails}>
+              <View style={styles.cancelledDestination}>
+                <Ionicons name="location" size={20} color="#fff" />
+                <Text style={styles.destinationText}>
+                  {item.destination?.address}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.rideFooter}>
+              <Text style={styles.time}>
+                {new Date(item.createdAt || item.updatedAt).toLocaleString()}
+              </Text>
+            </View>
+          </View>
+        )}
+        ListFooterComponent={() =>
+          cancelledLoadingMore ? (
+            <View style={{ padding: 12, alignItems: "center" }}>
+              <Text style={{ color: "#757575", fontFamily: "raleway-regular" }}>
+                Loading more...
+              </Text>
+            </View>
+          ) : null
+        }
+      />
+    </View>
   );
 };
 
@@ -259,9 +454,10 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 20,
-    gap: 8,
   },
   tabButton: {
     paddingVertical: 10,

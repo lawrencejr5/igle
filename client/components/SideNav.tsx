@@ -268,6 +268,17 @@ const SideNav: React.FC<{
                 <TouchableOpacity
                   onPress={() => {
                     closeSideNav();
+                    router.push("/(driver)/deliveries");
+                  }}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <Feather name="truck" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Deliveries</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
                     router.push("/(driver)/earnings");
                   }}
                 >

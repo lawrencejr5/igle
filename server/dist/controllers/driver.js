@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_delivery = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.upload_driver_profile_pic = exports.create_driver = void 0;
+exports.get_driver_cancelled_deliveries = exports.get_driver_delivered_deliveries = exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_delivery = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.upload_driver_profile_pic = exports.create_driver = void 0;
 const driver_1 = __importDefault(require("../models/driver"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const ride_1 = __importDefault(require("../models/ride"));
@@ -681,3 +714,89 @@ const get_driver_rides_history = (req, res) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.get_driver_rides_history = get_driver_rides_history;
+// Get driver's delivered deliveries
+const get_driver_delivered_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const { limit = 5, skip = 0 } = req.query;
+        const Delivery = (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default;
+        const deliveries = yield Delivery.find({
+            driver: driver_id,
+            status: "delivered",
+        })
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .skip(Number(skip))
+            .populate("sender", "name phone profile_pic")
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        });
+        const total = yield Delivery.countDocuments({
+            driver: driver_id,
+            status: "delivered",
+        });
+        res.status(200).json({
+            msg: "success",
+            deliveries,
+            pagination: {
+                total,
+                limit: Number(limit),
+                skip: Number(skip),
+            },
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_delivered_deliveries = get_driver_delivered_deliveries;
+// Get driver's cancelled deliveries
+const get_driver_cancelled_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const { limit = 5, skip = 0 } = req.query;
+        const Delivery = (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default;
+        const deliveries = yield Delivery.find({
+            driver: driver_id,
+            status: "cancelled",
+        })
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .skip(Number(skip))
+            .populate("sender", "name phone profile_pic")
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        });
+        const total = yield Delivery.countDocuments({
+            driver: driver_id,
+            status: "cancelled",
+        });
+        res.status(200).json({
+            msg: "success",
+            deliveries,
+            pagination: {
+                total,
+                limit: Number(limit),
+                skip: Number(skip),
+            },
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_driver_cancelled_deliveries = get_driver_cancelled_deliveries;

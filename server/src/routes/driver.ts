@@ -19,6 +19,8 @@ import {
   get_driver_completed_rides,
   get_driver_cancelled_rides,
   get_driver_rides_history,
+  get_driver_delivered_deliveries,
+  get_driver_cancelled_deliveries,
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
@@ -64,6 +66,8 @@ DriverRouter.get("/delivery/active", get_driver_active_delivery);
 DriverRouter.get("/rides/completed", get_driver_completed_rides);
 DriverRouter.get("/rides/cancelled", get_driver_cancelled_rides);
 DriverRouter.get("/rides/history", get_driver_rides_history);
+DriverRouter.get("/deliveries/delivered", get_driver_delivered_deliveries);
+DriverRouter.get("/deliveries/cancelled", get_driver_cancelled_deliveries);
 DriverRouter.get("/transactions", get_driver_transactions);
 
 export default DriverRouter;

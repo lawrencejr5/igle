@@ -817,3 +817,101 @@ export const get_driver_rides_history = async (
     res.status(500).json({ msg: "Server error." });
   }
 };
+
+// Get driver's delivered deliveries
+export const get_driver_delivered_deliveries = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const { limit = 5, skip = 0 } = req.query;
+
+    const Delivery = (await import("../models/delivery")).default;
+
+    const deliveries = await Delivery.find({
+      driver: driver_id,
+      status: "delivered",
+    })
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(skip))
+      .populate("sender", "name phone profile_pic")
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      });
+
+    const total = await Delivery.countDocuments({
+      driver: driver_id,
+      status: "delivered",
+    });
+
+    res.status(200).json({
+      msg: "success",
+      deliveries,
+      pagination: {
+        total,
+        limit: Number(limit),
+        skip: Number(skip),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Get driver's cancelled deliveries
+export const get_driver_cancelled_deliveries = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const driver_id = await get_driver_id(req.user?.id!);
+    const { limit = 5, skip = 0 } = req.query;
+
+    const Delivery = (await import("../models/delivery")).default;
+
+    const deliveries = await Delivery.find({
+      driver: driver_id,
+      status: "cancelled",
+    })
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(skip))
+      .populate("sender", "name phone profile_pic")
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      });
+
+    const total = await Delivery.countDocuments({
+      driver: driver_id,
+      status: "cancelled",
+    });
+
+    res.status(200).json({
+      msg: "success",
+      deliveries,
+      pagination: {
+        total,
+        limit: Number(limit),
+        skip: Number(skip),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error." });
+  }
+};

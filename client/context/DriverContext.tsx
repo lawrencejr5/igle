@@ -868,6 +868,131 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Delivered deliveries with pagination (limit 5 per page)
+  const [driverDeliveredDeliveries, setDriverDeliveredDeliveries] = useState<
+    Delivery[] | null
+  >(null);
+  const [deliveredPagination, setDeliveredPagination] = useState({
+    total: 0,
+    limit: 5,
+    skip: 0,
+  });
+  const [deliveredLoadingMore, setDeliveredLoadingMore] = useState(false);
+
+  const fetchDeliveredDeliveries = async (reset = true): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const limit = deliveredPagination.limit;
+      const skip = reset ? 0 : deliveredPagination.skip;
+
+      const { data } = await axios.get(
+        `${API_URL}/deliveries/delivered?limit=${limit}&skip=${skip}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data.deliveries) {
+        if (reset) setDriverDeliveredDeliveries(data.deliveries);
+        else
+          setDriverDeliveredDeliveries((prev) =>
+            prev ? [...prev, ...data.deliveries] : data.deliveries
+          );
+
+        const newSkip =
+          (reset ? 0 : deliveredPagination.skip) + data.deliveries.length;
+        setDeliveredPagination({
+          total: data.pagination?.total || 0,
+          limit: Number(limit),
+          skip: Number(newSkip),
+        });
+      }
+    } catch (error: any) {
+      console.log(error);
+    }
+  };
+
+  const fetchMoreDeliveredDeliveries = async (): Promise<void> => {
+    if (deliveredLoadingMore) return;
+    if (
+      deliveredPagination.total &&
+      deliveredPagination.skip >= deliveredPagination.total
+    )
+      return;
+    try {
+      setDeliveredLoadingMore(true);
+      await fetchDeliveredDeliveries(false);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setDeliveredLoadingMore(false);
+    }
+  };
+
+  // Cancelled deliveries with pagination (limit 5 per page)
+  const [driverCancelledDeliveries, setDriverCancelledDeliveries] = useState<
+    Delivery[] | null
+  >(null);
+  const [cancelledDeliveriesPagination, setCancelledDeliveriesPagination] =
+    useState({
+      total: 0,
+      limit: 5,
+      skip: 0,
+    });
+  const [cancelledDeliveriesLoadingMore, setCancelledDeliveriesLoadingMore] =
+    useState(false);
+
+  const fetchCancelledDeliveries = async (reset = true): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const limit = cancelledDeliveriesPagination.limit;
+      const skip = reset ? 0 : cancelledDeliveriesPagination.skip;
+
+      const { data } = await axios.get(
+        `${API_URL}/deliveries/cancelled?limit=${limit}&skip=${skip}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (data.deliveries) {
+        if (reset) setDriverCancelledDeliveries(data.deliveries);
+        else
+          setDriverCancelledDeliveries((prev) =>
+            prev ? [...prev, ...data.deliveries] : data.deliveries
+          );
+
+        const newSkip =
+          (reset ? 0 : cancelledDeliveriesPagination.skip) +
+          data.deliveries.length;
+        setCancelledDeliveriesPagination({
+          total: data.pagination?.total || 0,
+          limit: Number(limit),
+          skip: Number(newSkip),
+        });
+      }
+    } catch (error: any) {
+      showNotification("Error fetching cancelled deliveries", "error");
+      console.log(error);
+    }
+  };
+
+  const fetchMoreCancelledDeliveries = async (): Promise<void> => {
+    if (cancelledDeliveriesLoadingMore) return;
+    if (
+      cancelledDeliveriesPagination.total &&
+      cancelledDeliveriesPagination.skip >= cancelledDeliveriesPagination.total
+    )
+      return;
+    try {
+      setCancelledDeliveriesLoadingMore(true);
+      await fetchCancelledDeliveries(false);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setCancelledDeliveriesLoadingMore(false);
+    }
+  };
+
   return (
     <DriverContext.Provider
       value={{
@@ -916,6 +1041,16 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         fetchCancelledRides,
         fetchMoreCancelledRides,
         cancelledLoadingMore,
+
+        // Delivery pagination
+        driverDeliveredDeliveries,
+        fetchDeliveredDeliveries,
+        fetchMoreDeliveredDeliveries,
+        deliveredLoadingMore,
+        driverCancelledDeliveries,
+        fetchCancelledDeliveries,
+        fetchMoreCancelledDeliveries,
+        cancelledDeliveriesLoadingMore,
       }}
     >
       {children}
@@ -986,6 +1121,16 @@ interface DriverConextType {
   fetchCancelledRides: (reset?: boolean) => Promise<void>;
   fetchMoreCancelledRides: () => Promise<void>;
   cancelledLoadingMore: boolean;
+
+  // Delivery pagination
+  driverDeliveredDeliveries: Delivery[] | null;
+  fetchDeliveredDeliveries: (reset?: boolean) => Promise<void>;
+  fetchMoreDeliveredDeliveries: () => Promise<void>;
+  deliveredLoadingMore: boolean;
+  driverCancelledDeliveries: Delivery[] | null;
+  fetchCancelledDeliveries: (reset?: boolean) => Promise<void>;
+  fetchMoreCancelledDeliveries: () => Promise<void>;
+  cancelledDeliveriesLoadingMore: boolean;
 }
 
 export default DriverContextPrvider;
