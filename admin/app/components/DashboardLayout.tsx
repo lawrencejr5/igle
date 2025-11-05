@@ -20,7 +20,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <TopNav />
       <div className="main-content">
         <SideNav isCollapsed={isSideNavCollapsed} onToggle={toggleSideNav} />
-        <main className="page-content">{children}</main>
+        <main
+          className={`page-content ${
+            isSideNavCollapsed ? "page-content--collapsed" : ""
+          }`}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );
