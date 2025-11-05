@@ -1,8 +1,11 @@
-const Home = () => {
+import DashboardLayout from "./components/DashboardLayout";
+
+const Overview = () => {
   return (
-    <main>
-      <section>Hello world</section>
-    </main>
+    <DashboardLayout>
+      <h1 className="page-header">Overview</h1>
+    </DashboardLayout>
   );
 };
-export default Home;
+
+export default Overview;
