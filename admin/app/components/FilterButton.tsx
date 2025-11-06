@@ -4,13 +4,23 @@ import { IoFilterOutline } from "react-icons/io5";
 
 interface FilterButtonProps {
   onClick?: () => void;
+  hasActiveFilters?: boolean;
 }
 
-const FilterButton = ({ onClick }: FilterButtonProps) => {
+const FilterButton = ({
+  onClick,
+  hasActiveFilters = false,
+}: FilterButtonProps) => {
   return (
-    <button className="filter-button" onClick={onClick}>
+    <button
+      className={`filter-button ${
+        hasActiveFilters ? "filter-button--active" : ""
+      }`}
+      onClick={onClick}
+    >
       <IoFilterOutline />
       <span>Filter</span>
+      {hasActiveFilters && <span className="filter-button__badge"></span>}
     </button>
   );
 };

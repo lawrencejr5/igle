@@ -26,7 +26,7 @@ const AccountBalance = () => {
       <div className="account-balance__content">
         <p className="account-balance__label">Account Balance</p>
         <h2 className="account-balance__amount">
-          {isBalanceVisible ? formatBalance(balance) : "••••••••"}
+          {isBalanceVisible ? formatBalance(balance) : "••••"}
         </h2>
       </div>
       <button
