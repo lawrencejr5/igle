@@ -2247,3 +2247,91 @@ body {
         width: fit-content;
     }
 }
+
+// Transaction-specific styles
+.transaction-id {
+    font-weight: 600;
+    color: #6366f1;
+    font-size: 0.875rem;
+    font-family: monospace;
+}
+
+.user-cell {
+    &__info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    &__badge {
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+
+        &--rider {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        &--driver {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+    }
+}
+
+.transaction-type {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    width: fit-content;
+
+    &--funding {
+        background-color: #e0f2fe;
+        color: #075985;
+    }
+
+    &--payment {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    &--payout {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+}
+
+.transaction-amount {
+    font-weight: 700;
+    font-size: 0.9rem;
+
+    &--positive {
+        color: #16a34a;
+    }
+
+    &--negative {
+        color: #dc2626;
+    }
+}
+
+.transaction-channel {
+    padding: 0.2rem 0.5rem;
+    background-color: #f3f4f6;
+    color: #374151;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    width: fit-content;
+}
+
+.transaction-reference {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
