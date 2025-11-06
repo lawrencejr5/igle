@@ -1,8 +1,10 @@
 "use client";
 
-import { FiMoreVertical } from "react-icons/fi";
+import { useState } from "react";
 import { User } from "../data/users";
 import Pagination from "./Pagination";
+import ActionMenu from "./ActionMenu";
+import UserDetailsModal from "./UserDetailsModal";
 
 interface UsersTableProps {
   users: User[];
@@ -17,6 +19,9 @@ const UsersTable = ({
   totalPages,
   onPageChange,
 }: UsersTableProps) => {
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const getStatusClass = (status: string) => {
     switch (status) {
       case "Active":
@@ -28,6 +33,31 @@ const UsersTable = ({
       default:
         return "";
     }
+  };
+
+  const handleViewDetails = (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (user) {
+      setSelectedUser(user);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setSelectedUser(null);
+    }, 300); // Wait for animation to complete
+  };
+
+  const handleDelete = (userId: string) => {
+    console.log("Delete user:", userId);
+    // TODO: Implement delete logic with confirmation
+  };
+
+  const handleBlock = (userId: string) => {
+    console.log("Block user:", userId);
+    // TODO: Implement block logic
   };
 
   return (
@@ -68,9 +98,12 @@ const UsersTable = ({
                   </span>
                 </td>
                 <td>
-                  <button className="action-button" aria-label="More actions">
-                    <FiMoreVertical />
-                  </button>
+                  <ActionMenu
+                    userId={user.id}
+                    onViewDetails={handleViewDetails}
+                    onDelete={handleDelete}
+                    onBlock={handleBlock}
+                  />
                 </td>
               </tr>
             ))}
@@ -82,6 +115,12 @@ const UsersTable = ({
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={onPageChange}
+      />
+
+      <UserDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        user={selectedUser}
       />
     </>
   );
