@@ -2204,3 +2204,46 @@ body {
     color: var(--color-text-secondary);
     margin-top: 0.25rem;
 }
+
+// Delivery-specific styles
+.recipient-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-primary);
+    }
+
+    &__phone {
+        font-size: 0.75rem;
+        color: var(--color-text-secondary);
+    }
+}
+
+.package-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__type {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-primary);
+        text-transform: capitalize;
+    }
+
+    &__fragile {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        background-color: #fef3c7;
+        color: #92400e;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 4px;
+        text-transform: uppercase;
+        width: fit-content;
+    }
+}
