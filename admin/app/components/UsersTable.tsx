@@ -5,6 +5,7 @@ import { User } from "../data/users";
 import Pagination from "./Pagination";
 import ActionMenu from "./ActionMenu";
 import UserDetailsModal from "./UserDetailsModal";
+import EditUserModal from "./EditUserModal";
 
 interface UsersTableProps {
   users: User[];
@@ -21,6 +22,8 @@ const UsersTable = ({
 }: UsersTableProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -48,6 +51,27 @@ const UsersTable = ({
     setTimeout(() => {
       setSelectedUser(null);
     }, 300); // Wait for animation to complete
+  };
+
+  const handleEdit = (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (user) {
+      setEditingUser(user);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setTimeout(() => {
+      setEditingUser(null);
+    }, 300); // Wait for animation to complete
+  };
+
+  const handleSaveUser = (updatedUser: User) => {
+    console.log("Save user:", updatedUser);
+    // TODO: Implement save logic (update local state or call API)
+    handleCloseEditModal();
   };
 
   const handleDelete = (userId: string) => {
@@ -101,6 +125,7 @@ const UsersTable = ({
                   <ActionMenu
                     userId={user.id}
                     onViewDetails={handleViewDetails}
+                    onEdit={handleEdit}
                     onDelete={handleDelete}
                     onBlock={handleBlock}
                   />
@@ -121,6 +146,13 @@ const UsersTable = ({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         user={selectedUser}
+      />
+
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        user={editingUser}
+        onSave={handleSaveUser}
       />
     </>
   );

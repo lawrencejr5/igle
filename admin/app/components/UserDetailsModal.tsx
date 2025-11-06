@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import {
   MdEmail,
@@ -10,6 +10,7 @@ import {
   MdLocalShipping,
 } from "react-icons/md";
 import { User } from "../data/users";
+import EditUserModal from "./EditUserModal";
 
 interface UserDetailsModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface UserDetailsModalProps {
 }
 
 const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   useEffect(() => {
     // Prevent body scroll when modal is open
     if (isOpen) {
@@ -47,6 +49,20 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
+
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleSaveUser = (updatedUser: User) => {
+    console.log("Save user from details modal:", updatedUser);
+    // TODO: Implement save logic
+    setIsEditModalOpen(false);
+  };
 
   if (!user) return null;
 
@@ -202,11 +218,21 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
           >
             Close
           </button>
-          <button className="user-details-modal__button user-details-modal__button--primary">
+          <button
+            className="user-details-modal__button user-details-modal__button--primary"
+            onClick={handleEditClick}
+          >
             Edit User
           </button>
         </div>
       </div>
+
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        user={user}
+        onSave={handleSaveUser}
+      />
     </>
   );
 };

@@ -5,6 +5,7 @@ import { Driver } from "../data/drivers";
 import Pagination from "./Pagination";
 import ActionMenu from "./ActionMenu";
 import DriverDetailsModal from "./DriverDetailsModal";
+import EditDriverModal from "./EditDriverModal";
 
 interface DriversTableProps {
   drivers: Driver[];
@@ -21,6 +22,8 @@ const DriversTable = ({
 }: DriversTableProps) => {
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -50,6 +53,27 @@ const DriversTable = ({
     }, 300); // Wait for animation to complete
   };
 
+  const handleEdit = (driverId: string) => {
+    const driver = drivers.find((d) => d.id === driverId);
+    if (driver) {
+      setEditingDriver(driver);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setTimeout(() => {
+      setEditingDriver(null);
+    }, 300); // Wait for animation to complete
+  };
+
+  const handleSaveDriver = (updatedDriver: Driver) => {
+    console.log("Save driver:", updatedDriver);
+    // TODO: Implement save logic (update local state or call API)
+    handleCloseEditModal();
+  };
+
   const handleDelete = (driverId: string) => {
     console.log("Delete driver:", driverId);
     // TODO: Implement delete logic with confirmation
@@ -65,9 +89,6 @@ const DriversTable = ({
       <div className="rating-display">
         <span className="rating-display__star">★</span>
         <span className="rating-display__value">{rating.toFixed(1)}</span>
-        <span className="rating-display__reviews">
-          ({reviewsCount} reviews)
-        </span>
       </div>
     );
   };
@@ -122,6 +143,7 @@ const DriversTable = ({
                   <ActionMenu
                     userId={driver.id}
                     onViewDetails={handleViewDetails}
+                    onEdit={handleEdit}
                     onDelete={handleDelete}
                     onBlock={handleBlock}
                   />
@@ -142,6 +164,13 @@ const DriversTable = ({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         driver={selectedDriver}
+      />
+
+      <EditDriverModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        driver={editingDriver}
+        onSave={handleSaveDriver}
       />
     </>
   );

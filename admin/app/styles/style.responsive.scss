@@ -904,6 +904,16 @@
 
         &__stats-grid {
             grid-template-columns: 1fr;
+
+            &--three {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        &__info-grid {
+            &--two {
+                grid-template-columns: 1fr;
+            }
         }
 
         &__stat-card {
@@ -921,6 +931,10 @@
 
         &__stat-value {
             font-size: 1.5rem;
+        }
+
+        &__images-grid {
+            grid-template-columns: 1fr;
         }
 
         &__footer {
