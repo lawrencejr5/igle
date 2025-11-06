@@ -2335,3 +2335,215 @@ body {
     font-size: 0.8rem;
     color: #6b7280;
 }
+
+// Report-specific styles
+.report-id {
+    font-weight: 600;
+    color: #dc2626;
+    font-size: 0.875rem;
+    font-family: monospace;
+}
+
+.anonymous-badge {
+    padding: 0.25rem 0.5rem;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    &::before {
+        content: "🕵️";
+        font-size: 0.85rem;
+    }
+}
+
+.report-category {
+    padding: 0.25rem 0.5rem;
+    background-color: #fef3c7;
+    color: #92400e;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.report-description {
+    max-width: 300px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    font-size: 0.875rem;
+    color: #4b5563;
+    line-height: 1.4;
+}
+
+.report-description-full {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #374151;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #fbbf24;
+}
+
+.status {
+    &--new {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    &--investigating {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    &--resolved {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    &--dismissed {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+}
+
+// Feedback-specific styles
+.feedback-id {
+    font-weight: 600;
+    color: #7c3aed;
+    font-size: 0.875rem;
+    font-family: monospace;
+}
+
+.feedback-type {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    &--bug {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    &--feature {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    &--general {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+}
+
+.feedback-message {
+    max-width: 350px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    font-size: 0.875rem;
+    color: #4b5563;
+    line-height: 1.4;
+}
+
+.feedback-message-full {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #374151;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #7c3aed;
+    font-size: 0.95rem;
+}
+
+.feedback-contact {
+    font-family: monospace;
+    font-size: 0.875rem;
+    color: #6366f1;
+    font-weight: 500;
+}
+
+.feedback-images-badge {
+    padding: 0.2rem 0.5rem;
+    background-color: #e0e7ff;
+    color: #4338ca;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    &::before {
+        content: "📷";
+        font-size: 0.85rem;
+    }
+}
+
+.feedback-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.feedback-image-wrapper {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+
+    &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.feedback-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.text-muted {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.info-icon {
+    color: #6b7280;
+    margin-right: 0.25rem;
+}
+
+.user-avatar--large {
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+}
+
+.user-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}

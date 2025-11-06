@@ -26,7 +26,7 @@ const SideNav = ({ isCollapsed, onToggle }: SideNavProps) => {
     { name: "Rides", path: "/rides", icon: MdDirectionsCar },
     { name: "Deliveries", path: "/deliveries", icon: MdLocalShipping },
     { name: "Transactions", path: "/transactions", icon: MdPayment },
-    { name: "Report and Logs", path: "/logs", icon: MdDescription },
+    { name: "Report and Feedbacks", path: "/logs", icon: MdDescription },
   ];
 
   return (
