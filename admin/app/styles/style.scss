@@ -547,3 +547,292 @@ body {
         width: 100%;
     }
 }
+
+// Tab Switcher
+.tab-switcher {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+
+    &__tab {
+        background: none;
+        border: none;
+        padding: 1rem 0;
+        font-family: "Raleway", sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        cursor: pointer;
+        position: relative;
+        transition: var(--transition);
+
+        &:hover {
+            color: var(--color-primary);
+        }
+
+        &--active {
+            color: var(--color-primary);
+
+            &::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background-color: var(--color-accent);
+            }
+        }
+    }
+}
+
+// Table Header
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+// Search Bar
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 350px;
+    flex: 1;
+
+    &__icon {
+        position: absolute;
+        left: 1rem;
+        font-size: 1.1rem;
+        color: var(--color-text-secondary);
+        pointer-events: none;
+    }
+
+    &__input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        background-color: transparent;
+        border: 1px solid #e5e7eb;
+        border-radius: var(--border-radius);
+        font-family: "Raleway", sans-serif;
+        font-size: 0.95rem;
+        color: var(--color-primary);
+        transition: var(--transition);
+
+        &::placeholder {
+            color: var(--color-text-secondary);
+        }
+
+        &:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+    }
+}
+
+// Filter Button
+.filter-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background-color: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--border-radius);
+    font-family: "Raleway", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+
+    svg {
+        font-size: 1.1rem;
+    }
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+// Table Container
+.table-container {
+    background-color: transparent;
+    border: none;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+// Admin Table
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "Raleway", sans-serif;
+
+    thead {
+        background-color: transparent;
+        border-bottom: none;
+
+        th {
+            text-align: left;
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    }
+
+    tbody {
+        tr {
+            border-bottom: none;
+            transition: var(--transition);
+
+            &:hover {
+                background-color: transparent;
+            }
+
+            td {
+                padding: 1.25rem;
+                font-size: 0.95rem;
+                color: var(--color-primary);
+            }
+        }
+    }
+}
+
+// User Cell
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    &__avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #d1d5db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #121212;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    &__name {
+        font-weight: 600;
+        color: var(--color-primary);
+    }
+}
+
+// Status Badge
+.status-badge {
+    display: inline-block;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: capitalize;
+
+    &--active {
+        color: #10b981;
+    }
+
+    &--inactive {
+        color: #ef4444;
+    }
+
+    &--suspended {
+        color: #f59e0b;
+    }
+}
+
+// Action Button
+.action-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--color-text-secondary);
+
+    svg {
+        font-size: 1.25rem;
+    }
+
+    &:hover {
+        background-color: #f3f4f6;
+        color: var(--color-primary);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+// Pagination
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+
+    &__button {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+        color: var(--color-primary);
+
+        svg {
+            font-size: 1.5rem;
+        }
+
+        &:hover:not(:disabled) {
+            background-color: var(--color-accent);
+            border-color: var(--color-accent);
+            color: var(--color-secondary);
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        &:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+    }
+
+    &__info {
+        font-family: "Raleway", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--color-primary);
+    }
+}
