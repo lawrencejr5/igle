@@ -7,14 +7,18 @@ import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
 import UsersTable from "../components/UsersTable";
 import DriversTable from "../components/DriversTable";
+import RequestsTable from "../components/RequestsTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
 import { usersData } from "../data/users";
 import { driversData } from "../data/drivers";
+import { requestsData } from "../data/requests";
 
 const ITEMS_PER_PAGE = 10;
 
 const Users = () => {
-  const [activeTab, setActiveTab] = useState<"Users" | "Drivers">("Users");
+  const [activeTab, setActiveTab] = useState<"Users" | "Drivers" | "Requests">(
+    "Users"
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -49,7 +53,7 @@ const Users = () => {
   }, [filters]);
 
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab as "Users" | "Drivers");
+    setActiveTab(tab as "Users" | "Drivers" | "Requests");
     setCurrentPage(1); // Reset to first page when switching tabs
     setSearchQuery(""); // Clear search query
     setFilters({
@@ -154,13 +158,51 @@ const Users = () => {
     return result;
   }, [searchQuery, filters]);
 
+  // Filter and sort requests
+  const filteredRequests = useMemo(() => {
+    let result = [...requestsData];
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (request) =>
+          request.fullname.toLowerCase().includes(query) ||
+          request.email.toLowerCase().includes(query) ||
+          request.phone.includes(query) ||
+          request.vehicleType.toLowerCase().includes(query) ||
+          request.vehicleName.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case "name-asc":
+          result.sort((a, b) => a.fullname.localeCompare(b.fullname));
+          break;
+        case "name-desc":
+          result.sort((a, b) => b.fullname.localeCompare(a.fullname));
+          break;
+      }
+    }
+
+    return result;
+  }, [searchQuery, filters]);
+
   // Calculate pagination based on active tab
-  const currentData = activeTab === "Users" ? filteredUsers : filteredDrivers;
+  const currentData =
+    activeTab === "Users"
+      ? filteredUsers
+      : activeTab === "Drivers"
+      ? filteredDrivers
+      : filteredRequests;
   const totalPages = Math.ceil(currentData.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
   const currentDrivers = filteredDrivers.slice(startIndex, endIndex);
+  const currentRequests = filteredRequests.slice(startIndex, endIndex);
 
   // Reset to page 1 when search results change
   useMemo(() => {
@@ -171,11 +213,28 @@ const Users = () => {
     setCurrentPage(page);
   };
 
+  const handleApproveRequest = (requestId: string) => {
+    console.log("Approve request:", requestId);
+    // TODO: Implement approve logic - move to drivers list and remove from requests
+  };
+
+  const handleDeclineRequest = (requestId: string) => {
+    console.log("Decline request:", requestId);
+    // TODO: Implement decline logic - remove from requests
+  };
+
+  // Get tab labels with counts
+  const tabLabels = [
+    "Users",
+    "Drivers",
+    `Requests${requestsData.length > 0 ? ` (${requestsData.length})` : ""}`,
+  ];
+
   return (
     <DashboardLayout>
       <h1 className="page-header">{activeTab}</h1>
 
-      <TabSwitcher tabs={["Users", "Drivers"]} onTabChange={handleTabChange} />
+      <TabSwitcher tabs={tabLabels} onTabChange={handleTabChange} />
 
       <div className="table-header">
         <FilterButton
@@ -203,12 +262,21 @@ const Users = () => {
           totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      ) : (
+      ) : activeTab === "Drivers" ? (
         <DriversTable
           drivers={currentDrivers}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
+        />
+      ) : (
+        <RequestsTable
+          requests={currentRequests}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          onApprove={handleApproveRequest}
+          onDecline={handleDeclineRequest}
         />
       )}
     </DashboardLayout>

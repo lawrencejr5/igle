@@ -1970,3 +1970,117 @@ body {
         }
     }
 }
+
+// Request Actions Styles
+.request-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    &__button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-family: "Raleway", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        white-space: nowrap;
+
+        &--view {
+            background-color: transparent;
+            border: 1px solid #e5e7eb;
+            color: var(--color-primary);
+
+            &:hover {
+                background-color: #f9fafb;
+                border-color: #d1d5db;
+            }
+        }
+
+        &--approve {
+            background-color: #10b981;
+            color: var(--color-secondary);
+
+            &:hover {
+                background-color: #059669;
+            }
+        }
+
+        &--decline {
+            background-color: #ef4444;
+            color: var(--color-secondary);
+
+            &:hover {
+                background-color: #dc2626;
+            }
+        }
+
+        &:active {
+            transform: scale(0.98);
+        }
+    }
+}
+
+.user-details-modal__expandable {
+    margin-top: 1.25rem;
+}
+
+.user-details-modal__expandable-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1.25rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--border-radius);
+    font-family: "Raleway", sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    outline: none;
+    gap: 1rem;
+
+    &:hover,
+    &:focus {
+        background-color: #f3f4f6;
+        border-color: #d1d5db;
+    }
+
+    .user-details-modal__expandable-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-primary);
+    }
+
+    .user-details-modal__expandable-icon {
+        font-size: 1.25rem;
+        color: #121212; // black
+        background: #e5e7eb;
+        border-radius: 6px;
+        padding: 0.25rem;
+        margin-right: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    svg {
+        font-size: 1.25rem;
+        color: #6b7280;
+        transition: transform 0.2s;
+    }
+}
+
+.user-details-modal__expandable-header[aria-expanded="true"] svg {
+    color: #2563eb;
+    transform: rotate(180deg);
+}

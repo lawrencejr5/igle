@@ -13,7 +13,9 @@ const TabSwitcher = ({ tabs, onTabChange }: TabSwitcherProps) => {
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
     if (onTabChange) {
-      onTabChange(tab);
+      // Extract the base tab name (without count) for the callback
+      const baseTabName = tab.split(" (")[0];
+      onTabChange(baseTabName);
     }
   };
 
