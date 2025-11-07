@@ -10,6 +10,7 @@ import {
   MdPayment,
   MdDescription,
   MdEmojiEvents,
+  MdSettings,
 } from "react-icons/md";
 import { FiSidebar } from "react-icons/fi";
 
@@ -29,6 +30,7 @@ const SideNav = ({ isCollapsed, onToggle }: SideNavProps) => {
     { name: "Transactions", path: "/transactions", icon: MdPayment },
     { name: "Tasks", path: "/tasks", icon: MdEmojiEvents },
     { name: "Report and Feedbacks", path: "/logs", icon: MdDescription },
+    { name: "Settings", path: "/settings", icon: MdSettings },
   ];
 
   return (

@@ -1386,6 +1386,8 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* Ensure modal content uses Raleway font (applies to Task/Report/Feedback/CreateTask modals) */
+    font-family: "Raleway", sans-serif;
 
     &--open {
         transform: translateX(0);
@@ -3236,4 +3238,269 @@ body {
     font-size: 1rem;
     color: var(--color-text-secondary);
     margin: 0;
+}
+
+// Settings Page Styles
+.settings-page {
+    max-width: 1400px;
+    margin: 0 auto;
+
+    &__tabs {
+        margin-bottom: 2rem;
+    }
+
+    &__content {
+        background-color: #fff;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+/* Profile-settings specific tweaks: use Raleway and add vertical spacing to avoid jammed inputs */
+.profile-settings {
+    font-family: "Raleway", sans-serif;
+
+    .settings-form {
+        gap: 2rem; /* slightly larger gaps inside profile forms */
+    }
+
+    .settings-form-group {
+        margin-bottom: 1rem; /* extra vertical margin for profile form groups */
+    }
+
+    .profile-image-upload {
+        margin-bottom: 2.5rem; /* more breathing room under avatar */
+    }
+
+    .settings-section__title {
+        font-family: "Raleway", sans-serif;
+    }
+}
+
+.settings-section {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 2rem;
+
+    &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    &__title {
+        font-family: "Poppins", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--color-primary);
+        margin-bottom: 1.5rem;
+    }
+}
+
+// Profile Image Upload
+.profile-image-upload {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+
+    &__preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #e5e7eb;
+        background-color: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &__placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+
+    &__actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    &__input {
+        display: none;
+    }
+}
+
+// Settings Form
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.settings-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.settings-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &__label {
+        font-family: "Raleway", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    &__hint {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    &__input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-family: "Raleway", sans-serif;
+        font-size: 0.875rem;
+        color: var(--color-primary);
+        background-color: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+
+        &:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        &::placeholder {
+            color: #9ca3af;
+        }
+
+        // Number input specific styles
+        &[type="number"] {
+            appearance: textfield;
+            -moz-appearance: textfield;
+
+            &::-webkit-outer-spin-button,
+            &::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+        }
+    }
+
+    &__input[type="password"] {
+        letter-spacing: 0.1em;
+    }
+}
+
+// Button Styles for Settings
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-family: "Raleway", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &--primary {
+        background-color: var(--color-accent);
+        color: #fff;
+
+        &:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    &--secondary {
+        background-color: #f3f4f6;
+        color: var(--color-primary);
+        border: 1px solid #d1d5db;
+
+        &:hover {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+        }
+    }
+}
+
+// Responsive adjustments for settings
+@media (max-width: 1024px) {
+    .settings-page__content {
+        padding: 1.5rem;
+    }
+
+    .profile-image-upload {
+        flex-direction: column;
+        align-items: flex-start;
+
+        &__preview {
+            margin: 0 auto;
+        }
+
+        &__actions {
+            width: 100%;
+        }
+    }
+}
+
+@media (max-width: 640px) {
+    .settings-page__content {
+        padding: 1rem;
+    }
+
+    .settings-section {
+        gap: 1rem;
+
+        &__title {
+            font-size: 1.25rem;
+        }
+    }
+
+    .profile-image-upload__preview {
+        width: 100px;
+        height: 100px;
+    }
 }
