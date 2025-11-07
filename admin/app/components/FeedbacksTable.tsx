@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Feedback } from "../data/feedbacks";
 import FeedbackActionsMenu from "./FeedbackActionsMenu";
 import FeedbackDetailsModal from "./FeedbackDetailsModal";
@@ -85,14 +84,12 @@ const FeedbacksTable = ({
                 <td>
                   {feedback.user ? (
                     <div className="user-cell">
-                      <Image
-                        src={feedback.user.avatar}
-                        alt={feedback.user.fullname}
-                        width={32}
-                        height={32}
-                        className="user-avatar"
-                      />
-                      <span>{feedback.user.fullname}</span>
+                      <div className="user-cell__avatar">
+                        {feedback.user.fullname.charAt(0)}
+                      </div>
+                      <span className="user-cell__name">
+                        {feedback.user.fullname}
+                      </span>
                     </div>
                   ) : (
                     <span className="anonymous-badge">Anonymous</span>

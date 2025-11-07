@@ -151,6 +151,27 @@ const Rides = () => {
         onClose={handleFilterClose}
         onApply={handleApplyFilters}
         currentFilters={filters}
+        statusOptions={[
+          { value: "", label: "All Statuses" },
+          { value: "completed", label: "Completed" },
+          { value: "ongoing", label: "Ongoing" },
+          { value: "accepted", label: "Accepted" },
+          { value: "arrived", label: "Arrived" },
+          { value: "pending", label: "Pending" },
+          { value: "scheduled", label: "Scheduled" },
+          { value: "cancelled", label: "Cancelled" },
+          { value: "expired", label: "Expired" },
+        ]}
+        sortOptions={[
+          { value: "", label: "Default" },
+          { value: "name-asc", label: "Rider Name (A-Z)" },
+          { value: "name-desc", label: "Rider Name (Z-A)" },
+          { value: "rides-desc", label: "Highest Fare" },
+          { value: "rides-asc", label: "Lowest Fare" },
+          { value: "date-desc", label: "Newest First" },
+          { value: "date-asc", label: "Oldest First" },
+        ]}
+        dateLabel="Ride Date"
       />
 
       <RidesTable

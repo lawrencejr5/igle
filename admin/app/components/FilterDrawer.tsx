@@ -11,11 +11,19 @@ export interface FilterValues {
   sortBy: string;
 }
 
+export interface FilterOption {
+  value: string;
+  label: string;
+}
+
 interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: FilterValues) => void;
   currentFilters: FilterValues;
+  statusOptions?: FilterOption[];
+  sortOptions?: FilterOption[];
+  dateLabel?: string;
 }
 
 const FilterDrawer = ({
@@ -23,6 +31,22 @@ const FilterDrawer = ({
   onClose,
   onApply,
   currentFilters,
+  statusOptions = [
+    { value: "", label: "All Statuses" },
+    { value: "Active", label: "Active" },
+    { value: "Inactive", label: "Inactive" },
+    { value: "Suspended", label: "Suspended" },
+  ],
+  sortOptions = [
+    { value: "", label: "Default" },
+    { value: "name-asc", label: "Name (A-Z)" },
+    { value: "name-desc", label: "Name (Z-A)" },
+    { value: "rides-desc", label: "Most Rides" },
+    { value: "rides-asc", label: "Least Rides" },
+    { value: "deliveries-desc", label: "Most Deliveries" },
+    { value: "deliveries-asc", label: "Least Deliveries" },
+  ],
+  dateLabel = "Date Joined",
 }: FilterDrawerProps) => {
   const [filters, setFilters] = useState<FilterValues>(currentFilters);
 
@@ -61,12 +85,7 @@ const FilterDrawer = ({
         <div className="filter-drawer__field filter-drawer__field--status">
           <label className="filter-drawer__label">Status</label>
           <CustomDropdown
-            options={[
-              { value: "", label: "All Statuses" },
-              { value: "Active", label: "Active" },
-              { value: "Inactive", label: "Inactive" },
-              { value: "Suspended", label: "Suspended" },
-            ]}
+            options={statusOptions}
             value={filters.status}
             onChange={(value) => handleChange("status", value)}
             placeholder="Select status"
@@ -75,7 +94,7 @@ const FilterDrawer = ({
 
         {/* Date Joined Range */}
         <div className="filter-drawer__field filter-drawer__field--date">
-          <label className="filter-drawer__label">Date Joined</label>
+          <label className="filter-drawer__label">{dateLabel}</label>
           <div className="filter-drawer__date-range">
             <input
               type="date"
@@ -99,15 +118,7 @@ const FilterDrawer = ({
         <div className="filter-drawer__field filter-drawer__field--sort">
           <label className="filter-drawer__label">Sort By</label>
           <CustomDropdown
-            options={[
-              { value: "", label: "Default" },
-              { value: "name-asc", label: "Name (A-Z)" },
-              { value: "name-desc", label: "Name (Z-A)" },
-              { value: "rides-desc", label: "Most Rides" },
-              { value: "rides-asc", label: "Least Rides" },
-              { value: "deliveries-desc", label: "Most Deliveries" },
-              { value: "deliveries-asc", label: "Least Deliveries" },
-            ]}
+            options={sortOptions}
             value={filters.sortBy}
             onChange={(value) => handleChange("sortBy", value)}
             placeholder="Select sort order"

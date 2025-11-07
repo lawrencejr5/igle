@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import { IoClose } from "react-icons/io5";
 import {
   MdPerson,
@@ -72,23 +71,27 @@ const ReportDetailsModal = ({ report, onClose }: ReportDetailsModalProps) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <IoClose />
-        </button>
+    <>
+      <div
+        className="user-details-modal__backdrop user-details-modal__backdrop--open"
+        onClick={onClose}
+      />
+      <div className="user-details-modal user-details-modal--open">
+        <div className="user-details-modal__header">
+          <h2 className="user-details-modal__title">Report Details</h2>
+          <button className="user-details-modal__close" onClick={onClose}>
+            <IoClose />
+          </button>
+        </div>
 
-        <div className="modal-header">
-          <h2>Report Details</h2>
+        <div className="user-details-modal__content">
           <div className="modal-header__meta">
             <span className="modal-id">Report ID: {report._id}</span>
             <span className={getStatusClass(report.status)}>
               {getStatusIcon(report.status)} {report.status}
             </span>
           </div>
-        </div>
 
-        <div className="modal-body">
           {/* Reporter Information */}
           <section className="modal-section">
             <h3 className="modal-section__title">
@@ -103,13 +106,9 @@ const ReportDetailsModal = ({ report, onClose }: ReportDetailsModalProps) => {
               ) : report.reporter ? (
                 <>
                   <div className="user-info-row">
-                    <Image
-                      src={report.reporter.avatar}
-                      alt={report.reporter.fullname}
-                      width={48}
-                      height={48}
-                      className="user-avatar--large"
-                    />
+                    <div className="modal-avatar">
+                      {report.reporter.fullname.charAt(0)}
+                    </div>
                     <div>
                       <div className="info-row">
                         <span className="info-label">Name:</span>
@@ -142,13 +141,9 @@ const ReportDetailsModal = ({ report, onClose }: ReportDetailsModalProps) => {
             </h3>
             <div className="modal-section__content">
               <div className="user-info-row">
-                <Image
-                  src={report.driver.avatar}
-                  alt={report.driver.fullname}
-                  width={48}
-                  height={48}
-                  className="user-avatar--large"
-                />
+                <div className="modal-avatar">
+                  {report.driver.fullname.charAt(0)}
+                </div>
                 <div>
                   <div className="info-row">
                     <span className="info-label">Name:</span>
@@ -227,7 +222,7 @@ const ReportDetailsModal = ({ report, onClose }: ReportDetailsModalProps) => {
           </section>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

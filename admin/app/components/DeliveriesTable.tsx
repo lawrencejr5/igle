@@ -124,7 +124,7 @@ const DeliveriesTable = ({
             {deliveries.map((delivery) => (
               <tr key={delivery.id}>
                 <td>
-                  <span className="ride-id">{delivery.id}</span>
+                  <span className="delivery-id">{delivery.id}</span>
                 </td>
                 <td>
                   <div className="user-cell">

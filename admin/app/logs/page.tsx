@@ -249,6 +249,30 @@ const ReportAndFeedbacks = () => {
         onClose={handleFilterClose}
         onApply={handleApplyFilters}
         currentFilters={filters}
+        statusOptions={
+          activeTab === "Reports"
+            ? [
+                { value: "", label: "All Statuses" },
+                { value: "new", label: "New" },
+                { value: "investigating", label: "Investigating" },
+                { value: "resolved", label: "Resolved" },
+                { value: "dismissed", label: "Dismissed" },
+              ]
+            : [
+                { value: "", label: "All Types" },
+                { value: "bug", label: "Bug" },
+                { value: "feature", label: "Feature" },
+                { value: "general", label: "General" },
+              ]
+        }
+        sortOptions={[
+          { value: "", label: "Default" },
+          { value: "name-asc", label: "Name (A-Z)" },
+          { value: "name-desc", label: "Name (Z-A)" },
+          { value: "deliveries-desc", label: "Newest First" },
+          { value: "deliveries-asc", label: "Oldest First" },
+        ]}
+        dateLabel={activeTab === "Reports" ? "Report Date" : "Feedback Date"}
       />
 
       {activeTab === "Reports" ? (

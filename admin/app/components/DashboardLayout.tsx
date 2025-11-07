@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import SideNav from "./SideNav";
 import TopNav from "./TopNav";
 
@@ -11,8 +11,19 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isSideNavCollapsed, setIsSideNavCollapsed] = useState(false);
 
+  // Load collapse state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("sideNavCollapsed");
+    if (savedState !== null) {
+      setIsSideNavCollapsed(savedState === "true");
+    }
+  }, []);
+
   const toggleSideNav = () => {
-    setIsSideNavCollapsed(!isSideNavCollapsed);
+    const newState = !isSideNavCollapsed;
+    setIsSideNavCollapsed(newState);
+    // Save to localStorage
+    localStorage.setItem("sideNavCollapsed", String(newState));
   };
 
   return (

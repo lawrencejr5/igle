@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Report } from "../data/reports";
 import ReportActionsMenu from "./ReportActionsMenu";
 import ReportDetailsModal from "./ReportDetailsModal";
@@ -87,14 +86,12 @@ const ReportsTable = ({
                     <span className="anonymous-badge">Anonymous</span>
                   ) : report.reporter ? (
                     <div className="user-cell">
-                      <Image
-                        src={report.reporter.avatar}
-                        alt={report.reporter.fullname}
-                        width={32}
-                        height={32}
-                        className="user-avatar"
-                      />
-                      <span>{report.reporter.fullname}</span>
+                      <div className="user-cell__avatar">
+                        {report.reporter.fullname.charAt(0)}
+                      </div>
+                      <span className="user-cell__name">
+                        {report.reporter.fullname}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-muted">N/A</span>
@@ -102,14 +99,12 @@ const ReportsTable = ({
                 </td>
                 <td>
                   <div className="user-cell">
-                    <Image
-                      src={report.driver.avatar}
-                      alt={report.driver.fullname}
-                      width={32}
-                      height={32}
-                      className="user-avatar"
-                    />
-                    <span>{report.driver.fullname}</span>
+                    <div className="user-cell__avatar">
+                      {report.driver.fullname.charAt(0)}
+                    </div>
+                    <span className="user-cell__name">
+                      {report.driver.fullname}
+                    </span>
                   </div>
                 </td>
                 <td>

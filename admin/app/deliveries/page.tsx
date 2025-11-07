@@ -160,6 +160,27 @@ const Deliveries = () => {
         onClose={handleFilterClose}
         onApply={handleApplyFilters}
         currentFilters={filters}
+        statusOptions={[
+          { value: "", label: "All Statuses" },
+          { value: "completed", label: "Completed" },
+          { value: "ongoing", label: "Ongoing" },
+          { value: "accepted", label: "Accepted" },
+          { value: "arrived", label: "Arrived" },
+          { value: "pending", label: "Pending" },
+          { value: "scheduled", label: "Scheduled" },
+          { value: "cancelled", label: "Cancelled" },
+          { value: "expired", label: "Expired" },
+        ]}
+        sortOptions={[
+          { value: "", label: "Default" },
+          { value: "name-asc", label: "Sender Name (A-Z)" },
+          { value: "name-desc", label: "Sender Name (Z-A)" },
+          { value: "deliveries-desc", label: "Highest Fare" },
+          { value: "deliveries-asc", label: "Lowest Fare" },
+          { value: "date-desc", label: "Newest First" },
+          { value: "date-asc", label: "Oldest First" },
+        ]}
+        dateLabel="Delivery Date"
       />
 
       <DeliveriesTable

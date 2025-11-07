@@ -150,6 +150,22 @@ const Transactions = () => {
         onClose={handleFilterClose}
         onApply={handleApplyFilters}
         currentFilters={filters}
+        statusOptions={[
+          { value: "", label: "All Statuses" },
+          { value: "success", label: "Success" },
+          { value: "pending", label: "Pending" },
+          { value: "failed", label: "Failed" },
+        ]}
+        sortOptions={[
+          { value: "", label: "Default" },
+          { value: "name-asc", label: "User Name (A-Z)" },
+          { value: "name-desc", label: "User Name (Z-A)" },
+          { value: "deliveries-desc", label: "Highest Amount" },
+          { value: "deliveries-asc", label: "Lowest Amount" },
+          { value: "date-desc", label: "Newest First" },
+          { value: "date-asc", label: "Oldest First" },
+        ]}
+        dateLabel="Transaction Date"
       />
 
       <TransactionsTable

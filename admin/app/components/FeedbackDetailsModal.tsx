@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import { IoClose } from "react-icons/io5";
 import {
   MdPerson,
@@ -75,23 +74,27 @@ const FeedbackDetailsModal = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <IoClose />
-        </button>
+    <>
+      <div
+        className="user-details-modal__backdrop user-details-modal__backdrop--open"
+        onClick={onClose}
+      />
+      <div className="user-details-modal user-details-modal--open">
+        <div className="user-details-modal__header">
+          <h2 className="user-details-modal__title">Feedback Details</h2>
+          <button className="user-details-modal__close" onClick={onClose}>
+            <IoClose />
+          </button>
+        </div>
 
-        <div className="modal-header">
-          <h2>Feedback Details</h2>
+        <div className="user-details-modal__content">
           <div className="modal-header__meta">
             <span className="modal-id">Feedback ID: {feedback._id}</span>
             <span className={getTypeClass(feedback.type)}>
               {getTypeIcon(feedback.type)} {feedback.type}
             </span>
           </div>
-        </div>
 
-        <div className="modal-body">
           {/* User Information */}
           <section className="modal-section">
             <h3 className="modal-section__title">
@@ -100,13 +103,9 @@ const FeedbackDetailsModal = ({
             <div className="modal-section__content">
               {feedback.user ? (
                 <div className="user-info-row">
-                  <Image
-                    src={feedback.user.avatar}
-                    alt={feedback.user.fullname}
-                    width={48}
-                    height={48}
-                    className="user-avatar--large"
-                  />
+                  <div className="modal-avatar">
+                    {feedback.user.fullname.charAt(0)}
+                  </div>
                   <div>
                     <div className="info-row">
                       <span className="info-label">Name:</span>
@@ -175,11 +174,9 @@ const FeedbackDetailsModal = ({
                 <div className="feedback-images-grid">
                   {feedback.images.map((image, index) => (
                     <div key={index} className="feedback-image-wrapper">
-                      <Image
+                      <img
                         src={image}
                         alt={`Feedback attachment ${index + 1}`}
-                        width={200}
-                        height={150}
                         className="feedback-image"
                       />
                     </div>
@@ -231,7 +228,7 @@ const FeedbackDetailsModal = ({
           </section>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
