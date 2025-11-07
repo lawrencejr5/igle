@@ -2404,12 +2404,15 @@ body {
 }
 
 .report-description {
-    max-width: 450px;
+    /* Widened to accommodate longer descriptions without crowding */
+    min-width: 300px;
     white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
+    /* standard property for compatibility in addition to the webkit prefix */
     line-clamp: 2;
+    -webkit-line-clamp: 2; /* show up to 3 lines */
     -webkit-box-orient: vertical;
     font-size: 0.875rem;
     color: #4b5563;
@@ -2490,7 +2493,7 @@ body {
 }
 
 .feedback-message {
-    max-width: 500px;
+    min-width: 300px;
     white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2763,4 +2766,474 @@ body {
     height: 100%;
     object-fit: cover;
     cursor: pointer;
+}
+
+// ===========================================
+// Task Styling
+// ===========================================
+
+// Task ID
+.task-id {
+    font-family: monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4b5563;
+
+    &::before {
+        content: "#";
+        color: #9ca3af;
+        margin-right: 2px;
+    }
+}
+
+// Task Title
+.task-title {
+    font-weight: 600;
+    color: var(--color-primary);
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// Task Type Badges
+.task-type {
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+
+    &--ride {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    &--delivery {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    &--streak {
+        background-color: #fce7f3;
+        color: #9f1239;
+    }
+
+    &--referral {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    &--custom {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+    }
+}
+
+// Task Goal and Reward
+.task-goal {
+    font-weight: 700;
+    color: #1e40af;
+    font-size: 1rem;
+}
+
+.task-reward {
+    font-weight: 700;
+    color: #166534;
+    font-size: 0.95rem;
+}
+
+.task-goal-highlight {
+    padding: 0.5rem 1rem;
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.task-reward-highlight {
+    padding: 0.5rem 1rem;
+    background-color: #dcfce7;
+    color: #166534;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+// Task Status
+.task-status {
+    padding: 0.35rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+
+    &--active {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    &--inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+}
+
+// Task Max User
+.task-max-user {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+// Task Descriptions in Modal
+.task-description-full {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #374151;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #6366f1;
+}
+
+.task-terms-full {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #374151;
+    padding: 1rem;
+    background-color: #fffbeb;
+    border-radius: 8px;
+    border-left: 4px solid #fbbf24;
+    font-size: 0.9rem;
+}
+
+// User Task ID
+.user-task-id {
+    font-family: monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4b5563;
+
+    &::before {
+        content: "#";
+        color: #9ca3af;
+        margin-right: 2px;
+    }
+}
+
+// Task Info in UserTasksTable
+.task-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__title {
+        font-weight: 600;
+        color: var(--color-primary);
+        font-size: 0.9rem;
+    }
+
+    &__meta {
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+}
+
+// User Task Status
+.user-task-status {
+    padding: 0.35rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+
+    &--locked {
+        background-color: #f3f4f6;
+        color: #6b7280;
+    }
+
+    &--in-progress {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    &--completed {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    &--claimed {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    &--expired {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+}
+
+// Progress Container
+.progress-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 150px;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+
+    &__fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+}
+
+.progress-percentage {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 600;
+    text-align: right;
+}
+
+// User Cell Email (for UserTasksTable)
+.user-cell__email {
+    display: block;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.15rem;
+}
+
+// Create Task Modal Specific
+.create-task-modal {
+    width: 600px;
+    max-width: 90vw;
+}
+
+// Task Form
+.task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &--checkbox {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-label {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+
+    .required {
+        color: #ef4444;
+        margin-left: 2px;
+    }
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: "Poppins", sans-serif;
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    background-color: var(--color-secondary);
+    transition: border-color 0.2s ease;
+
+    &:focus {
+        outline: none;
+        border-color: var(--color-accent);
+    }
+
+    &::placeholder {
+        color: #9ca3af;
+    }
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.checkbox-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--color-accent);
+}
+
+.checkbox-text {
+    font-family: "Poppins", sans-serif;
+    font-size: 0.9rem;
+    color: var(--color-primary);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e5e7eb;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    &--primary {
+        background-color: var(--color-accent);
+        color: white;
+
+        &:hover {
+            background-color: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    &--dark {
+        background-color: #000000;
+        color: white;
+
+        &:hover {
+            background-color: #1f1f1f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    &--secondary {
+        background-color: #f3f4f6;
+        color: var(--color-primary);
+
+        &:hover {
+            background-color: #e5e7eb;
+        }
+    }
+
+    &--with-icon {
+        svg {
+            font-size: 1.2rem;
+        }
+    }
+}
+
+// Filter Badge for Task Type
+.filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #fef3c7;
+    color: #92400e;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #fbbf24;
+
+    button {
+        background: none;
+        border: none;
+        color: #92400e;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+
+        &:hover {
+            color: #78350f;
+        }
+    }
+}
+
+// Page Header for Tasks
+.page__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 2rem;
+
+    &-main {
+        flex: 1;
+    }
+}
+
+.page__title {
+    font-family: "Poppins", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.page__subtitle {
+    font-family: "Raleway", sans-serif;
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin: 0;
 }

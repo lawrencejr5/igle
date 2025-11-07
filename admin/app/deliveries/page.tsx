@@ -146,6 +146,7 @@ const Deliveries = () => {
       <div className="table-header">
         <FilterButton
           onClick={handleFilterClick}
+          isOpen={isFilterOpen}
           hasActiveFilters={hasActiveFilters}
         />
         <SearchBar

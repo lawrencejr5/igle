@@ -83,7 +83,10 @@ const ReportsTable = ({
                 </td>
                 <td>
                   {report.anonymous ? (
-                    <span className="anonymous-badge">Anonymous</span>
+                    <div className="user-cell user-cell--anonymous">
+                      <div className="user-cell__avatar">A</div>
+                      <span className="user-cell__name">Anonymous</span>
+                    </div>
                   ) : report.reporter ? (
                     <div className="user-cell">
                       <div className="user-cell__avatar">

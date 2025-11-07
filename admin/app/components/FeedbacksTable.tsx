@@ -92,7 +92,10 @@ const FeedbacksTable = ({
                       </span>
                     </div>
                   ) : (
-                    <span className="anonymous-badge">Anonymous</span>
+                    <div className="user-cell user-cell--anonymous">
+                      <div className="user-cell__avatar">A</div>
+                      <span className="user-cell__name">Anonymous</span>
+                    </div>
                   )}
                 </td>
                 <td>
