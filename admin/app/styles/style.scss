@@ -95,6 +95,77 @@ body {
     }
 }
 
+/* Auth pages (signin/signup) should not be shifted by the sidenav */
+.page-content--auth {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff; /* page background set to white */
+    color: var(--color-primary); /* default page text color */
+}
+
+/* Auth card (signin) */
+.auth-card {
+    /* Auth card should be white (form on white background) */
+    background: #ffffff;
+    color: var(--color-primary);
+    border-radius: 12px;
+    padding: 2.25rem;
+    box-shadow: none; /* no shadow as requested */
+    width: 100%;
+    max-width: 480px;
+
+    /* Typography inside the card */
+    .page__title,
+    .page__subtitle {
+        color: var(--color-primary);
+    }
+
+    /* Inputs should be light and readable on white card */
+    .settings-form-group__input {
+        background-color: #ffffff;
+        color: var(--color-primary);
+        border: 1px solid #d1d5db;
+    }
+
+    .settings-form-group__label {
+        color: #374151;
+    }
+
+    a {
+        color: var(--color-accent);
+    }
+
+    /* Ensure primary button stands out on white card */
+    .btn--primary {
+        /* make primary button black on the auth card */
+        background-color: #121212;
+        color: #ffffff;
+        border: none;
+        box-shadow: none;
+
+        &:hover {
+            background-color: #1f1f1f;
+        }
+    }
+}
+
+.auth-card__logo {
+    display: block;
+    margin: 0 auto 1rem auto;
+    width: 88px;
+    height: 88px;
+    object-fit: contain;
+    border-radius: 20px;
+}
+
+.auth-card header {
+    text-align: center;
+}
+
 .page-header {
     font-size: 2rem;
     font-weight: 700;
