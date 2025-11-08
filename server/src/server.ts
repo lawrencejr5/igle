@@ -25,6 +25,7 @@ import ActivityRouter from "./routes/activity";
 import DeliveryRouter from "./routes/delivery";
 import FeedbackRouter from "./routes/feedback";
 import ReportRouter from "./routes/report";
+import AdminRouter from "./routes/admin";
 
 import { handle_socket_events } from "./sockets";
 import RatingRouter from "./routes/rating";
@@ -46,6 +47,7 @@ app.use("/api/v1/rating", RatingRouter);
 app.use("/api/v1/delivery", DeliveryRouter);
 app.use("/api/v1/feedback", FeedbackRouter);
 app.use("/api/v1/report", ReportRouter);
+app.use("/api/v1/admin", AdminRouter);
 
 app.use(not_found);
 
