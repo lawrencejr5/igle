@@ -32,6 +32,10 @@ export const get_task = async (req: Request, res: Response) => {
 
 export const create_task = async (req: Request, res: Response) => {
   try {
+    if ((req.user as any)?.role !== "admin")
+      return res
+        .status(403)
+        .json({ msg: "admin role required for this action" });
     const {
       title,
       description,
@@ -75,6 +79,10 @@ export const create_task = async (req: Request, res: Response) => {
 
 export const update_task = async (req: Request, res: Response) => {
   try {
+    if ((req.user as any)?.role !== "admin")
+      return res
+        .status(403)
+        .json({ msg: "admin role required for this action" });
     const { id } = req.params;
     const payload = req.body;
 
@@ -89,6 +97,10 @@ export const update_task = async (req: Request, res: Response) => {
 
 export const delete_task = async (req: Request, res: Response) => {
   try {
+    if ((req.user as any)?.role !== "admin")
+      return res
+        .status(403)
+        .json({ msg: "admin role required for this action" });
     const { id } = req.params;
     const task = await Task.findByIdAndDelete(id);
     if (!task) return res.status(404).json({ msg: "Task not found" });

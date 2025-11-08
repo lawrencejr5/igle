@@ -368,20 +368,7 @@ export const admin_get_transaction = async (req: Request, res: Response) => {
     if (!transaction)
       return res.status(404).json({ msg: "Transaction not found" });
 
-    // Optional: return activity count related to this transaction
-    let activitiesCount = 0;
-    try {
-      const activityModel = (await import("../models/activity")).default;
-      activitiesCount = await activityModel.countDocuments({
-        "metadata.transaction_id": transaction._id,
-      } as any);
-    } catch (e) {
-      // ignore if Activity model missing
-    }
-
-    return res
-      .status(200)
-      .json({ msg: "success", transaction, activitiesCount });
+    return res.status(200).json({ msg: "success", transaction });
   } catch (err) {
     console.error("admin_get_transaction error:", err);
     return res.status(500).json({ msg: "Server error." });

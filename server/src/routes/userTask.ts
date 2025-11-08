@@ -8,6 +8,8 @@ import {
   ensure_user_task,
   update_progress,
   claim_task,
+  admin_end_user_task,
+  admin_delete_user_task,
 } from "../controllers/userTask";
 
 UserTaskRouter.use(auth);
@@ -17,5 +19,9 @@ UserTaskRouter.get("/:taskId", get_user_task);
 UserTaskRouter.post("/:taskId/ensure", ensure_user_task);
 UserTaskRouter.post("/:taskId/progress", update_progress);
 UserTaskRouter.post("/:taskId/claim", claim_task);
+
+// Admin user-task management
+UserTaskRouter.patch("/admin/usertasks/end", admin_end_user_task);
+UserTaskRouter.delete("/admin/usertasks", admin_delete_user_task);
 
 export default UserTaskRouter;

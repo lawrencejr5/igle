@@ -148,4 +148,78 @@ export const claim_task = async (req: Request, res: Response) => {
   }
 };
 
+// --- Admin: Force-end a user's task (mark completed) ---
+export const admin_end_user_task = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(req.query.id || req.body?.id || "");
+
+    let userTask = null as any;
+
+    if (id) {
+      userTask = await UserTask.findById(id);
+    } else {
+      const user = req.query.user || req.body?.user;
+      const taskId = req.query.task || req.body?.task;
+      if (!user || !taskId)
+        return res
+          .status(400)
+          .json({ msg: "id or user and task are required" });
+      userTask = await UserTask.findOne({ user, task: taskId });
+    }
+
+    if (!userTask) return res.status(404).json({ msg: "UserTask not found" });
+
+    // set progress to goalCount if task known
+    const task = await Task.findById(userTask.task);
+    const goal = task?.goalCount ?? userTask.progress ?? 0;
+
+    userTask.progress = goal;
+    userTask.status = "completed";
+    userTask.completedAt = new Date();
+    await userTask.save();
+    await userTask.populate("task");
+
+    return res
+      .status(200)
+      .json({ msg: "UserTask marked completed", task: userTask });
+  } catch (err) {
+    console.error("admin_end_user_task error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// --- Admin: Delete a user's task record ---
+export const admin_delete_user_task = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(req.query.id || req.body?.id || "");
+
+    let deleted = null as any;
+
+    if (id) {
+      deleted = await UserTask.findByIdAndDelete(id);
+    } else {
+      const user = req.query.user || req.body?.user;
+      const taskId = req.query.task || req.body?.task;
+      if (!user || !taskId)
+        return res
+          .status(400)
+          .json({ msg: "id or user and task are required" });
+      deleted = await UserTask.findOneAndDelete({ user, task: taskId });
+    }
+
+    if (!deleted) return res.status(404).json({ msg: "UserTask not found" });
+
+    return res.status(200).json({ msg: "UserTask deleted" });
+  } catch (err) {
+    console.error("admin_delete_user_task error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
 export default {};
