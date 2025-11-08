@@ -7,7 +7,7 @@ export interface ReportType extends Document {
   category: string;
   description?: string;
   anonymous: boolean;
-  status: string;
+  status: "new" | "investigating" | "resolved";
 }
 
 const ReportSchema = new Schema<ReportType>(
@@ -18,7 +18,11 @@ const ReportSchema = new Schema<ReportType>(
     category: { type: String, required: true },
     description: { type: String, default: "" },
     anonymous: { type: Boolean, default: false },
-    status: { type: String, default: "new" },
+    status: {
+      type: String,
+      enum: ["new", "investigating", "resolved"],
+      default: "new",
+    },
   },
   { timestamps: true }
 );
