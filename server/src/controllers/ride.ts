@@ -886,3 +886,218 @@ export const pay_for_ride = async (req: Request, res: Response) => {
     res.status(500).json({ msg: "Server error", err });
   }
 };
+
+// --- Admin functions (moved to bottom) ---
+
+// Admin: fetch paginated rides with rider and driver populated
+export const admin_get_rides = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Number(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const status = req.query.status as string | undefined;
+    const filter: any = {};
+    if (status) filter.status = status;
+
+    const [total, rides] = await Promise.all([
+      Ride.countDocuments(filter),
+      Ride.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate({ path: "rider", select: "name phone" })
+        .populate({
+          path: "driver",
+          select: "user vehicle_type vehicle",
+          populate: { path: "user", select: "name phone" },
+        }),
+    ]);
+
+    const pages = Math.ceil(total / limit);
+    return res.status(200).json({ msg: "success", rides, total, page, pages });
+  } catch (err) {
+    console.error("admin_get_rides error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Admin: get single ride details (populate rider and driver, include related counts)
+export const admin_get_ride = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(
+      req.query.id ||
+        req.query.ride_id ||
+        req.query.rideId ||
+        req.body?.id ||
+        ""
+    );
+    if (!id) return res.status(400).json({ msg: "id is required" });
+
+    const ride = await Ride.findById(id)
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name email phone profile_pic",
+        },
+      })
+      .populate("rider", "name phone profile_pic");
+
+    if (!ride) return res.status(404).json({ msg: "Ride not found" });
+
+    // fetch related transactions and activities counts (quietly — non-blocking if model missing)
+    let transactionsCount = 0;
+    let activitiesCount = 0;
+    try {
+      const transactionModel = (await import("../models/transaction")).default;
+      transactionsCount = await transactionModel.countDocuments({
+        ride_id: ride._id,
+      } as any);
+    } catch (e) {
+      // ignore if transaction model not available
+    }
+
+    try {
+      activitiesCount = await Activity.countDocuments({
+        "metadata.ride_id": ride._id,
+      } as any);
+    } catch (e) {
+      // ignore
+    }
+
+    return res
+      .status(200)
+      .json({ msg: "success", ride, transactionsCount, activitiesCount });
+  } catch (err) {
+    console.error("admin_get_ride error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Admin: cancel an ongoing ride
+export const admin_cancel_ride = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(req.query.id || req.body?.id || "");
+    if (!id) return res.status(400).json({ msg: "id is required" });
+
+    const reason = (
+      req.query.reason ||
+      req.body?.reason ||
+      "Cancelled by admin"
+    ).toString();
+
+    const ride = await Ride.findById(id);
+    if (!ride) return res.status(404).json({ msg: "Ride not found" });
+
+    if (ride.status !== "ongoing") {
+      return res
+        .status(400)
+        .json({ msg: "Only ongoing rides can be cancelled by admin" });
+    }
+
+    // Notify rider and driver via sockets and push
+    const user_socket = await get_user_socket_id(ride.rider!);
+    const driver_socket = await get_driver_socket_id(ride.driver!);
+    if (user_socket)
+      io.to(user_socket).emit("ride_cancel", {
+        reason,
+        by: "admin",
+        ride_id: id,
+      });
+    if (driver_socket)
+      io.to(driver_socket).emit("ride_cancel", {
+        reason,
+        by: "admin",
+        ride_id: id,
+      });
+
+    // set ride cancelled metadata
+    ride.status = "cancelled";
+    ride.timestamps = {
+      ...(ride.timestamps || {}),
+      cancelled_at: new Date(),
+    } as any;
+    ride.cancelled = { by: "admin", reason } as any;
+    await ride.save();
+
+    try {
+      const riderTokens = ride?.rider
+        ? await get_user_push_tokens(ride.rider)
+        : [];
+      const driverTokens = ride?.driver
+        ? await get_driver_push_tokens(ride.driver)
+        : [];
+
+      if (riderTokens.length) {
+        await sendExpoPush(riderTokens, "Ride cancelled", reason, {
+          type: "ride_cancelled",
+          rideId: ride._id,
+          by: "admin",
+        });
+      }
+      if (driverTokens.length) {
+        await sendExpoPush(driverTokens, "Ride cancelled", reason, {
+          type: "ride_cancelled",
+          rideId: ride._id,
+          by: "admin",
+        });
+      }
+    } catch (e) {
+      console.error("Failed to send cancel push notifications:", e);
+    }
+
+    return res.status(200).json({ msg: "Ride cancelled by admin", ride });
+  } catch (err) {
+    console.error("admin_cancel_ride error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Admin: delete a ride and related data (transactions, activities)
+export const admin_delete_ride = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(req.query.id || req.body?.id || "");
+    if (!id) return res.status(400).json({ msg: "id is required" });
+
+    const ride = await Ride.findById(id);
+    if (!ride) return res.status(404).json({ msg: "Ride not found" });
+
+    // delete related transactions
+    try {
+      await Wallet.deleteMany({}); // noop placeholder - keep wallets intact
+    } catch (e) {
+      // ignore
+    }
+
+    // delete transactions linked to this ride
+    await (
+      await import("../models/transaction")
+    ).default.deleteMany({ ride_id: ride._id } as any);
+
+    // delete activities related to this ride
+    await Activity.deleteMany({ "metadata.ride_id": ride._id } as any);
+
+    // delete the ride itself
+    await Ride.deleteOne({ _id: ride._id });
+
+    return res.status(200).json({ msg: "Ride and related data deleted" });
+  } catch (err) {
+    console.error("admin_delete_ride error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};

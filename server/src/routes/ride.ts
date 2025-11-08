@@ -16,6 +16,10 @@ import {
   retry_ride,
   get_user_scheduled_rides,
   get_user_ongoing_ride,
+  admin_get_rides,
+  admin_get_ride,
+  admin_cancel_ride,
+  admin_delete_ride,
 } from "../controllers/ride";
 
 const RideRouter = Router();
@@ -35,5 +39,11 @@ RideRouter.get("/data", get_ride_data);
 RideRouter.get("/user", get_user_rides);
 RideRouter.patch("/status", update_ride_status);
 RideRouter.post("/pay", pay_for_ride);
+
+// Admin ride management
+RideRouter.get("/admin/rides", admin_get_rides);
+RideRouter.get("/admin/rides/data", admin_get_ride);
+RideRouter.patch("/admin/rides/cancel", admin_cancel_ride);
+RideRouter.delete("/admin/rides", admin_delete_ride);
 
 export default RideRouter;
