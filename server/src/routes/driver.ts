@@ -21,6 +21,10 @@ import {
   get_driver_rides_history,
   get_driver_delivered_deliveries,
   get_driver_cancelled_deliveries,
+  admin_get_driver,
+  admin_edit_driver,
+  admin_delete_driver,
+  admin_block_driver,
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
@@ -69,5 +73,11 @@ DriverRouter.get("/rides/history", get_driver_rides_history);
 DriverRouter.get("/deliveries/delivered", get_driver_delivered_deliveries);
 DriverRouter.get("/deliveries/cancelled", get_driver_cancelled_deliveries);
 DriverRouter.get("/transactions", get_driver_transactions);
+
+// Admin driver management (query-based id: ?id=...)
+DriverRouter.get("/admin/driver", admin_get_driver);
+DriverRouter.patch("/admin/driver", admin_edit_driver);
+DriverRouter.delete("/admin/driver", admin_delete_driver);
+DriverRouter.patch("/admin/driver/block", admin_block_driver);
 
 export default DriverRouter;

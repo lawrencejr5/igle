@@ -38,6 +38,13 @@ export interface DriverType extends Document {
   rating?: number;
   total_trips: number;
   num_of_reviews: number;
+  // optional admin fields
+  is_deleted?: boolean;
+  deleted_at?: Date;
+  deleted_by?: mongoose.Types.ObjectId;
+  is_blocked?: boolean;
+  blocked_at?: Date;
+  blocked_by?: mongoose.Types.ObjectId;
 }
 
 const DriverSchema = new Schema<DriverType>({
@@ -94,6 +101,13 @@ const DriverSchema = new Schema<DriverType>({
   rating: { type: Number, default: 5 },
   total_trips: { type: Number, default: 0 },
   num_of_reviews: { type: Number, default: 0 },
+  // admin fields for soft-delete and blocking
+  is_deleted: { type: Boolean, default: false },
+  deleted_at: { type: Date, default: undefined },
+  deleted_by: { type: Schema.Types.ObjectId, ref: "Admin", default: undefined },
+  is_blocked: { type: Boolean, default: false },
+  blocked_at: { type: Date, default: undefined },
+  blocked_by: { type: Schema.Types.ObjectId, ref: "Admin", default: undefined },
 });
 
 DriverSchema.index({ current_location: "2dsphere" });
