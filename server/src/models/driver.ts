@@ -38,6 +38,8 @@ export interface DriverType extends Document {
   rating?: number;
   total_trips: number;
   num_of_reviews: number;
+  application: "none" | "rejected" | "submitted" | "approved";
+
   // optional admin fields
   is_deleted?: boolean;
   deleted_at?: Date;
@@ -101,6 +103,12 @@ const DriverSchema = new Schema<DriverType>({
   rating: { type: Number, default: 5 },
   total_trips: { type: Number, default: 0 },
   num_of_reviews: { type: Number, default: 0 },
+  application: {
+    type: String,
+    enum: ["none", "submitted", "rejected", "approved"],
+    default: "none",
+  },
+
   // admin fields for soft-delete and blocking
   is_deleted: { type: Boolean, default: false },
   deleted_at: { type: Date, default: undefined },

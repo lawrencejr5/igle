@@ -25,6 +25,8 @@ import {
   admin_edit_driver,
   admin_delete_driver,
   admin_block_driver,
+  admin_get_driver_applications,
+  admin_process_driver_application,
 } from "../controllers/driver";
 
 import { auth } from "../middleware/auth";
@@ -79,5 +81,11 @@ DriverRouter.get("/admin/driver", admin_get_driver);
 DriverRouter.patch("/admin/driver", admin_edit_driver);
 DriverRouter.delete("/admin/driver", admin_delete_driver);
 DriverRouter.patch("/admin/driver/block", admin_block_driver);
+// driver application admin endpoints
+DriverRouter.get("/admin/driver/applications", admin_get_driver_applications);
+DriverRouter.patch(
+  "/admin/driver/application",
+  admin_process_driver_application
+);
 
 export default DriverRouter;
