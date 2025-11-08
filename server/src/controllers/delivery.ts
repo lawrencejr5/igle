@@ -8,6 +8,7 @@ import {
   get_driver_socket_id,
   get_driver_id,
   get_driver_push_tokens,
+  get_user_push_tokens,
 } from "../utils/get_id";
 import { sendExpoPush } from "../utils/expo_push";
 import { complete_delivery } from "../utils/complete_delivery";
@@ -806,5 +807,228 @@ export const get_driver_active_delivery = async (
     res.status(200).json({ msg: "success", delivery });
   } catch (err: any) {
     res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// --- Admin functions for deliveries ---
+
+export const admin_get_deliveries = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Number(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const status = req.query.status as string | undefined;
+    const filter: any = {};
+    if (status) filter.status = status;
+
+    const [total, deliveries] = await Promise.all([
+      (await import("../models/delivery")).default.countDocuments(filter),
+      (
+        await import("../models/delivery")
+      ).default
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("sender", "name phone")
+        .populate({
+          path: "driver",
+          select: "user vehicle_type vehicle",
+          populate: { path: "user", select: "name phone" },
+        }),
+    ]);
+
+    const pages = Math.ceil(total / limit);
+    return res
+      .status(200)
+      .json({ msg: "success", deliveries, total, page, pages });
+  } catch (err) {
+    console.error("admin_get_deliveries error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const admin_get_delivery = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(
+      req.query.id ||
+        req.query.delivery_id ||
+        req.query.deliveryId ||
+        req.body?.id ||
+        ""
+    );
+    if (!id) return res.status(400).json({ msg: "id is required" });
+
+    const delivery = await (
+      await import("../models/delivery")
+    ).default
+      .findById(id)
+      .populate("sender", "name phone profile_pic")
+      .populate({
+        path: "driver",
+        populate: { path: "user", select: "name phone profile_pic" },
+      });
+
+    if (!delivery) return res.status(404).json({ msg: "Delivery not found" });
+
+    let transactionsCount = 0;
+    let activitiesCount = 0;
+    try {
+      const transactionModel = (await import("../models/transaction")).default;
+      transactionsCount = await transactionModel.countDocuments({
+        ride_id: delivery._id,
+      } as any);
+    } catch (e) {
+      // ignore
+    }
+
+    try {
+      activitiesCount = await Activity.countDocuments({
+        "metadata.delivery_id": delivery._id,
+      } as any);
+    } catch (e) {
+      // ignore
+    }
+
+    return res
+      .status(200)
+      .json({ msg: "success", delivery, transactionsCount, activitiesCount });
+  } catch (err) {
+    console.error("admin_get_delivery error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const admin_cancel_delivery = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(req.query.id || req.body?.id || "");
+    if (!id) return res.status(400).json({ msg: "id is required" });
+
+    const reason = (
+      req.query.reason ||
+      req.body?.reason ||
+      "Cancelled by admin"
+    ).toString();
+
+    const deliveryModel = (await import("../models/delivery")).default;
+    const delivery = await deliveryModel.findById(id);
+    if (!delivery) return res.status(404).json({ msg: "Delivery not found" });
+
+    // Only allow admin to cancel deliveries in transit (mirror ride ongoing)
+    if (delivery.status !== "in_transit") {
+      return res
+        .status(400)
+        .json({ msg: "Only in_transit deliveries can be cancelled by admin" });
+    }
+
+    const senderSocket = await get_user_socket_id(delivery.sender!.toString());
+    const driverSocket = delivery.driver
+      ? await get_driver_socket_id(delivery.driver!.toString())
+      : null;
+    if (senderSocket)
+      io.to(senderSocket).emit("delivery_cancel", {
+        reason,
+        by: "admin",
+        delivery_id: id,
+      });
+    if (driverSocket)
+      io.to(driverSocket).emit("delivery_cancel", {
+        reason,
+        by: "admin",
+        delivery_id: id,
+      });
+
+    delivery.status = "cancelled" as any;
+    delivery.timestamps = {
+      ...(delivery.timestamps as any),
+      cancelled_at: new Date(),
+    } as any;
+    delivery.cancelled = { by: "admin", reason } as any;
+    await delivery.save();
+
+    try {
+      const senderTokens = delivery?.sender
+        ? await get_user_push_tokens(delivery.sender!.toString())
+        : [];
+      const driverTokens = delivery?.driver
+        ? await get_driver_push_tokens(delivery.driver!.toString())
+        : [];
+
+      if (senderTokens.length) {
+        await sendExpoPush(senderTokens, "Delivery cancelled", reason, {
+          type: "delivery_cancelled",
+          deliveryId: delivery._id,
+          by: "admin",
+        });
+      }
+      if (driverTokens.length) {
+        await sendExpoPush(driverTokens, "Delivery cancelled", reason, {
+          type: "delivery_cancelled",
+          deliveryId: delivery._id,
+          by: "admin",
+        });
+      }
+    } catch (e) {
+      console.error(
+        "Failed to send cancel push notifications for admin cancel:",
+        e
+      );
+    }
+
+    return res
+      .status(200)
+      .json({ msg: "Delivery cancelled by admin", delivery });
+  } catch (err) {
+    console.error("admin_cancel_delivery error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const admin_delete_delivery = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(req.query.id || req.body?.id || "");
+    if (!id) return res.status(400).json({ msg: "id is required" });
+
+    const deliveryModel = (await import("../models/delivery")).default;
+    const delivery = await deliveryModel.findById(id);
+    if (!delivery) return res.status(404).json({ msg: "Delivery not found" });
+
+    // delete related transactions (best-effort)
+    try {
+      await (
+        await import("../models/transaction")
+      ).default.deleteMany({ ride_id: delivery._id } as any);
+    } catch (e) {
+      // ignore
+    }
+
+    // delete activities related to this delivery
+    try {
+      await Activity.deleteMany({
+        "metadata.delivery_id": delivery._id,
+      } as any);
+    } catch (e) {
+      // ignore
+    }
+
+    await deliveryModel.deleteOne({ _id: delivery._id });
+
+    return res.status(200).json({ msg: "Delivery and related data deleted" });
+  } catch (err) {
+    console.error("admin_delete_delivery error:", err);
+    return res.status(500).json({ msg: "Server error." });
   }
 };

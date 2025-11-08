@@ -16,6 +16,10 @@ import {
   get_user_cancelled_deliveries,
   get_user_delivered_deliveries,
   get_driver_active_delivery,
+  admin_get_deliveries,
+  admin_get_delivery,
+  admin_cancel_delivery,
+  admin_delete_delivery,
 } from "../controllers/delivery";
 
 const DeliveryRouter = Router();
@@ -37,5 +41,11 @@ DeliveryRouter.get("/data", get_delivery_data);
 DeliveryRouter.get("/user", get_user_deliveries);
 DeliveryRouter.patch("/status", update_delivery_status);
 DeliveryRouter.post("/pay", pay_for_delivery);
+
+// Admin delivery management
+DeliveryRouter.get("/admin/deliveries", admin_get_deliveries);
+DeliveryRouter.get("/admin/deliveries/data", admin_get_delivery);
+DeliveryRouter.patch("/admin/deliveries/cancel", admin_cancel_delivery);
+DeliveryRouter.delete("/admin/deliveries", admin_delete_delivery);
 
 export default DeliveryRouter;
