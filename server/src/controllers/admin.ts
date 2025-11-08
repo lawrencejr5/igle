@@ -6,6 +6,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import Admin from "../models/admin";
+import User from "../models/user";
+import Driver from "../models/driver";
+import Ride from "../models/ride";
+import Delivery from "../models/delivery";
+import Report from "../models/report";
+import Transaction from "../models/transaction";
 import { cloudinary } from "../middleware/upload";
 
 const jwt_secret = process.env.JWT_SECRET;
@@ -29,7 +35,7 @@ export const register = async (req: Request, res: Response) => {
     const admin = await Admin.create({ username, email, password: hashed });
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email },
+      { id: admin._id, email: admin.email, role: "admin" },
       jwt_secret as string,
       {
         expiresIn: "7d",
@@ -76,7 +82,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email },
+      { id: admin._id, email: admin.email, role: "admin" },
       jwt_secret as string,
       {
         expiresIn: "7d",
@@ -95,6 +101,11 @@ export const login = async (req: Request, res: Response) => {
 
 // Get authenticated admin data
 export const get_admin_data = async (req: Request, res: Response) => {
+  // only admins may call this
+  if ((req.user as any)?.role !== "admin") {
+    return res.status(403).json({ msg: "admin role required for this action" });
+  }
+
   try {
     const id = req.user?.id;
     const admin = await Admin.findById(id).select("-password");
@@ -108,6 +119,11 @@ export const get_admin_data = async (req: Request, res: Response) => {
 
 // Update profile (username/email)
 export const update_profile = async (req: Request, res: Response) => {
+  // only admins may call this
+  if ((req.user as any)?.role !== "admin") {
+    return res.status(403).json({ msg: "admin role required for this action" });
+  }
+
   try {
     const id = req.user?.id;
     const { username, email } = req.body;
@@ -134,6 +150,11 @@ export const update_profile = async (req: Request, res: Response) => {
 
 // Update password
 export const update_password = async (req: Request, res: Response) => {
+  // only admins may call this
+  if ((req.user as any)?.role !== "admin") {
+    return res.status(403).json({ msg: "admin role required for this action" });
+  }
+
   try {
     const id = req.user?.id;
     const { old_password, new_password, confirm_password } = req.body;
@@ -166,6 +187,11 @@ export const update_password = async (req: Request, res: Response) => {
 
 // Upload profile picture
 export const upload_profile_pic = async (req: Request, res: Response) => {
+  // only admins may call this
+  if ((req.user as any)?.role !== "admin") {
+    return res.status(403).json({ msg: "admin role required for this action" });
+  }
+
   const admin_id = req.user?.id;
   const filePath = req.file?.path;
 
@@ -203,6 +229,11 @@ export const upload_profile_pic = async (req: Request, res: Response) => {
 };
 
 export const remove_profile_pic = async (req: Request, res: Response) => {
+  // only admins may call this
+  if ((req.user as any)?.role !== "admin") {
+    return res.status(403).json({ msg: "admin role required for this action" });
+  }
+
   try {
     const adminId = req.user?.id;
     const admin = await Admin.findById(adminId);
@@ -228,3 +259,61 @@ export const remove_profile_pic = async (req: Request, res: Response) => {
 };
 
 export default {};
+
+// Admin summary: totals and revenue this month
+export const summary = async (req: Request, res: Response) => {
+  // ensure requester is admin
+  const role = (req.user as any)?.role;
+  if (role !== "admin") {
+    return res.status(403).json({ msg: "admin role required for this action" });
+  }
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const [
+      totalUsers,
+      activeDrivers,
+      activeRides,
+      activeDeliveries,
+      totalReports,
+      revenueAgg,
+    ] = await Promise.all([
+      User.countDocuments({}),
+      Driver.countDocuments({ is_online: true }),
+      Ride.countDocuments({
+        status: { $in: ["accepted", "arrived", "ongoing"] },
+      }),
+      Delivery.countDocuments({
+        status: { $in: ["accepted", "arrived", "picked_up", "in_transit"] },
+      }),
+      Report.countDocuments({}),
+      Transaction.aggregate([
+        {
+          $match: {
+            type: "payment",
+            status: "success",
+            createdAt: { $gte: startOfMonth, $lt: startOfNextMonth },
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
+    ]);
+
+    const totalRevenueThisMonth =
+      (revenueAgg && revenueAgg[0] && revenueAgg[0].total) || 0;
+
+    return res.status(200).json({
+      totalUsers,
+      activeDrivers,
+      activeRides,
+      activeDeliveries,
+      totalReports,
+      totalRevenueThisMonth,
+    });
+  } catch (err) {
+    console.error("admin summary error:", err);
+    res.status(500).json({ msg: "Server error." });
+  }
+};

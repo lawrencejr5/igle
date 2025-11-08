@@ -9,6 +9,7 @@ import {
   update_password,
   upload_profile_pic,
   remove_profile_pic,
+  summary,
 } from "../controllers/admin";
 
 import { auth } from "../middleware/auth";
@@ -26,5 +27,6 @@ AdminRouter.patch(
   upload_profile_pic
 );
 AdminRouter.patch("/remove_pic", auth, remove_profile_pic);
+AdminRouter.get("/summary", auth, summary);
 
 export default AdminRouter;
