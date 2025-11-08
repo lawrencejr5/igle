@@ -15,6 +15,11 @@ import {
   upload_profile_pic,
   remove_profile_pic,
   set_push_token,
+  admin_get_users,
+  admin_get_user,
+  admin_edit_user,
+  admin_delete_user,
+  admin_block_user,
 } from "../controllers/user";
 
 import { auth } from "../middleware/auth";
@@ -44,5 +49,13 @@ UserRouter.patch("/password", auth, update_password);
 UserRouter.patch("/driver_application", auth, update_driver_application);
 
 UserRouter.get("/data", auth, get_user_data);
+
+// Admin user management
+UserRouter.get("/admin/users", auth, admin_get_users);
+// single-user admin operations now use query `?id=...` instead of path params
+UserRouter.get("/admin/user", auth, admin_get_user);
+UserRouter.patch("/admin/user", auth, admin_edit_user);
+UserRouter.delete("/admin/user", auth, admin_delete_user);
+UserRouter.patch("/admin/user/block", auth, admin_block_user);
 
 export default UserRouter;

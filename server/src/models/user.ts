@@ -20,6 +20,12 @@ export interface UserType extends Document {
   driver_application: "none" | "rejected" | "submitted" | "approved";
   is_driver: boolean;
   is_verified: boolean;
+  is_deleted?: boolean;
+  deleted_at?: Date;
+  deleted_by?: any;
+  is_blocked?: boolean;
+  blocked_at?: Date;
+  blocked_by?: any;
   expo_push_tokens?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -60,6 +66,14 @@ const UserSchema = new Schema<UserType>(
     },
     is_driver: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },
+    // soft delete fields
+    is_deleted: { type: Boolean, default: false },
+    deleted_at: { type: Date, default: null },
+    deleted_by: { type: Schema.Types.ObjectId, ref: "Admin", default: null },
+    // block fields
+    is_blocked: { type: Boolean, default: false },
+    blocked_at: { type: Date, default: null },
+    blocked_by: { type: Schema.Types.ObjectId, ref: "Admin", default: null },
     // Expo push tokens (multiple devices per user)
     expo_push_tokens: { type: [String], default: [] },
   },
