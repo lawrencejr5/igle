@@ -305,3 +305,85 @@ export const get_driver_earnings_stats = async (
     res.status(500).json({ msg: "Could not fetch earnings stats", error: err });
   }
 };
+
+// --- Admin transaction functions ---
+
+export const admin_get_transactions = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Number(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const { type, status, wallet_id, owner_id } = req.query as any;
+
+    const filter: any = {};
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+    if (wallet_id) filter.wallet_id = wallet_id;
+
+    // If owner_id provided, find wallets for that owner and filter by them
+    if (owner_id) {
+      const wallets = await Wallet.find({ owner_id: owner_id });
+      const ids = wallets.map((w) => w._id);
+      filter.wallet_id = { $in: ids } as any;
+    }
+
+    const [total, transactions] = await Promise.all([
+      Transaction.countDocuments(filter),
+      Transaction.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("ride_id")
+        .populate({ path: "wallet_id", populate: { path: "owner_id" } }),
+    ]);
+
+    const pages = Math.ceil(total / limit);
+    return res
+      .status(200)
+      .json({ msg: "success", transactions, total, page, pages });
+  } catch (err) {
+    console.error("admin_get_transactions error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+export const admin_get_transaction = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(
+      req.query.id || req.query.transaction_id || req.body?.id || ""
+    );
+    if (!id) return res.status(400).json({ msg: "id is required" });
+
+    const transaction = await Transaction.findById(id)
+      .populate("ride_id")
+      .populate({ path: "wallet_id", populate: { path: "owner_id" } });
+
+    if (!transaction)
+      return res.status(404).json({ msg: "Transaction not found" });
+
+    // Optional: return activity count related to this transaction
+    let activitiesCount = 0;
+    try {
+      const activityModel = (await import("../models/activity")).default;
+      activitiesCount = await activityModel.countDocuments({
+        "metadata.transaction_id": transaction._id,
+      } as any);
+    } catch (e) {
+      // ignore if Activity model missing
+    }
+
+    return res
+      .status(200)
+      .json({ msg: "success", transaction, activitiesCount });
+  } catch (err) {
+    console.error("admin_get_transaction error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
