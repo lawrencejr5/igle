@@ -69,6 +69,14 @@ const UserSchema = new mongoose_1.Schema({
     },
     is_driver: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },
+    // soft delete fields
+    is_deleted: { type: Boolean, default: false },
+    deleted_at: { type: Date, default: null },
+    deleted_by: { type: mongoose_1.Schema.Types.ObjectId, ref: "Admin", default: null },
+    // block fields
+    is_blocked: { type: Boolean, default: false },
+    blocked_at: { type: Date, default: null },
+    blocked_by: { type: mongoose_1.Schema.Types.ObjectId, ref: "Admin", default: null },
     // Expo push tokens (multiple devices per user)
     expo_push_tokens: { type: [String], default: [] },
 }, { timestamps: true });

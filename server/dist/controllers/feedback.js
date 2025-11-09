@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_all_feedbacks = exports.get_user_feedbacks = exports.add_feedback = void 0;
+exports.get_feedback_detail = exports.delete_feedback = exports.get_all_feedbacks = exports.get_user_feedbacks = exports.add_feedback = void 0;
 const fs_1 = __importDefault(require("fs"));
 const feedback_1 = __importDefault(require("../models/feedback"));
 const upload_file_1 = require("../utils/upload_file");
@@ -86,14 +86,76 @@ const get_user_feedbacks = (req, res) => __awaiter(void 0, void 0, void 0, funct
 exports.get_user_feedbacks = get_user_feedbacks;
 // (Optional) Get all feedbacks for admin/audit
 const get_all_feedbacks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    // Admin-only paginated listing
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
     try {
-        const feedbacks = yield feedback_1.default.find().sort({ createdAt: -1 });
-        res
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.max(1, Number(req.query.limit) || 20);
+        const skip = (page - 1) * limit;
+        const { type, user } = req.query;
+        const filter = {};
+        if (type)
+            filter.type = type;
+        if (user)
+            filter.user = user;
+        const [total, feedbacks] = yield Promise.all([
+            feedback_1.default.countDocuments(filter),
+            feedback_1.default.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate("user", "name email phone"),
+        ]);
+        const pages = Math.ceil(total / limit);
+        return res
             .status(200)
-            .json({ msg: "success", rowCount: feedbacks.length, feedbacks });
+            .json({ msg: "success", feedbacks, total, page, pages });
     }
     catch (err) {
+        console.error("get_all_feedbacks error:", err);
         res.status(500).json({ msg: "Server error." });
     }
 });
 exports.get_all_feedbacks = get_all_feedbacks;
+// Admin: delete feedback
+const delete_feedback = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || req.body.id || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const deleted = yield feedback_1.default.findByIdAndDelete(id);
+        if (!deleted)
+            return res.status(404).json({ msg: "Feedback not found" });
+        return res.status(200).json({ msg: "Feedback deleted" });
+    }
+    catch (err) {
+        console.error("delete_feedback error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.delete_feedback = delete_feedback;
+// Admin: get feedback detail
+const get_feedback_detail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || req.body.id || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const feedback = yield feedback_1.default.findById(id).populate("user", "name email phone profile_pic");
+        if (!feedback)
+            return res.status(404).json({ msg: "Feedback not found" });
+        return res.status(200).json({ msg: "success", feedback });
+    }
+    catch (err) {
+        console.error("get_feedback_detail error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.get_feedback_detail = get_feedback_detail;

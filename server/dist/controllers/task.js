@@ -47,7 +47,12 @@ const get_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.get_task = get_task;
 const create_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+            return res
+                .status(403)
+                .json({ msg: "admin role required for this action" });
         const { title, description, type, goalCount, rewardAmount, active, startAt, endAt, terms, maxPerUser, totalBudget, } = req.body;
         if (!title || goalCount === undefined || rewardAmount === undefined) {
             return res
@@ -76,7 +81,12 @@ const create_task = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.create_task = create_task;
 const update_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+            return res
+                .status(403)
+                .json({ msg: "admin role required for this action" });
         const { id } = req.params;
         const payload = req.body;
         const task = yield task_1.default.findByIdAndUpdate(id, payload, { new: true });
@@ -91,7 +101,12 @@ const update_task = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.update_task = update_task;
 const delete_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+            return res
+                .status(403)
+                .json({ msg: "admin role required for this action" });
         const { id } = req.params;
         const task = yield task_1.default.findByIdAndDelete(id);
         if (!task)

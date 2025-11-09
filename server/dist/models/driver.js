@@ -88,6 +88,18 @@ const DriverSchema = new mongoose_1.Schema({
     rating: { type: Number, default: 5 },
     total_trips: { type: Number, default: 0 },
     num_of_reviews: { type: Number, default: 0 },
+    application: {
+        type: String,
+        enum: ["none", "submitted", "rejected", "approved"],
+        default: "none",
+    },
+    // admin fields for soft-delete and blocking
+    is_deleted: { type: Boolean, default: false },
+    deleted_at: { type: Date, default: undefined },
+    deleted_by: { type: mongoose_1.Schema.Types.ObjectId, ref: "Admin", default: undefined },
+    is_blocked: { type: Boolean, default: false },
+    blocked_at: { type: Date, default: undefined },
+    blocked_by: { type: mongoose_1.Schema.Types.ObjectId, ref: "Admin", default: undefined },
 });
 DriverSchema.index({ current_location: "2dsphere" });
 exports.default = mongoose_1.default.model("Driver", DriverSchema);

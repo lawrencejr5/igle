@@ -27,6 +27,7 @@ import FeedbackRouter from "./routes/feedback";
 import ReportRouter from "./routes/report";
 import AdminRouter from "./routes/admin";
 import AppWalletRouter from "./routes/app_wallet";
+import SystemSettingsRouter from "./routes/system_settings";
 
 import { handle_socket_events } from "./sockets";
 import RatingRouter from "./routes/rating";
@@ -50,6 +51,7 @@ app.use("/api/v1/feedback", FeedbackRouter);
 app.use("/api/v1/report", ReportRouter);
 app.use("/api/v1/admin", AdminRouter);
 app.use("/api/v1/app_wallet", AppWalletRouter);
+app.use("/api/v1/system", SystemSettingsRouter);
 
 app.use(not_found);
 

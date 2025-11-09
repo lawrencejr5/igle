@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.claim_task = exports.update_progress = exports.ensure_user_task = exports.get_user_task = exports.get_user_tasks = void 0;
+exports.admin_delete_user_task = exports.admin_end_user_task = exports.claim_task = exports.update_progress = exports.ensure_user_task = exports.get_user_task = exports.get_user_tasks = void 0;
 const userTask_1 = __importDefault(require("../models/userTask"));
 const task_1 = __importDefault(require("../models/task"));
 const wallet_1 = __importDefault(require("../models/wallet"));
@@ -162,4 +162,74 @@ const claim_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.claim_task = claim_task;
+// --- Admin: Force-end a user's task (mark completed) ---
+const admin_end_user_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        let userTask = null;
+        if (id) {
+            userTask = yield userTask_1.default.findById(id);
+        }
+        else {
+            const user = req.query.user || ((_c = req.body) === null || _c === void 0 ? void 0 : _c.user);
+            const taskId = req.query.task || ((_d = req.body) === null || _d === void 0 ? void 0 : _d.task);
+            if (!user || !taskId)
+                return res
+                    .status(400)
+                    .json({ msg: "id or user and task are required" });
+            userTask = yield userTask_1.default.findOne({ user, task: taskId });
+        }
+        if (!userTask)
+            return res.status(404).json({ msg: "UserTask not found" });
+        // set progress to goalCount if task known
+        const task = yield task_1.default.findById(userTask.task);
+        const goal = (_f = (_e = task === null || task === void 0 ? void 0 : task.goalCount) !== null && _e !== void 0 ? _e : userTask.progress) !== null && _f !== void 0 ? _f : 0;
+        userTask.progress = goal;
+        userTask.status = "completed";
+        userTask.completedAt = new Date();
+        yield userTask.save();
+        yield userTask.populate("task");
+        return res
+            .status(200)
+            .json({ msg: "UserTask marked completed", task: userTask });
+    }
+    catch (err) {
+        console.error("admin_end_user_task error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_end_user_task = admin_end_user_task;
+// --- Admin: Delete a user's task record ---
+const admin_delete_user_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        let deleted = null;
+        if (id) {
+            deleted = yield userTask_1.default.findByIdAndDelete(id);
+        }
+        else {
+            const user = req.query.user || ((_c = req.body) === null || _c === void 0 ? void 0 : _c.user);
+            const taskId = req.query.task || ((_d = req.body) === null || _d === void 0 ? void 0 : _d.task);
+            if (!user || !taskId)
+                return res
+                    .status(400)
+                    .json({ msg: "id or user and task are required" });
+            deleted = yield userTask_1.default.findOneAndDelete({ user, task: taskId });
+        }
+        if (!deleted)
+            return res.status(404).json({ msg: "UserTask not found" });
+        return res.status(200).json({ msg: "UserTask deleted" });
+    }
+    catch (err) {
+        console.error("admin_delete_user_task error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_delete_user_task = admin_delete_user_task;
 exports.default = {};

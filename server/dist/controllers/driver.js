@@ -45,12 +45,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_driver_cancelled_deliveries = exports.get_driver_delivered_deliveries = exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_delivery = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.upload_driver_profile_pic = exports.create_driver = void 0;
+exports.get_driver_cancelled_deliveries = exports.get_driver_delivered_deliveries = exports.get_driver_rides_history = exports.get_driver_cancelled_rides = exports.get_driver_completed_rides = exports.save_bank_info = exports.update_driver_info = exports.update_driver_rating = exports.get_driver_by_user = exports.set_driver_online_status = exports.update_driver_license = exports.update_vehicle_info = exports.set_driver_availability = exports.get_driver_transactions = exports.get_driver_active_delivery = exports.get_driver_active_ride = exports.get_driver = exports.update_location = exports.upload_driver_profile_pic = exports.create_driver = exports.admin_process_driver_application = exports.admin_get_driver_applications = exports.admin_block_driver = exports.admin_delete_driver = exports.admin_edit_driver = exports.admin_get_driver = void 0;
 const driver_1 = __importDefault(require("../models/driver"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const ride_1 = __importDefault(require("../models/ride"));
 const delivery_1 = __importDefault(require("../models/delivery"));
 const transaction_1 = __importDefault(require("../models/transaction"));
+const user_1 = __importDefault(require("../models/user"));
 const get_id_1 = require("../utils/get_id");
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -68,6 +69,260 @@ const safeUnlink = (path) => __awaiter(void 0, void 0, void 0, function* () {
         console.error("Failed to delete temp file:", path, err);
     }
 });
+// --- Admin functions (moved to bottom) ---
+// Admin: fetch driver by id (query ?id=...)
+const admin_get_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin") {
+        res.status(403).json({ msg: "admin role required for this action" });
+        return;
+    }
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const driver = yield driver_1.default.findById(id).populate("user");
+        if (!driver)
+            return res.status(404).json({ msg: "Driver not found" });
+        const wallet = yield wallet_1.default.findOne({
+            owner_id: driver._id,
+            owner_type: "Driver",
+        });
+        res.status(200).json({
+            msg: "success",
+            driver,
+            wallet_balance: wallet ? wallet.balance : 0,
+        });
+    }
+    catch (err) {
+        console.error("admin_get_driver error:", err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_driver = admin_get_driver;
+// Admin: edit driver
+const admin_edit_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin") {
+        res.status(403).json({ msg: "admin role required for this action" });
+        return;
+    }
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const allowed = [
+            "profile_img",
+            "vehicle_type",
+            "vehicle",
+            "is_available",
+            "rating",
+            "bank",
+            "driver_licence",
+            "total_trips",
+            "num_of_reviews",
+        ];
+        const update = {};
+        for (const key of allowed) {
+            if (req.body[key] !== undefined)
+                update[key] = req.body[key];
+        }
+        if (Object.keys(update).length === 0)
+            return res.status(400).json({ msg: "Nothing to update" });
+        const driver = yield driver_1.default.findByIdAndUpdate(id, update, { new: true });
+        if (!driver)
+            return res.status(404).json({ msg: "Driver not found" });
+        res.status(200).json({ msg: "Driver updated", driver });
+    }
+    catch (err) {
+        console.error("admin_edit_driver error:", err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_edit_driver = admin_edit_driver;
+// Admin: delete driver and related data
+const admin_delete_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin") {
+        res.status(403).json({ msg: "admin role required for this action" });
+        return;
+    }
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const driver = yield driver_1.default.findById(id);
+        if (!driver)
+            return res.status(404).json({ msg: "Driver not found" });
+        const soft = req.query.soft === "true" || ((_c = req.body) === null || _c === void 0 ? void 0 : _c.soft) === true;
+        if (soft) {
+            // attempt soft-delete if schema allows
+            try {
+                driver.is_deleted = true;
+                driver.deleted_at = new Date();
+                driver.deleted_by = (_d = req.user) === null || _d === void 0 ? void 0 : _d.id;
+                yield driver.save();
+                return res.status(200).json({ msg: "Driver soft-deleted" });
+            }
+            catch (e) {
+                console.warn("soft-delete not supported on Driver schema, falling back to hard delete", e);
+            }
+        }
+        // delete driver's wallets and transactions
+        const wallets = yield wallet_1.default.find({ owner_id: driver._id });
+        const walletIds = wallets.map((w) => w._id);
+        if (walletIds.length) {
+            yield transaction_1.default.deleteMany({ wallet_id: { $in: walletIds } });
+            yield wallet_1.default.deleteMany({ _id: { $in: walletIds } });
+        }
+        // delete rides and deliveries where driver is assigned
+        yield ride_1.default.deleteMany({ driver: driver._id });
+        yield delivery_1.default.deleteMany({ driver: driver._id });
+        // delete driver record
+        yield driver_1.default.deleteOne({ _id: driver._id });
+        // optionally, do not delete the user account here — admins may prefer that
+        res.status(200).json({ msg: "Driver and related data deleted" });
+    }
+    catch (err) {
+        console.error("admin_delete_driver error:", err);
+        res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_delete_driver = admin_delete_driver;
+// Admin: block or unblock driver (also blocks associated user)
+const admin_block_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin") {
+        res.status(403).json({ msg: "admin role required for this action" });
+        return;
+    }
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const block = ((_c = req.body) === null || _c === void 0 ? void 0 : _c.block) === true || ((_d = req.query) === null || _d === void 0 ? void 0 : _d.block) === "true";
+        const driver = yield driver_1.default.findById(id);
+        if (!driver)
+            return res.status(404).json({ msg: "Driver not found" });
+        // set block flags on driver (if schema allows)
+        try {
+            driver.is_blocked = block;
+            driver.blocked_at = block ? new Date() : null;
+            driver.blocked_by = block ? (_e = req.user) === null || _e === void 0 ? void 0 : _e.id : null;
+            yield driver.save();
+        }
+        catch (e) {
+            console.warn("could not set block fields on Driver schema:", e);
+        }
+        // also block/unblock the associated user to prevent login
+        if (driver.user) {
+            const user = yield user_1.default.findById(driver.user);
+            if (user) {
+                user.is_blocked = block;
+                user.blocked_at = block ? new Date() : undefined;
+                user.blocked_by = block ? (_f = req.user) === null || _f === void 0 ? void 0 : _f.id : undefined;
+                yield user.save();
+            }
+        }
+        return res
+            .status(200)
+            .json({ msg: block ? "Driver blocked" : "Driver unblocked" });
+    }
+    catch (err) {
+        console.error("admin_block_driver error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_block_driver = admin_block_driver;
+// Admin: list driver applications (submitted)
+const admin_get_driver_applications = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.max(1, Number(req.query.limit) || 20);
+        const skip = (page - 1) * limit;
+        const includeDeleted = req.query.include_deleted === "true";
+        const filter = { application: "submitted" };
+        if (!includeDeleted)
+            filter.is_deleted = false;
+        const [total, drivers] = yield Promise.all([
+            driver_1.default.countDocuments(filter),
+            driver_1.default.find(filter)
+                .populate("user")
+                .skip(skip)
+                .limit(limit)
+                .sort({ createdAt: -1 }),
+        ]);
+        const pages = Math.ceil(total / limit);
+        return res
+            .status(200)
+            .json({ msg: "success", drivers, total, page, pages });
+    }
+    catch (err) {
+        console.error("admin_get_driver_applications error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_driver_applications = admin_get_driver_applications;
+// Admin: approve or reject a driver's application
+const admin_process_driver_application = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const action = (req.query.action || ((_c = req.body) === null || _c === void 0 ? void 0 : _c.action) || "")
+            .toString()
+            .toLowerCase();
+        if (!["approve", "reject"].includes(action))
+            return res
+                .status(400)
+                .json({ msg: "action must be 'approve' or 'reject'" });
+        const driver = yield driver_1.default.findById(id).populate("user");
+        if (!driver)
+            return res.status(404).json({ msg: "Driver not found" });
+        if (action === "approve") {
+            driver.application = "approved";
+            yield driver.save();
+            // mark user as driver and ensure wallet exists
+            if (driver.user) {
+                const user = yield user_1.default.findById(driver.user);
+                if (user) {
+                    user.is_driver = true;
+                    yield user.save();
+                }
+            }
+            // ensure wallet exists
+            const wallet = yield wallet_1.default.findOne({
+                owner_id: driver._id,
+                owner_type: "Driver",
+            });
+            if (!wallet) {
+                yield wallet_1.default.create({
+                    owner_id: driver._id,
+                    owner_type: "Driver",
+                    balance: 0,
+                });
+            }
+            return res
+                .status(200)
+                .json({ msg: "Driver application approved", driver });
+        }
+        // reject
+        driver.application = "rejected";
+        yield driver.save();
+        return res.status(200).json({ msg: "Driver application rejected", driver });
+    }
+    catch (err) {
+        console.error("admin_process_driver_application error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_process_driver_application = admin_process_driver_application;
 // Create a new driver
 const create_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -191,7 +446,16 @@ const get_driver = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             res.status(404).json({ msg: "Driver not found." });
             return;
         }
-        res.status(200).json({ msg: "success", driver });
+        // include driver wallet balance if exists
+        const wallet = yield wallet_1.default.findOne({
+            owner_id: driver._id,
+            owner_type: "Driver",
+        });
+        res.status(200).json({
+            msg: "success",
+            driver,
+            wallet_balance: wallet ? wallet.balance : 0,
+        });
     }
     catch (err) {
         res.status(500).json({ msg: "Server error." });

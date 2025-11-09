@@ -20,4 +20,9 @@ DeliveryRouter.get("/data", delivery_1.get_delivery_data);
 DeliveryRouter.get("/user", delivery_1.get_user_deliveries);
 DeliveryRouter.patch("/status", delivery_1.update_delivery_status);
 DeliveryRouter.post("/pay", delivery_1.pay_for_delivery);
+// Admin delivery management
+DeliveryRouter.get("/admin/deliveries", delivery_1.admin_get_deliveries);
+DeliveryRouter.get("/admin/deliveries/data", delivery_1.admin_get_delivery);
+DeliveryRouter.patch("/admin/deliveries/cancel", delivery_1.admin_cancel_delivery);
+DeliveryRouter.delete("/admin/deliveries", delivery_1.admin_delete_delivery);
 exports.default = DeliveryRouter;

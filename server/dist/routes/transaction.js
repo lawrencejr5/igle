@@ -11,4 +11,7 @@ TransactionRouter.get("/user", transaction_1.get_user_transactions);
 TransactionRouter.get("/driver", transaction_1.get_driver_transactions);
 TransactionRouter.post("/driver/withdraw", transaction_1.initiate_driver_withdrawal);
 TransactionRouter.get("/driver/earnings-stats", transaction_1.get_driver_earnings_stats);
+// Admin transaction management
+TransactionRouter.get("/admin/transactions", transaction_1.admin_get_transactions);
+TransactionRouter.get("/admin/transactions/data", transaction_1.admin_get_transaction);
 exports.default = TransactionRouter;

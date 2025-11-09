@@ -34,17 +34,14 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const ReportSchema = new mongoose_1.Schema({
-    reporter: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: false },
-    driver: { type: mongoose_1.Schema.Types.ObjectId, ref: "Driver", required: true },
-    ride: { type: mongoose_1.Schema.Types.ObjectId, ref: "Ride", required: false },
-    category: { type: String, required: true },
-    description: { type: String, default: "" },
-    anonymous: { type: Boolean, default: false },
-    status: {
-        type: String,
-        enum: ["new", "investigating", "resolved"],
-        default: "new",
+const SystemSettingSchema = new mongoose_1.Schema({
+    rideFare: {
+        type: mongoose_1.Schema.Types.Mixed,
+        default: {},
+    },
+    deliveryFare: {
+        type: mongoose_1.Schema.Types.Mixed,
+        default: {},
     },
 }, { timestamps: true });
-exports.default = mongoose_1.default.model("Report", ReportSchema);
+exports.default = mongoose_1.default.model("SystemSetting", SystemSettingSchema);

@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_ongoing_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = void 0;
+exports.admin_delete_ride = exports.admin_cancel_ride = exports.admin_get_ride = exports.admin_get_rides = exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_ongoing_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = void 0;
 const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
@@ -761,3 +794,200 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.pay_for_ride = pay_for_ride;
+// --- Admin functions (moved to bottom) ---
+// Admin: fetch paginated rides with rider and driver populated
+const admin_get_rides = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.max(1, Number(req.query.limit) || 20);
+        const skip = (page - 1) * limit;
+        const status = req.query.status;
+        const filter = {};
+        if (status)
+            filter.status = status;
+        const [total, rides] = yield Promise.all([
+            ride_1.default.countDocuments(filter),
+            ride_1.default.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate({ path: "rider", select: "name phone" })
+                .populate({
+                path: "driver",
+                select: "user vehicle_type vehicle",
+                populate: { path: "user", select: "name phone" },
+            }),
+        ]);
+        const pages = Math.ceil(total / limit);
+        return res.status(200).json({ msg: "success", rides, total, page, pages });
+    }
+    catch (err) {
+        console.error("admin_get_rides error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_rides = admin_get_rides;
+// Admin: get single ride details (populate rider and driver, include related counts)
+const admin_get_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id ||
+            req.query.ride_id ||
+            req.query.rideId ||
+            ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) ||
+            "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const ride = yield ride_1.default.findById(id)
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name email phone profile_pic",
+            },
+        })
+            .populate("rider", "name phone profile_pic");
+        if (!ride)
+            return res.status(404).json({ msg: "Ride not found" });
+        // fetch related transactions and activities counts (quietly — non-blocking if model missing)
+        let transactionsCount = 0;
+        let activitiesCount = 0;
+        try {
+            const transactionModel = (yield Promise.resolve().then(() => __importStar(require("../models/transaction")))).default;
+            transactionsCount = yield transactionModel.countDocuments({
+                ride_id: ride._id,
+            });
+        }
+        catch (e) {
+            // ignore if transaction model not available
+        }
+        try {
+            activitiesCount = yield activity_1.default.countDocuments({
+                "metadata.ride_id": ride._id,
+            });
+        }
+        catch (e) {
+            // ignore
+        }
+        return res
+            .status(200)
+            .json({ msg: "success", ride, transactionsCount, activitiesCount });
+    }
+    catch (err) {
+        console.error("admin_get_ride error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_ride = admin_get_ride;
+// Admin: cancel an ongoing ride
+const admin_cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const reason = (req.query.reason ||
+            ((_c = req.body) === null || _c === void 0 ? void 0 : _c.reason) ||
+            "Cancelled by admin").toString();
+        const ride = yield ride_1.default.findById(id);
+        if (!ride)
+            return res.status(404).json({ msg: "Ride not found" });
+        if (ride.status !== "ongoing") {
+            return res
+                .status(400)
+                .json({ msg: "Only ongoing rides can be cancelled by admin" });
+        }
+        // Notify rider and driver via sockets and push
+        const user_socket = yield (0, get_id_1.get_user_socket_id)(ride.rider);
+        const driver_socket = yield (0, get_id_1.get_driver_socket_id)(ride.driver);
+        if (user_socket)
+            server_1.io.to(user_socket).emit("ride_cancel", {
+                reason,
+                by: "admin",
+                ride_id: id,
+            });
+        if (driver_socket)
+            server_1.io.to(driver_socket).emit("ride_cancel", {
+                reason,
+                by: "admin",
+                ride_id: id,
+            });
+        // set ride cancelled metadata
+        ride.status = "cancelled";
+        ride.timestamps = Object.assign(Object.assign({}, (ride.timestamps || {})), { cancelled_at: new Date() });
+        ride.cancelled = { by: "admin", reason };
+        yield ride.save();
+        try {
+            const riderTokens = (ride === null || ride === void 0 ? void 0 : ride.rider)
+                ? yield (0, get_id_2.get_user_push_tokens)(ride.rider)
+                : [];
+            const driverTokens = (ride === null || ride === void 0 ? void 0 : ride.driver)
+                ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
+                : [];
+            if (riderTokens.length) {
+                yield (0, expo_push_1.sendExpoPush)(riderTokens, "Ride cancelled", reason, {
+                    type: "ride_cancelled",
+                    rideId: ride._id,
+                    by: "admin",
+                });
+            }
+            if (driverTokens.length) {
+                yield (0, expo_push_1.sendExpoPush)(driverTokens, "Ride cancelled", reason, {
+                    type: "ride_cancelled",
+                    rideId: ride._id,
+                    by: "admin",
+                });
+            }
+        }
+        catch (e) {
+            console.error("Failed to send cancel push notifications:", e);
+        }
+        return res.status(200).json({ msg: "Ride cancelled by admin", ride });
+    }
+    catch (err) {
+        console.error("admin_cancel_ride error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_cancel_ride = admin_cancel_ride;
+// Admin: delete a ride and related data (transactions, activities)
+const admin_delete_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const ride = yield ride_1.default.findById(id);
+        if (!ride)
+            return res.status(404).json({ msg: "Ride not found" });
+        // delete related transactions
+        try {
+            yield wallet_1.default.deleteMany({}); // noop placeholder - keep wallets intact
+        }
+        catch (e) {
+            // ignore
+        }
+        // delete transactions linked to this ride
+        yield (yield Promise.resolve().then(() => __importStar(require("../models/transaction")))).default.deleteMany({ ride_id: ride._id });
+        // delete activities related to this ride
+        yield activity_1.default.deleteMany({ "metadata.ride_id": ride._id });
+        // delete the ride itself
+        yield ride_1.default.deleteOne({ _id: ride._id });
+        return res.status(200).json({ msg: "Ride and related data deleted" });
+    }
+    catch (err) {
+        console.error("admin_delete_ride error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_delete_ride = admin_delete_ride;

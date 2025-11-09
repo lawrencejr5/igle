@@ -8,6 +8,9 @@ const ReportRouter = (0, express_1.Router)();
 ReportRouter.use(auth_1.auth);
 // submit a new report
 ReportRouter.post("/", report_1.create_report);
-// list reports (basic) - consider protecting to admins only in future
-ReportRouter.get("/", report_1.get_reports);
+// admin report management
+ReportRouter.get("/admin/reports", report_1.get_reports);
+ReportRouter.get("/admin/reports/data", report_1.get_report_detail);
+ReportRouter.patch("/admin/reports/status", report_1.update_report_status);
+ReportRouter.delete("/admin/reports", report_1.delete_report);
 exports.default = ReportRouter;

@@ -18,4 +18,9 @@ RideRouter.get("/data", ride_1.get_ride_data);
 RideRouter.get("/user", ride_1.get_user_rides);
 RideRouter.patch("/status", ride_1.update_ride_status);
 RideRouter.post("/pay", ride_1.pay_for_ride);
+// Admin ride management
+RideRouter.get("/admin/rides", ride_1.admin_get_rides);
+RideRouter.get("/admin/rides/data", ride_1.admin_get_ride);
+RideRouter.patch("/admin/rides/cancel", ride_1.admin_cancel_ride);
+RideRouter.delete("/admin/rides", ride_1.admin_delete_ride);
 exports.default = RideRouter;

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_driver_earnings_stats = exports.initiate_driver_withdrawal = exports.get_driver_transactions = exports.get_user_transactions = void 0;
+exports.admin_get_transaction = exports.admin_get_transactions = exports.get_driver_earnings_stats = exports.initiate_driver_withdrawal = exports.get_driver_transactions = exports.get_user_transactions = void 0;
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const get_id_1 = require("../utils/get_id");
@@ -274,3 +274,67 @@ const get_driver_earnings_stats = (req, res) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.get_driver_earnings_stats = get_driver_earnings_stats;
+// --- Admin transaction functions ---
+const admin_get_transactions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.max(1, Number(req.query.limit) || 20);
+        const skip = (page - 1) * limit;
+        const { type, status, wallet_id, owner_id } = req.query;
+        const filter = {};
+        if (type)
+            filter.type = type;
+        if (status)
+            filter.status = status;
+        if (wallet_id)
+            filter.wallet_id = wallet_id;
+        // If owner_id provided, find wallets for that owner and filter by them
+        if (owner_id) {
+            const wallets = yield wallet_1.default.find({ owner_id: owner_id });
+            const ids = wallets.map((w) => w._id);
+            filter.wallet_id = { $in: ids };
+        }
+        const [total, transactions] = yield Promise.all([
+            transaction_1.default.countDocuments(filter),
+            transaction_1.default.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate("ride_id")
+                .populate({ path: "wallet_id", populate: { path: "owner_id" } }),
+        ]);
+        const pages = Math.ceil(total / limit);
+        return res
+            .status(200)
+            .json({ msg: "success", transactions, total, page, pages });
+    }
+    catch (err) {
+        console.error("admin_get_transactions error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_transactions = admin_get_transactions;
+const admin_get_transaction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || req.query.transaction_id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const transaction = yield transaction_1.default.findById(id)
+            .populate("ride_id")
+            .populate({ path: "wallet_id", populate: { path: "owner_id" } });
+        if (!transaction)
+            return res.status(404).json({ msg: "Transaction not found" });
+        return res.status(200).json({ msg: "success", transaction });
+    }
+    catch (err) {
+        console.error("admin_get_transaction error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_transaction = admin_get_transaction;

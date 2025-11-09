@@ -45,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_driver_active_delivery = exports.pay_for_delivery = exports.update_delivery_status = exports.cancel_delivery = exports.accept_delivery = exports.get_user_active_delivery = exports.get_user_delivered_deliveries = exports.get_user_cancelled_deliveries = exports.get_user_in_transit_deliveries = exports.get_user_deliveries = exports.get_delivery_data = exports.get_available_deliveries = exports.rebook_delivery = exports.retry_delivery = exports.request_delivery = void 0;
+exports.admin_delete_delivery = exports.admin_cancel_delivery = exports.admin_get_delivery = exports.admin_get_deliveries = exports.get_driver_active_delivery = exports.pay_for_delivery = exports.update_delivery_status = exports.cancel_delivery = exports.accept_delivery = exports.get_user_active_delivery = exports.get_user_delivered_deliveries = exports.get_user_cancelled_deliveries = exports.get_user_in_transit_deliveries = exports.get_user_deliveries = exports.get_delivery_data = exports.get_available_deliveries = exports.rebook_delivery = exports.retry_delivery = exports.request_delivery = void 0;
 const delivery_1 = __importDefault(require("../models/delivery"));
 const driver_1 = __importDefault(require("../models/driver"));
 const calc_commision_1 = require("../utils/calc_commision");
@@ -722,3 +722,204 @@ const get_driver_active_delivery = (req, res) => __awaiter(void 0, void 0, void 
     }
 });
 exports.get_driver_active_delivery = get_driver_active_delivery;
+// --- Admin functions for deliveries ---
+const admin_get_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.max(1, Number(req.query.limit) || 20);
+        const skip = (page - 1) * limit;
+        const status = req.query.status;
+        const filter = {};
+        if (status)
+            filter.status = status;
+        const [total, deliveries] = yield Promise.all([
+            (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default.countDocuments(filter),
+            (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default
+                .find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate("sender", "name phone")
+                .populate({
+                path: "driver",
+                select: "user vehicle_type vehicle",
+                populate: { path: "user", select: "name phone" },
+            }),
+        ]);
+        const pages = Math.ceil(total / limit);
+        return res
+            .status(200)
+            .json({ msg: "success", deliveries, total, page, pages });
+    }
+    catch (err) {
+        console.error("admin_get_deliveries error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_deliveries = admin_get_deliveries;
+const admin_get_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id ||
+            req.query.delivery_id ||
+            req.query.deliveryId ||
+            ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) ||
+            "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const delivery = yield (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default
+            .findById(id)
+            .populate("sender", "name phone profile_pic")
+            .populate({
+            path: "driver",
+            populate: { path: "user", select: "name phone profile_pic" },
+        });
+        if (!delivery)
+            return res.status(404).json({ msg: "Delivery not found" });
+        let transactionsCount = 0;
+        let activitiesCount = 0;
+        try {
+            const transactionModel = (yield Promise.resolve().then(() => __importStar(require("../models/transaction")))).default;
+            transactionsCount = yield transactionModel.countDocuments({
+                ride_id: delivery._id,
+            });
+        }
+        catch (e) {
+            // ignore
+        }
+        try {
+            activitiesCount = yield activity_1.default.countDocuments({
+                "metadata.delivery_id": delivery._id,
+            });
+        }
+        catch (e) {
+            // ignore
+        }
+        return res
+            .status(200)
+            .json({ msg: "success", delivery, transactionsCount, activitiesCount });
+    }
+    catch (err) {
+        console.error("admin_get_delivery error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_delivery = admin_get_delivery;
+const admin_cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const reason = (req.query.reason ||
+            ((_c = req.body) === null || _c === void 0 ? void 0 : _c.reason) ||
+            "Cancelled by admin").toString();
+        const deliveryModel = (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default;
+        const delivery = yield deliveryModel.findById(id);
+        if (!delivery)
+            return res.status(404).json({ msg: "Delivery not found" });
+        // Only allow admin to cancel deliveries in transit (mirror ride ongoing)
+        if (delivery.status !== "in_transit") {
+            return res
+                .status(400)
+                .json({ msg: "Only in_transit deliveries can be cancelled by admin" });
+        }
+        const senderSocket = yield (0, get_id_1.get_user_socket_id)(delivery.sender.toString());
+        const driverSocket = delivery.driver
+            ? yield (0, get_id_1.get_driver_socket_id)(delivery.driver.toString())
+            : null;
+        if (senderSocket)
+            server_1.io.to(senderSocket).emit("delivery_cancel", {
+                reason,
+                by: "admin",
+                delivery_id: id,
+            });
+        if (driverSocket)
+            server_1.io.to(driverSocket).emit("delivery_cancel", {
+                reason,
+                by: "admin",
+                delivery_id: id,
+            });
+        delivery.status = "cancelled";
+        delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { cancelled_at: new Date() });
+        delivery.cancelled = { by: "admin", reason };
+        yield delivery.save();
+        try {
+            const senderTokens = (delivery === null || delivery === void 0 ? void 0 : delivery.sender)
+                ? yield (0, get_id_1.get_user_push_tokens)(delivery.sender.toString())
+                : [];
+            const driverTokens = (delivery === null || delivery === void 0 ? void 0 : delivery.driver)
+                ? yield (0, get_id_1.get_driver_push_tokens)(delivery.driver.toString())
+                : [];
+            if (senderTokens.length) {
+                yield (0, expo_push_1.sendExpoPush)(senderTokens, "Delivery cancelled", reason, {
+                    type: "delivery_cancelled",
+                    deliveryId: delivery._id,
+                    by: "admin",
+                });
+            }
+            if (driverTokens.length) {
+                yield (0, expo_push_1.sendExpoPush)(driverTokens, "Delivery cancelled", reason, {
+                    type: "delivery_cancelled",
+                    deliveryId: delivery._id,
+                    by: "admin",
+                });
+            }
+        }
+        catch (e) {
+            console.error("Failed to send cancel push notifications for admin cancel:", e);
+        }
+        return res
+            .status(200)
+            .json({ msg: "Delivery cancelled by admin", delivery });
+    }
+    catch (err) {
+        console.error("admin_cancel_delivery error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_cancel_delivery = admin_cancel_delivery;
+const admin_delete_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        if (!id)
+            return res.status(400).json({ msg: "id is required" });
+        const deliveryModel = (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default;
+        const delivery = yield deliveryModel.findById(id);
+        if (!delivery)
+            return res.status(404).json({ msg: "Delivery not found" });
+        // delete related transactions (best-effort)
+        try {
+            yield (yield Promise.resolve().then(() => __importStar(require("../models/transaction")))).default.deleteMany({ ride_id: delivery._id });
+        }
+        catch (e) {
+            // ignore
+        }
+        // delete activities related to this delivery
+        try {
+            yield activity_1.default.deleteMany({
+                "metadata.delivery_id": delivery._id,
+            });
+        }
+        catch (e) {
+            // ignore
+        }
+        yield deliveryModel.deleteOne({ _id: delivery._id });
+        return res.status(200).json({ msg: "Delivery and related data deleted" });
+    }
+    catch (err) {
+        console.error("admin_delete_delivery error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_delete_delivery = admin_delete_delivery;

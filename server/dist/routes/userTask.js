@@ -10,4 +10,7 @@ UserTaskRouter.get("/:taskId", userTask_1.get_user_task);
 UserTaskRouter.post("/:taskId/ensure", userTask_1.ensure_user_task);
 UserTaskRouter.post("/:taskId/progress", userTask_1.update_progress);
 UserTaskRouter.post("/:taskId/claim", userTask_1.claim_task);
+// Admin user-task management
+UserTaskRouter.patch("/admin/usertasks/end", userTask_1.admin_end_user_task);
+UserTaskRouter.delete("/admin/usertasks", userTask_1.admin_delete_user_task);
 exports.default = UserTaskRouter;
