@@ -13,7 +13,6 @@ const SigninPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   // Redirect to dashboard if already signed in
   useEffect(() => {
@@ -24,7 +23,6 @@ const SigninPage = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -32,7 +30,7 @@ const SigninPage = () => {
       // Redirect to dashboard on successful login
       router.push("/");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in. Please try again.");
+      // Error is handled by notification in AuthContext
     } finally {
       setLoading(false);
     }
@@ -80,21 +78,6 @@ const SigninPage = () => {
             Enter your credentials to access the dashboard
           </p>
         </header>
-
-        {error && (
-          <div
-            style={{
-              padding: "12px 16px",
-              marginBottom: 16,
-              backgroundColor: "#fee",
-              border: "1px solid #fcc",
-              borderRadius: 6,
-              color: "#c33",
-            }}
-          >
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit}>
           <div className="settings-form-group" style={{ marginBottom: 16 }}>

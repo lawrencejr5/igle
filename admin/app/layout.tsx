@@ -3,6 +3,7 @@ import "./styles/style.scss";
 import "./styles/style.responsive.scss";
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AlertProvider from "./context/AlertContext";
 
 export const metadata: Metadata = {
   title: "Igle ride admin",
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          <ProtectedRoute>{children}</ProtectedRoute>
-        </AuthProvider>
+        <AlertProvider>
+          <AuthProvider>
+            <ProtectedRoute>{children}</ProtectedRoute>
+          </AuthProvider>
+        </AlertProvider>
       </body>
     </html>
   );

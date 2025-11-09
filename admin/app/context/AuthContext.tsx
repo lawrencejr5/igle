@@ -7,6 +7,7 @@ import {
   ReactNode,
 } from "react";
 import axios from "axios";
+import { useAlert } from "./AlertContext";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
@@ -35,6 +36,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const { showAlert } = useAlert();
 
   // Initialize: check for stored token and fetch admin data
   const initialize = async () => {
@@ -84,6 +86,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setToken(newToken);
         setAdmin(adminData);
         setIsSignedIn(true);
+        showAlert("Login successful!", "success");
       } else {
         throw new Error("Invalid response from server");
       }
@@ -91,6 +94,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       console.error("Login failed:", error);
       const message =
         error.response?.data?.msg || "Login failed. Please try again.";
+      showAlert(message, "error");
       throw new Error(message);
     }
   };
@@ -126,6 +130,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       (error: any) => {
         if (error.response?.status === 401 || error.response?.status === 403) {
           // Token is invalid or expired, logout user
+          showAlert("Session expired. Please login again.", "error");
           logout();
         }
         return Promise.reject(error);
