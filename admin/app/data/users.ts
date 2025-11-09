@@ -5,7 +5,7 @@ export interface User {
   phone: string;
   rides: number;
   deliveries: number;
-  status: "Active" | "Inactive" | "Suspended";
+  status: "Online" | "Offline" | "Suspended";
 }
 
 export const usersData: User[] = [
@@ -16,7 +16,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8900",
     rides: 45,
     deliveries: 12,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "2",
@@ -25,7 +25,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8901",
     rides: 32,
     deliveries: 8,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "3",
@@ -34,7 +34,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8902",
     rides: 18,
     deliveries: 5,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "4",
@@ -43,7 +43,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8903",
     rides: 67,
     deliveries: 23,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "5",
@@ -61,7 +61,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8905",
     rides: 89,
     deliveries: 34,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "7",
@@ -70,7 +70,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8906",
     rides: 56,
     deliveries: 18,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "8",
@@ -79,7 +79,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8907",
     rides: 23,
     deliveries: 7,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "9",
@@ -88,7 +88,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8908",
     rides: 41,
     deliveries: 15,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "10",
@@ -97,7 +97,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8909",
     rides: 78,
     deliveries: 29,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "11",
@@ -115,7 +115,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8911",
     rides: 92,
     deliveries: 41,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "13",
@@ -124,7 +124,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8912",
     rides: 34,
     deliveries: 11,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "14",
@@ -133,7 +133,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8913",
     rides: 61,
     deliveries: 22,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "15",
@@ -142,7 +142,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8914",
     rides: 27,
     deliveries: 9,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "16",
@@ -151,7 +151,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8915",
     rides: 73,
     deliveries: 27,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "17",
@@ -169,7 +169,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8917",
     rides: 85,
     deliveries: 32,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "19",
@@ -178,7 +178,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8918",
     rides: 48,
     deliveries: 17,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "20",
@@ -187,7 +187,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8919",
     rides: 36,
     deliveries: 13,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "21",
@@ -196,7 +196,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8920",
     rides: 54,
     deliveries: 20,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "22",
@@ -205,7 +205,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8921",
     rides: 29,
     deliveries: 10,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "23",
@@ -223,7 +223,7 @@ export const usersData: User[] = [
     phone: "+1 234 567 8923",
     rides: 91,
     deliveries: 38,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "25",
@@ -232,6 +232,6 @@ export const usersData: User[] = [
     phone: "+1 234 567 8924",
     rides: 42,
     deliveries: 14,
-    status: "Active",
+    status: "Online",
   },
 ];

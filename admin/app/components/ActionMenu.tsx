@@ -11,6 +11,7 @@ import {
 
 interface ActionMenuProps {
   userId: string;
+  userStatus?: string;
   onViewDetails?: (userId: string) => void;
   onEdit?: (userId: string) => void;
   onDelete?: (userId: string) => void;
@@ -19,6 +20,7 @@ interface ActionMenuProps {
 
 const ActionMenu = ({
   userId,
+  userStatus,
   onViewDetails,
   onEdit,
   onDelete,
@@ -28,6 +30,9 @@ const ActionMenu = ({
   const [openUpward, setOpenUpward] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isBlocked = userStatus === "Suspended";
+  const blockButtonText = isBlocked ? "Unblock" : "Block";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -109,7 +114,7 @@ const ActionMenu = ({
             onClick={() => handleAction(() => onBlock?.(userId))}
           >
             <IoBanOutline />
-            <span>Block</span>
+            <span>{blockButtonText}</span>
           </button>
         </div>
       )}

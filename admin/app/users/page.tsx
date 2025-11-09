@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import TabSwitcher from "../components/TabSwitcher";
 import FilterButton from "../components/FilterButton";
@@ -9,13 +9,22 @@ import UsersTable from "../components/UsersTable";
 import DriversTable from "../components/DriversTable";
 import RequestsTable from "../components/RequestsTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { usersData } from "../data/users";
 import { driversData } from "../data/drivers";
 import { requestsData } from "../data/requests";
+import { useUserContext, User as ApiUser } from "../context/UserContext";
 
 const ITEMS_PER_PAGE = 10;
 
 const Users = () => {
+  const {
+    users: apiUsers,
+    totalUsers,
+    totalPages: apiTotalPages,
+    currentPage: apiCurrentPage,
+    loading,
+    fetchUsers,
+  } = useUserContext();
+
   const [activeTab, setActiveTab] = useState<"Users" | "Drivers" | "Requests">(
     "Users"
   );
@@ -28,6 +37,17 @@ const Users = () => {
     dateTo: "",
     sortBy: "",
   });
+
+  // Fetch users when component mounts or page changes
+  useEffect(() => {
+    if (activeTab === "Users") {
+      fetchUsers(currentPage, ITEMS_PER_PAGE);
+    }
+  }, [activeTab, currentPage]);
+
+  const handleRefreshUsers = () => {
+    fetchUsers(currentPage, ITEMS_PER_PAGE);
+  };
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -66,7 +86,20 @@ const Users = () => {
 
   // Filter and sort users
   const filteredUsers = useMemo(() => {
-    let result = [...usersData];
+    // Convert API users to display format with ride/delivery counts
+    let result = apiUsers.map((user) => ({
+      id: user._id,
+      fullname: user.name,
+      email: user.email,
+      phone: user.phone || "N/A",
+      rides: 0, // TODO: These should come from user details endpoint
+      deliveries: 0,
+      status: (user.is_blocked
+        ? "Suspended"
+        : user.is_online
+        ? "Online"
+        : "Offline") as "Online" | "Offline" | "Suspended",
+    }));
 
     // Apply search query
     if (searchQuery.trim()) {
@@ -110,7 +143,7 @@ const Users = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [apiUsers, searchQuery, filters]);
 
   // Filter and sort drivers
   const filteredDrivers = useMemo(() => {
@@ -197,10 +230,20 @@ const Users = () => {
       : activeTab === "Drivers"
       ? filteredDrivers
       : filteredRequests;
-  const totalPages = Math.ceil(currentData.length / ITEMS_PER_PAGE);
+
+  // Use API pagination for users, local pagination for others
+  const totalPages =
+    activeTab === "Users"
+      ? apiTotalPages
+      : Math.ceil(currentData.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // For users, use the data from API (already paginated)
+  const currentUsers =
+    activeTab === "Users"
+      ? filteredUsers
+      : filteredUsers.slice(startIndex, endIndex);
   const currentDrivers = filteredDrivers.slice(startIndex, endIndex);
   const currentRequests = filteredRequests.slice(startIndex, endIndex);
 
@@ -262,6 +305,7 @@ const Users = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
+          onRefresh={handleRefreshUsers}
         />
       ) : activeTab === "Drivers" ? (
         <DriversTable

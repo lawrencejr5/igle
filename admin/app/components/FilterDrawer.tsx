@@ -33,8 +33,8 @@ const FilterDrawer = ({
   currentFilters,
   statusOptions = [
     { value: "", label: "All Statuses" },
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" },
+    { value: "Online", label: "Online" },
+    { value: "Offline", label: "Offline" },
     { value: "Suspended", label: "Suspended" },
   ],
   sortOptions = [

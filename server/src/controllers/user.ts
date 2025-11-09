@@ -554,11 +554,11 @@ export const admin_get_users = async (req: Request, res: Response) => {
 
     const includeDeleted = req.query.include_deleted === "true";
     const filter: any = {};
-    if (!includeDeleted) filter.is_deleted = false;
+    if (!includeDeleted) filter.is_deleted = false || undefined;
 
     const [total, users] = await Promise.all([
-      User.countDocuments(filter),
-      User.find(filter)
+      User.countDocuments(),
+      User.find()
         .select("-password")
         .skip(skip)
         .limit(limit)
