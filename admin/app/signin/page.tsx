@@ -1,23 +1,64 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useAuthContext } from "../context/AuthContext";
 
 const SigninPage = () => {
+  const router = useRouter();
+  const { login, isSignedIn, loading: authLoading } = useAuthContext();
+
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Redirect to dashboard if already signed in
+  useEffect(() => {
+    if (!authLoading && isSignedIn) {
+      router.push("/");
+    }
+  }, [isSignedIn, authLoading, router]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
     setLoading(true);
-    // TODO: replace with real auth call
-    await new Promise((r) => setTimeout(r, 700));
-    setLoading(false);
-    alert(`Signed in as: ${identifier}`);
+
+    try {
+      await login(identifier, password);
+      // Redirect to dashboard on successful login
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Don't render form if already authenticated
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "#666" }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSignedIn) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div
@@ -40,6 +81,21 @@ const SigninPage = () => {
           </p>
         </header>
 
+        {error && (
+          <div
+            style={{
+              padding: "12px 16px",
+              marginBottom: 16,
+              backgroundColor: "#fee",
+              border: "1px solid #fcc",
+              borderRadius: 6,
+              color: "#c33",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="settings-form-group" style={{ marginBottom: 16 }}>
             <label className="settings-form-group__label" htmlFor="identifier">
@@ -50,7 +106,7 @@ const SigninPage = () => {
               className="settings-form-group__input"
               placeholder="you@company.com or username"
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              onChange={(event) => setIdentifier(event.target.value)}
               required
             />
           </div>
@@ -66,12 +122,12 @@ const SigninPage = () => {
                 className="settings-form-group__input"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
               <button
                 type="button"
-                onClick={() => setShowPassword((s) => !s)}
+                onClick={() => setShowPassword((show) => !show)}
                 aria-label="Toggle password visibility"
                 style={{
                   position: "absolute",

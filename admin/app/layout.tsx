@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./styles/style.scss";
 import "./styles/style.responsive.scss";
+import AuthProvider from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export const metadata: Metadata = {
   title: "Igle ride admin",
@@ -14,7 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          <ProtectedRoute>{children}</ProtectedRoute>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
