@@ -4,6 +4,7 @@ import "./styles/style.responsive.scss";
 import AuthProvider from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AlertProvider from "./context/AlertContext";
+import AdminProvider from "./context/AdminContext";
 
 export const metadata: Metadata = {
   title: "Igle ride admin",
@@ -20,7 +21,9 @@ export default function RootLayout({
       <body>
         <AlertProvider>
           <AuthProvider>
-            <ProtectedRoute>{children}</ProtectedRoute>
+            <AdminProvider>
+              <ProtectedRoute>{children}</ProtectedRoute>
+            </AdminProvider>
           </AuthProvider>
         </AlertProvider>
       </body>

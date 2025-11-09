@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaWallet, FaEye, FaEyeSlash } from "react-icons/fa";
+import { useAdminContext } from "../context/AdminContext";
 
 const AccountBalance = () => {
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
-  const balance = 125430.5; // Replace with actual balance from your data source
+  const { appWallet, fetchAppWallet } = useAdminContext();
+
+  useEffect(() => {
+    fetchAppWallet();
+  }, []);
+
+  const balance = appWallet?.balance || 0;
 
   const toggleBalanceVisibility = () => {
     setIsBalanceVisible(!isBalanceVisible);

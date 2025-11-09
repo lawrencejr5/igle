@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   FaUsers,
   FaCar,
@@ -8,6 +9,7 @@ import {
   FaTruck,
   FaExclamationTriangle,
 } from "react-icons/fa";
+import { useAdminContext } from "../context/AdminContext";
 
 interface StatCardProps {
   title: string;
@@ -31,40 +33,54 @@ const StatCard = ({ title, value, icon, iconBg }: StatCardProps) => {
 };
 
 const StatsCards = () => {
+  const { summary, fetchSummary } = useAdminContext();
+
+  useEffect(() => {
+    fetchSummary();
+  }, []);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   const stats = [
     {
       title: "Total Users",
-      value: "2,543",
+      value: summary?.totalUsers?.toLocaleString() || "0",
       icon: <FaUsers />,
       iconBg: "#3b82f6", // blue
     },
     {
       title: "Active Drivers",
-      value: "324",
+      value: summary?.activeDrivers?.toLocaleString() || "0",
       icon: <FaCar />,
       iconBg: "#10b981", // green
     },
     {
       title: "Active Rides",
-      value: "87",
+      value: summary?.activeRides?.toLocaleString() || "0",
       icon: <FaRoute />,
       iconBg: "#f59e0b", // amber
     },
     {
       title: "Total Revenue This Month",
-      value: "$45,230",
+      value: formatCurrency(summary?.totalRevenueThisMonth || 0),
       icon: <FaDollarSign />,
       iconBg: "#8b5cf6", // purple
     },
     {
       title: "Active Deliveries",
-      value: "156",
+      value: summary?.activeDeliveries?.toLocaleString() || "0",
       icon: <FaTruck />,
       iconBg: "#ec4899", // pink
     },
     {
       title: "Total Reports",
-      value: "23",
+      value: summary?.totalReports?.toLocaleString() || "0",
       icon: <FaExclamationTriangle />,
       iconBg: "#ef4444", // red
     },
