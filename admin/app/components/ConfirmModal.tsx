@@ -156,7 +156,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
               backgroundColor:
                 requireReason && !reason.trim() ? "#ccc" : getVariantColor(),
               color: "white",
-              cursor: requireReason && !reason.trim() ? "not-allowed" : "pointer",
+              cursor:
+                requireReason && !reason.trim() ? "not-allowed" : "pointer",
               fontSize: 14,
               fontWeight: 500,
               opacity: requireReason && !reason.trim() ? 0.6 : 1,

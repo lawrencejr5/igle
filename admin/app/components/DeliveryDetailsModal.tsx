@@ -209,7 +209,9 @@ const DeliveryDetailsModal = ({
             <div className="user-details-modal__profile-info">
               <h3 className="user-details-modal__name">{displayDelivery.id}</h3>
               <span
-                className={`status-badge ${getStatusClass(displayDelivery.status)}`}
+                className={`status-badge ${getStatusClass(
+                  displayDelivery.status
+                )}`}
               >
                 {displayDelivery.status.charAt(0).toUpperCase() +
                   displayDelivery.status.slice(1).replace("_", " ")}

@@ -21,8 +21,11 @@ const Deliveries = () => {
     sortBy: "",
   });
 
-  const { deliveries, fetchDeliveries, totalPages: apiTotalPages } =
-    useDeliveryContext();
+  const {
+    deliveries,
+    fetchDeliveries,
+    totalPages: apiTotalPages,
+  } = useDeliveryContext();
 
   // Fetch deliveries on mount and when page changes
   useEffect(() => {
