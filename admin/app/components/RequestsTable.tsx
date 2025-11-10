@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ConfirmModal from "./ConfirmModal";
 import { DriverRequest } from "../data/requests";
 import Pagination from "./Pagination";
 import RequestDetailsModal from "./RequestDetailsModal";
@@ -28,6 +29,10 @@ const RequestsTable = ({
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState<"approve" | "decline" | null>(
+    null
+  );
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
 
   const handleViewDetails = (requestId: string) => {
     const request = requests.find((r) => r.id === requestId);
@@ -44,24 +49,34 @@ const RequestsTable = ({
     }, 300); // Wait for animation to complete
   };
 
-  const handleApprove = async (requestId: string) => {
-    if (onApprove) {
-      await onApprove(requestId);
-      handleCloseModal();
-      if (onRefresh) {
-        onRefresh();
-      }
-    }
+  const handleApprove = (requestId: string) => {
+    setConfirmType("approve");
+    setPendingRequestId(requestId);
   };
 
-  const handleDecline = async (requestId: string) => {
-    if (onDecline) {
-      await onDecline(requestId);
+  const handleDecline = (requestId: string) => {
+    setConfirmType("decline");
+    setPendingRequestId(requestId);
+  };
+
+  const handleConfirm = async () => {
+    if (!pendingRequestId) return;
+    if (confirmType === "approve" && onApprove) {
+      await onApprove(pendingRequestId);
       handleCloseModal();
-      if (onRefresh) {
-        onRefresh();
-      }
+      if (onRefresh) onRefresh();
+    } else if (confirmType === "decline" && onDecline) {
+      await onDecline(pendingRequestId);
+      handleCloseModal();
+      if (onRefresh) onRefresh();
     }
+    setConfirmType(null);
+    setPendingRequestId(null);
+  };
+
+  const handleCancel = () => {
+    setConfirmType(null);
+    setPendingRequestId(null);
   };
 
   return (
@@ -106,22 +121,28 @@ const RequestsTable = ({
                   <div className="request-actions">
                     <button
                       className="request-actions__button request-actions__button--view"
+                      type="button"
                       onClick={() => handleViewDetails(request.id)}
                       title="View Details"
+                      style={{ zIndex: 2 }}
                     >
                       View
                     </button>
                     <button
                       className="request-actions__button request-actions__button--approve"
+                      type="button"
                       onClick={() => handleApprove(request.id)}
                       title="Approve Request"
+                      style={{ zIndex: 2 }}
                     >
                       Approve
                     </button>
                     <button
                       className="request-actions__button request-actions__button--decline"
+                      type="button"
                       onClick={() => handleDecline(request.id)}
                       title="Decline Request"
+                      style={{ zIndex: 2 }}
                     >
                       Decline
                     </button>
@@ -145,6 +166,24 @@ const RequestsTable = ({
         request={selectedRequest}
         onApprove={handleApprove}
         onDecline={handleDecline}
+      />
+      <ConfirmModal
+        isOpen={!!confirmType}
+        title={
+          confirmType === "approve"
+            ? "Approve Application"
+            : "Decline Application"
+        }
+        message={
+          confirmType === "approve"
+            ? "Are you sure you want to approve this driver application?"
+            : "Are you sure you want to decline this driver application?"
+        }
+        confirmText={confirmType === "approve" ? "Approve" : "Decline"}
+        cancelText="Cancel"
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        variant={confirmType === "approve" ? "info" : "danger"}
       />
     </>
   );

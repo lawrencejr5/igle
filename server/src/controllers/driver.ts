@@ -1148,7 +1148,7 @@ export const admin_get_driver_applications = async (
     const skip = (page - 1) * limit;
 
     // const includeDeleted = req.query.include_deleted === "true";
-    const filter: any = { application: { $in: ["submitted", "pending"] } };
+    const filter: any = { application: "submitted" };
     // if (!includeDeleted) filter.is_deleted = false;
 
     const [total, drivers] = await Promise.all([

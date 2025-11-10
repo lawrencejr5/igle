@@ -34,6 +34,7 @@ DriverRouter.get("/deliveries/delivered", driver_1.get_driver_delivered_deliveri
 DriverRouter.get("/deliveries/cancelled", driver_1.get_driver_cancelled_deliveries);
 DriverRouter.get("/transactions", driver_1.get_driver_transactions);
 // Admin driver management (query-based id: ?id=...)
+DriverRouter.get("/admin/drivers", driver_1.admin_get_drivers);
 DriverRouter.get("/admin/driver", driver_1.admin_get_driver);
 DriverRouter.patch("/admin/driver", driver_1.admin_edit_driver);
 DriverRouter.delete("/admin/driver", driver_1.admin_delete_driver);

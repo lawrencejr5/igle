@@ -87,6 +87,20 @@ const RequestDetailsModal = ({
 
   if (!displayData) return null;
 
+  // Try to get profile image from driver context if available, else fallback to request prop
+
+  const profileImg = (request as any).profileImg;
+  // Compute initials from name
+  let initials = "";
+  if (displayData && displayData.fullname) {
+    const names = displayData.fullname.trim().split(" ");
+    initials =
+      names.length === 1
+        ? names[0][0]
+        : names[0][0] + names[names.length - 1][0];
+    initials = initials.toUpperCase();
+  }
+
   return (
     <>
       {isOpen && (
@@ -95,17 +109,78 @@ const RequestDetailsModal = ({
           onClick={onClose}
           role="button"
           aria-label="Close modal"
-        />
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 10001,
+          }}
+        ></div>
       )}
 
       <div
         className={`user-details-modal ${
           isOpen ? "user-details-modal--open" : ""
         }`}
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: isOpen ? "translate(-50%, -50%)" : undefined,
+          zIndex: 11000, // higher than ConfirmModal
+          maxWidth: 600,
+          width: "95%",
+          background: "#fff",
+          borderRadius: 12,
+          boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+          transition: "all 0.3s cubic-bezier(.4,0,.2,1)",
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? "auto" : "none",
+        }}
       >
         {/* Header */}
-        <div className="user-details-modal__header">
-          <div>
+        <div
+          className="user-details-modal__header"
+          style={{ display: "flex", alignItems: "center", gap: 16 }}
+        >
+          {profileImg ? (
+            <img
+              src={profileImg}
+              alt="Profile"
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "2px solid #eee",
+                marginRight: 12,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background: "#e5e7eb",
+                color: "#374151",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                fontSize: 22,
+                marginRight: 12,
+                border: "2px solid #eee",
+                userSelect: "none",
+              }}
+            >
+              {initials}
+            </div>
+          )}
+          <div style={{ flex: 1 }}>
             <h2 className="user-details-modal__name">{displayData.fullname}</h2>
             <span className="user-details-modal__subtitle">
               Driver Application

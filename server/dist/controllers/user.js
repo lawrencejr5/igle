@@ -533,10 +533,10 @@ const admin_get_users = (req, res) => __awaiter(void 0, void 0, void 0, function
         const includeDeleted = req.query.include_deleted === "true";
         const filter = {};
         if (!includeDeleted)
-            filter.is_deleted = false;
+            filter.is_deleted = false || undefined;
         const [total, users] = yield Promise.all([
-            user_1.default.countDocuments(filter),
-            user_1.default.find(filter)
+            user_1.default.countDocuments(),
+            user_1.default.find()
                 .select("-password")
                 .skip(skip)
                 .limit(limit)

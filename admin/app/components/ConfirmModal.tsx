@@ -64,7 +64,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 10000,
+        zIndex: 12000, // higher than any other modal
       }}
     >
       <div
