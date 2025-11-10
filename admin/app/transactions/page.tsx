@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
 import TransactionsTable from "../components/TransactionsTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { transactionsData } from "../data/transactions";
+import { useTransactionContext } from "../context/TransactionContext";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const Transactions = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,6 +20,17 @@ const Transactions = () => {
     dateTo: "",
     sortBy: "",
   });
+
+  const {
+    transactions,
+    fetchTransactions,
+    totalPages: apiTotalPages,
+  } = useTransactionContext();
+
+  // Fetch transactions on mount and when page changes
+  useEffect(() => {
+    fetchTransactions(currentPage, ITEMS_PER_PAGE);
+  }, [currentPage]);
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -44,7 +55,31 @@ const Transactions = () => {
   }, [filters]);
 
   const filteredTransactions = useMemo(() => {
-    let result = [...transactionsData];
+    // Transform API transactions to UI format
+    const transformedTransactions = transactions.map((transaction) => ({
+      id: transaction._id,
+      userId: transaction.wallet_id.owner_id._id,
+      userName: transaction.wallet_id.owner_id.name || "Unknown User",
+      userEmail: transaction.wallet_id.owner_id.email,
+      userPhone: transaction.wallet_id.owner_id.phone,
+      userProfilePic: transaction.wallet_id.owner_id.profile_pic,
+      userType: (transaction.wallet_id.owner_type.toLowerCase() === "user"
+        ? "rider"
+        : "driver") as "rider" | "driver",
+      walletId: transaction.wallet_id._id,
+      walletBalance: transaction.wallet_id.balance,
+      type: transaction.type,
+      amount: transaction.amount,
+      status: transaction.status,
+      channel: transaction.channel,
+      rideId: transaction.ride_id?._id,
+      reference: transaction.reference,
+      metadata: transaction.metadata,
+      createdAt: new Date(transaction.createdAt),
+      updatedAt: new Date(transaction.updatedAt),
+    }));
+
+    let result = [...transformedTransactions];
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -114,12 +149,11 @@ const Transactions = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [transactions, searchQuery, filters]);
 
-  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+  // Use API pagination instead of client-side slicing
+  const totalPages = apiTotalPages;
+  const currentTransactions = filteredTransactions;
 
   useMemo(() => {
     setCurrentPage(1);
@@ -127,6 +161,10 @@ const Transactions = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleRefresh = () => {
+    fetchTransactions(currentPage, ITEMS_PER_PAGE);
   };
 
   return (
@@ -174,6 +212,7 @@ const Transactions = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        onRefresh={handleRefresh}
       />
     </DashboardLayout>
   );

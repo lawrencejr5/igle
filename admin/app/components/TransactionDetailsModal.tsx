@@ -14,7 +14,34 @@ import {
   MdError,
   MdPending,
 } from "react-icons/md";
-import { Transaction } from "../data/transactions";
+import { useTransactionContext } from "../context/TransactionContext";
+
+// UI Transaction interface (transformed from API)
+interface Transaction {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userPhone?: string;
+  userProfilePic?: string;
+  userType: "rider" | "driver";
+  walletId: string;
+  walletBalance: number;
+  type: "funding" | "payment" | "payout";
+  amount: number;
+  status: "pending" | "success" | "failed";
+  channel: "card" | "transfer" | "cash" | "wallet";
+  rideId?: string;
+  rideDetails?: {
+    pickup: string;
+    dropoff: string;
+    fare: number;
+  };
+  reference?: string;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
@@ -27,6 +54,42 @@ const TransactionDetailsModal = ({
   onClose,
   transaction,
 }: TransactionDetailsModalProps) => {
+  const { currentTransaction } = useTransactionContext();
+
+  // Transform API transaction to UI format if using context transaction
+  const displayTransaction = currentTransaction
+    ? {
+        id: currentTransaction._id,
+        userId: currentTransaction.wallet_id.owner_id._id,
+        userName: currentTransaction.wallet_id.owner_id.name || "Unknown User",
+        userEmail: currentTransaction.wallet_id.owner_id.email,
+        userPhone: currentTransaction.wallet_id.owner_id.phone,
+        userProfilePic: currentTransaction.wallet_id.owner_id.profile_pic,
+        userType: (currentTransaction.wallet_id.owner_type.toLowerCase() ===
+        "user"
+          ? "rider"
+          : "driver") as "rider" | "driver",
+        walletId: currentTransaction.wallet_id._id,
+        walletBalance: currentTransaction.wallet_id.balance,
+        type: currentTransaction.type,
+        amount: currentTransaction.amount,
+        status: currentTransaction.status,
+        channel: currentTransaction.channel,
+        rideId: currentTransaction.ride_id?._id,
+        rideDetails: currentTransaction.ride_id
+          ? {
+              pickup: currentTransaction.ride_id.pickup.address,
+              dropoff: currentTransaction.ride_id.dropoff.address,
+              fare: currentTransaction.ride_id.fare,
+            }
+          : undefined,
+        reference: currentTransaction.reference,
+        metadata: currentTransaction.metadata,
+        createdAt: new Date(currentTransaction.createdAt),
+        updatedAt: new Date(currentTransaction.updatedAt),
+      }
+    : transaction;
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -55,7 +118,7 @@ const TransactionDetailsModal = ({
     };
   }, [isOpen, onClose]);
 
-  if (!transaction) return null;
+  if (!displayTransaction) return null;
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -158,15 +221,19 @@ const TransactionDetailsModal = ({
           {/* Transaction ID and Status */}
           <div className="user-details-modal__profile">
             <div className="user-details-modal__avatar">
-              {getStatusIcon(transaction.status)}
+              {getStatusIcon(displayTransaction.status)}
             </div>
             <div className="user-details-modal__profile-info">
-              <h3 className="user-details-modal__name">{transaction.id}</h3>
+              <h3 className="user-details-modal__name">
+                {displayTransaction.id}
+              </h3>
               <span
-                className={`status-badge ${getStatusClass(transaction.status)}`}
+                className={`status-badge ${getStatusClass(
+                  displayTransaction.status
+                )}`}
               >
-                {transaction.status.charAt(0).toUpperCase() +
-                  transaction.status.slice(1)}
+                {displayTransaction.status.charAt(0).toUpperCase() +
+                  displayTransaction.status.slice(1)}
               </span>
             </div>
           </div>
@@ -186,7 +253,7 @@ const TransactionDetailsModal = ({
                     User Name
                   </span>
                   <span className="user-details-modal__info-value">
-                    {transaction.userName}
+                    {displayTransaction.userName}
                   </span>
                 </div>
               </div>
@@ -200,8 +267,8 @@ const TransactionDetailsModal = ({
                     User Type
                   </span>
                   <span className="user-details-modal__info-value">
-                    {transaction.userType.charAt(0).toUpperCase() +
-                      transaction.userType.slice(1)}
+                    {displayTransaction.userType.charAt(0).toUpperCase() +
+                      displayTransaction.userType.slice(1)}
                   </span>
                 </div>
               </div>
@@ -215,7 +282,7 @@ const TransactionDetailsModal = ({
                     Wallet ID
                   </span>
                   <span className="user-details-modal__info-value">
-                    {transaction.walletId}
+                    {displayTransaction.walletId}
                   </span>
                 </div>
               </div>
@@ -229,7 +296,7 @@ const TransactionDetailsModal = ({
                     User ID
                   </span>
                   <span className="user-details-modal__info-value">
-                    {transaction.userId}
+                    {displayTransaction.userId}
                   </span>
                 </div>
               </div>
@@ -248,7 +315,7 @@ const TransactionDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {getTypeDisplay(transaction.type)}
+                    {getTypeDisplay(displayTransaction.type)}
                   </span>
                   <span className="user-details-modal__stat-label">
                     Transaction Type
@@ -262,7 +329,7 @@ const TransactionDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {formatCurrency(transaction.amount)}
+                    {formatCurrency(displayTransaction.amount)}
                   </span>
                   <span className="user-details-modal__stat-label">Amount</span>
                 </div>
@@ -274,7 +341,7 @@ const TransactionDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {getChannelDisplay(transaction.channel)}
+                    {getChannelDisplay(displayTransaction.channel)}
                   </span>
                   <span className="user-details-modal__stat-label">
                     Payment Channel
@@ -288,7 +355,7 @@ const TransactionDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {formatDate(transaction.createdAt)}
+                    {formatDate(displayTransaction.createdAt)}
                   </span>
                   <span className="user-details-modal__stat-label">
                     Created At
@@ -313,12 +380,12 @@ const TransactionDetailsModal = ({
                     Reference
                   </span>
                   <span className="user-details-modal__info-value">
-                    {transaction.reference || "N/A"}
+                    {displayTransaction.reference || "N/A"}
                   </span>
                 </div>
               </div>
 
-              {transaction.rideId && (
+              {displayTransaction.rideId && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-icon">
                     <MdInfo />
@@ -328,7 +395,7 @@ const TransactionDetailsModal = ({
                       Ride/Delivery ID
                     </span>
                     <span className="user-details-modal__info-value">
-                      {transaction.rideId}
+                      {displayTransaction.rideId}
                     </span>
                   </div>
                 </div>
@@ -337,36 +404,38 @@ const TransactionDetailsModal = ({
           </div>
 
           {/* Metadata Information */}
-          {transaction.metadata &&
-            Object.keys(transaction.metadata).length > 0 && (
+          {displayTransaction.metadata &&
+            Object.keys(displayTransaction.metadata).length > 0 && (
               <div className="user-details-modal__section">
                 <h4 className="user-details-modal__section-title">
                   Additional Information
                 </h4>
                 <div className="user-details-modal__info-grid">
-                  {Object.entries(transaction.metadata).map(([key, value]) => (
-                    <div key={key} className="user-details-modal__info-item">
-                      <div className="user-details-modal__info-icon">
-                        <MdInfo />
+                  {Object.entries(displayTransaction.metadata).map(
+                    ([key, value]) => (
+                      <div key={key} className="user-details-modal__info-item">
+                        <div className="user-details-modal__info-icon">
+                          <MdInfo />
+                        </div>
+                        <div className="user-details-modal__info-content">
+                          <span className="user-details-modal__info-label">
+                            {key
+                              .split(/(?=[A-Z])/)
+                              .map(
+                                (word) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                              )
+                              .join(" ")}
+                          </span>
+                          <span className="user-details-modal__info-value">
+                            {typeof value === "object"
+                              ? JSON.stringify(value)
+                              : String(value)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="user-details-modal__info-content">
-                        <span className="user-details-modal__info-label">
-                          {key
-                            .split(/(?=[A-Z])/)
-                            .map(
-                              (word) =>
-                                word.charAt(0).toUpperCase() + word.slice(1)
-                            )
-                            .join(" ")}
-                        </span>
-                        <span className="user-details-modal__info-value">
-                          {typeof value === "object"
-                            ? JSON.stringify(value)
-                            : String(value)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </div>
             )}

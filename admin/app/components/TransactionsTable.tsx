@@ -1,16 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { Transaction } from "../data/transactions";
 import Pagination from "./Pagination";
 import TransactionActionsMenu from "./TransactionActionsMenu";
 import TransactionDetailsModal from "./TransactionDetailsModal";
+import { useTransactionContext } from "../context/TransactionContext";
+
+// UI Transaction interface (transformed from API)
+interface Transaction {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userPhone?: string;
+  userProfilePic?: string;
+  userType: "rider" | "driver";
+  walletId: string;
+  walletBalance: number;
+  type: "funding" | "payment" | "payout";
+  amount: number;
+  status: "pending" | "success" | "failed";
+  channel: "card" | "transfer" | "cash" | "wallet";
+  rideId?: string;
+  reference?: string;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface TransactionsTableProps {
   transactions: Transaction[];
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onRefresh: () => void;
 }
 
 const TransactionsTable = ({
@@ -18,10 +41,11 @@ const TransactionsTable = ({
   currentPage,
   totalPages,
   onPageChange,
+  onRefresh,
 }: TransactionsTableProps) => {
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { fetchTransactionDetails } = useTransactionContext();
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -91,18 +115,12 @@ const TransactionsTable = ({
   };
 
   const handleViewDetails = (transactionId: string) => {
-    const transaction = transactions.find((t) => t.id === transactionId);
-    if (transaction) {
-      setSelectedTransaction(transaction);
-      setIsModalOpen(true);
-    }
+    fetchTransactionDetails(transactionId);
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setTimeout(() => {
-      setSelectedTransaction(null);
-    }, 300);
   };
 
   const handleRetry = (transactionId: string) => {
@@ -224,7 +242,7 @@ const TransactionsTable = ({
       <TransactionDetailsModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        transaction={selectedTransaction}
+        transaction={null}
       />
     </>
   );
