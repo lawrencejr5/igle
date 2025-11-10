@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
 import DeliveriesTable from "../components/DeliveriesTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { deliveriesData } from "../data/deliveries";
+import { useDeliveryContext } from "../context/DeliveryContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -20,6 +20,14 @@ const Deliveries = () => {
     dateTo: "",
     sortBy: "",
   });
+
+  const { deliveries, fetchDeliveries, totalPages: apiTotalPages } =
+    useDeliveryContext();
+
+  // Fetch deliveries on mount and when page changes
+  useEffect(() => {
+    fetchDeliveries(currentPage, ITEMS_PER_PAGE);
+  }, [currentPage]);
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -44,9 +52,56 @@ const Deliveries = () => {
     );
   }, [filters]);
 
-  // Filter and sort deliveries
+  // Filter and sort deliveries - Transform API data to match UI Delivery interface
   const filteredDeliveries = useMemo(() => {
-    let result = [...deliveriesData];
+    // Transform API deliveries to UI format
+    const transformedDeliveries = deliveries.map((delivery) => ({
+      id: delivery._id,
+      senderId: delivery.sender._id,
+      senderName: delivery.sender.name,
+      senderPhone: delivery.sender.phone,
+      senderProfilePic: delivery.sender.profile_pic,
+      driverId: delivery.driver?._id,
+      driverName: delivery.driver?.user.name,
+      driverPhone: delivery.driver?.user.phone,
+      driverProfilePic: delivery.driver?.user.profile_pic,
+      pickup: delivery.pickup,
+      dropoff: delivery.dropoff,
+      to: delivery.to,
+      package: delivery.package,
+      status: delivery.status,
+      fare: delivery.fare,
+      distance_km: delivery.distance_km,
+      duration_mins: delivery.duration_mins,
+      vehicle: delivery.vehicle,
+      payment_status: delivery.payment_status,
+      payment_method: delivery.payment_method,
+      timestamps: {
+        accepted_at: delivery.timestamps.accepted_at
+          ? new Date(delivery.timestamps.accepted_at)
+          : undefined,
+        picked_up_at: delivery.timestamps.picked_up_at
+          ? new Date(delivery.timestamps.picked_up_at)
+          : undefined,
+        delivered_at: delivery.timestamps.delivered_at
+          ? new Date(delivery.timestamps.delivered_at)
+          : undefined,
+        cancelled_at: delivery.timestamps.cancelled_at
+          ? new Date(delivery.timestamps.cancelled_at)
+          : undefined,
+      },
+      cancelled: delivery.cancelled,
+      driver_earnings: delivery.driver_earnings,
+      commission: delivery.commission,
+      scheduled: delivery.scheduled,
+      scheduled_time: delivery.scheduled_time
+        ? new Date(delivery.scheduled_time)
+        : null,
+      createdAt: new Date(delivery.createdAt),
+      updatedAt: new Date(delivery.updatedAt),
+    }));
+
+    let result = [...transformedDeliveries];
 
     // Apply search query
     if (searchQuery.trim()) {
@@ -122,13 +177,11 @@ const Deliveries = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [deliveries, searchQuery, filters]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredDeliveries.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentDeliveries = filteredDeliveries.slice(startIndex, endIndex);
+  // Use API pagination instead of client-side slicing
+  const totalPages = apiTotalPages;
+  const currentDeliveries = filteredDeliveries;
 
   // Reset to page 1 when search results change
   useMemo(() => {
@@ -137,6 +190,10 @@ const Deliveries = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleRefresh = () => {
+    fetchDeliveries(currentPage, ITEMS_PER_PAGE);
   };
 
   return (
@@ -189,6 +246,7 @@ const Deliveries = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        onRefresh={handleRefresh}
       />
     </DashboardLayout>
   );

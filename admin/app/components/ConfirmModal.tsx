@@ -11,6 +11,10 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   variant?: "danger" | "warning" | "info";
+  requireReason?: boolean;
+  reason?: string;
+  onReasonChange?: (reason: string) => void;
+  reasonPlaceholder?: string;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -22,6 +26,10 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
   variant = "danger",
+  requireReason = false,
+  reason = "",
+  onReasonChange,
+  reasonPlaceholder = "Enter reason...",
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -95,6 +103,26 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </p>
         </div>
 
+        {requireReason && (
+          <div style={{ marginBottom: 16 }}>
+            <textarea
+              value={reason}
+              onChange={(e) => onReasonChange?.(e.target.value)}
+              placeholder={reasonPlaceholder}
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 6,
+                border: "1px solid #ddd",
+                fontSize: 14,
+                resize: "vertical",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+        )}
+
         <div
           style={{
             display: "flex",
@@ -120,15 +148,18 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           </button>
           <button
             onClick={onConfirm}
+            disabled={requireReason && !reason.trim()}
             style={{
               padding: "8px 16px",
               borderRadius: 6,
               border: "none",
-              backgroundColor: getVariantColor(),
+              backgroundColor:
+                requireReason && !reason.trim() ? "#ccc" : getVariantColor(),
               color: "white",
-              cursor: "pointer",
+              cursor: requireReason && !reason.trim() ? "not-allowed" : "pointer",
               fontSize: 14,
               fontWeight: 500,
+              opacity: requireReason && !reason.trim() ? 0.6 : 1,
             }}
           >
             {confirmText}

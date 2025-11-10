@@ -5,12 +5,15 @@ import { Delivery } from "../data/deliveries";
 import Pagination from "./Pagination";
 import DeliveryActionsMenu from "./DeliveryActionsMenu";
 import DeliveryDetailsModal from "./DeliveryDetailsModal";
+import ConfirmModal from "./ConfirmModal";
+import { useDeliveryContext } from "../context/DeliveryContext";
 
 interface DeliveriesTableProps {
   deliveries: Delivery[];
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onRefresh: () => void;
 }
 
 const DeliveriesTable = ({
@@ -18,11 +21,17 @@ const DeliveriesTable = ({
   currentPage,
   totalPages,
   onPageChange,
+  onRefresh,
 }: DeliveriesTableProps) => {
   const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [deliveryToCancel, setDeliveryToCancel] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+
+  const { fetchDeliveryDetails, cancelDelivery } = useDeliveryContext();
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -70,11 +79,8 @@ const DeliveriesTable = ({
   };
 
   const handleViewDetails = (deliveryId: string) => {
-    const delivery = deliveries.find((d) => d.id === deliveryId);
-    if (delivery) {
-      setSelectedDelivery(delivery);
-      setIsModalOpen(true);
-    }
+    fetchDeliveryDetails(deliveryId);
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
@@ -85,8 +91,20 @@ const DeliveriesTable = ({
   };
 
   const handleCancel = (deliveryId: string) => {
-    console.log("Cancel delivery:", deliveryId);
-    // TODO: Implement cancel logic
+    setDeliveryToCancel(deliveryId);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (deliveryToCancel && cancelReason.trim()) {
+      const success = await cancelDelivery(deliveryToCancel, cancelReason);
+      if (success) {
+        setShowConfirmModal(false);
+        setDeliveryToCancel(null);
+        setCancelReason("");
+        onRefresh(); // Refresh the deliveries list
+      }
+    }
   };
 
   const handleAssignDriver = (deliveryId: string) => {
@@ -255,6 +273,24 @@ const DeliveriesTable = ({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         delivery={selectedDelivery}
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onCancel={() => {
+          setShowConfirmModal(false);
+          setDeliveryToCancel(null);
+          setCancelReason("");
+        }}
+        onConfirm={handleConfirmCancel}
+        title="Cancel Delivery"
+        message="Are you sure you want to cancel this delivery? This action cannot be undone."
+        variant="danger"
+        confirmText="Cancel Delivery"
+        requireReason={true}
+        reason={cancelReason}
+        onReasonChange={setCancelReason}
+        reasonPlaceholder="Enter cancellation reason..."
       />
     </>
   );
