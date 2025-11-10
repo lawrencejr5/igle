@@ -68,7 +68,9 @@ interface DriversListResponse {
 interface DriverContextType {
   drivers: Driver[];
   currentDriver: DriverDetails | null;
+  applications: Driver[];
   totalDrivers: number;
+  totalApplications: number;
   currentPage: number;
   totalPages: number;
   loading: boolean;
@@ -101,10 +103,12 @@ export const DriverProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [applications, setApplications] = useState<Driver[]>([]);
   const [currentDriver, setCurrentDriver] = useState<DriverDetails | null>(
     null
   );
   const [totalDrivers, setTotalDrivers] = useState(0);
+  const [totalApplications, setTotalApplications] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -274,10 +278,11 @@ export const DriverProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (response.data) {
-        setDrivers(response.data.drivers || []);
-        setTotalDrivers(response.data.total || 0);
+        setApplications(response.data.drivers || []);
+        setTotalApplications(response.data.total || 0);
         setCurrentPage(response.data.page || 1);
         setTotalPages(response.data.pages || 0);
+        console.log(response.data.drivers);
       }
     } catch (error: any) {
       console.error("Failed to fetch driver applications:", error);
@@ -306,13 +311,9 @@ export const DriverProvider: React.FC<{ children: ReactNode }> = ({
       );
 
       if (response.data?.driver) {
-        // Update driver in list
-        setDrivers((prev) =>
-          prev.map((driver) =>
-            driver._id === driverId
-              ? { ...driver, ...response.data.driver }
-              : driver
-          )
+        // Update driver in applications list
+        setApplications((prev) =>
+          prev.filter((driver) => driver._id !== driverId)
         );
         showAlert(
           `Driver application ${
@@ -335,8 +336,10 @@ export const DriverProvider: React.FC<{ children: ReactNode }> = ({
 
   const value: DriverContextType = {
     drivers,
+    applications,
     currentDriver,
     totalDrivers,
+    totalApplications,
     currentPage,
     totalPages,
     loading,

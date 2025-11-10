@@ -11,6 +11,7 @@ import {
   MdImage,
 } from "react-icons/md";
 import { DriverRequest } from "../data/requests";
+import { useDriverContext } from "../context/DriverContext";
 
 interface RequestDetailsModalProps {
   isOpen: boolean;
@@ -27,8 +28,16 @@ const RequestDetailsModal = ({
   onApprove,
   onDecline,
 }: RequestDetailsModalProps) => {
+  const { currentDriver, fetchDriverDetails } = useDriverContext();
   const [showVehicleImages, setShowVehicleImages] = useState(false);
   const [showLicenseImages, setShowLicenseImages] = useState(false);
+
+  useEffect(() => {
+    // Fetch full driver details when request is selected
+    if (request && isOpen) {
+      fetchDriverDetails(request.id);
+    }
+  }, [request, isOpen]);
 
   useEffect(() => {
     // Prevent body scroll when modal is open
@@ -63,18 +72,20 @@ const RequestDetailsModal = ({
   const handleApprove = () => {
     if (request && onApprove) {
       onApprove(request.id);
-      onClose();
     }
   };
 
   const handleDecline = () => {
     if (request && onDecline) {
       onDecline(request.id);
-      onClose();
     }
   };
 
-  if (!request) return null;
+  // Use currentDriver from context if available, otherwise fallback to request prop
+  const driver = currentDriver || null;
+  const displayData = request; // Use request for display until driver details load
+
+  if (!displayData) return null;
 
   return (
     <>
@@ -95,7 +106,7 @@ const RequestDetailsModal = ({
         {/* Header */}
         <div className="user-details-modal__header">
           <div>
-            <h2 className="user-details-modal__name">{request.fullname}</h2>
+            <h2 className="user-details-modal__name">{displayData.fullname}</h2>
             <span className="user-details-modal__subtitle">
               Driver Application
             </span>
@@ -122,7 +133,7 @@ const RequestDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Email</span>
                   <span className="user-details-modal__info-value">
-                    {request.email}
+                    {displayData.email}
                   </span>
                 </div>
               </div>
@@ -132,12 +143,12 @@ const RequestDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Phone</span>
                   <span className="user-details-modal__info-value">
-                    {request.phone}
+                    {displayData.phone}
                   </span>
                 </div>
               </div>
 
-              {request.dateOfBirth && (
+              {displayData.dateOfBirth && (
                 <div className="user-details-modal__info-item">
                   <MdCalendarToday className="user-details-modal__info-icon" />
                   <div className="user-details-modal__info-content">
@@ -145,7 +156,7 @@ const RequestDetailsModal = ({
                       Date of Birth
                     </span>
                     <span className="user-details-modal__info-value">
-                      {new Date(request.dateOfBirth).toLocaleDateString()}
+                      {new Date(displayData.dateOfBirth).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -166,7 +177,7 @@ const RequestDetailsModal = ({
                     Vehicle Type
                   </span>
                   <span className="user-details-modal__info-value">
-                    {request.vehicleType}
+                    {displayData.vehicleType}
                   </span>
                 </div>
               </div>
@@ -178,12 +189,12 @@ const RequestDetailsModal = ({
                     Vehicle Name
                   </span>
                   <span className="user-details-modal__info-value">
-                    {request.vehicleName}
+                    {displayData.vehicleName}
                   </span>
                 </div>
               </div>
 
-              {request.vehicleDetails && (
+              {displayData.vehicleDetails && (
                 <>
                   <div className="user-details-modal__info-item">
                     <div className="user-details-modal__info-content">
@@ -191,8 +202,8 @@ const RequestDetailsModal = ({
                         Brand & Model
                       </span>
                       <span className="user-details-modal__info-value">
-                        {request.vehicleDetails.brand}{" "}
-                        {request.vehicleDetails.model}
+                        {displayData.vehicleDetails.brand}{" "}
+                        {displayData.vehicleDetails.model}
                       </span>
                     </div>
                   </div>
@@ -203,7 +214,7 @@ const RequestDetailsModal = ({
                         Color
                       </span>
                       <span className="user-details-modal__info-value">
-                        {request.vehicleDetails.color}
+                        {displayData.vehicleDetails.color}
                       </span>
                     </div>
                   </div>
@@ -214,7 +225,7 @@ const RequestDetailsModal = ({
                         Year
                       </span>
                       <span className="user-details-modal__info-value">
-                        {request.vehicleDetails.year}
+                        {displayData.vehicleDetails.year}
                       </span>
                     </div>
                   </div>
@@ -225,7 +236,7 @@ const RequestDetailsModal = ({
                         Plate Number
                       </span>
                       <span className="user-details-modal__info-value">
-                        {request.vehicleDetails.plateNumber}
+                        {displayData.vehicleDetails.plateNumber}
                       </span>
                     </div>
                   </div>
@@ -234,8 +245,8 @@ const RequestDetailsModal = ({
             </div>
 
             {/* Vehicle Images */}
-            {request.vehicleDetails?.exteriorImage &&
-              request.vehicleDetails?.interiorImage && (
+            {displayData.vehicleDetails?.exteriorImage &&
+              displayData.vehicleDetails?.interiorImage && (
                 <div className="user-details-modal__expandable">
                   <button
                     className="user-details-modal__expandable-header"
@@ -257,7 +268,7 @@ const RequestDetailsModal = ({
                           </span>
                           <div className="user-details-modal__image-wrapper">
                             <img
-                              src={request.vehicleDetails.exteriorImage}
+                              src={displayData.vehicleDetails.exteriorImage}
                               alt="Vehicle Exterior"
                               className="user-details-modal__image"
                             />
@@ -270,7 +281,7 @@ const RequestDetailsModal = ({
                           </span>
                           <div className="user-details-modal__image-wrapper">
                             <img
-                              src={request.vehicleDetails.interiorImage}
+                              src={displayData.vehicleDetails.interiorImage}
                               alt="Vehicle Interior"
                               className="user-details-modal__image"
                             />
@@ -284,7 +295,7 @@ const RequestDetailsModal = ({
           </div>
 
           {/* License Information */}
-          {request.driverLicence && (
+          {displayData.driverLicence && (
             <div className="user-details-modal__section">
               <h4 className="user-details-modal__section-title">
                 Driver License Information
@@ -297,7 +308,7 @@ const RequestDetailsModal = ({
                       License Number
                     </span>
                     <span className="user-details-modal__info-value">
-                      {request.driverLicence.number}
+                      {displayData.driverLicence.number}
                     </span>
                   </div>
                 </div>
@@ -310,7 +321,7 @@ const RequestDetailsModal = ({
                     </span>
                     <span className="user-details-modal__info-value">
                       {new Date(
-                        request.driverLicence.expiryDate
+                        displayData.driverLicence.expiryDate
                       ).toLocaleDateString()}
                     </span>
                   </div>
@@ -318,9 +329,9 @@ const RequestDetailsModal = ({
               </div>
 
               {/* License Images */}
-              {request.driverLicence.frontImage &&
-                request.driverLicence.backImage &&
-                request.driverLicence.selfieWithLicence && (
+              {displayData.driverLicence.frontImage &&
+                displayData.driverLicence.backImage &&
+                displayData.driverLicence.selfieWithLicence && (
                   <div className="user-details-modal__expandable">
                     <button
                       className="user-details-modal__expandable-header"
@@ -342,7 +353,7 @@ const RequestDetailsModal = ({
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={request.driverLicence.frontImage}
+                                src={displayData.driverLicence.frontImage}
                                 alt="License Front"
                                 className="user-details-modal__image"
                               />
@@ -355,7 +366,7 @@ const RequestDetailsModal = ({
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={request.driverLicence.backImage}
+                                src={displayData.driverLicence.backImage}
                                 alt="License Back"
                                 className="user-details-modal__image"
                               />
@@ -368,7 +379,9 @@ const RequestDetailsModal = ({
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={request.driverLicence.selfieWithLicence}
+                                src={
+                                  displayData.driverLicence.selfieWithLicence
+                                }
                                 alt="Selfie with License"
                                 className="user-details-modal__image"
                               />
@@ -394,7 +407,7 @@ const RequestDetailsModal = ({
                     Request ID
                   </span>
                   <span className="user-details-modal__info-value">
-                    {request.id}
+                    {displayData.id}
                   </span>
                 </div>
               </div>
@@ -406,7 +419,7 @@ const RequestDetailsModal = ({
                     Request Date
                   </span>
                   <span className="user-details-modal__info-value">
-                    {new Date(request.requestDate).toLocaleDateString()}
+                    {new Date(displayData.requestDate).toLocaleDateString()}
                   </span>
                 </div>
               </div>

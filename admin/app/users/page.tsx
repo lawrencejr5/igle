@@ -30,9 +30,13 @@ const Users = () => {
 
   const {
     drivers: apiDrivers,
+    applications: apiApplications,
     totalDrivers,
+    totalApplications,
     totalPages: driverTotalPages,
     fetchDrivers,
+    fetchDriverApplications,
+    processDriverApplication,
     loading: driversLoading,
   } = useDriverContext();
 
@@ -49,12 +53,19 @@ const Users = () => {
     sortBy: "",
   });
 
+  // Fetch applications on mount to ensure Requests tab visibility is accurate
+  useEffect(() => {
+    fetchDriverApplications(1, ITEMS_PER_PAGE);
+  }, []);
+
   // Fetch users when component mounts or page changes
   useEffect(() => {
     if (activeTab === "Users") {
       fetchUsers(currentPage, ITEMS_PER_PAGE);
     } else if (activeTab === "Drivers") {
       fetchDrivers(currentPage, ITEMS_PER_PAGE);
+    } else if (activeTab === "Requests") {
+      fetchDriverApplications(currentPage, ITEMS_PER_PAGE);
     }
   }, [activeTab, currentPage]);
 
@@ -64,6 +75,10 @@ const Users = () => {
 
   const handleRefreshDrivers = () => {
     fetchDrivers(currentPage, ITEMS_PER_PAGE);
+  };
+
+  const handleRefreshApplications = () => {
+    fetchDriverApplications(currentPage, ITEMS_PER_PAGE);
   };
 
   const handleFilterClick = () => {
@@ -243,9 +258,59 @@ const Users = () => {
     return result;
   }, [apiDrivers, searchQuery, filters]);
 
-  // Filter and sort requests
+  // Filter and sort requests (driver applications)
   const filteredRequests = useMemo(() => {
-    let result = [...requestsData];
+    // Helper function to capitalize vehicle type
+    const capitalizeVehicleType = (
+      type: string
+    ): "Cab" | "Bike" | "SUV" | "Keke" | "Van" | "Truck" => {
+      const typeMap: {
+        [key: string]: "Cab" | "Bike" | "SUV" | "Keke" | "Van" | "Truck";
+      } = {
+        bike: "Bike",
+        keke: "Keke",
+        cab: "Cab",
+        suv: "SUV",
+        van: "Van",
+        truck: "Truck",
+      };
+      return typeMap[type.toLowerCase()] || "Cab";
+    };
+
+    // Convert API applications to display format
+    let result = apiApplications.map((application) => ({
+      id: application._id,
+      fullname: application.user.name,
+      email: application.user.email,
+      phone: application.user.phone || "N/A",
+      vehicleType: capitalizeVehicleType(application.vehicle_type),
+      vehicleName:
+        application.vehicle.brand && application.vehicle.model
+          ? `${application.vehicle.brand} ${application.vehicle.model}`
+          : "N/A",
+      requestDate: application.createdAt,
+      vehicleDetails: application.vehicle.brand
+        ? {
+            brand: application.vehicle.brand,
+            model: application.vehicle.model || "",
+            color: application.vehicle.color || "",
+            year: application.vehicle.year || "",
+            plateNumber: application.vehicle.plate_number || "",
+            exteriorImage: application.vehicle.exterior_image,
+            interiorImage: application.vehicle.interior_image,
+          }
+        : undefined,
+      driverLicence: application.driver_licence.number
+        ? {
+            number: application.driver_licence.number,
+            expiryDate: application.driver_licence.expiry_date || "",
+            frontImage: application.driver_licence.front_image,
+            backImage: application.driver_licence.back_image,
+            selfieWithLicence: application.driver_licence.selfie_with_licence,
+          }
+        : undefined,
+      dateOfBirth: application.createdAt,
+    }));
 
     // Apply search query
     if (searchQuery.trim()) {
@@ -273,7 +338,7 @@ const Users = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [apiApplications, searchQuery, filters]);
 
   // Calculate pagination based on active tab
   const currentData =
@@ -283,17 +348,17 @@ const Users = () => {
       ? filteredDrivers
       : filteredRequests;
 
-  // Use API pagination for users and drivers
+  // Use API pagination for users, drivers, and requests
   const totalPages =
     activeTab === "Users"
       ? apiTotalPages
       : activeTab === "Drivers"
       ? driverTotalPages
-      : Math.ceil(currentData.length / ITEMS_PER_PAGE);
+      : Math.ceil(totalApplications / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
 
-  // For users and drivers, use the data from API (already paginated)
+  // For users, drivers, and requests, use the data from API (already paginated)
   const currentUsers =
     activeTab === "Users"
       ? filteredUsers
@@ -302,7 +367,10 @@ const Users = () => {
     activeTab === "Drivers"
       ? filteredDrivers
       : filteredDrivers.slice(startIndex, endIndex);
-  const currentRequests = filteredRequests.slice(startIndex, endIndex);
+  const currentRequests =
+    activeTab === "Requests"
+      ? filteredRequests
+      : filteredRequests.slice(startIndex, endIndex);
 
   // Reset to page 1 when search results change
   useMemo(() => {
@@ -313,22 +381,19 @@ const Users = () => {
     setCurrentPage(page);
   };
 
-  const handleApproveRequest = (requestId: string) => {
-    console.log("Approve request:", requestId);
-    // TODO: Implement approve logic - move to drivers list and remove from requests
+  const handleApproveRequest = async (requestId: string) => {
+    await processDriverApplication(requestId, "approve");
   };
 
-  const handleDeclineRequest = (requestId: string) => {
-    console.log("Decline request:", requestId);
-    // TODO: Implement decline logic - remove from requests
+  const handleDeclineRequest = async (requestId: string) => {
+    await processDriverApplication(requestId, "reject");
   };
 
   // Get tab labels with counts
-  const tabLabels = [
-    "Users",
-    "Drivers",
-    `Requests${requestsData.length > 0 ? ` (${requestsData.length})` : ""}`,
-  ];
+  const tabLabels =
+    totalApplications > 0
+      ? ["Users", "Drivers", `Requests (${totalApplications})`]
+      : ["Users", "Drivers"];
 
   return (
     <DashboardLayout>
@@ -380,6 +445,7 @@ const Users = () => {
           onPageChange={handlePageChange}
           onApprove={handleApproveRequest}
           onDecline={handleDeclineRequest}
+          onRefresh={handleRefreshApplications}
         />
       )}
     </DashboardLayout>

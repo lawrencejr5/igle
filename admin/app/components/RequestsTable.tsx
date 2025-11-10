@@ -12,6 +12,7 @@ interface RequestsTableProps {
   onPageChange: (page: number) => void;
   onApprove?: (requestId: string) => void;
   onDecline?: (requestId: string) => void;
+  onRefresh?: () => void;
 }
 
 const RequestsTable = ({
@@ -21,6 +22,7 @@ const RequestsTable = ({
   onPageChange,
   onApprove,
   onDecline,
+  onRefresh,
 }: RequestsTableProps) => {
   const [selectedRequest, setSelectedRequest] = useState<DriverRequest | null>(
     null
@@ -42,21 +44,23 @@ const RequestsTable = ({
     }, 300); // Wait for animation to complete
   };
 
-  const handleApprove = (requestId: string) => {
+  const handleApprove = async (requestId: string) => {
     if (onApprove) {
-      onApprove(requestId);
-    } else {
-      console.log("Approve request:", requestId);
-      // TODO: Implement approve logic
+      await onApprove(requestId);
+      handleCloseModal();
+      if (onRefresh) {
+        onRefresh();
+      }
     }
   };
 
-  const handleDecline = (requestId: string) => {
+  const handleDecline = async (requestId: string) => {
     if (onDecline) {
-      onDecline(requestId);
-    } else {
-      console.log("Decline request:", requestId);
-      // TODO: Implement decline logic
+      await onDecline(requestId);
+      handleCloseModal();
+      if (onRefresh) {
+        onRefresh();
+      }
     }
   };
 

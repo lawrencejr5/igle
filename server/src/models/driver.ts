@@ -38,7 +38,7 @@ export interface DriverType extends Document {
   rating?: number;
   total_trips: number;
   num_of_reviews: number;
-  application: "none" | "rejected" | "submitted" | "approved";
+  application: "pending" | "rejected" | "submitted" | "approved";
 
   // optional admin fields
   is_deleted?: boolean;
@@ -49,74 +49,85 @@ export interface DriverType extends Document {
   blocked_by?: mongoose.Types.ObjectId;
 }
 
-const DriverSchema = new Schema<DriverType>({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    unique: true,
-  },
-  profile_img: String,
-  socket_id: { type: String, default: null },
-  vehicle_type: {
-    type: String,
-    enum: ["bike", "keke", "cab", "suv", "van", "truck"],
-    required: true,
-  },
-  vehicle: {
-    exterior_image: { type: String },
-    interior_image: { type: String },
-    brand: { type: String },
-    model: { type: String },
-    color: { type: String },
-    year: { type: String },
-    plate_number: { type: String },
-  },
-  driver_licence: {
-    number: { type: String },
-    expiry_date: { type: String },
-    front_image: { type: String },
-    back_image: { type: String },
-    selfie_with_licence: { type: String },
-  },
-  bank: {
-    bank_name: String,
-    account_number: String,
-    account_name: String,
-    bank_code: String,
-    recipient_code: String,
-  },
-  date_of_birth: { type: String },
-  is_online: { type: Boolean, default: false },
-  is_available: { type: Boolean, default: true },
-  current_location: {
-    type: {
+const DriverSchema = new Schema<DriverType>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
+    profile_img: String,
+    socket_id: { type: String, default: null },
+    vehicle_type: {
       type: String,
-      enum: ["Point"],
-      default: "Point",
+      enum: ["bike", "keke", "cab", "suv", "van", "truck"],
+      required: true,
     },
-    coordinates: {
-      type: [Number],
-      default: [0, 0],
+    vehicle: {
+      exterior_image: { type: String },
+      interior_image: { type: String },
+      brand: { type: String },
+      model: { type: String },
+      color: { type: String },
+      year: { type: String },
+      plate_number: { type: String },
     },
-  },
-  rating: { type: Number, default: 5 },
-  total_trips: { type: Number, default: 0 },
-  num_of_reviews: { type: Number, default: 0 },
-  application: {
-    type: String,
-    enum: ["none", "submitted", "rejected", "approved"],
-    default: "none",
-  },
+    driver_licence: {
+      number: { type: String },
+      expiry_date: { type: String },
+      front_image: { type: String },
+      back_image: { type: String },
+      selfie_with_licence: { type: String },
+    },
+    bank: {
+      bank_name: String,
+      account_number: String,
+      account_name: String,
+      bank_code: String,
+      recipient_code: String,
+    },
+    date_of_birth: { type: String },
+    is_online: { type: Boolean, default: false },
+    is_available: { type: Boolean, default: true },
+    current_location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0],
+      },
+    },
+    rating: { type: Number, default: 5 },
+    total_trips: { type: Number, default: 0 },
+    num_of_reviews: { type: Number, default: 0 },
+    application: {
+      type: String,
+      enum: ["pending", "submitted", "rejected", "approved"],
+      default: "pending",
+    },
 
-  // admin fields for soft-delete and blocking
-  is_deleted: { type: Boolean, default: false },
-  deleted_at: { type: Date, default: undefined },
-  deleted_by: { type: Schema.Types.ObjectId, ref: "Admin", default: undefined },
-  is_blocked: { type: Boolean, default: false },
-  blocked_at: { type: Date, default: undefined },
-  blocked_by: { type: Schema.Types.ObjectId, ref: "Admin", default: undefined },
-});
+    // admin fields for soft-delete and blocking
+    is_deleted: { type: Boolean, default: false },
+    deleted_at: { type: Date, default: undefined },
+    deleted_by: {
+      type: Schema.Types.ObjectId,
+      ref: "Admin",
+      default: undefined,
+    },
+    is_blocked: { type: Boolean, default: false },
+    blocked_at: { type: Date, default: undefined },
+    blocked_by: {
+      type: Schema.Types.ObjectId,
+      ref: "Admin",
+      default: undefined,
+    },
+  },
+  { timestamps: true }
+);
 
 DriverSchema.index({ current_location: "2dsphere" });
 
