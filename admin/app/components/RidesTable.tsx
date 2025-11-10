@@ -5,12 +5,15 @@ import { Ride } from "../data/rides";
 import Pagination from "./Pagination";
 import RideActionsMenu from "./RideActionsMenu";
 import RideDetailsModal from "./RideDetailsModal";
+import ConfirmModal from "./ConfirmModal";
+import { useRideContext } from "../context/RideContext";
 
 interface RidesTableProps {
   rides: Ride[];
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onRefresh?: () => void;
 }
 
 const RidesTable = ({
@@ -18,9 +21,15 @@ const RidesTable = ({
   currentPage,
   totalPages,
   onPageChange,
+  onRefresh,
 }: RidesTableProps) => {
+  const { fetchRideDetails, cancelRide } = useRideContext();
   const [selectedRide, setSelectedRide] = useState<Ride | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "cancel" | "refund" | null;
+    rideId: string | null;
+  }>({ type: null, rideId: null });
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -63,6 +72,8 @@ const RidesTable = ({
     if (ride) {
       setSelectedRide(ride);
       setIsModalOpen(true);
+      // Fetch full details from API
+      fetchRideDetails(rideId);
     }
   };
 
@@ -70,12 +81,27 @@ const RidesTable = ({
     setIsModalOpen(false);
     setTimeout(() => {
       setSelectedRide(null);
-    }, 300); // Wait for animation to complete
+    }, 300);
   };
 
   const handleCancel = (rideId: string) => {
-    console.log("Cancel ride:", rideId);
-    // TODO: Implement cancel logic
+    setConfirmAction({ type: "cancel", rideId });
+  };
+
+  const handleConfirmCancel = async () => {
+    if (confirmAction.rideId) {
+      try {
+        await cancelRide(confirmAction.rideId, "Cancelled by admin");
+        setConfirmAction({ type: null, rideId: null });
+        if (onRefresh) onRefresh();
+      } catch (error) {
+        // Error is already handled in context
+      }
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmAction({ type: null, rideId: null });
   };
 
   const handleAssignDriver = (rideId: string) => {
@@ -209,6 +235,21 @@ const RidesTable = ({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         ride={selectedRide}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmAction.type}
+        title={confirmAction.type === "cancel" ? "Cancel Ride" : "Refund Ride"}
+        message={
+          confirmAction.type === "cancel"
+            ? "Are you sure you want to cancel this ride? This action cannot be undone."
+            : "Are you sure you want to refund this ride?"
+        }
+        confirmText={confirmAction.type === "cancel" ? "Cancel Ride" : "Refund"}
+        cancelText="Go Back"
+        onConfirm={handleConfirmCancel}
+        onCancel={handleCancelConfirm}
+        variant="danger"
       />
     </>
   );

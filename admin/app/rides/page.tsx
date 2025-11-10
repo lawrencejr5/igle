@@ -1,16 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
 import RidesTable from "../components/RidesTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { ridesData } from "../data/rides";
+import { useRideContext, Ride as ApiRide } from "../context/RideContext";
 
 const ITEMS_PER_PAGE = 10;
 
 const Rides = () => {
+  const {
+    rides: apiRides,
+    totalRides,
+    totalPages: apiTotalPages,
+    loading,
+    fetchRides,
+  } = useRideContext();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -20,6 +28,15 @@ const Rides = () => {
     dateTo: "",
     sortBy: "",
   });
+
+  // Fetch rides when component mounts or page changes
+  useEffect(() => {
+    fetchRides(currentPage, ITEMS_PER_PAGE);
+  }, [currentPage]);
+
+  const handleRefresh = () => {
+    fetchRides(currentPage, ITEMS_PER_PAGE);
+  };
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -46,7 +63,55 @@ const Rides = () => {
 
   // Filter and sort rides
   const filteredRides = useMemo(() => {
-    let result = [...ridesData];
+    // Convert API rides to display format matching Ride interface
+    let result = apiRides.map((ride) => ({
+      id: ride._id,
+      riderId: ride.rider._id,
+      riderName: ride.rider.name,
+      driverId: ride.driver?._id,
+      driverName: ride.driver?.user.name,
+      pickup: {
+        address: ride.pickup.address,
+        coordinates: ride.pickup.coordinates,
+      },
+      destination: {
+        address: ride.destination.address,
+        coordinates: ride.destination.coordinates,
+      },
+      status: ride.status,
+      fare: ride.fare,
+      vehicle: ride.vehicle,
+      distance_km: ride.distance_km,
+      duration_mins: ride.duration_mins,
+      payment_status: ride.payment_status,
+      payment_method: ride.payment_method,
+      driver_earnings: ride.driver_earnings,
+      driver_paid: ride.driver_paid,
+      commission: ride.commission,
+      scheduled: ride.scheduled,
+      scheduled_time: ride.scheduled_time
+        ? new Date(ride.scheduled_time)
+        : null,
+      cancelled: ride.cancelled,
+      timestamps: {
+        accepted_at: ride.timestamps?.accepted_at
+          ? new Date(ride.timestamps.accepted_at)
+          : undefined,
+        arrived_at: ride.timestamps?.arrived_at
+          ? new Date(ride.timestamps.arrived_at)
+          : undefined,
+        started_at: ride.timestamps?.started_at
+          ? new Date(ride.timestamps.started_at)
+          : undefined,
+        completed_at: ride.timestamps?.completed_at
+          ? new Date(ride.timestamps.completed_at)
+          : undefined,
+        cancelled_at: ride.timestamps?.cancelled_at
+          ? new Date(ride.timestamps.cancelled_at)
+          : undefined,
+      },
+      createdAt: new Date(ride.createdAt),
+    }));
 
     // Apply search query
     if (searchQuery.trim()) {
@@ -76,7 +141,7 @@ const Rides = () => {
 
     if (filters.dateTo) {
       const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999); // Include the entire day
+      toDate.setHours(23, 59, 59, 999);
       result = result.filter((ride) => new Date(ride.createdAt) <= toDate);
     }
 
@@ -113,13 +178,11 @@ const Rides = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [apiRides, searchQuery, filters]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredRides.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentRides = filteredRides.slice(startIndex, endIndex);
+  // Use API pagination
+  const totalPages = apiTotalPages;
+  const currentRides = filteredRides;
 
   // Reset to page 1 when search results change
   useMemo(() => {
@@ -180,6 +243,7 @@ const Rides = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        onRefresh={handleRefresh}
       />
     </DashboardLayout>
   );
