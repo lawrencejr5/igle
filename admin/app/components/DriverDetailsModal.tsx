@@ -12,13 +12,13 @@ import {
   MdCardTravel,
   MdImage,
 } from "react-icons/md";
-import { Driver } from "../data/drivers";
+import { useDriverContext } from "../context/DriverContext";
 import EditDriverModal from "./EditDriverModal";
 
 interface DriverDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  driver: Driver | null;
+  driver: any;
 }
 
 const DriverDetailsModal = ({
@@ -26,9 +26,13 @@ const DriverDetailsModal = ({
   onClose,
   driver,
 }: DriverDetailsModalProps) => {
+  const { currentDriver } = useDriverContext();
   const [showVehicleImages, setShowVehicleImages] = useState(false);
   const [showLicenseImages, setShowLicenseImages] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Use currentDriver from context if available, fallback to prop
+  const displayDriver = currentDriver || driver;
 
   useEffect(() => {
     // Prevent body scroll when modal is open
@@ -68,13 +72,20 @@ const DriverDetailsModal = ({
     setIsEditModalOpen(false);
   };
 
-  const handleSaveDriver = (updatedDriver: Driver) => {
+  const handleSaveDriver = (updatedDriver: any) => {
     console.log("Save driver from details modal:", updatedDriver);
     // TODO: Implement save logic
     setIsEditModalOpen(false);
   };
 
-  if (!driver) return null;
+  if (!displayDriver) return null;
+
+  // Helper to get status for display
+  const getDisplayStatus = () => {
+    if (displayDriver.is_blocked) return "Suspended";
+    if (displayDriver.is_online) return "Online";
+    return "Offline";
+  };
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -122,12 +133,12 @@ const DriverDetailsModal = ({
           {/* Driver Profile Section */}
           <div className="user-details-modal__profile">
             <div className="user-details-modal__avatar">
-              {driver.fullname.charAt(0)}
+              {displayDriver.user.name.charAt(0)}
             </div>
             <div className="user-details-modal__profile-info">
-              <h3 className="user-details-modal__name">{driver.fullname}</h3>
-              <span className={`status-badge ${getStatusClass(driver.status)}`}>
-                {driver.status}
+              <h3 className="user-details-modal__name">{displayDriver.user.name}</h3>
+              <span className={`status-badge ${getStatusClass(getDisplayStatus())}`}>
+                {getDisplayStatus()}
               </span>
             </div>
           </div>
@@ -145,7 +156,7 @@ const DriverDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Email</span>
                   <span className="user-details-modal__info-value">
-                    {driver.email}
+                    {displayDriver.user.email}
                   </span>
                 </div>
               </div>
@@ -157,7 +168,7 @@ const DriverDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Phone</span>
                   <span className="user-details-modal__info-value">
-                    {driver.phone}
+                    {displayDriver.user.phone}
                   </span>
                 </div>
               </div>
@@ -176,11 +187,11 @@ const DriverDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {driver.rating.toFixed(1)}
+                    {displayDriver.rating.toFixed(1)}
                   </span>
                   <span className="user-details-modal__stat-label">Rating</span>
                   <span className="user-details-modal__stat-sublabel">
-                    {driver.reviewsCount} reviews
+                    {displayDriver.num_of_reviews} reviews
                   </span>
                 </div>
               </div>
@@ -191,7 +202,7 @@ const DriverDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {driver.totalTrips || 0}
+                    {displayDriver.total_trips || 0}
                   </span>
                   <span className="user-details-modal__stat-label">
                     Total Trips
@@ -205,11 +216,11 @@ const DriverDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {driver.isOnline ? "Online" : "Offline"}
+                    {displayDriver.is_online ? "Online" : "Offline"}
                   </span>
                   <span className="user-details-modal__stat-label">Status</span>
                   <span className="user-details-modal__stat-sublabel">
-                    {driver.isAvailable ? "Available" : "Busy"}
+                    {displayDriver.is_available ? "Available" : "Busy"}
                   </span>
                 </div>
               </div>
@@ -231,12 +242,12 @@ const DriverDetailsModal = ({
                     Vehicle Type
                   </span>
                   <span className="user-details-modal__info-value">
-                    {driver.vehicleType}
+                    {displayDriver.vehicle_type}
                   </span>
                 </div>
               </div>
 
-              {driver.vehicleDetails && (
+              {displayDriver.vehicle && (
                 <>
                   <div className="user-details-modal__info-item">
                     <div className="user-details-modal__info-content">
@@ -244,8 +255,8 @@ const DriverDetailsModal = ({
                         Brand & Model
                       </span>
                       <span className="user-details-modal__info-value">
-                        {driver.vehicleDetails.brand}{" "}
-                        {driver.vehicleDetails.model}
+                        {displayDriver.vehicle.brand}{" "}
+                        {displayDriver.vehicle.model}
                       </span>
                     </div>
                   </div>
@@ -256,7 +267,7 @@ const DriverDetailsModal = ({
                         Color
                       </span>
                       <span className="user-details-modal__info-value">
-                        {driver.vehicleDetails.color}
+                        {displayDriver.vehicle.color}
                       </span>
                     </div>
                   </div>
@@ -267,7 +278,7 @@ const DriverDetailsModal = ({
                         Year
                       </span>
                       <span className="user-details-modal__info-value">
-                        {driver.vehicleDetails.year}
+                        {displayDriver.vehicle.year}
                       </span>
                     </div>
                   </div>
@@ -278,7 +289,7 @@ const DriverDetailsModal = ({
                         Plate Number
                       </span>
                       <span className="user-details-modal__info-value">
-                        {driver.vehicleDetails.plateNumber}
+                        {displayDriver.vehicle.plate_number}
                       </span>
                     </div>
                   </div>
@@ -287,9 +298,9 @@ const DriverDetailsModal = ({
             </div>
 
             {/* Vehicle Images - Expandable */}
-            {driver.vehicleDetails &&
-              (driver.vehicleDetails.exteriorImage ||
-                driver.vehicleDetails.interiorImage) && (
+            {displayDriver.vehicle &&
+              (displayDriver.vehicle.exterior_image ||
+                displayDriver.vehicle.interior_image) && (
                 <div className="user-details-modal__expandable">
                   <button
                     className="user-details-modal__expandable-trigger"
@@ -305,28 +316,28 @@ const DriverDetailsModal = ({
                   {showVehicleImages && (
                     <div className="user-details-modal__expandable-content">
                       <div className="user-details-modal__images-grid">
-                        {driver.vehicleDetails.exteriorImage && (
+                        {displayDriver.vehicle.exterior_image && (
                           <div className="user-details-modal__image-item">
                             <span className="user-details-modal__image-label">
                               Exterior View
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={driver.vehicleDetails.exteriorImage}
+                                src={displayDriver.vehicle.exterior_image}
                                 alt="Vehicle Exterior"
                                 className="user-details-modal__image"
                               />
                             </div>
                           </div>
                         )}
-                        {driver.vehicleDetails.interiorImage && (
+                        {displayDriver.vehicle.interior_image && (
                           <div className="user-details-modal__image-item">
                             <span className="user-details-modal__image-label">
                               Interior View
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={driver.vehicleDetails.interiorImage}
+                                src={displayDriver.vehicle.interior_image}
                                 alt="Vehicle Interior"
                                 className="user-details-modal__image"
                               />
@@ -341,7 +352,7 @@ const DriverDetailsModal = ({
           </div>
 
           {/* Driver License Information */}
-          {driver.driverLicence && (
+          {displayDriver.driver_licence && (
             <div className="user-details-modal__section">
               <h4 className="user-details-modal__section-title">
                 License Information
@@ -353,7 +364,7 @@ const DriverDetailsModal = ({
                       License Number
                     </span>
                     <span className="user-details-modal__info-value">
-                      {driver.driverLicence.number}
+                      {displayDriver.driver_licence.number}
                     </span>
                   </div>
                 </div>
@@ -368,7 +379,7 @@ const DriverDetailsModal = ({
                     </span>
                     <span className="user-details-modal__info-value">
                       {new Date(
-                        driver.driverLicence.expiryDate
+                        displayDriver.driver_licence.expiry_date
                       ).toLocaleDateString()}
                     </span>
                   </div>
@@ -376,9 +387,9 @@ const DriverDetailsModal = ({
               </div>
 
               {/* License Images - Expandable */}
-              {(driver.driverLicence.frontImage ||
-                driver.driverLicence.backImage ||
-                driver.driverLicence.selfieWithLicence) && (
+              {(displayDriver.driver_licence.front_image ||
+                displayDriver.driver_licence.back_image ||
+                displayDriver.driver_licence.selfie_with_licence) && (
                 <div className="user-details-modal__expandable">
                   <button
                     className="user-details-modal__expandable-trigger"
@@ -394,42 +405,42 @@ const DriverDetailsModal = ({
                   {showLicenseImages && (
                     <div className="user-details-modal__expandable-content">
                       <div className="user-details-modal__images-grid">
-                        {driver.driverLicence.frontImage && (
+                        {displayDriver.driver_licence.front_image && (
                           <div className="user-details-modal__image-item">
                             <span className="user-details-modal__image-label">
                               License Front
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={driver.driverLicence.frontImage}
+                                src={displayDriver.driver_licence.front_image}
                                 alt="License Front"
                                 className="user-details-modal__image"
                               />
                             </div>
                           </div>
                         )}
-                        {driver.driverLicence.backImage && (
+                        {displayDriver.driver_licence.back_image && (
                           <div className="user-details-modal__image-item">
                             <span className="user-details-modal__image-label">
                               License Back
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={driver.driverLicence.backImage}
+                                src={displayDriver.driver_licence.back_image}
                                 alt="License Back"
                                 className="user-details-modal__image"
                               />
                             </div>
                           </div>
                         )}
-                        {driver.driverLicence.selfieWithLicence && (
+                        {displayDriver.driver_licence.selfie_with_licence && (
                           <div className="user-details-modal__image-item">
                             <span className="user-details-modal__image-label">
                               Selfie with License
                             </span>
                             <div className="user-details-modal__image-wrapper">
                               <img
-                                src={driver.driverLicence.selfieWithLicence}
+                                src={displayDriver.driver_licence.selfie_with_licence}
                                 alt="Selfie with License"
                                 className="user-details-modal__image"
                               />
@@ -445,7 +456,7 @@ const DriverDetailsModal = ({
           )}
 
           {/* Personal Information */}
-          {driver.dateOfBirth && (
+          {displayDriver.date_of_birth && (
             <div className="user-details-modal__section">
               <h4 className="user-details-modal__section-title">
                 Personal Information
@@ -460,7 +471,7 @@ const DriverDetailsModal = ({
                       Date of Birth
                     </span>
                     <span className="user-details-modal__info-value">
-                      {new Date(driver.dateOfBirth).toLocaleDateString()}
+                      {new Date(displayDriver.date_of_birth).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -471,7 +482,7 @@ const DriverDetailsModal = ({
                       Driver ID
                     </span>
                     <span className="user-details-modal__info-value">
-                      {driver.id}
+                      {displayDriver._id}
                     </span>
                   </div>
                 </div>
@@ -491,7 +502,7 @@ const DriverDetailsModal = ({
                     Driver ID
                   </span>
                   <span className="user-details-modal__info-value">
-                    {driver.id}
+                    {displayDriver._id}
                   </span>
                 </div>
               </div>

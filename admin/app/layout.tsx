@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AlertProvider from "./context/AlertContext";
 import AdminProvider from "./context/AdminContext";
 import UserProvider from "./context/UserContext";
+import DriverProvider from "./context/DriverContext";
 
 export const metadata: Metadata = {
   title: "Igle ride admin",
@@ -24,7 +25,9 @@ export default function RootLayout({
           <AuthProvider>
             <AdminProvider>
               <UserProvider>
-                <ProtectedRoute>{children}</ProtectedRoute>
+                <DriverProvider>
+                  <ProtectedRoute>{children}</ProtectedRoute>
+                </DriverProvider>
               </UserProvider>
             </AdminProvider>
           </AuthProvider>

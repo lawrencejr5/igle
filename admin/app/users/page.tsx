@@ -9,9 +9,12 @@ import UsersTable from "../components/UsersTable";
 import DriversTable from "../components/DriversTable";
 import RequestsTable from "../components/RequestsTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { driversData } from "../data/drivers";
 import { requestsData } from "../data/requests";
 import { useUserContext, User as ApiUser } from "../context/UserContext";
+import {
+  useDriverContext,
+  Driver as ApiDriver,
+} from "../context/DriverContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -24,6 +27,14 @@ const Users = () => {
     loading,
     fetchUsers,
   } = useUserContext();
+
+  const {
+    drivers: apiDrivers,
+    totalDrivers,
+    totalPages: driverTotalPages,
+    fetchDrivers,
+    loading: driversLoading,
+  } = useDriverContext();
 
   const [activeTab, setActiveTab] = useState<"Users" | "Drivers" | "Requests">(
     "Users"
@@ -42,11 +53,17 @@ const Users = () => {
   useEffect(() => {
     if (activeTab === "Users") {
       fetchUsers(currentPage, ITEMS_PER_PAGE);
+    } else if (activeTab === "Drivers") {
+      fetchDrivers(currentPage, ITEMS_PER_PAGE);
     }
   }, [activeTab, currentPage]);
 
   const handleRefreshUsers = () => {
     fetchUsers(currentPage, ITEMS_PER_PAGE);
+  };
+
+  const handleRefreshDrivers = () => {
+    fetchDrivers(currentPage, ITEMS_PER_PAGE);
   };
 
   const handleFilterClick = () => {
@@ -147,7 +164,42 @@ const Users = () => {
 
   // Filter and sort drivers
   const filteredDrivers = useMemo(() => {
-    let result = [...driversData];
+    // Helper function to capitalize vehicle type
+    const capitalizeVehicleType = (
+      type: string
+    ): "Cab" | "Bike" | "SUV" | "Keke" | "Van" | "Truck" => {
+      const typeMap: {
+        [key: string]: "Cab" | "Bike" | "SUV" | "Keke" | "Van" | "Truck";
+      } = {
+        bike: "Bike",
+        keke: "Keke",
+        cab: "Cab",
+        suv: "SUV",
+        van: "Van",
+        truck: "Truck",
+      };
+      return typeMap[type.toLowerCase()] || "Cab";
+    };
+
+    // Convert API drivers to display format
+    let result = apiDrivers.map((driver) => ({
+      id: driver._id,
+      fullname: driver.user.name,
+      email: driver.user.email,
+      phone: driver.user.phone || "N/A",
+      vehicleType: capitalizeVehicleType(driver.vehicle_type),
+      vehicleName:
+        driver.vehicle.brand && driver.vehicle.model
+          ? `${driver.vehicle.brand} ${driver.vehicle.model}`
+          : "N/A",
+      rating: driver.rating || 0,
+      reviewsCount: driver.num_of_reviews || 0,
+      status: (driver.is_blocked
+        ? "Suspended"
+        : driver.is_online
+        ? "Online"
+        : "Offline") as "Online" | "Offline" | "Suspended",
+    }));
 
     // Apply search query
     if (searchQuery.trim()) {
@@ -189,7 +241,7 @@ const Users = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [apiDrivers, searchQuery, filters]);
 
   // Filter and sort requests
   const filteredRequests = useMemo(() => {
@@ -231,20 +283,25 @@ const Users = () => {
       ? filteredDrivers
       : filteredRequests;
 
-  // Use API pagination for users, local pagination for others
+  // Use API pagination for users and drivers
   const totalPages =
     activeTab === "Users"
       ? apiTotalPages
+      : activeTab === "Drivers"
+      ? driverTotalPages
       : Math.ceil(currentData.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
 
-  // For users, use the data from API (already paginated)
+  // For users and drivers, use the data from API (already paginated)
   const currentUsers =
     activeTab === "Users"
       ? filteredUsers
       : filteredUsers.slice(startIndex, endIndex);
-  const currentDrivers = filteredDrivers.slice(startIndex, endIndex);
+  const currentDrivers =
+    activeTab === "Drivers"
+      ? filteredDrivers
+      : filteredDrivers.slice(startIndex, endIndex);
   const currentRequests = filteredRequests.slice(startIndex, endIndex);
 
   // Reset to page 1 when search results change
@@ -313,6 +370,7 @@ const Users = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
+          onRefresh={handleRefreshDrivers}
         />
       ) : (
         <RequestsTable

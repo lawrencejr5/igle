@@ -27,7 +27,7 @@ export interface Driver {
   totalTrips?: number;
   isOnline?: boolean;
   isAvailable?: boolean;
-  status: "Active" | "Inactive" | "Suspended";
+  status: "Online" | "Offline" | "Suspended";
 }
 
 export const driversData: Driver[] = [
@@ -60,7 +60,7 @@ export const driversData: Driver[] = [
     totalTrips: 856,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D2",
@@ -91,7 +91,7 @@ export const driversData: Driver[] = [
     totalTrips: 1024,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D3",
@@ -122,7 +122,7 @@ export const driversData: Driver[] = [
     totalTrips: 523,
     isOnline: false,
     isAvailable: false,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "D4",
@@ -153,7 +153,7 @@ export const driversData: Driver[] = [
     totalTrips: 678,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D5",
@@ -215,7 +215,7 @@ export const driversData: Driver[] = [
     totalTrips: 1456,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D7",
@@ -246,7 +246,7 @@ export const driversData: Driver[] = [
     totalTrips: 745,
     isOnline: true,
     isAvailable: false,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D8",
@@ -276,7 +276,7 @@ export const driversData: Driver[] = [
     totalTrips: 312,
     isOnline: false,
     isAvailable: false,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "D9",
@@ -306,7 +306,7 @@ export const driversData: Driver[] = [
     totalTrips: 980,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D10",
@@ -336,7 +336,7 @@ export const driversData: Driver[] = [
     totalTrips: 640,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D11",
@@ -396,7 +396,7 @@ export const driversData: Driver[] = [
     totalTrips: 1580,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D13",
@@ -426,7 +426,7 @@ export const driversData: Driver[] = [
     totalTrips: 440,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D14",
@@ -456,7 +456,7 @@ export const driversData: Driver[] = [
     totalTrips: 512,
     isOnline: false,
     isAvailable: false,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "D15",
@@ -486,7 +486,7 @@ export const driversData: Driver[] = [
     totalTrips: 390,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D16",
@@ -516,7 +516,7 @@ export const driversData: Driver[] = [
     totalTrips: 870,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D17",
@@ -576,7 +576,7 @@ export const driversData: Driver[] = [
     totalTrips: 1630,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D19",
@@ -606,7 +606,7 @@ export const driversData: Driver[] = [
     totalTrips: 1100,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D20",
@@ -636,7 +636,7 @@ export const driversData: Driver[] = [
     totalTrips: 398,
     isOnline: false,
     isAvailable: false,
-    status: "Inactive",
+    status: "Offline",
   },
   {
     id: "D21",
@@ -666,7 +666,7 @@ export const driversData: Driver[] = [
     totalTrips: 1420,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D22",
@@ -696,7 +696,7 @@ export const driversData: Driver[] = [
     totalTrips: 920,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D23",
@@ -756,7 +756,7 @@ export const driversData: Driver[] = [
     totalTrips: 2040,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
   {
     id: "D25",
@@ -786,6 +786,6 @@ export const driversData: Driver[] = [
     totalTrips: 820,
     isOnline: true,
     isAvailable: true,
-    status: "Active",
+    status: "Online",
   },
 ];

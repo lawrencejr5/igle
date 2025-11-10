@@ -21,6 +21,7 @@ import {
   get_driver_rides_history,
   get_driver_delivered_deliveries,
   get_driver_cancelled_deliveries,
+  admin_get_drivers,
   admin_get_driver,
   admin_edit_driver,
   admin_delete_driver,
@@ -77,6 +78,7 @@ DriverRouter.get("/deliveries/cancelled", get_driver_cancelled_deliveries);
 DriverRouter.get("/transactions", get_driver_transactions);
 
 // Admin driver management (query-based id: ?id=...)
+DriverRouter.get("/admin/drivers", admin_get_drivers);
 DriverRouter.get("/admin/driver", admin_get_driver);
 DriverRouter.patch("/admin/driver", admin_edit_driver);
 DriverRouter.delete("/admin/driver", admin_delete_driver);
