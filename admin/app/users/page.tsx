@@ -399,7 +399,11 @@ const Users = () => {
     <DashboardLayout>
       <h1 className="page-header">{activeTab}</h1>
 
-      <TabSwitcher tabs={tabLabels} onTabChange={handleTabChange} />
+      <TabSwitcher
+        tabs={tabLabels}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
 
       <div className="table-header">
         <FilterButton

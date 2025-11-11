@@ -93,7 +93,9 @@ interface TaskContextType {
   deleteTask: (taskId: string) => Promise<boolean>;
   fetchUserTasks: () => Promise<void>;
   endUserTask: (userTaskId: string) => Promise<boolean>;
+  restartUserTask: (userTaskId: string) => Promise<boolean>;
   deleteUserTask: (userTaskId: string) => Promise<boolean>;
+  toggleTaskActive: (task: Task) => Promise<boolean>;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -240,7 +242,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // ===== UserTask Functions =====
 
-  // Fetch all user tasks (currently returns current user's tasks only - needs admin endpoint)
   // Fetch all user tasks (admin)
   const fetchUserTasks = async () => {
     setLoading(true);
@@ -287,6 +288,30 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Admin: Restart a user task (set progress/status back to in_progress)
+  const restartUserTask = async (userTaskId: string) => {
+    setLoading(true);
+    try {
+      const response = await axios.patch<{ msg: string }>(
+        `${USER_TASK_API}/admin/usertasks/restart`,
+        { id: userTaskId },
+        getAuthHeaders()
+      );
+      showAlert(response.data.msg || "User task restarted", "success");
+      await fetchUserTasks();
+      return true;
+    } catch (error: any) {
+      console.error("Error restarting user task:", error);
+      showAlert(
+        error.response?.data?.msg || "Failed to restart user task",
+        "error"
+      );
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Admin: Delete a user task
   const deleteUserTask = async (userTaskId: string) => {
     setLoading(true);
@@ -318,6 +343,34 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Admin: Toggle task active status
+  const toggleTaskActive = async (task: Task) => {
+    setLoading(true);
+    try {
+      const response = await axios.put<{ msg: string; task: Task }>(
+        `${API_BASE}/${task._id}`,
+        { active: !task.active },
+        getAuthHeaders()
+      );
+      showAlert(
+        response.data.msg ||
+          `Task ${task.active ? "deactivated" : "activated"} successfully`,
+        "success"
+      );
+      await fetchTasks();
+      return true;
+    } catch (error: any) {
+      console.error("Error toggling task active status:", error);
+      showAlert(
+        error.response?.data?.msg || "Failed to toggle task active status",
+        "error"
+      );
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value: TaskContextType = {
     tasks,
     currentTask,
@@ -330,7 +383,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     deleteTask,
     fetchUserTasks,
     endUserTask,
+    restartUserTask,
     deleteUserTask,
+    toggleTaskActive,
   };
 
   return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;

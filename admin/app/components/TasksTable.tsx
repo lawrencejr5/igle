@@ -5,6 +5,8 @@ import { Task } from "../context/TaskContext";
 import TaskActionsMenu from "./TaskActionsMenu";
 import TaskDetailsModal from "./TaskDetailsModal";
 import Pagination from "./Pagination";
+import { useTaskContext } from "../context/TaskContext";
+import ConfirmModal from "./ConfirmModal";
 
 interface TasksTableProps {
   tasks: Task[];
@@ -20,6 +22,37 @@ const TasksTable = ({
   onPageChange,
 }: TasksTableProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const { deleteTask, toggleTaskActive } = useTaskContext();
+  const [taskToToggle, setTaskToToggle] = useState<Task | null>(null);
+  const [showConfirmToggle, setShowConfirmToggle] = useState(false);
+
+  const handleDelete = (task: Task) => {
+    setTaskToDelete(task);
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (taskToDelete) {
+      await deleteTask(taskToDelete._id);
+      setShowConfirmDelete(false);
+      setTaskToDelete(null);
+    }
+  };
+
+  const handleToggleActive = (task: Task) => {
+    setTaskToToggle(task);
+    setShowConfirmToggle(true);
+  };
+
+  const handleConfirmToggle = async () => {
+    if (taskToToggle) {
+      await toggleTaskActive(taskToToggle);
+      setShowConfirmToggle(false);
+      setTaskToToggle(null);
+    }
+  };
 
   const handleViewDetails = (task: Task) => {
     setSelectedTask(task);
@@ -123,6 +156,8 @@ const TasksTable = ({
                   <TaskActionsMenu
                     task={task}
                     onViewDetails={handleViewDetails}
+                    onDelete={handleDelete}
+                    onToggleActive={handleToggleActive}
                   />
                 </td>
               </tr>
@@ -142,6 +177,43 @@ const TasksTable = ({
       {selectedTask && (
         <TaskDetailsModal task={selectedTask} onClose={handleCloseModal} />
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirmDelete(false);
+          setTaskToDelete(null);
+        }}
+        variant="danger"
+      />
+      <ConfirmModal
+        isOpen={showConfirmToggle}
+        title={
+          taskToToggle && taskToToggle.active
+            ? "Deactivate Task"
+            : "Activate Task"
+        }
+        message={
+          taskToToggle && taskToToggle.active
+            ? "Are you sure you want to deactivate this task? Users will not be able to participate until reactivated."
+            : "Are you sure you want to activate this task? Users will be able to participate."
+        }
+        confirmText={
+          taskToToggle && taskToToggle.active ? "Deactivate" : "Activate"
+        }
+        cancelText="Cancel"
+        onConfirm={handleConfirmToggle}
+        onCancel={() => {
+          setShowConfirmToggle(false);
+          setTaskToToggle(null);
+        }}
+        variant={taskToToggle && taskToToggle.active ? "warning" : "info"}
+      />
     </>
   );
 };

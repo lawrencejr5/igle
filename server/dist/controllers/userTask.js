@@ -12,7 +12,44 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.admin_delete_user_task = exports.admin_end_user_task = exports.admin_get_all_user_tasks = exports.claim_task = exports.update_progress = exports.ensure_user_task = exports.get_user_task = exports.get_user_tasks = void 0;
+exports.admin_delete_user_task = exports.admin_end_user_task = exports.admin_get_all_user_tasks = exports.claim_task = exports.update_progress = exports.ensure_user_task = exports.get_user_task = exports.get_user_tasks = exports.admin_restart_user_task = void 0;
+// --- Admin: Restart a user's task (reset progress/status) ---
+const admin_restart_user_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const id = String(req.query.id || ((_b = req.body) === null || _b === void 0 ? void 0 : _b.id) || "");
+        let userTask = null;
+        if (id) {
+            userTask = yield userTask_1.default.findById(id);
+        }
+        else {
+            const user = req.query.user || ((_c = req.body) === null || _c === void 0 ? void 0 : _c.user);
+            const taskId = req.query.task || ((_d = req.body) === null || _d === void 0 ? void 0 : _d.task);
+            if (!user || !taskId)
+                return res
+                    .status(400)
+                    .json({ msg: "id or user and task are required" });
+            userTask = yield userTask_1.default.findOne({ user, task: taskId });
+        }
+        if (!userTask)
+            return res.status(404).json({ msg: "UserTask not found" });
+        userTask.progress = 0;
+        userTask.status = "in_progress";
+        userTask.claimedAt = null;
+        if (userTask.completedAt)
+            userTask.completedAt = undefined;
+        yield userTask.save();
+        yield userTask.populate("task");
+        return res.status(200).json({ msg: "UserTask restarted", task: userTask });
+    }
+    catch (err) {
+        console.error("admin_restart_user_task error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_restart_user_task = admin_restart_user_task;
 const userTask_1 = __importDefault(require("../models/userTask"));
 const task_1 = __importDefault(require("../models/task"));
 const wallet_1 = __importDefault(require("../models/wallet"));

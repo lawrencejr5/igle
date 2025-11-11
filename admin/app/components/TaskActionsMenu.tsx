@@ -13,9 +13,16 @@ import { Task } from "../context/TaskContext";
 interface TaskActionsMenuProps {
   task: Task;
   onViewDetails: (task: Task) => void;
+  onDelete?: (task: Task) => void;
+  onToggleActive?: (task: Task) => void;
 }
 
-const TaskActionsMenu = ({ task, onViewDetails }: TaskActionsMenuProps) => {
+const TaskActionsMenu = ({
+  task,
+  onViewDetails,
+  onDelete,
+  onToggleActive,
+}: TaskActionsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -46,12 +53,18 @@ const TaskActionsMenu = ({ task, onViewDetails }: TaskActionsMenuProps) => {
         // TODO: Implement edit logic
         break;
       case "toggle":
-        console.log("Toggle active status:", task._id);
-        // TODO: Implement toggle active logic
+        if (onToggleActive) {
+          onToggleActive(task);
+        } else {
+          console.log("Toggle active status:", task._id);
+        }
         break;
       case "delete":
-        console.log("Delete task:", task._id);
-        // TODO: Implement delete logic
+        if (onDelete) {
+          onDelete(task);
+        } else {
+          console.log("Delete task:", task._id);
+        }
         break;
     }
   };

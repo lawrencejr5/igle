@@ -229,6 +229,7 @@ const ReportAndFeedbacks = () => {
 
       <TabSwitcher
         tabs={["Reports", "Feedbacks"]}
+        activeTab={activeTab}
         onTabChange={handleTabChange}
       />
 

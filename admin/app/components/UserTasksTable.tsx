@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { UserTask } from "../context/TaskContext";
 import Pagination from "./Pagination";
 import UserTaskActionsMenu from "./UserTaskActionsMenu";
+import ConfirmModal from "./ConfirmModal";
 
 interface UserTasksTableProps {
   userTasks: UserTask[];
@@ -11,6 +13,7 @@ interface UserTasksTableProps {
   onPageChange: (page: number) => void;
   onDelete?: (userTaskId: string) => void;
   onEndTask?: (userTaskId: string) => void;
+  onRestartTask?: (userTaskId: string) => void;
 }
 
 const UserTasksTable = ({
@@ -20,7 +23,53 @@ const UserTasksTable = ({
   onPageChange,
   onDelete,
   onEndTask,
+  onRestartTask,
 }: UserTasksTableProps) => {
+  const [userTaskToDelete, setUserTaskToDelete] = useState<UserTask | null>(
+    null
+  );
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [userTaskToEnd, setUserTaskToEnd] = useState<UserTask | null>(null);
+  const [showConfirmEnd, setShowConfirmEnd] = useState(false);
+  const [userTaskToRestart, setUserTaskToRestart] = useState<UserTask | null>(
+    null
+  );
+  const [showConfirmRestart, setShowConfirmRestart] = useState(false);
+
+  const handleDelete = (userTask: UserTask) => {
+    setUserTaskToDelete(userTask);
+    setShowConfirmDelete(true);
+  };
+  const handleEnd = (userTask: UserTask) => {
+    setUserTaskToEnd(userTask);
+    setShowConfirmEnd(true);
+  };
+  const handleRestart = (userTask: UserTask) => {
+    setUserTaskToRestart(userTask);
+    setShowConfirmRestart(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (userTaskToDelete && onDelete) {
+      await onDelete(userTaskToDelete._id);
+      setShowConfirmDelete(false);
+      setUserTaskToDelete(null);
+    }
+  };
+  const handleConfirmEnd = async () => {
+    if (userTaskToEnd && onEndTask) {
+      await onEndTask(userTaskToEnd._id);
+      setShowConfirmEnd(false);
+      setUserTaskToEnd(null);
+    }
+  };
+  const handleConfirmRestart = async () => {
+    if (userTaskToRestart && onRestartTask) {
+      await onRestartTask(userTaskToRestart._id);
+    }
+    setShowConfirmRestart(false);
+    setUserTaskToRestart(null);
+  };
   const getStatusClass = (status: string) => {
     switch (status) {
       case "locked":
@@ -135,8 +184,9 @@ const UserTasksTable = ({
                 <td>
                   <UserTaskActionsMenu
                     userTask={userTask}
-                    onDelete={onDelete}
-                    onEndTask={onEndTask}
+                    onDelete={() => handleDelete(userTask)}
+                    onEndTask={() => handleEnd(userTask)}
+                    onRestartTask={() => handleRestart(userTask)}
                   />
                 </td>
               </tr>
@@ -152,6 +202,45 @@ const UserTasksTable = ({
           onPageChange={onPageChange}
         />
       )}
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Delete User Task"
+        message="Are you sure you want to delete this user task? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirmDelete(false);
+          setUserTaskToDelete(null);
+        }}
+        variant="danger"
+      />
+      <ConfirmModal
+        isOpen={showConfirmEnd}
+        title="End User Task"
+        message="Are you sure you want to end this user task? This will mark it as completed or expired."
+        confirmText="End Task"
+        cancelText="Cancel"
+        onConfirm={handleConfirmEnd}
+        onCancel={() => {
+          setShowConfirmEnd(false);
+          setUserTaskToEnd(null);
+        }}
+        variant="warning"
+      />
+      <ConfirmModal
+        isOpen={showConfirmRestart}
+        title="Restart User Task"
+        message="Are you sure you want to restart this user task? This will reset its progress."
+        confirmText="Restart"
+        cancelText="Cancel"
+        onConfirm={handleConfirmRestart}
+        onCancel={() => {
+          setShowConfirmRestart(false);
+          setUserTaskToRestart(null);
+        }}
+        variant="info"
+      />
     </>
   );
 };

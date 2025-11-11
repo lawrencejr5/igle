@@ -4,14 +4,12 @@ import { useState } from "react";
 
 interface TabSwitcherProps {
   tabs: string[];
+  activeTab: string;
   onTabChange?: (activeTab: string) => void;
 }
 
-const TabSwitcher = ({ tabs, onTabChange }: TabSwitcherProps) => {
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
+const TabSwitcher = ({ tabs, activeTab, onTabChange }: TabSwitcherProps) => {
   const handleTabClick = (tab: string) => {
-    setActiveTab(tab);
     if (onTabChange) {
       // Extract the base tab name (without count) for the callback
       const baseTabName = tab.split(" (")[0];

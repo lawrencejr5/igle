@@ -1,3 +1,40 @@
+// --- Admin: Restart a user's task (reset progress/status) ---
+export const admin_restart_user_task = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const id = String(req.query.id || req.body?.id || "");
+
+    let userTask = null as any;
+
+    if (id) {
+      userTask = await UserTask.findById(id);
+    } else {
+      const user = req.query.user || req.body?.user;
+      const taskId = req.query.task || req.body?.task;
+      if (!user || !taskId)
+        return res
+          .status(400)
+          .json({ msg: "id or user and task are required" });
+      userTask = await UserTask.findOne({ user, task: taskId });
+    }
+
+    if (!userTask) return res.status(404).json({ msg: "UserTask not found" });
+
+    userTask.progress = 0;
+    userTask.status = "in_progress";
+    userTask.claimedAt = null;
+    if (userTask.completedAt) userTask.completedAt = undefined;
+    await userTask.save();
+    await userTask.populate("task");
+
+    return res.status(200).json({ msg: "UserTask restarted", task: userTask });
+  } catch (err) {
+    console.error("admin_restart_user_task error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
 import { Request, Response } from "express";
 import UserTask from "../models/userTask";
 import Task from "../models/task";

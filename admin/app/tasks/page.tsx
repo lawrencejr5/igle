@@ -44,6 +44,7 @@ const TasksPage = () => {
     fetchUserTasks,
     endUserTask,
     deleteUserTask,
+    restartUserTask,
   } = useTaskContext();
 
   // Fetch tasks and user tasks on mount
@@ -171,6 +172,11 @@ const TasksPage = () => {
     await endUserTask(userTaskId);
   };
 
+  const handleRestartUserTask = async (userTaskId: string) => {
+    console.log("Restarting user task:", userTaskId);
+    await restartUserTask(userTaskId);
+  };
+
   // Check if there are active filters
   const hasActiveFilters = useMemo(() => {
     const currentFilters =
@@ -209,6 +215,11 @@ const TasksPage = () => {
             `Tasks (${tasks.length})`,
             `User Tasks (${filteredUserTasks.length})`,
           ]}
+          activeTab={
+            activeTab === "tasks"
+              ? `Tasks (${tasks.length})`
+              : `User Tasks (${filteredUserTasks.length})`
+          }
           onTabChange={handleTabSwitch}
         />
 
@@ -297,6 +308,7 @@ const TasksPage = () => {
             onPageChange={setCurrentUserTasksPage}
             onDelete={handleDeleteUserTask}
             onEndTask={handleEndUserTask}
+            onRestartTask={handleRestartUserTask}
           />
         )}
 

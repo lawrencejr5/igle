@@ -32,6 +32,7 @@ const SettingsPage = () => {
         <div className="settings-page__tabs">
           <TabSwitcher
             tabs={["Profile Settings", "System Settings"]}
+            activeTab={activeTab}
             onTabChange={handleTabChange}
           />
         </div>

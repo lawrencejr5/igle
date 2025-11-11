@@ -2,19 +2,25 @@
 
 import { useState, useRef, useEffect } from "react";
 import { FiMoreVertical } from "react-icons/fi";
-import { IoTrashOutline, IoStopCircleOutline } from "react-icons/io5";
+import {
+  IoTrashOutline,
+  IoStopCircleOutline,
+  IoRefreshCircleOutline,
+} from "react-icons/io5";
 import { UserTask } from "../context/TaskContext";
 
 interface UserTaskActionsMenuProps {
   userTask: UserTask;
-  onDelete?: (userTaskId: string) => void;
-  onEndTask?: (userTaskId: string) => void;
+  onDelete?: () => void;
+  onEndTask?: () => void;
+  onRestartTask?: () => void;
 }
 
 const UserTaskActionsMenu = ({
   userTask,
   onDelete,
   onEndTask,
+  onRestartTask,
 }: UserTaskActionsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -40,14 +46,21 @@ const UserTaskActionsMenu = ({
     switch (action) {
       case "end":
         if (onEndTask) {
-          onEndTask(userTask._id);
+          onEndTask();
         } else {
           console.log("End task:", userTask._id);
         }
         break;
+      case "restart":
+        if (onRestartTask) {
+          onRestartTask();
+        } else {
+          console.log("Restart user task:", userTask._id);
+        }
+        break;
       case "delete":
         if (onDelete) {
-          onDelete(userTask._id);
+          onDelete();
         } else {
           console.log("Delete user task:", userTask._id);
         }
@@ -67,13 +80,21 @@ const UserTaskActionsMenu = ({
       {isOpen && (
         <div className="action-menu__dropdown">
           <button
-            className="action-menu__item"
+            className="action-menu__item action-menu__item--end"
+            style={{ color: "#e67e22" }}
             onClick={() => handleAction("end")}
           >
             <IoStopCircleOutline />
             <span>End Task</span>
           </button>
-
+          <button
+            className="action-menu__item action-menu__item--restart"
+            style={{ color: "#2980b9" }}
+            onClick={() => handleAction("restart")}
+          >
+            <IoRefreshCircleOutline />
+            <span>Restart Task</span>
+          </button>
           <button
             className="action-menu__item action-menu__item--danger"
             onClick={() => handleAction("delete")}
