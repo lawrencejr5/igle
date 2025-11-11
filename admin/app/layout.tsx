@@ -12,6 +12,7 @@ import { DeliveryProvider } from "./context/DeliveryContext";
 import { TransactionProvider } from "./context/TransactionContext";
 import { TaskProvider } from "./context/TaskContext";
 import { ReportProvider } from "./context/ReportContext";
+import { FeedbackProvider } from "./context/FeedbackContext";
 
 export const metadata: Metadata = {
   title: "Igle ride admin",
@@ -36,7 +37,9 @@ export default function RootLayout({
                       <TransactionProvider>
                         <TaskProvider>
                           <ReportProvider>
-                            <ProtectedRoute>{children}</ProtectedRoute>
+                            <FeedbackProvider>
+                              <ProtectedRoute>{children}</ProtectedRoute>
+                            </FeedbackProvider>
                           </ReportProvider>
                         </TaskProvider>
                       </TransactionProvider>

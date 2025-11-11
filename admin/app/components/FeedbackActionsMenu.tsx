@@ -3,16 +3,18 @@
 import { useState, useRef, useEffect } from "react";
 import { FiMoreVertical } from "react-icons/fi";
 import { IoEyeOutline, IoTrashOutline, IoMailOutline } from "react-icons/io5";
-import { Feedback } from "../data/feedbacks";
+import { Feedback } from "../context/FeedbackContext";
 
 interface FeedbackActionsMenuProps {
   feedback: Feedback;
   onViewDetails: (feedback: Feedback) => void;
+  onDelete?: (feedback: Feedback) => void;
 }
 
 const FeedbackActionsMenu = ({
   feedback,
   onViewDetails,
+  onDelete,
 }: FeedbackActionsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -44,8 +46,9 @@ const FeedbackActionsMenu = ({
         // TODO: Implement reply logic
         break;
       case "delete":
-        console.log("Delete feedback:", feedback._id);
-        // TODO: Implement delete logic
+        if (onDelete) {
+          onDelete(feedback);
+        }
         break;
     }
   };

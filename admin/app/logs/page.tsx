@@ -8,8 +8,8 @@ import SearchBar from "../components/SearchBar";
 import ReportsTable from "../components/ReportsTable";
 import FeedbacksTable from "../components/FeedbacksTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { feedbacksData } from "../data/feedbacks";
 import { useReportContext } from "../context/ReportContext";
+import { useFeedbackContext } from "../context/FeedbackContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -35,11 +35,22 @@ const ReportAndFeedbacks = () => {
     deleteReport,
   } = useReportContext();
 
+  const {
+    feedbacks,
+    totalPages: feedbackTotalPages,
+    fetchFeedbacks,
+    deleteFeedback,
+  } = useFeedbackContext();
+
   // Fetch reports on mount and when filters/page changes
   useEffect(() => {
     if (activeTab === "Reports") {
       fetchReports(currentPage, ITEMS_PER_PAGE, {
         status: filters.status,
+      });
+    } else if (activeTab === "Feedbacks") {
+      fetchFeedbacks(currentPage, ITEMS_PER_PAGE, {
+        type: filters.status,
       });
     }
   }, [activeTab, currentPage, filters.status]);
@@ -88,6 +99,10 @@ const ReportAndFeedbacks = () => {
 
   const handleDeleteReport = async (reportId: string) => {
     await deleteReport(reportId);
+  };
+
+  const handleDeleteFeedback = async (feedbackId: string) => {
+    await deleteFeedback(feedbackId);
   };
 
   // Filter and sort reports (client-side filtering on top of server data)
@@ -161,9 +176,9 @@ const ReportAndFeedbacks = () => {
     return result;
   }, [reports, searchQuery, filters]);
 
-  // Filter and sort feedbacks
+  // Filter and sort feedbacks (client-side filtering on top of server data)
   const filteredFeedbacks = useMemo(() => {
-    let result = [...feedbacksData];
+    let result = [...feedbacks];
 
     // Apply search query
     if (searchQuery.trim()) {
@@ -171,8 +186,7 @@ const ReportAndFeedbacks = () => {
       result = result.filter(
         (feedback) =>
           feedback._id.toLowerCase().includes(query) ||
-          (feedback.user &&
-            feedback.user.fullname.toLowerCase().includes(query)) ||
+          (feedback.user && feedback.user.name.toLowerCase().includes(query)) ||
           feedback.type.toLowerCase().includes(query) ||
           feedback.message.toLowerCase().includes(query) ||
           (feedback.contact && feedback.contact.toLowerCase().includes(query))
@@ -201,15 +215,15 @@ const ReportAndFeedbacks = () => {
       switch (filters.sortBy) {
         case "name-asc":
           result.sort((a, b) => {
-            const nameA = a.user?.fullname || "Anonymous";
-            const nameB = b.user?.fullname || "Anonymous";
+            const nameA = a.user?.name || "Anonymous";
+            const nameB = b.user?.name || "Anonymous";
             return nameA.localeCompare(nameB);
           });
           break;
         case "name-desc":
           result.sort((a, b) => {
-            const nameA = a.user?.fullname || "Anonymous";
-            const nameB = b.user?.fullname || "Anonymous";
+            const nameA = a.user?.name || "Anonymous";
+            const nameB = b.user?.name || "Anonymous";
             return nameB.localeCompare(nameA);
           });
           break;
@@ -231,16 +245,13 @@ const ReportAndFeedbacks = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [feedbacks, searchQuery, filters]);
 
   // Calculate pagination based on active tab
   const totalPages =
-    activeTab === "Reports"
-      ? reportTotalPages
-      : Math.ceil(filteredFeedbacks.length / ITEMS_PER_PAGE);
+    activeTab === "Reports" ? reportTotalPages : feedbackTotalPages;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentFeedbacks = filteredFeedbacks.slice(startIndex, endIndex);
 
   // Reset to page 1 when search results change
   useMemo(() => {
@@ -316,10 +327,11 @@ const ReportAndFeedbacks = () => {
         />
       ) : (
         <FeedbacksTable
-          feedbacks={currentFeedbacks}
+          feedbacks={filteredFeedbacks}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
+          onDelete={handleDeleteFeedback}
         />
       )}
     </DashboardLayout>

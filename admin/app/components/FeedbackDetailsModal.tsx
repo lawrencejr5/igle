@@ -12,7 +12,8 @@ import {
   MdLightbulb,
   MdChat,
 } from "react-icons/md";
-import { Feedback } from "../data/feedbacks";
+import { Feedback } from "../context/FeedbackContext";
+import "../styles/style.scss";
 
 interface FeedbackDetailsModalProps {
   feedback: Feedback;
@@ -62,8 +63,8 @@ const FeedbackDetailsModal = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -104,14 +105,12 @@ const FeedbackDetailsModal = ({
               {feedback.user ? (
                 <div className="user-info-row">
                   <div className="modal-avatar">
-                    {feedback.user.fullname.charAt(0)}
+                    {feedback.user.name.charAt(0)}
                   </div>
                   <div>
                     <div className="info-row">
                       <span className="info-label">Name:</span>
-                      <span className="info-value">
-                        {feedback.user.fullname}
-                      </span>
+                      <span className="info-value">{feedback.user.name}</span>
                     </div>
                     <div className="info-row">
                       <span className="info-label">User ID:</span>

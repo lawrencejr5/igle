@@ -2478,7 +2478,7 @@ body {
 
 .report-description {
     /* Widened to accommodate longer descriptions without crowding */
-    min-width: 300px;
+    min-width: 100px;
     white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2566,7 +2566,7 @@ body {
 }
 
 .feedback-message {
-    min-width: 300px;
+    min-width: 100px;
     white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;

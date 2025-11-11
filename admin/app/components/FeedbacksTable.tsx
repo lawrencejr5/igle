@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Feedback } from "../data/feedbacks";
+import { Feedback } from "../context/FeedbackContext";
 import FeedbackActionsMenu from "./FeedbackActionsMenu";
 import FeedbackDetailsModal from "./FeedbackDetailsModal";
 import Pagination from "./Pagination";
+import ConfirmModal from "./ConfirmModal";
 
 interface FeedbacksTableProps {
   feedbacks: Feedback[];
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onDelete?: (feedbackId: string) => void;
 }
 
 const FeedbacksTable = ({
@@ -18,10 +20,15 @@ const FeedbacksTable = ({
   currentPage,
   totalPages,
   onPageChange,
+  onDelete,
 }: FeedbacksTableProps) => {
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
     null
   );
+  const [feedbackToDelete, setFeedbackToDelete] = useState<Feedback | null>(
+    null
+  );
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   const handleViewDetails = (feedback: Feedback) => {
     setSelectedFeedback(feedback);
@@ -29,6 +36,19 @@ const FeedbacksTable = ({
 
   const handleCloseModal = () => {
     setSelectedFeedback(null);
+  };
+
+  const handleDelete = (feedback: Feedback) => {
+    setFeedbackToDelete(feedback);
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (feedbackToDelete && onDelete) {
+      await onDelete(feedbackToDelete._id);
+      setShowConfirmDelete(false);
+      setFeedbackToDelete(null);
+    }
   };
 
   const getTypeClass = (type: string) => {
@@ -44,8 +64,8 @@ const FeedbacksTable = ({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -85,10 +105,10 @@ const FeedbacksTable = ({
                   {feedback.user ? (
                     <div className="user-cell">
                       <div className="user-cell__avatar">
-                        {feedback.user.fullname.charAt(0)}
+                        {feedback.user.name.charAt(0)}
                       </div>
                       <span className="user-cell__name">
-                        {feedback.user.fullname}
+                        {feedback.user.name}
                       </span>
                     </div>
                   ) : (
@@ -130,6 +150,7 @@ const FeedbacksTable = ({
                   <FeedbackActionsMenu
                     feedback={feedback}
                     onViewDetails={handleViewDetails}
+                    onDelete={handleDelete}
                   />
                 </td>
               </tr>
@@ -148,10 +169,24 @@ const FeedbacksTable = ({
 
       {selectedFeedback && (
         <FeedbackDetailsModal
-          feedback={selectedFeedback}
+          feedback={selectedFeedback as any}
           onClose={handleCloseModal}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Delete Feedback"
+        message="Are you sure you want to delete this feedback? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirmDelete(false);
+          setFeedbackToDelete(null);
+        }}
+        variant="danger"
+      />
     </>
   );
 };

@@ -8,7 +8,8 @@ import {
   MdLocationOn,
   MdWarning,
 } from "react-icons/md";
-import { Report } from "../data/reports";
+import { Report } from "../context/ReportContext";
+import "../styles/style.scss";
 
 interface ReportDetailsModalProps {
   report: Report;
@@ -59,7 +60,7 @@ const ReportDetailsModal = ({ report, onClose }: ReportDetailsModalProps) => {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -107,13 +108,13 @@ const ReportDetailsModal = ({ report, onClose }: ReportDetailsModalProps) => {
                 <>
                   <div className="user-info-row">
                     <div className="modal-avatar">
-                      {report.reporter.fullname.charAt(0)}
+                      {report.reporter.name.charAt(0)}
                     </div>
                     <div>
                       <div className="info-row">
                         <span className="info-label">Name:</span>
                         <span className="info-value">
-                          {report.reporter.fullname}
+                          {report.reporter.name}
                         </span>
                       </div>
                       <div className="info-row">
@@ -142,12 +143,14 @@ const ReportDetailsModal = ({ report, onClose }: ReportDetailsModalProps) => {
             <div className="modal-section__content">
               <div className="user-info-row">
                 <div className="modal-avatar">
-                  {report.driver.fullname.charAt(0)}
+                  {report.driver.user.name.charAt(0)}
                 </div>
                 <div>
                   <div className="info-row">
                     <span className="info-label">Name:</span>
-                    <span className="info-value">{report.driver.fullname}</span>
+                    <span className="info-value">
+                      {report.driver.user.name}
+                    </span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">Driver ID:</span>
