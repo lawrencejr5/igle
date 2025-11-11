@@ -89,7 +89,10 @@ export const TransactionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const { showAlert } = useAlert();
 
-  const API_BASE = "http://localhost:5000/api/v1/transactions";
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+  const API_URL = `${API_BASE_URL}/transactions`;
 
   // Get admin token from localStorage
   const getAuthHeaders = () => {
@@ -121,7 +124,7 @@ export const TransactionProvider: React.FC<{ children: React.ReactNode }> = ({
       if (filters?.owner_id) params.owner_id = filters.owner_id;
 
       const response = await axios.get<TransactionsListResponse>(
-        `${API_BASE}/admin/transactions`,
+        `${API_URL}/admin/transactions`,
         {
           ...getAuthHeaders(),
           params,
@@ -150,7 +153,7 @@ export const TransactionProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await axios.get<{
         msg: string;
         transaction: TransactionDetails;
-      }>(`${API_BASE}/admin/transactions/data`, {
+      }>(`${API_URL}/admin/transactions/data`, {
         ...getAuthHeaders(),
         params: { id: transactionId },
       });

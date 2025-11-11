@@ -110,8 +110,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const { showAlert } = useAlert();
 
-  const API_BASE = "http://localhost:5000/api/v1/tasks";
-  const USER_TASK_API = "http://localhost:5000/api/v1/user_tasks";
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+  const TASK_API_URL = `${API_BASE_URL}/tasks`;
+  const USER_TASK_API_URL = `${API_BASE_URL}/user_tasks`;
 
   // Get admin token from localStorage
   const getAuthHeaders = () => {
@@ -132,7 +135,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       if (filters?.type) params.type = filters.type;
 
       const response = await axios.get<{ msg: string; tasks: Task[] }>(
-        API_BASE,
+        TASK_API_URL,
         {
           ...getAuthHeaders(),
           params,
@@ -153,7 +156,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.get<{ msg: string; task: Task }>(
-        `${API_BASE}/${taskId}`,
+        `${TASK_API_URL}/${taskId}`,
         getAuthHeaders()
       );
 
@@ -174,7 +177,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.post<{ msg: string; task: Task }>(
-        API_BASE,
+        TASK_API_URL,
         payload,
         getAuthHeaders()
       );
@@ -200,7 +203,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.put<{ msg: string; task: Task }>(
-        `${API_BASE}/${taskId}`,
+        `${TASK_API_URL}/${taskId}`,
         payload,
         getAuthHeaders()
       );
@@ -223,7 +226,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.delete<{ msg: string }>(
-        `${API_BASE}/${taskId}`,
+        `${TASK_API_URL}/${taskId}`,
         getAuthHeaders()
       );
 
@@ -247,7 +250,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.get<{ msg: string; tasks: UserTask[] }>(
-        `${USER_TASK_API}/admin/all`,
+        `${USER_TASK_API_URL}/admin/all`,
         getAuthHeaders()
       );
       setUserTasks(response.data.tasks);
@@ -267,7 +270,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.patch<{ msg: string }>(
-        `${USER_TASK_API}/admin/usertasks/end`,
+        `${USER_TASK_API_URL}/admin/usertasks/end`,
         { id: userTaskId },
         getAuthHeaders()
       );
@@ -293,7 +296,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.patch<{ msg: string }>(
-        `${USER_TASK_API}/admin/usertasks/restart`,
+        `${USER_TASK_API_URL}/admin/usertasks/restart`,
         { id: userTaskId },
         getAuthHeaders()
       );
@@ -317,7 +320,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.delete<{ msg: string }>(
-        `${USER_TASK_API}/admin/usertasks`,
+        `${USER_TASK_API_URL}/admin/usertasks`,
         {
           ...getAuthHeaders(),
           data: { id: userTaskId },
@@ -348,7 +351,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.put<{ msg: string; task: Task }>(
-        `${API_BASE}/${task._id}`,
+        `${TASK_API_URL}/${task._id}`,
         { active: !task.active },
         getAuthHeaders()
       );

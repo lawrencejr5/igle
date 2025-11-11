@@ -66,7 +66,11 @@ const get_reports = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 .skip(skip)
                 .limit(limit)
                 .populate("reporter", "name email phone")
-                .populate("driver", "user"),
+                .populate({
+                path: "driver",
+                select: "user",
+                populate: { path: "user", select: "name" },
+            }),
         ]);
         const pages = Math.ceil(total / limit);
         return res

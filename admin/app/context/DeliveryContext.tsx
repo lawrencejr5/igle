@@ -142,7 +142,10 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const { showAlert } = useAlert();
 
-  const API_BASE = "http://localhost:5000/api/v1/delivery";
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+  const API_URL = `${API_BASE_URL}/delivery`;
 
   // Get admin token from localStorage
   const getAuthHeaders = () => {
@@ -159,7 +162,7 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.get<DeliveriesListResponse>(
-        `${API_BASE}/admin/deliveries`,
+        `${API_URL}/admin/deliveries`,
         {
           ...getAuthHeaders(),
           params: { page, limit },
@@ -188,7 +191,7 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await axios.get<{
         msg: string;
         delivery: DeliveryDetails;
-      }>(`${API_BASE}/admin/deliveries/data`, {
+      }>(`${API_URL}/admin/deliveries/data`, {
         ...getAuthHeaders(),
         params: { delivery_id: deliveryId },
       });
@@ -212,7 +215,7 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Promise<boolean> => {
     try {
       const response = await axios.patch(
-        `${API_BASE}/admin/deliveries/cancel`,
+        `${API_URL}/admin/deliveries/cancel`,
         { reason },
         {
           ...getAuthHeaders(),
@@ -238,7 +241,7 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({
   // Delete a delivery
   const deleteDelivery = async (deliveryId: string): Promise<boolean> => {
     try {
-      const response = await axios.delete(`${API_BASE}/admin/deliveries`, {
+      const response = await axios.delete(`${API_URL}/admin/deliveries`, {
         ...getAuthHeaders(),
         params: { delivery_id: deliveryId },
       });

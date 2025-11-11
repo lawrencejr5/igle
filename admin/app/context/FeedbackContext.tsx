@@ -62,7 +62,10 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const { showAlert } = useAlert();
 
-  const API_BASE = "http://localhost:5000/api/v1/feedback/admin/feedbacks";
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+
+  const API_URL = `${API_BASE_URL}/feedback/admin/feedbacks`;
 
   // Get admin token from localStorage
   const getAuthHeaders = () => {
@@ -95,7 +98,7 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
         total: number;
         page: number;
         pages: number;
-      }>(API_BASE, {
+      }>(API_URL, {
         ...getAuthHeaders(),
         params,
       });
@@ -120,7 +123,7 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const response = await axios.get<{ msg: string; feedback: Feedback }>(
-        `${API_BASE}/data`,
+        `${API_URL}/data`,
         {
           ...getAuthHeaders(),
           params: { id: feedbackId },
@@ -143,7 +146,7 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
   const deleteFeedback = async (feedbackId: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const response = await axios.delete<{ msg: string }>(API_BASE, {
+      const response = await axios.delete<{ msg: string }>(API_URL, {
         ...getAuthHeaders(),
         data: { id: feedbackId },
       });

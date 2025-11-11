@@ -2,13 +2,17 @@
 
 import Image from "next/image";
 import { IoSearchOutline } from "react-icons/io5";
+
+import { useRouter } from "next/navigation";
 import { useAuthContext } from "../context/AuthContext";
 import { FiPower } from "react-icons/fi";
 
 const TopNav = () => {
   const { admin, logout } = useAuthContext();
+  const router = useRouter();
 
   const username = admin?.username || "Admin";
+  const profilePic = admin?.profile_pic;
   const avatarLetter = username.charAt(0).toUpperCase();
 
   return (
@@ -32,7 +36,12 @@ const TopNav = () => {
         />
       </div>
 
-      <div className="topnav__profile">
+      <div
+        className="topnav__profile"
+        style={{ cursor: "pointer" }}
+        onClick={() => router.push("/settings")}
+        title="Go to settings"
+      >
         <span
           className="topnav__username"
           style={{ textTransform: "capitalize" }}
@@ -40,11 +49,24 @@ const TopNav = () => {
           Admin {username}
         </span>
         <div className="topnav__avatar">
-          <span>{avatarLetter}</span>
+          {profilePic ? (
+            <Image
+              src={profilePic}
+              alt={username}
+              width={36}
+              height={36}
+              style={{ borderRadius: "50%", objectFit: "cover" }}
+            />
+          ) : (
+            <span>{avatarLetter}</span>
+          )}
         </div>
         <button
           className="topnav__logout"
-          onClick={logout}
+          onClick={(e) => {
+            e.stopPropagation();
+            logout();
+          }}
           style={{
             marginLeft: 16,
             background: "none",
