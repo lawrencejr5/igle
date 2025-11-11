@@ -321,10 +321,8 @@ const Users = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
 
   // For drivers and requests, use paginated data
-  const currentDrivers =
-    activeTab === "Drivers"
-      ? filteredDrivers
-      : filteredDrivers.slice(startIndex, endIndex);
+  // Use API drivers directly for DriversTable (filteredDrivers is display-mapped, not context type)
+  const currentDrivers = apiDrivers;
   const currentRequests =
     activeTab === "Requests"
       ? filteredRequests

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Driver } from "../data/drivers";
+import { Driver } from "../context/DriverContext";
 import Pagination from "./Pagination";
 import ActionMenu from "./ActionMenu";
 import DriverDetailsModal from "./DriverDetailsModal";
@@ -61,7 +61,7 @@ const DriversTable = ({
   const handleViewDetails = async (driverId: string) => {
     try {
       await fetchDriverDetails(driverId);
-      const driver = drivers.find((d) => d.id === driverId);
+      const driver = drivers.find((d) => d._id === driverId);
       if (driver) {
         setSelectedDriver(driver);
         setIsModalOpen(true);
@@ -79,7 +79,7 @@ const DriversTable = ({
   };
 
   const handleEdit = (driverId: string) => {
-    const driver = drivers.find((d) => d.id === driverId);
+    const driver = drivers.find((d) => d._id === driverId);
     if (driver) {
       setEditingDriver(driver);
       setIsEditModalOpen(true);
@@ -122,8 +122,8 @@ const DriversTable = ({
   };
 
   const handleBlock = (driverId: string) => {
-    const driver = drivers.find((d) => d.id === driverId);
-    const isBlocked = driver?.status === "Suspended";
+    const driver = drivers.find((d) => d._id === driverId);
+    const isBlocked = driver?.is_blocked;
     const action = isBlocked ? "unblock" : "block";
 
     setConfirmModal({
@@ -172,39 +172,62 @@ const DriversTable = ({
           </thead>
           <tbody>
             {drivers.map((driver) => (
-              <tr key={driver.id}>
+              <tr key={driver._id}>
                 <td>
                   <div className="user-cell">
                     <div className="user-cell__avatar">
-                      {driver.fullname.charAt(0)}
+                      {driver.user.name.charAt(0)}
                     </div>
-                    <span className="user-cell__name">{driver.fullname}</span>
+                    <span className="user-cell__name">{driver.user.name}</span>
                   </div>
                 </td>
-                <td>{driver.email}</td>
-                <td>{driver.phone}</td>
+                <td>{driver.user.email}</td>
+                <td>{driver.user.phone || "N/A"}</td>
                 <td>
                   <span className="vehicle-info">
                     <span className="vehicle-info__type">
-                      {driver.vehicleType}
+                      {driver.vehicle_type.charAt(0).toUpperCase() +
+                        driver.vehicle_type.slice(1)}
                     </span>
                     <span className="vehicle-info__name">
-                      ({driver.vehicleName})
+                      (
+                      {driver.vehicle.brand && driver.vehicle.model
+                        ? `${driver.vehicle.brand} ${driver.vehicle.model}`
+                        : "N/A"}
+                      )
                     </span>
                   </span>
                 </td>
-                <td>{renderStars(driver.rating, driver.reviewsCount)}</td>
+                <td>
+                  {renderStars(driver.rating ?? 0, driver.num_of_reviews ?? 0)}
+                </td>
                 <td>
                   <span
-                    className={`status-badge ${getStatusClass(driver.status)}`}
+                    className={`status-badge ${
+                      driver.is_blocked
+                        ? "status-badge--suspended"
+                        : driver.is_online
+                        ? "status-badge--active"
+                        : "status-badge--inactive"
+                    }`}
                   >
-                    {driver.status}
+                    {driver.is_blocked
+                      ? "Suspended"
+                      : driver.is_online
+                      ? "Online"
+                      : "Offline"}
                   </span>
                 </td>
                 <td>
                   <ActionMenu
-                    userId={driver.id}
-                    userStatus={driver.status}
+                    userId={driver._id}
+                    userStatus={
+                      driver.is_blocked
+                        ? "Suspended"
+                        : driver.is_online
+                        ? "Online"
+                        : "Offline"
+                    }
                     onViewDetails={handleViewDetails}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
