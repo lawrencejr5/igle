@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { IoAdd } from "react-icons/io5";
 import DashboardLayout from "../components/DashboardLayout";
 import TabSwitcher from "../components/TabSwitcher";
@@ -10,7 +10,7 @@ import TasksTable from "../components/TasksTable";
 import UserTasksTable from "../components/UserTasksTable";
 import CreateTaskModal from "../components/CreateTaskModal";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { sampleTasks, sampleUserTasks } from "../data/tasks";
+import { useTaskContext } from "../context/TaskContext";
 
 const TasksPage = () => {
   const [activeTab, setActiveTab] = useState<"tasks" | "userTasks">("tasks");
@@ -37,8 +37,23 @@ const TasksPage = () => {
   const [currentUserTasksPage, setCurrentUserTasksPage] = useState(1);
   const itemsPerPage = 10;
 
+  const {
+    tasks,
+    fetchTasks,
+    userTasks,
+    fetchUserTasks,
+    endUserTask,
+    deleteUserTask,
+  } = useTaskContext();
+
+  // Fetch tasks and user tasks on mount
+  useEffect(() => {
+    fetchTasks();
+    fetchUserTasks();
+  }, []);
+
   const filteredTasks = useMemo(() => {
-    let filtered = sampleTasks.filter((task) => {
+    let filtered = tasks.filter((task) => {
       const matchesSearch =
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -75,14 +90,12 @@ const TasksPage = () => {
     }
 
     return filtered;
-  }, [searchQuery, taskFilters, taskTypeFilter]);
+  }, [tasks, searchQuery, taskFilters, taskTypeFilter]);
 
   const filteredUserTasks = useMemo(() => {
-    let filtered = sampleUserTasks.filter((userTask) => {
+    let filtered = userTasks.filter((userTask) => {
       const matchesSearch =
-        userTask.user.fullname
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
+        userTask.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         userTask.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         userTask.task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         userTask._id.toLowerCase().includes(searchQuery.toLowerCase());
@@ -113,7 +126,7 @@ const TasksPage = () => {
     }
 
     return filtered;
-  }, [searchQuery, userTaskFilters]);
+  }, [userTasks, searchQuery, userTaskFilters]);
 
   const totalTasksPages = Math.ceil(filteredTasks.length / itemsPerPage);
   const paginatedTasks = filteredTasks.slice(
@@ -150,14 +163,12 @@ const TasksPage = () => {
     setCurrentUserTasksPage(1);
   };
 
-  const handleDeleteUserTask = (userTaskId: string) => {
-    console.log("Delete user task:", userTaskId);
-    // TODO: Implement delete logic
+  const handleDeleteUserTask = async (userTaskId: string) => {
+    await deleteUserTask(userTaskId);
   };
 
-  const handleEndUserTask = (userTaskId: string) => {
-    console.log("End user task:", userTaskId);
-    // TODO: Implement end task logic
+  const handleEndUserTask = async (userTaskId: string) => {
+    await endUserTask(userTaskId);
   };
 
   // Check if there are active filters
@@ -195,8 +206,8 @@ const TasksPage = () => {
 
         <TabSwitcher
           tabs={[
-            `Tasks (${sampleTasks.length})`,
-            `User Tasks (${sampleUserTasks.length})`,
+            `Tasks (${tasks.length})`,
+            `User Tasks (${filteredUserTasks.length})`,
           ]}
           onTabChange={handleTabSwitch}
         />
@@ -290,7 +301,10 @@ const TasksPage = () => {
         )}
 
         {showCreateModal && (
-          <CreateTaskModal onClose={() => setShowCreateModal(false)} />
+          <CreateTaskModal
+            onClose={() => setShowCreateModal(false)}
+            onTaskCreated={() => fetchTasks()}
+          />
         )}
       </div>
     </DashboardLayout>

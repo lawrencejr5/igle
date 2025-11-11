@@ -10,7 +10,7 @@ import {
   MdPeople,
   MdDescription,
 } from "react-icons/md";
-import { Task } from "../data/tasks";
+import { Task } from "../context/TaskContext";
 
 interface TaskDetailsModalProps {
   task: Task;
@@ -48,9 +48,9 @@ const TaskDetailsModal = ({ task, onClose }: TaskDetailsModalProps) => {
     }
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "No limit";
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return "No limit";
+    return new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",

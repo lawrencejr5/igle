@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { FiMoreVertical } from "react-icons/fi";
 import { IoTrashOutline, IoStopCircleOutline } from "react-icons/io5";
-import { UserTask } from "../data/tasks";
+import { UserTask } from "../context/TaskContext";
 
 interface UserTaskActionsMenuProps {
   userTask: UserTask;

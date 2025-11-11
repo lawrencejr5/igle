@@ -148,6 +148,22 @@ export const claim_task = async (req: Request, res: Response) => {
   }
 };
 
+// --- Admin: Get all user tasks ---
+export const admin_get_all_user_tasks = async (req: Request, res: Response) => {
+  if ((req.user as any)?.role !== "admin")
+    return res.status(403).json({ msg: "admin role required for this action" });
+
+  try {
+    const userTasks = await UserTask.find()
+      .populate("user", "name email")
+      .populate("task");
+    return res.status(200).json({ msg: "success", tasks: userTasks });
+  } catch (err) {
+    console.error("admin_get_all_user_tasks error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
 // --- Admin: Force-end a user's task (mark completed) ---
 export const admin_end_user_task = async (req: Request, res: Response) => {
   if ((req.user as any)?.role !== "admin")

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Task } from "../data/tasks";
+import { Task } from "../context/TaskContext";
 import TaskActionsMenu from "./TaskActionsMenu";
 import TaskDetailsModal from "./TaskDetailsModal";
 import Pagination from "./Pagination";
@@ -46,9 +46,9 @@ const TasksTable = ({
     }
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "No limit";
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return "No limit";
+    return new Date(date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",

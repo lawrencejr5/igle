@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.admin_delete_user_task = exports.admin_end_user_task = exports.claim_task = exports.update_progress = exports.ensure_user_task = exports.get_user_task = exports.get_user_tasks = void 0;
+exports.admin_delete_user_task = exports.admin_end_user_task = exports.admin_get_all_user_tasks = exports.claim_task = exports.update_progress = exports.ensure_user_task = exports.get_user_task = exports.get_user_tasks = void 0;
 const userTask_1 = __importDefault(require("../models/userTask"));
 const task_1 = __importDefault(require("../models/task"));
 const wallet_1 = __importDefault(require("../models/wallet"));
@@ -162,6 +162,23 @@ const claim_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.claim_task = claim_task;
+// --- Admin: Get all user tasks ---
+const admin_get_all_user_tasks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "admin")
+        return res.status(403).json({ msg: "admin role required for this action" });
+    try {
+        const userTasks = yield userTask_1.default.find()
+            .populate("user", "name email")
+            .populate("task");
+        return res.status(200).json({ msg: "success", tasks: userTasks });
+    }
+    catch (err) {
+        console.error("admin_get_all_user_tasks error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+});
+exports.admin_get_all_user_tasks = admin_get_all_user_tasks;
 // --- Admin: Force-end a user's task (mark completed) ---
 const admin_end_user_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f;

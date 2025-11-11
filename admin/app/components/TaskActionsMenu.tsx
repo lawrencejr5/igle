@@ -8,7 +8,7 @@ import {
   IoTrashOutline,
   IoToggle,
 } from "react-icons/io5";
-import { Task } from "../data/tasks";
+import { Task } from "../context/TaskContext";
 
 interface TaskActionsMenuProps {
   task: Task;

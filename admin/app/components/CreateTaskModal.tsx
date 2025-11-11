@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
-import { TaskType } from "../data/tasks";
+import { TaskType, useTaskContext } from "../context/TaskContext";
 
 interface CreateTaskModalProps {
   onClose: () => void;
+  onTaskCreated?: () => void;
 }
 
-const CreateTaskModal = ({ onClose }: CreateTaskModalProps) => {
+const CreateTaskModal = ({ onClose, onTaskCreated }: CreateTaskModalProps) => {
+  const { createTask } = useTaskContext();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -61,11 +63,30 @@ const CreateTaskModal = ({ onClose }: CreateTaskModalProps) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to create task
-    console.log("Creating task:", formData);
-    onClose();
+
+    const taskPayload = {
+      title: formData.title,
+      description: formData.description,
+      type: formData.type,
+      goalCount: formData.goalCount,
+      rewardAmount: formData.rewardAmount,
+      active: formData.active,
+      startAt: formData.startAt ? new Date(formData.startAt) : null,
+      endAt: formData.endAt ? new Date(formData.endAt) : null,
+      terms: formData.terms || undefined,
+      maxPerUser: formData.maxPerUser || undefined,
+      totalBudget: formData.totalBudget
+        ? Number(formData.totalBudget)
+        : undefined,
+    };
+
+    const success = await createTask(taskPayload);
+    if (success) {
+      onTaskCreated?.();
+      onClose();
+    }
   };
 
   return (

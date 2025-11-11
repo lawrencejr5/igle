@@ -1,6 +1,6 @@
 "use client";
 
-import { UserTask } from "../data/tasks";
+import { UserTask } from "../context/TaskContext";
 import Pagination from "./Pagination";
 import UserTaskActionsMenu from "./UserTaskActionsMenu";
 
@@ -38,9 +38,9 @@ const UserTasksTable = ({
     }
   };
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -78,11 +78,11 @@ const UserTasksTable = ({
                 <td>
                   <div className="user-cell">
                     <div className="user-cell__avatar">
-                      {userTask.user.fullname.charAt(0)}
+                      {userTask.user.name.charAt(0)}
                     </div>
                     <div>
                       <span className="user-cell__name">
-                        {userTask.user.fullname}
+                        {userTask.user.name}
                       </span>
                       <span className="user-cell__email">
                         {userTask.user.email}

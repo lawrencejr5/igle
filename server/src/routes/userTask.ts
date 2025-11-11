@@ -10,6 +10,7 @@ import {
   claim_task,
   admin_end_user_task,
   admin_delete_user_task,
+  admin_get_all_user_tasks,
 } from "../controllers/userTask";
 
 UserTaskRouter.use(auth);
@@ -21,6 +22,7 @@ UserTaskRouter.post("/:taskId/progress", update_progress);
 UserTaskRouter.post("/:taskId/claim", claim_task);
 
 // Admin user-task management
+UserTaskRouter.get("/admin/all", admin_get_all_user_tasks);
 UserTaskRouter.patch("/admin/usertasks/end", admin_end_user_task);
 UserTaskRouter.delete("/admin/usertasks", admin_delete_user_task);
 
