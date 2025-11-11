@@ -1,26 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiSave } from "react-icons/fi";
-
-interface RideFareSettings {
-  baseFare: number;
-  costPerKm: number;
-  costPerMinute: number;
-  minimumFare: number;
-  commissionRate: number;
-  cancellationFee: number;
-}
-
-interface DeliveryFareSettings {
-  baseDeliveryFee: number;
-  costPerKm: number;
-  weightBasedFee: number;
-  minimumDeliveryFee: number;
-}
+import {
+  useSystemSettings,
+  FareSettings,
+  DeliveryFareSettings,
+} from "../context/SystemSettingsContext";
 
 const SystemSettings = () => {
-  const [rideFare, setRideFare] = useState<RideFareSettings>({
+  const { settings, loading, fetchSettings, updateSettings } =
+    useSystemSettings();
+
+  const [rideFare, setRideFare] = useState<FareSettings>({
     baseFare: 500,
     costPerKm: 150,
     costPerMinute: 50,
@@ -36,10 +28,24 @@ const SystemSettings = () => {
     minimumDeliveryFee: 1000,
   });
 
-  const handleRideFareChange = (
-    field: keyof RideFareSettings,
-    value: string
-  ) => {
+  // Fetch settings on mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  // Update local state when settings are fetched
+  useEffect(() => {
+    if (settings) {
+      if (settings.rideFare) {
+        setRideFare(settings.rideFare);
+      }
+      if (settings.deliveryFare) {
+        setDeliveryFare(settings.deliveryFare);
+      }
+    }
+  }, [settings]);
+
+  const handleRideFareChange = (field: keyof FareSettings, value: string) => {
     setRideFare((prev) => ({
       ...prev,
       [field]: parseFloat(value) || 0,
@@ -56,14 +62,20 @@ const SystemSettings = () => {
     }));
   };
 
-  const handleSaveRideFare = () => {
-    // TODO: Implement API call to update ride fare settings
-    console.log("Saving ride fare settings:", rideFare);
+  const handleSaveRideFare = async () => {
+    try {
+      await updateSettings(rideFare, undefined);
+    } catch (error) {
+      console.error("Failed to save ride fare settings:", error);
+    }
   };
 
-  const handleSaveDeliveryFare = () => {
-    // TODO: Implement API call to update delivery fare settings
-    console.log("Saving delivery fare settings:", deliveryFare);
+  const handleSaveDeliveryFare = async () => {
+    try {
+      await updateSettings(undefined, deliveryFare);
+    } catch (error) {
+      console.error("Failed to save delivery fare settings:", error);
+    }
   };
 
   return (
@@ -89,6 +101,7 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="500"
                 min="0"
+                disabled={loading}
               />
             </div>
 
@@ -105,6 +118,7 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="150"
                 min="0"
+                disabled={loading}
               />
             </div>
           </div>
@@ -123,6 +137,7 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="50"
                 min="0"
+                disabled={loading}
               />
             </div>
 
@@ -139,6 +154,7 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="800"
                 min="0"
+                disabled={loading}
               />
             </div>
           </div>
@@ -161,6 +177,7 @@ const SystemSettings = () => {
                 placeholder="15"
                 min="0"
                 max="100"
+                disabled={loading}
               />
             </div>
 
@@ -177,13 +194,18 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="300"
                 min="0"
+                disabled={loading}
               />
             </div>
           </div>
 
-          <button className="btn btn--primary" onClick={handleSaveRideFare}>
+          <button
+            className="btn btn--primary"
+            onClick={handleSaveRideFare}
+            disabled={loading}
+          >
             <FiSave />
-            Save Ride Fare Settings
+            {loading ? "Saving..." : "Save Ride Fare Settings"}
           </button>
         </div>
       </div>
@@ -206,6 +228,7 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="600"
                 min="0"
+                disabled={loading}
               />
             </div>
 
@@ -222,6 +245,7 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="100"
                 min="0"
+                disabled={loading}
               />
             </div>
           </div>
@@ -240,6 +264,7 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="200"
                 min="0"
+                disabled={loading}
               />
             </div>
 
@@ -256,13 +281,18 @@ const SystemSettings = () => {
                 className="settings-form-group__input"
                 placeholder="1000"
                 min="0"
+                disabled={loading}
               />
             </div>
           </div>
 
-          <button className="btn btn--primary" onClick={handleSaveDeliveryFare}>
+          <button
+            className="btn btn--primary"
+            onClick={handleSaveDeliveryFare}
+            disabled={loading}
+          >
             <FiSave />
-            Save Delivery Fare Settings
+            {loading ? "Saving..." : "Save Delivery Fare Settings"}
           </button>
         </div>
       </div>

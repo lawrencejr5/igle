@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   // Allow external image hosts used by our seed data (avatars, placeholders)
   images: {
-    domains: ["i.pravatar.cc", "placehold.co"],
+    domains: ["i.pravatar.cc", "placehold.co", "res.cloudinary.com"],
     // If you prefer pattern matching instead, use `remotePatterns`.
   },
 };

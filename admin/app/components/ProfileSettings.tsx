@@ -1,46 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { FiUpload, FiSave } from "react-icons/fi";
+import { FiUpload, FiSave, FiTrash2 } from "react-icons/fi";
 import { FaImage } from "react-icons/fa";
+import { useAdminContext } from "../context/AdminContext";
 
 const ProfileSettings = () => {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [username, setUsername] = useState("Admin User");
+  const {
+    profile,
+    loading,
+    updateProfile,
+    updatePassword,
+    uploadProfilePic,
+    removeProfilePic,
+  } = useAdminContext();
+
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  // Initialize form with profile data
+  useEffect(() => {
+    if (profile) {
+      setUsername(profile.username || "");
+      setEmail(profile.email || "");
+      setPreviewImage(profile.profile_pic || null);
+    }
+  }, [profile]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result as string);
+        setPreviewImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSaveProfile = () => {
-    // TODO: Implement API call to update profile
-    console.log("Saving profile:", { username, profileImage });
+  const handleSaveProfile = async () => {
+    try {
+      await updateProfile(username, email);
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+    }
   };
 
-  const handleChangePassword = () => {
-    // TODO: Implement API call to change password
+  const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-    console.log("Changing password");
+    try {
+      await updatePassword(currentPassword, newPassword, confirmPassword);
+      // Clear password fields on success
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      console.error("Failed to change password:", error);
+    }
   };
 
-  const handleSaveProfileImage = () => {
-    // TODO: Implement API call to save profile image
-    console.log("Saving profile image", profileImage);
-    alert("Profile image saved (demo)");
+  const handleSaveProfileImage = async () => {
+    if (!selectedFile) {
+      alert("Please select an image first");
+      return;
+    }
+    try {
+      await uploadProfilePic(selectedFile);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error("Failed to save profile image:", error);
+    }
+  };
+
+  const handleRemoveProfileImage = async () => {
+    if (
+      !window.confirm("Are you sure you want to remove your profile picture?")
+    ) {
+      return;
+    }
+    try {
+      await removeProfilePic();
+      setPreviewImage(null);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error("Failed to remove profile image:", error);
+    }
   };
 
   return (
@@ -50,9 +104,9 @@ const ProfileSettings = () => {
         <h3 className="settings-section__title">Profile Image</h3>
         <div className="profile-image-upload">
           <div className="profile-image-upload__preview">
-            {profileImage ? (
+            {previewImage ? (
               <Image
-                src={profileImage}
+                src={previewImage}
                 alt="Profile"
                 width={120}
                 height={120}
@@ -77,22 +131,35 @@ const ProfileSettings = () => {
               onChange={handleImageChange}
               className="profile-image-upload__input"
             />
-            <div>
+            <div className="profile-image-upload__buttons">
               <button
                 type="button"
                 className="btn btn--primary"
                 onClick={handleSaveProfileImage}
+                disabled={!selectedFile || loading}
               >
-                Save Changes
+                <FiSave />
+                {loading ? "Saving..." : "Save Image"}
               </button>
+              {profile?.profile_pic && (
+                <button
+                  type="button"
+                  className="btn btn--danger"
+                  onClick={handleRemoveProfileImage}
+                  disabled={loading}
+                >
+                  <FiTrash2 />
+                  Remove
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Username Section */}
+      {/* Profile Info Section */}
       <div className="settings-section">
-        <h3 className="settings-section__title">Username</h3>
+        <h3 className="settings-section__title">Profile Information</h3>
         <div className="settings-form-group">
           <label htmlFor="username" className="settings-form-group__label">
             Username
@@ -104,11 +171,30 @@ const ProfileSettings = () => {
             onChange={(e) => setUsername(e.target.value)}
             className="settings-form-group__input"
             placeholder="Enter your username"
+            disabled={loading}
           />
         </div>
-        <button className="btn btn--primary" onClick={handleSaveProfile}>
+        <div className="settings-form-group">
+          <label htmlFor="email" className="settings-form-group__label">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="settings-form-group__input"
+            placeholder="Enter your email"
+            disabled={loading}
+          />
+        </div>
+        <button
+          className="btn btn--primary"
+          onClick={handleSaveProfile}
+          disabled={loading}
+        >
           <FiSave />
-          Save Changes
+          {loading ? "Saving..." : "Save Changes"}
         </button>
       </div>
 
@@ -129,6 +215,7 @@ const ProfileSettings = () => {
             onChange={(e) => setCurrentPassword(e.target.value)}
             className="settings-form-group__input"
             placeholder="Enter current password"
+            disabled={loading}
           />
         </div>
         <div className="settings-form-group">
@@ -142,6 +229,7 @@ const ProfileSettings = () => {
             onChange={(e) => setNewPassword(e.target.value)}
             className="settings-form-group__input"
             placeholder="Enter new password"
+            disabled={loading}
           />
         </div>
         <div className="settings-form-group">
@@ -158,11 +246,16 @@ const ProfileSettings = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="settings-form-group__input"
             placeholder="Confirm new password"
+            disabled={loading}
           />
         </div>
-        <button className="btn btn--primary" onClick={handleChangePassword}>
+        <button
+          className="btn btn--primary"
+          onClick={handleChangePassword}
+          disabled={loading}
+        >
           <FiSave />
-          Update Password
+          {loading ? "Updating..." : "Update Password"}
         </button>
       </div>
     </div>
