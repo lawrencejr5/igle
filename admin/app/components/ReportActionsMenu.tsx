@@ -9,16 +9,23 @@ import {
   IoTrashOutline,
 } from "react-icons/io5";
 import { MdSearch } from "react-icons/md";
-import { Report } from "../data/reports";
+import { Report } from "../context/ReportContext";
 
 interface ReportActionsMenuProps {
   report: Report;
   onViewDetails: (report: Report) => void;
+  onUpdateStatus?: (
+    report: Report,
+    status: "new" | "investigating" | "resolved" | "dismissed"
+  ) => void;
+  onDelete?: (report: Report) => void;
 }
 
 const ReportActionsMenu = ({
   report,
   onViewDetails,
+  onUpdateStatus,
+  onDelete,
 }: ReportActionsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -46,20 +53,24 @@ const ReportActionsMenu = ({
         onViewDetails(report);
         break;
       case "investigate":
-        console.log("Mark as investigating:", report._id);
-        // TODO: Implement investigate logic
+        if (onUpdateStatus) {
+          onUpdateStatus(report, "investigating");
+        }
         break;
       case "resolve":
-        console.log("Mark as resolved:", report._id);
-        // TODO: Implement resolve logic
+        if (onUpdateStatus) {
+          onUpdateStatus(report, "resolved");
+        }
         break;
       case "dismiss":
-        console.log("Dismiss report:", report._id);
-        // TODO: Implement dismiss logic
+        if (onUpdateStatus) {
+          onUpdateStatus(report, "dismissed");
+        }
         break;
       case "delete":
-        console.log("Delete report:", report._id);
-        // TODO: Implement delete logic
+        if (onDelete) {
+          onDelete(report);
+        }
         break;
     }
   };

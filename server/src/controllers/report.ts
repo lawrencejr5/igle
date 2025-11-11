@@ -53,7 +53,11 @@ export const get_reports = async (req: Request, res: Response) => {
         .skip(skip)
         .limit(limit)
         .populate("reporter", "name email phone")
-        .populate("driver", "user"),
+        .populate({
+          path: "driver",
+          select: "user",
+          populate: { path: "user", select: "name" },
+        }),
     ]);
 
     const pages = Math.ceil(total / limit);

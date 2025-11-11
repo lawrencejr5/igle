@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import TabSwitcher from "../components/TabSwitcher";
 import FilterButton from "../components/FilterButton";
@@ -8,8 +8,8 @@ import SearchBar from "../components/SearchBar";
 import ReportsTable from "../components/ReportsTable";
 import FeedbacksTable from "../components/FeedbacksTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { reportsData } from "../data/reports";
 import { feedbacksData } from "../data/feedbacks";
+import { useReportContext } from "../context/ReportContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -26,6 +26,23 @@ const ReportAndFeedbacks = () => {
     dateTo: "",
     sortBy: "",
   });
+
+  const {
+    reports,
+    totalPages: reportTotalPages,
+    fetchReports,
+    updateReportStatus,
+    deleteReport,
+  } = useReportContext();
+
+  // Fetch reports on mount and when filters/page changes
+  useEffect(() => {
+    if (activeTab === "Reports") {
+      fetchReports(currentPage, ITEMS_PER_PAGE, {
+        status: filters.status,
+      });
+    }
+  }, [activeTab, currentPage, filters.status]);
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -62,9 +79,20 @@ const ReportAndFeedbacks = () => {
     }); // Reset filters
   };
 
-  // Filter and sort reports
+  const handleUpdateStatus = async (
+    reportId: string,
+    status: "new" | "investigating" | "resolved" | "dismissed"
+  ) => {
+    await updateReportStatus(reportId, status);
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    await deleteReport(reportId);
+  };
+
+  // Filter and sort reports (client-side filtering on top of server data)
   const filteredReports = useMemo(() => {
-    let result = [...reportsData];
+    let result = [...reports];
 
     // Apply search query
     if (searchQuery.trim()) {
@@ -72,9 +100,9 @@ const ReportAndFeedbacks = () => {
       result = result.filter(
         (report) =>
           report._id.toLowerCase().includes(query) ||
-          report.driver.fullname.toLowerCase().includes(query) ||
+          report.driver.user.name.toLowerCase().includes(query) ||
           (report.reporter &&
-            report.reporter.fullname.toLowerCase().includes(query)) ||
+            report.reporter.name.toLowerCase().includes(query)) ||
           report.category.toLowerCase().includes(query) ||
           (report.description &&
             report.description.toLowerCase().includes(query)) ||
@@ -105,12 +133,12 @@ const ReportAndFeedbacks = () => {
       switch (filters.sortBy) {
         case "name-asc":
           result.sort((a, b) =>
-            a.driver.fullname.localeCompare(b.driver.fullname)
+            a.driver.user.name.localeCompare(b.driver.user.name)
           );
           break;
         case "name-desc":
           result.sort((a, b) =>
-            b.driver.fullname.localeCompare(a.driver.fullname)
+            b.driver.user.name.localeCompare(a.driver.user.name)
           );
           break;
         case "rides-desc":
@@ -131,7 +159,7 @@ const ReportAndFeedbacks = () => {
     }
 
     return result;
-  }, [searchQuery, filters]);
+  }, [reports, searchQuery, filters]);
 
   // Filter and sort feedbacks
   const filteredFeedbacks = useMemo(() => {
@@ -206,12 +234,12 @@ const ReportAndFeedbacks = () => {
   }, [searchQuery, filters]);
 
   // Calculate pagination based on active tab
-  const currentData =
-    activeTab === "Reports" ? filteredReports : filteredFeedbacks;
-  const totalPages = Math.ceil(currentData.length / ITEMS_PER_PAGE);
+  const totalPages =
+    activeTab === "Reports"
+      ? reportTotalPages
+      : Math.ceil(filteredFeedbacks.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentReports = filteredReports.slice(startIndex, endIndex);
   const currentFeedbacks = filteredFeedbacks.slice(startIndex, endIndex);
 
   // Reset to page 1 when search results change
@@ -279,10 +307,12 @@ const ReportAndFeedbacks = () => {
 
       {activeTab === "Reports" ? (
         <ReportsTable
-          reports={currentReports}
+          reports={filteredReports}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
+          onUpdateStatus={handleUpdateStatus}
+          onDelete={handleDeleteReport}
         />
       ) : (
         <FeedbacksTable

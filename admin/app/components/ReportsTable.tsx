@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Report } from "../data/reports";
+import { Report } from "../context/ReportContext";
 import ReportActionsMenu from "./ReportActionsMenu";
 import ReportDetailsModal from "./ReportDetailsModal";
 import Pagination from "./Pagination";
+import ConfirmModal from "./ConfirmModal";
 
 interface ReportsTableProps {
   reports: Report[];
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  onUpdateStatus?: (
+    reportId: string,
+    status: "new" | "investigating" | "resolved" | "dismissed"
+  ) => void;
+  onDelete?: (reportId: string) => void;
 }
 
 const ReportsTable = ({
@@ -18,8 +24,12 @@ const ReportsTable = ({
   currentPage,
   totalPages,
   onPageChange,
+  onUpdateStatus,
+  onDelete,
 }: ReportsTableProps) => {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   const handleViewDetails = (report: Report) => {
     setSelectedReport(report);
@@ -27,6 +37,28 @@ const ReportsTable = ({
 
   const handleCloseModal = () => {
     setSelectedReport(null);
+  };
+
+  const handleUpdateStatus = (
+    report: Report,
+    status: "new" | "investigating" | "resolved" | "dismissed"
+  ) => {
+    if (onUpdateStatus) {
+      onUpdateStatus(report._id, status);
+    }
+  };
+
+  const handleDelete = (report: Report) => {
+    setReportToDelete(report);
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (reportToDelete && onDelete) {
+      await onDelete(reportToDelete._id);
+      setShowConfirmDelete(false);
+      setReportToDelete(null);
+    }
   };
 
   const getStatusClass = (status: string) => {
@@ -48,8 +80,8 @@ const ReportsTable = ({
     return "report-category";
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -90,10 +122,10 @@ const ReportsTable = ({
                   ) : report.reporter ? (
                     <div className="user-cell">
                       <div className="user-cell__avatar">
-                        {report.reporter.fullname.charAt(0)}
+                        {report.reporter.name.charAt(0)}
                       </div>
                       <span className="user-cell__name">
-                        {report.reporter.fullname}
+                        {report.reporter.name}
                       </span>
                     </div>
                   ) : (
@@ -103,10 +135,10 @@ const ReportsTable = ({
                 <td>
                   <div className="user-cell">
                     <div className="user-cell__avatar">
-                      {report.driver.fullname.charAt(0)}
+                      {report.driver.user.name.charAt(0)}
                     </div>
                     <span className="user-cell__name">
-                      {report.driver.fullname}
+                      {report.driver.user.name}
                     </span>
                   </div>
                 </td>
@@ -137,6 +169,8 @@ const ReportsTable = ({
                   <ReportActionsMenu
                     report={report}
                     onViewDetails={handleViewDetails}
+                    onUpdateStatus={handleUpdateStatus}
+                    onDelete={handleDelete}
                   />
                 </td>
               </tr>
@@ -155,10 +189,24 @@ const ReportsTable = ({
 
       {selectedReport && (
         <ReportDetailsModal
-          report={selectedReport}
+          report={selectedReport as any}
           onClose={handleCloseModal}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Delete Report"
+        message="Are you sure you want to delete this report? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirmDelete(false);
+          setReportToDelete(null);
+        }}
+        variant="danger"
+      />
     </>
   );
 };
