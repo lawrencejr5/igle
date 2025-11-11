@@ -10,7 +10,7 @@ import DriversTable from "../components/DriversTable";
 import RequestsTable from "../components/RequestsTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
 import { requestsData } from "../data/requests";
-import { useUserContext, User as ApiUser } from "../context/UserContext";
+import { useUserContext } from "../context/UserContext";
 import {
   useDriverContext,
   Driver as ApiDriver,
@@ -31,8 +31,6 @@ const Users = () => {
   const {
     drivers: apiDrivers,
     applications: apiApplications,
-    totalDrivers,
-    totalApplications,
     totalPages: driverTotalPages,
     fetchDrivers,
     fetchDriverApplications,
@@ -52,6 +50,36 @@ const Users = () => {
     dateTo: "",
     sortBy: "",
   });
+
+  // Filter and sort users
+  const filteredUsers = useMemo(() => {
+    let result = [...apiUsers];
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (user) =>
+          user.name.toLowerCase().includes(query) ||
+          user.email.toLowerCase().includes(query) ||
+          (user.phone && user.phone.includes(query))
+      );
+    }
+    // Apply status filter
+    if (filters.status) {
+      result = result.filter((user) => {
+        if (filters.status === "Online")
+          return user.is_online && !user.is_blocked;
+        if (filters.status === "Offline")
+          return !user.is_online && !user.is_blocked;
+        if (filters.status === "Suspended") return user.is_blocked;
+        return true;
+      });
+    }
+    // Optionally add sorting here if needed
+    return result;
+  }, [apiUsers, searchQuery, filters]);
+
+  const currentUsers = filteredUsers;
 
   // Fetch applications on mount to ensure Requests tab visibility is accurate
   useEffect(() => {
@@ -116,66 +144,7 @@ const Users = () => {
     }); // Reset filters
   };
 
-  // Filter and sort users
-  const filteredUsers = useMemo(() => {
-    // Convert API users to display format with ride/delivery counts
-    let result = apiUsers.map((user) => ({
-      id: user._id,
-      fullname: user.name,
-      email: user.email,
-      phone: user.phone || "N/A",
-      rides: 0, // TODO: These should come from user details endpoint
-      deliveries: 0,
-      status: (user.is_blocked
-        ? "Suspended"
-        : user.is_online
-        ? "Online"
-        : "Offline") as "Online" | "Offline" | "Suspended",
-    }));
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (user) =>
-          user.fullname.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query) ||
-          user.phone.includes(query) ||
-          user.status.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply status filter
-    if (filters.status) {
-      result = result.filter((user) => user.status === filters.status);
-    }
-
-    // Apply sorting
-    if (filters.sortBy) {
-      switch (filters.sortBy) {
-        case "name-asc":
-          result.sort((a, b) => a.fullname.localeCompare(b.fullname));
-          break;
-        case "name-desc":
-          result.sort((a, b) => b.fullname.localeCompare(a.fullname));
-          break;
-        case "rides-desc":
-          result.sort((a, b) => b.rides - a.rides);
-          break;
-        case "rides-asc":
-          result.sort((a, b) => a.rides - b.rides);
-          break;
-        case "deliveries-desc":
-          result.sort((a, b) => b.deliveries - a.deliveries);
-          break;
-        case "deliveries-asc":
-          result.sort((a, b) => a.deliveries - b.deliveries);
-          break;
-      }
-    }
-
-    return result;
-  }, [apiUsers, searchQuery, filters]);
+  // No display mapping for users; use apiUsers directly
 
   // Filter and sort drivers
   const filteredDrivers = useMemo(() => {
@@ -340,29 +309,18 @@ const Users = () => {
     return result;
   }, [apiApplications, searchQuery, filters]);
 
-  // Calculate pagination based on active tab
-  const currentData =
-    activeTab === "Users"
-      ? filteredUsers
-      : activeTab === "Drivers"
-      ? filteredDrivers
-      : filteredRequests;
+  // Calculate pagination based on active tab (for drivers/requests only)
 
-  // Use API pagination for users, drivers, and requests
   const totalPages =
     activeTab === "Users"
       ? apiTotalPages
       : activeTab === "Drivers"
       ? driverTotalPages
-      : Math.ceil(totalApplications / ITEMS_PER_PAGE);
+      : Math.ceil(apiApplications.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
 
-  // For users, drivers, and requests, use the data from API (already paginated)
-  const currentUsers =
-    activeTab === "Users"
-      ? filteredUsers
-      : filteredUsers.slice(startIndex, endIndex);
+  // For drivers and requests, use paginated data
   const currentDrivers =
     activeTab === "Drivers"
       ? filteredDrivers
@@ -391,8 +349,8 @@ const Users = () => {
 
   // Get tab labels with counts
   const tabLabels =
-    totalApplications > 0
-      ? ["Users", "Drivers", `Requests (${totalApplications})`]
+    apiApplications.length > 0
+      ? ["Users", "Drivers", `Requests (${apiApplications.length})`]
       : ["Users", "Drivers"];
 
   return (

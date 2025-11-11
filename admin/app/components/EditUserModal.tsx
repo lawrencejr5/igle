@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { User } from "../data/users";
+import { User } from "../context/UserContext";
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -18,19 +18,17 @@ const EditUserModal = ({
   onSave,
 }: EditUserModalProps) => {
   const [formData, setFormData] = useState({
-    fullname: "",
+    name: "",
     email: "",
     phone: "",
-    status: "Active" as "Active" | "Inactive" | "Suspended",
   });
 
   useEffect(() => {
     if (user) {
       setFormData({
-        fullname: user.fullname,
+        name: user.name,
         email: user.email,
-        phone: user.phone,
-        status: user.status,
+        phone: user.phone || "",
       });
     }
   }, [user]);
@@ -113,14 +111,14 @@ const EditUserModal = ({
               <form onSubmit={handleSubmit} className="edit-modal__form">
                 {/* Full Name */}
                 <div className="edit-modal__field">
-                  <label htmlFor="fullname" className="edit-modal__field-label">
+                  <label htmlFor="name" className="edit-modal__field-label">
                     Full Name
                   </label>
                   <input
                     type="text"
-                    id="fullname"
-                    name="fullname"
-                    value={formData.fullname}
+                    id="name"
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
                     className="edit-modal__field-input"
                     required
@@ -159,31 +157,12 @@ const EditUserModal = ({
                   />
                 </div>
 
-                {/* Status */}
-                <div className="edit-modal__field">
-                  <label htmlFor="status" className="edit-modal__field-label">
-                    Account Status
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="edit-modal__field-select"
-                    required
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Suspended">Suspended</option>
-                  </select>
-                </div>
-
                 {/* User ID (Read-only) */}
                 <div className="edit-modal__field">
                   <label className="edit-modal__field-label">User ID</label>
                   <input
                     type="text"
-                    value={user.id}
+                    value={user._id}
                     className="edit-modal__field-input"
                     disabled
                   />

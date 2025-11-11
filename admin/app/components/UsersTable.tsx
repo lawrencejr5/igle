@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "../data/users";
+import { User } from "../context/UserContext";
 import Pagination from "./Pagination";
 import ActionMenu from "./ActionMenu";
 import UserDetailsModal from "./UserDetailsModal";
@@ -45,21 +45,14 @@ const UsersTable = ({
     onConfirm: () => {},
   });
 
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case "Online":
-        return "status-badge--active";
-      case "Offline":
-        return "status-badge--inactive";
-      case "Suspended":
-        return "status-badge--suspended";
-      default:
-        return "";
-    }
+  const getStatusClass = (user: User) => {
+    if (user.is_blocked) return "status-badge--suspended";
+    if (user.is_online) return "status-badge--active";
+    return "status-badge--inactive";
   };
 
   const handleViewDetails = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
+    const user = users.find((u) => u._id === userId);
     if (user) {
       setSelectedUser(user);
       setIsModalOpen(true);
@@ -74,7 +67,7 @@ const UsersTable = ({
   };
 
   const handleEdit = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
+    const user = users.find((u) => u._id === userId);
     if (user) {
       setEditingUser(user);
       setIsEditModalOpen(true);
@@ -90,8 +83,8 @@ const UsersTable = ({
 
   const handleSaveUser = async (updatedUser: User) => {
     try {
-      await editUser(updatedUser.id, {
-        name: updatedUser.fullname,
+      await editUser(updatedUser._id, {
+        name: updatedUser.name,
         email: updatedUser.email,
         phone: updatedUser.phone,
       });
@@ -120,8 +113,8 @@ const UsersTable = ({
   };
 
   const handleBlock = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    const isBlocked = user?.status === "Suspended";
+    const user = users.find((u) => u._id === userId);
+    const isBlocked = user?.is_blocked;
     const action = isBlocked ? "unblock" : "block";
 
     setConfirmModal({
@@ -153,38 +146,46 @@ const UsersTable = ({
               <th>Full Name</th>
               <th>Email</th>
               <th>Phone</th>
-              <th>Rides</th>
-              <th>Deliveries</th>
+              {/* <th>Rides</th>
+              <th>Deliveries</th> */}
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id}>
+              <tr key={user._id}>
                 <td>
                   <div className="user-cell">
                     <div className="user-cell__avatar">
-                      {user.fullname.charAt(0)}
+                      {user.name.charAt(0)}
                     </div>
-                    <span className="user-cell__name">{user.fullname}</span>
+                    <span className="user-cell__name">{user.name}</span>
                   </div>
                 </td>
                 <td>{user.email}</td>
-                <td>{user.phone}</td>
-                <td>{user.rides}</td>
-                <td>{user.deliveries}</td>
+                <td>{user.phone || "N/A"}</td>
+                {/* <td>0</td>
+                <td>0</td> */}
                 <td>
-                  <span
-                    className={`status-badge ${getStatusClass(user.status)}`}
-                  >
-                    {user.status}
+                  <span className={`status-badge ${getStatusClass(user)}`}>
+                    {user.is_blocked
+                      ? "Suspended"
+                      : user.is_online
+                      ? "Online"
+                      : "Offline"}
                   </span>
                 </td>
                 <td>
                   <ActionMenu
-                    userId={user.id}
-                    userStatus={user.status}
+                    userId={user._id}
+                    userStatus={
+                      user.is_blocked
+                        ? "Suspended"
+                        : user.is_online
+                        ? "Online"
+                        : "Offline"
+                    }
                     onViewDetails={handleViewDetails}
                     onEdit={handleEdit}
                     onDelete={handleDelete}

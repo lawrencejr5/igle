@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { Driver } from "../data/drivers";
+import { Driver } from "../context/DriverContext";
 
 interface EditDriverModalProps {
   isOpen: boolean;
@@ -21,9 +21,7 @@ const EditDriverModal = ({
     fullname: "",
     email: "",
     phone: "",
-    vehicleType: "Cab" as "Cab" | "Bike" | "SUV" | "Keke" | "Van" | "Truck",
-    status: "Active" as "Active" | "Inactive" | "Suspended",
-    dateOfBirth: "",
+    vehicleType: "cab" as "cab" | "bike" | "suv" | "keke" | "van" | "truck",
     vehicleBrand: "",
     vehicleModel: "",
     vehicleColor: "",
@@ -36,19 +34,18 @@ const EditDriverModal = ({
   useEffect(() => {
     if (driver) {
       setFormData({
-        fullname: driver.fullname,
-        email: driver.email,
-        phone: driver.phone,
-        vehicleType: driver.vehicleType,
-        status: driver.status,
-        dateOfBirth: driver.dateOfBirth || "",
-        vehicleBrand: driver.vehicleDetails?.brand || "",
-        vehicleModel: driver.vehicleDetails?.model || "",
-        vehicleColor: driver.vehicleDetails?.color || "",
-        vehicleYear: driver.vehicleDetails?.year || "",
-        vehiclePlateNumber: driver.vehicleDetails?.plateNumber || "",
-        licenseNumber: driver.driverLicence?.number || "",
-        licenseExpiryDate: driver.driverLicence?.expiryDate || "",
+        fullname: driver.user?.name || "",
+        email: driver.user?.email || "",
+        phone: driver.user?.phone || "",
+        vehicleType: driver.vehicle_type || "cab",
+        // dateOfBirth removed: not present in context type
+        vehicleBrand: driver.vehicle?.brand || "",
+        vehicleModel: driver.vehicle?.model || "",
+        vehicleColor: driver.vehicle?.color || "",
+        vehicleYear: driver.vehicle?.year || "",
+        vehiclePlateNumber: driver.vehicle?.plate_number || "",
+        licenseNumber: driver.driver_licence?.number || "",
+        licenseExpiryDate: driver.driver_licence?.expiry_date || "",
       });
     }
   }, [driver]);
@@ -96,29 +93,26 @@ const EditDriverModal = ({
     if (driver) {
       const updatedDriver: Driver = {
         ...driver,
-        fullname: formData.fullname,
-        email: formData.email,
-        phone: formData.phone,
-        vehicleType: formData.vehicleType,
-        status: formData.status,
-        dateOfBirth: formData.dateOfBirth,
-        vehicleDetails: {
-          ...driver.vehicleDetails,
+        user: {
+          ...driver.user,
+          name: formData.fullname,
+          email: formData.email,
+          phone: formData.phone,
+        },
+        vehicle_type: formData.vehicleType as Driver["vehicle_type"],
+        // date_of_birth removed: not present in context type
+        vehicle: {
+          ...driver.vehicle,
           brand: formData.vehicleBrand,
           model: formData.vehicleModel,
           color: formData.vehicleColor,
           year: formData.vehicleYear,
-          plateNumber: formData.vehiclePlateNumber,
-          exteriorImage: driver.vehicleDetails?.exteriorImage,
-          interiorImage: driver.vehicleDetails?.interiorImage,
+          plate_number: formData.vehiclePlateNumber,
         },
-        driverLicence: {
-          ...driver.driverLicence,
+        driver_licence: {
+          ...driver.driver_licence,
           number: formData.licenseNumber,
-          expiryDate: formData.licenseExpiryDate,
-          frontImage: driver.driverLicence?.frontImage,
-          backImage: driver.driverLicence?.backImage,
-          selfieWithLicence: driver.driverLicence?.selfieWithLicence,
+          expiry_date: formData.licenseExpiryDate,
         },
       };
       onSave?.(updatedDriver);
@@ -206,40 +200,9 @@ const EditDriverModal = ({
                     />
                   </div>
 
-                  <div className="edit-modal__field">
-                    <label
-                      htmlFor="dateOfBirth"
-                      className="edit-modal__field-label"
-                    >
-                      Date of Birth
-                    </label>
-                    <input
-                      type="date"
-                      id="dateOfBirth"
-                      name="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={handleChange}
-                      className="edit-modal__field-input"
-                    />
-                  </div>
+                  {/* Date of Birth removed: not present in context Driver type */}
 
-                  <div className="edit-modal__field">
-                    <label htmlFor="status" className="edit-modal__field-label">
-                      Account Status
-                    </label>
-                    <select
-                      id="status"
-                      name="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="edit-modal__field-select"
-                      required
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                      <option value="Suspended">Suspended</option>
-                    </select>
-                  </div>
+                  {/* Account Status removed: not present in backend type. You may add is_online/is_blocked toggles if needed. */}
                 </div>
 
                 {/* Vehicle Information Section */}
@@ -408,7 +371,7 @@ const EditDriverModal = ({
                   <label className="edit-modal__field-label">Driver ID</label>
                   <input
                     type="text"
-                    value={driver.id}
+                    value={driver._id}
                     className="edit-modal__field-input"
                     disabled
                   />

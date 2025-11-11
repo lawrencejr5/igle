@@ -9,7 +9,7 @@ import {
   MdDirectionsCar,
   MdLocalShipping,
 } from "react-icons/md";
-import { User } from "../data/users";
+import { User } from "../context/UserContext";
 import EditUserModal from "./EditUserModal";
 
 interface UserDetailsModalProps {
@@ -66,17 +66,11 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
 
   if (!user) return null;
 
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "status-badge--active";
-      case "Inactive":
-        return "status-badge--inactive";
-      case "Suspended":
-        return "status-badge--suspended";
-      default:
-        return "";
-    }
+  // Optionally, you can use is_blocked or is_verified for status
+  const getStatusClass = (user: User) => {
+    if (user.is_blocked) return "status-badge--suspended";
+    if (user.is_verified) return "status-badge--active";
+    return "status-badge--inactive";
   };
 
   return (
@@ -112,12 +106,16 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
           {/* User Profile Section */}
           <div className="user-details-modal__profile">
             <div className="user-details-modal__avatar">
-              {user.fullname.charAt(0)}
+              {user.name.charAt(0)}
             </div>
             <div className="user-details-modal__profile-info">
-              <h3 className="user-details-modal__name">{user.fullname}</h3>
-              <span className={`status-badge ${getStatusClass(user.status)}`}>
-                {user.status}
+              <h3 className="user-details-modal__name">{user.name}</h3>
+              <span className={`status-badge ${getStatusClass(user)}`}>
+                {user.is_blocked
+                  ? "Suspended"
+                  : user.is_verified
+                  ? "Active"
+                  : "Inactive"}
               </span>
             </div>
           </div>
@@ -155,40 +153,6 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
           </div>
 
           {/* Activity Statistics */}
-          <div className="user-details-modal__section">
-            <h4 className="user-details-modal__section-title">
-              Activity Statistics
-            </h4>
-            <div className="user-details-modal__stats-grid">
-              <div className="user-details-modal__stat-card">
-                <div className="user-details-modal__stat-icon user-details-modal__stat-icon--rides">
-                  <MdDirectionsCar />
-                </div>
-                <div className="user-details-modal__stat-content">
-                  <span className="user-details-modal__stat-value">
-                    {user.rides}
-                  </span>
-                  <span className="user-details-modal__stat-label">
-                    Total Rides
-                  </span>
-                </div>
-              </div>
-
-              <div className="user-details-modal__stat-card">
-                <div className="user-details-modal__stat-icon user-details-modal__stat-icon--deliveries">
-                  <MdLocalShipping />
-                </div>
-                <div className="user-details-modal__stat-content">
-                  <span className="user-details-modal__stat-value">
-                    {user.deliveries}
-                  </span>
-                  <span className="user-details-modal__stat-label">
-                    Total Deliveries
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Additional Information */}
           <div className="user-details-modal__section">
@@ -202,7 +166,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
                     User ID
                   </span>
                   <span className="user-details-modal__info-value">
-                    {user.id}
+                    {user._id}
                   </span>
                 </div>
               </div>
