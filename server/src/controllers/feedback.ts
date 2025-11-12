@@ -82,24 +82,66 @@ export const get_all_feedbacks = async (req: Request, res: Response) => {
     const limit = Math.max(1, Number(req.query.limit) || 20);
     const skip = (page - 1) * limit;
 
-    const { type, user } = req.query as any;
+    const { type, user, search, dateFrom, dateTo } = req.query as any;
+
     const filter: any = {};
     if (type) filter.type = type;
     if (user) filter.user = user;
 
-    const [total, feedbacks] = await Promise.all([
-      Feedback.countDocuments(filter),
-      Feedback.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate("user", "name email phone"),
-    ]);
+    // Date range filters
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        filter.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = endDate;
+      }
+    }
+
+    // Get all feedbacks with populated data for search
+    let feedbacks = await Feedback.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("user", "name email phone");
+
+    // Apply search filter if provided
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase();
+      feedbacks = feedbacks.filter((feedback: any) => {
+        const id = feedback._id.toString().toLowerCase();
+        const userName = (feedback.user?.name || "").toLowerCase();
+        const userEmail = (feedback.user?.email || "").toLowerCase();
+        const message = (feedback.message || "").toLowerCase();
+        const feedbackType = (feedback.type || "").toLowerCase();
+        const contact = (feedback.contact || "").toLowerCase();
+
+        return (
+          id.includes(searchLower) ||
+          userName.includes(searchLower) ||
+          userEmail.includes(searchLower) ||
+          message.includes(searchLower) ||
+          feedbackType.includes(searchLower) ||
+          contact.includes(searchLower)
+        );
+      });
+    }
+
+    // Get total count and apply pagination
+    const total = feedbacks.length;
+    const paginatedFeedbacks = feedbacks.slice(skip, skip + limit);
 
     const pages = Math.ceil(total / limit);
     return res
       .status(200)
-      .json({ msg: "success", feedbacks, total, page, pages });
+      .json({
+        msg: "success",
+        feedbacks: paginatedFeedbacks,
+        total,
+        page,
+        pages,
+      });
   } catch (err) {
     console.error("get_all_feedbacks error:", err);
     res.status(500).json({ msg: "Server error." });

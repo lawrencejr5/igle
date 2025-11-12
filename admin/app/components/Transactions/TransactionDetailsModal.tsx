@@ -76,13 +76,6 @@ const TransactionDetailsModal = ({
         status: currentTransaction.status,
         channel: currentTransaction.channel,
         rideId: currentTransaction.ride_id?._id,
-        rideDetails: currentTransaction.ride_id
-          ? {
-              pickup: currentTransaction.ride_id.pickup.address,
-              dropoff: currentTransaction.ride_id.dropoff.address,
-              fare: currentTransaction.ride_id.fare,
-            }
-          : undefined,
         reference: currentTransaction.reference,
         metadata: currentTransaction.metadata,
         createdAt: new Date(currentTransaction.createdAt),

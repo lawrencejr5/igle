@@ -530,20 +530,54 @@ const admin_get_users = (req, res) => __awaiter(void 0, void 0, void 0, function
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.max(1, Number(req.query.limit) || 20);
         const skip = (page - 1) * limit;
-        const includeDeleted = req.query.include_deleted === "true";
+        const { include_deleted, status, search, dateFrom, dateTo } = req.query;
         const filter = {};
-        if (!includeDeleted)
-            filter.is_deleted = false || undefined;
-        const [total, users] = yield Promise.all([
-            user_1.default.countDocuments(),
-            user_1.default.find()
-                .select("-password")
-                .skip(skip)
-                .limit(limit)
-                .sort({ createdAt: -1 }),
-        ]);
+        // Status filter
+        if (status) {
+            if (status === "active")
+                filter.is_active = true;
+            else if (status === "suspended")
+                filter.is_active = false;
+            else if (status === "deleted")
+                filter.is_deleted = true;
+        }
+        // Date range filters
+        if (dateFrom || dateTo) {
+            filter.createdAt = {};
+            if (dateFrom) {
+                filter.createdAt.$gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = endDate;
+            }
+        }
+        // Get all users for search
+        let users = yield user_1.default.find(filter)
+            .select("-password")
+            .sort({ createdAt: -1 });
+        // Apply search filter if provided
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase();
+            users = users.filter((user) => {
+                const name = (user.name || "").toLowerCase();
+                const email = (user.email || "").toLowerCase();
+                const phone = (user.phone || "").toLowerCase();
+                const id = user._id.toString().toLowerCase();
+                return (name.includes(searchLower) ||
+                    email.includes(searchLower) ||
+                    phone.includes(searchLower) ||
+                    id.includes(searchLower));
+            });
+        }
+        // Get total count and apply pagination
+        const total = users.length;
+        const paginatedUsers = users.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
-        return res.status(200).json({ msg: "success", users, total, page, pages });
+        return res
+            .status(200)
+            .json({ msg: "success", users: paginatedUsers, total, page, pages });
     }
     catch (err) {
         console.error("admin_get_users error:", err);

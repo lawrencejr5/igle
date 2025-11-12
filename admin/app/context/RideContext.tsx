@@ -100,7 +100,16 @@ interface RideContextType {
   currentPage: number;
   totalPages: number;
   loading: boolean;
-  fetchRides: (page?: number, limit?: number) => Promise<void>;
+  fetchRides: (
+    page?: number,
+    limit?: number,
+    filters?: {
+      status?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => Promise<void>;
   fetchRideDetails: (rideId: string) => Promise<void>;
   cancelRide: (rideId: string, reason?: string) => Promise<void>;
   deleteRide: (rideId: string) => Promise<void>;
@@ -117,14 +126,29 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const fetchRides = async (page = 1, limit = 10) => {
+  const fetchRides = async (
+    page = 1,
+    limit = 10,
+    filters?: {
+      status?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("admin_token");
+      const params: any = { page, limit };
+      if (filters?.status) params.status = filters.status;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters?.dateTo) params.dateTo = filters.dateTo;
+
       const response = await axios.get<RidesListResponse>(
         `${API_URL}/admin/rides`,
         {
-          params: { page, limit },
+          params,
           headers: { Authorization: `Bearer ${token}` },
         }
       );

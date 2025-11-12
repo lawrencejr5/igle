@@ -823,19 +823,57 @@ const admin_get_drivers = (req, res) => __awaiter(void 0, void 0, void 0, functi
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.max(1, Number(req.query.limit) || 20);
         const skip = (page - 1) * limit;
+        const { status, search, dateFrom, dateTo } = req.query;
         const filter = { application: "approved" };
-        const [total, drivers] = yield Promise.all([
-            driver_1.default.countDocuments(filter),
-            driver_1.default.find(filter)
-                .populate("user")
-                .skip(skip)
-                .limit(limit)
-                .sort({ createdAt: -1 }),
-        ]);
+        // Status filter
+        if (status) {
+            if (status === "active")
+                filter.is_active = true;
+            else if (status === "suspended")
+                filter.is_active = false;
+        }
+        // Date range filters
+        if (dateFrom || dateTo) {
+            filter.createdAt = {};
+            if (dateFrom) {
+                filter.createdAt.$gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = endDate;
+            }
+        }
+        // Get all drivers with populated data for search
+        let drivers = yield driver_1.default.find(filter)
+            .populate("user")
+            .sort({ createdAt: -1 });
+        // Apply search filter if provided
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase();
+            drivers = drivers.filter((driver) => {
+                var _a, _b, _c, _d;
+                const id = driver._id.toString().toLowerCase();
+                const userName = (((_a = driver.user) === null || _a === void 0 ? void 0 : _a.name) || "").toLowerCase();
+                const userEmail = (((_b = driver.user) === null || _b === void 0 ? void 0 : _b.email) || "").toLowerCase();
+                const userPhone = (((_c = driver.user) === null || _c === void 0 ? void 0 : _c.phone) || "").toLowerCase();
+                const vehicleType = (driver.vehicle_type || "").toLowerCase();
+                const plateNumber = (((_d = driver.vehicle) === null || _d === void 0 ? void 0 : _d.plate_number) || "").toLowerCase();
+                return (id.includes(searchLower) ||
+                    userName.includes(searchLower) ||
+                    userEmail.includes(searchLower) ||
+                    userPhone.includes(searchLower) ||
+                    vehicleType.includes(searchLower) ||
+                    plateNumber.includes(searchLower));
+            });
+        }
+        // Get total count and apply pagination
+        const total = drivers.length;
+        const paginatedDrivers = drivers.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
         return res
             .status(200)
-            .json({ msg: "success", drivers, total, page, pages });
+            .json({ msg: "success", drivers: paginatedDrivers, total, page, pages });
     }
     catch (err) {
         console.error("admin_get_drivers error:", err);

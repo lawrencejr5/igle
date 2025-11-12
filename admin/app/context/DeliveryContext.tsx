@@ -119,7 +119,16 @@ interface DeliveryContextType {
   currentPage: number;
   totalPages: number;
   loading: boolean;
-  fetchDeliveries: (page?: number, limit?: number) => Promise<void>;
+  fetchDeliveries: (
+    page?: number,
+    limit?: number,
+    filters?: {
+      status?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => Promise<void>;
   fetchDeliveryDetails: (deliveryId: string) => Promise<void>;
   cancelDelivery: (deliveryId: string, reason: string) => Promise<boolean>;
   deleteDelivery: (deliveryId: string) => Promise<boolean>;
@@ -158,14 +167,29 @@ export const DeliveryProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Fetch paginated deliveries list
-  const fetchDeliveries = async (page: number = 1, limit: number = 10) => {
+  const fetchDeliveries = async (
+    page: number = 1,
+    limit: number = 10,
+    filters?: {
+      status?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => {
     setLoading(true);
     try {
+      const params: any = { page, limit };
+      if (filters?.status) params.status = filters.status;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters?.dateTo) params.dateTo = filters.dateTo;
+
       const response = await axios.get<DeliveriesListResponse>(
         `${API_URL}/admin/deliveries`,
         {
           ...getAuthHeaders(),
-          params: { page, limit },
+          params,
         }
       );
 

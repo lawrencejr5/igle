@@ -67,6 +67,9 @@ interface TransactionContextType {
       status?: string;
       wallet_id?: string;
       owner_id?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
     }
   ) => Promise<void>;
   fetchTransactionDetails: (transactionId: string) => Promise<void>;
@@ -113,6 +116,9 @@ export const TransactionProvider: React.FC<{ children: React.ReactNode }> = ({
       status?: string;
       wallet_id?: string;
       owner_id?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
     }
   ) => {
     setLoading(true);
@@ -122,6 +128,9 @@ export const TransactionProvider: React.FC<{ children: React.ReactNode }> = ({
       if (filters?.status) params.status = filters.status;
       if (filters?.wallet_id) params.wallet_id = filters.wallet_id;
       if (filters?.owner_id) params.owner_id = filters.owner_id;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters?.dateTo) params.dateTo = filters.dateTo;
 
       const response = await axios.get<TransactionsListResponse>(
         `${API_URL}/admin/transactions`,

@@ -731,28 +731,68 @@ const admin_get_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.max(1, Number(req.query.limit) || 20);
         const skip = (page - 1) * limit;
-        const status = req.query.status;
+        const { status, search, dateFrom, dateTo } = req.query;
         const filter = {};
         if (status)
             filter.status = status;
-        const [total, deliveries] = yield Promise.all([
-            (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default.countDocuments(filter),
-            (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default
-                .find(filter)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .populate("sender", "name phone")
-                .populate({
-                path: "driver",
-                select: "user vehicle_type vehicle",
-                populate: { path: "user", select: "name phone" },
-            }),
-        ]);
+        // Date range filters
+        if (dateFrom || dateTo) {
+            filter.createdAt = {};
+            if (dateFrom) {
+                filter.createdAt.$gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = endDate;
+            }
+        }
+        // Get all deliveries with populated data for search
+        let deliveries = yield (yield Promise.resolve().then(() => __importStar(require("../models/delivery")))).default
+            .find(filter)
+            .sort({ createdAt: -1 })
+            .populate("sender", "name phone")
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle",
+            populate: { path: "user", select: "name phone" },
+        });
+        // Apply search filter if provided
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase();
+            deliveries = deliveries.filter((delivery) => {
+                var _a, _b, _c, _d, _e, _f;
+                const id = delivery._id.toString().toLowerCase();
+                const senderName = (((_a = delivery.sender) === null || _a === void 0 ? void 0 : _a.name) || "").toLowerCase();
+                const driverName = (((_c = (_b = delivery.driver) === null || _b === void 0 ? void 0 : _b.user) === null || _c === void 0 ? void 0 : _c.name) || "").toLowerCase();
+                const pickupAddress = (((_d = delivery.pickup) === null || _d === void 0 ? void 0 : _d.address) || "").toLowerCase();
+                const dropoffAddress = (((_e = delivery.dropoff) === null || _e === void 0 ? void 0 : _e.address) || "").toLowerCase();
+                const vehicle = (delivery.vehicle || "").toLowerCase();
+                const packageType = (((_f = delivery.package) === null || _f === void 0 ? void 0 : _f.type) || "").toLowerCase();
+                const deliveryStatus = (delivery.status || "").toLowerCase();
+                return (id.includes(searchLower) ||
+                    senderName.includes(searchLower) ||
+                    driverName.includes(searchLower) ||
+                    pickupAddress.includes(searchLower) ||
+                    dropoffAddress.includes(searchLower) ||
+                    vehicle.includes(searchLower) ||
+                    packageType.includes(searchLower) ||
+                    deliveryStatus.includes(searchLower));
+            });
+        }
+        // Get total count and apply pagination
+        const total = deliveries.length;
+        const paginatedDeliveries = deliveries.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
         return res
             .status(200)
-            .json({ msg: "success", deliveries, total, page, pages });
+            .json({
+            msg: "success",
+            deliveries: paginatedDeliveries,
+            total,
+            page,
+            pages,
+        });
     }
     catch (err) {
         console.error("admin_get_deliveries error:", err);

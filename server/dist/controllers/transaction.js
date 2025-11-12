@@ -283,7 +283,7 @@ const admin_get_transactions = (req, res) => __awaiter(void 0, void 0, void 0, f
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.max(1, Number(req.query.limit) || 20);
         const skip = (page - 1) * limit;
-        const { type, status, wallet_id, owner_id } = req.query;
+        const { type, status, wallet_id, owner_id, search, dateFrom, dateTo } = req.query;
         const filter = {};
         if (type)
             filter.type = type;
@@ -297,19 +297,55 @@ const admin_get_transactions = (req, res) => __awaiter(void 0, void 0, void 0, f
             const ids = wallets.map((w) => w._id);
             filter.wallet_id = { $in: ids };
         }
-        const [total, transactions] = yield Promise.all([
-            transaction_1.default.countDocuments(filter),
-            transaction_1.default.find(filter)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .populate("ride_id")
-                .populate({ path: "wallet_id", populate: { path: "owner_id" } }),
-        ]);
+        // Date range filters
+        if (dateFrom || dateTo) {
+            filter.createdAt = {};
+            if (dateFrom) {
+                filter.createdAt.$gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = endDate;
+            }
+        }
+        // First, get all transactions with populated data for search
+        let transactions = yield transaction_1.default.find(filter)
+            .sort({ createdAt: -1 })
+            .populate("ride_id")
+            .populate({ path: "wallet_id", populate: { path: "owner_id" } });
+        // Apply search filter if provided
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase();
+            transactions = transactions.filter((txn) => {
+                var _a, _b, _c, _d;
+                const id = txn._id.toString().toLowerCase();
+                const reference = (txn.reference || "").toLowerCase();
+                const userName = (((_b = (_a = txn.wallet_id) === null || _a === void 0 ? void 0 : _a.owner_id) === null || _b === void 0 ? void 0 : _b.name) || "").toLowerCase();
+                const userEmail = (((_d = (_c = txn.wallet_id) === null || _c === void 0 ? void 0 : _c.owner_id) === null || _d === void 0 ? void 0 : _d.email) || "").toLowerCase();
+                const txnType = (txn.type || "").toLowerCase();
+                const channel = (txn.channel || "").toLowerCase();
+                return (id.includes(searchLower) ||
+                    reference.includes(searchLower) ||
+                    userName.includes(searchLower) ||
+                    userEmail.includes(searchLower) ||
+                    txnType.includes(searchLower) ||
+                    channel.includes(searchLower));
+            });
+        }
+        // Get total count and apply pagination
+        const total = transactions.length;
+        const paginatedTransactions = transactions.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
         return res
             .status(200)
-            .json({ msg: "success", transactions, total, page, pages });
+            .json({
+            msg: "success",
+            transactions: paginatedTransactions,
+            total,
+            page,
+            pages,
+        });
     }
     catch (err) {
         console.error("admin_get_transactions error:", err);

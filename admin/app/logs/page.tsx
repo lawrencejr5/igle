@@ -42,18 +42,26 @@ const ReportAndFeedbacks = () => {
     deleteFeedback,
   } = useFeedbackContext();
 
-  // Fetch reports on mount and when filters/page changes
+  // Fetch reports on mount and when filters/page/search changes
   useEffect(() => {
     if (activeTab === "Reports") {
-      fetchReports(currentPage, ITEMS_PER_PAGE, {
-        status: filters.status,
-      });
+      const filterParams: any = {};
+      if (filters.status) filterParams.status = filters.status;
+      if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+      if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+      if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+      fetchReports(currentPage, ITEMS_PER_PAGE, filterParams);
     } else if (activeTab === "Feedbacks") {
-      fetchFeedbacks(currentPage, ITEMS_PER_PAGE, {
-        type: filters.status,
-      });
+      const filterParams: any = {};
+      if (filters.status) filterParams.type = filters.status;
+      if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+      if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+      if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+      fetchFeedbacks(currentPage, ITEMS_PER_PAGE, filterParams);
     }
-  }, [activeTab, currentPage, filters.status]);
+  }, [activeTab, currentPage, searchQuery, filters]);
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -105,43 +113,9 @@ const ReportAndFeedbacks = () => {
     await deleteFeedback(feedbackId);
   };
 
-  // Filter and sort reports (client-side filtering on top of server data)
-  const filteredReports = useMemo(() => {
+  // Sort reports (client-side sorting only, filtering is done on backend)
+  const displayReports = useMemo(() => {
     let result = [...reports];
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (report) =>
-          report._id.toLowerCase().includes(query) ||
-          report.driver.user.name.toLowerCase().includes(query) ||
-          (report.reporter &&
-            report.reporter.name.toLowerCase().includes(query)) ||
-          report.category.toLowerCase().includes(query) ||
-          (report.description &&
-            report.description.toLowerCase().includes(query)) ||
-          report.status.toLowerCase().includes(query) ||
-          (report.ride && report.ride._id.toLowerCase().includes(query))
-      );
-    }
-
-    // Apply status filter
-    if (filters.status) {
-      result = result.filter((report) => report.status === filters.status);
-    }
-
-    // Apply date range filter
-    if (filters.dateFrom) {
-      result = result.filter(
-        (report) => new Date(report.createdAt) >= new Date(filters.dateFrom)
-      );
-    }
-    if (filters.dateTo) {
-      result = result.filter(
-        (report) => new Date(report.createdAt) <= new Date(filters.dateTo)
-      );
-    }
 
     // Apply sorting
     if (filters.sortBy) {
@@ -174,41 +148,11 @@ const ReportAndFeedbacks = () => {
     }
 
     return result;
-  }, [reports, searchQuery, filters]);
+  }, [reports, filters.sortBy]);
 
-  // Filter and sort feedbacks (client-side filtering on top of server data)
-  const filteredFeedbacks = useMemo(() => {
+  // Sort feedbacks (client-side sorting only, filtering is done on backend)
+  const displayFeedbacks = useMemo(() => {
     let result = [...feedbacks];
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (feedback) =>
-          feedback._id.toLowerCase().includes(query) ||
-          (feedback.user && feedback.user.name.toLowerCase().includes(query)) ||
-          feedback.type.toLowerCase().includes(query) ||
-          feedback.message.toLowerCase().includes(query) ||
-          (feedback.contact && feedback.contact.toLowerCase().includes(query))
-      );
-    }
-
-    // Apply type filter (reusing status filter for feedback type)
-    if (filters.status) {
-      result = result.filter((feedback) => feedback.type === filters.status);
-    }
-
-    // Apply date range filter
-    if (filters.dateFrom) {
-      result = result.filter(
-        (feedback) => new Date(feedback.createdAt) >= new Date(filters.dateFrom)
-      );
-    }
-    if (filters.dateTo) {
-      result = result.filter(
-        (feedback) => new Date(feedback.createdAt) <= new Date(filters.dateTo)
-      );
-    }
 
     // Apply sorting
     if (filters.sortBy) {
@@ -245,7 +189,7 @@ const ReportAndFeedbacks = () => {
     }
 
     return result;
-  }, [feedbacks, searchQuery, filters]);
+  }, [feedbacks, filters.sortBy]);
 
   // Calculate pagination based on active tab
   const totalPages =
@@ -318,7 +262,7 @@ const ReportAndFeedbacks = () => {
 
       {activeTab === "Reports" ? (
         <ReportsTable
-          reports={filteredReports}
+          reports={displayReports}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
@@ -327,7 +271,7 @@ const ReportAndFeedbacks = () => {
         />
       ) : (
         <FeedbacksTable
-          feedbacks={filteredFeedbacks}
+          feedbacks={displayFeedbacks}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}

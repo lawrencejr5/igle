@@ -51,58 +51,83 @@ const Users = () => {
     sortBy: "",
   });
 
-  // Filter and sort users
-  const filteredUsers = useMemo(() => {
+  // Apply client-side sorting only (filtering/search now handled by backend)
+  const displayUsers = useMemo(() => {
     let result = [...apiUsers];
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (user) =>
-          user.name.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query) ||
-          (user.phone && user.phone.includes(query))
-      );
-    }
-    // Apply status filter
-    if (filters.status) {
-      result = result.filter((user) => {
-        if (filters.status === "Online")
-          return user.is_online && !user.is_blocked;
-        if (filters.status === "Offline")
-          return !user.is_online && !user.is_blocked;
-        if (filters.status === "Suspended") return user.is_blocked;
-        return true;
-      });
-    }
-    // Optionally add sorting here if needed
-    return result;
-  }, [apiUsers, searchQuery, filters]);
 
-  const currentUsers = filteredUsers;
+    // Apply sorting
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case "name-asc":
+          result.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case "name-desc":
+          result.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case "date-desc":
+          result.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          break;
+        case "date-asc":
+          result.sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          break;
+      }
+    }
+
+    return result;
+  }, [apiUsers, filters.sortBy]);
 
   // Fetch applications on mount to ensure Requests tab visibility is accurate
   useEffect(() => {
     fetchDriverApplications(1, ITEMS_PER_PAGE);
   }, []);
 
-  // Fetch users when component mounts or page changes
+  // Fetch users when component mounts or page/search/filters change
   useEffect(() => {
     if (activeTab === "Users") {
-      fetchUsers(currentPage, ITEMS_PER_PAGE);
+      const filterParams: any = {};
+      if (filters.status) filterParams.status = filters.status;
+      if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+      if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+      if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+      fetchUsers(currentPage, ITEMS_PER_PAGE, false, filterParams);
     } else if (activeTab === "Drivers") {
-      fetchDrivers(currentPage, ITEMS_PER_PAGE);
+      const filterParams: any = {};
+      if (filters.status) filterParams.status = filters.status;
+      if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+      if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+      if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+      fetchDrivers(currentPage, ITEMS_PER_PAGE, false, filterParams);
     } else if (activeTab === "Requests") {
       fetchDriverApplications(currentPage, ITEMS_PER_PAGE);
     }
-  }, [activeTab, currentPage]);
+  }, [activeTab, currentPage, searchQuery, filters]);
 
   const handleRefreshUsers = () => {
-    fetchUsers(currentPage, ITEMS_PER_PAGE);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchUsers(currentPage, ITEMS_PER_PAGE, false, filterParams);
   };
 
   const handleRefreshDrivers = () => {
-    fetchDrivers(currentPage, ITEMS_PER_PAGE);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchDrivers(currentPage, ITEMS_PER_PAGE, false, filterParams);
   };
 
   const handleRefreshApplications = () => {
@@ -146,38 +171,36 @@ const Users = () => {
 
   // No display mapping for users; use apiUsers directly
 
-  // Filter and sort drivers (using real Driver fields)
-  const filteredDrivers = useMemo(() => {
+  // Apply client-side sorting only for drivers (filtering/search now handled by backend)
+  const displayDrivers = useMemo(() => {
     let result = [...apiDrivers];
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (driver) =>
-          driver.user.name.toLowerCase().includes(query) ||
-          driver.user.email.toLowerCase().includes(query) ||
-          (driver.user.phone && driver.user.phone.includes(query)) ||
-          driver.vehicle_type.toLowerCase().includes(query) ||
-          (driver.vehicle.brand &&
-            driver.vehicle.brand.toLowerCase().includes(query)) ||
-          (driver.vehicle.model &&
-            driver.vehicle.model.toLowerCase().includes(query))
-      );
+
+    // Apply sorting
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case "name-asc":
+          result.sort((a, b) => a.user.name.localeCompare(b.user.name));
+          break;
+        case "name-desc":
+          result.sort((a, b) => b.user.name.localeCompare(a.user.name));
+          break;
+        case "date-desc":
+          result.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          break;
+        case "date-asc":
+          result.sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          break;
+      }
     }
-    // Apply status filter
-    if (filters.status) {
-      result = result.filter((driver) => {
-        if (filters.status === "Online")
-          return driver.is_online && !driver.is_blocked;
-        if (filters.status === "Offline")
-          return !driver.is_online && !driver.is_blocked;
-        if (filters.status === "Suspended") return driver.is_blocked;
-        return true;
-      });
-    }
-    // Optionally add sorting here if needed
+
     return result;
-  }, [apiDrivers, searchQuery, filters]);
+  }, [apiDrivers, filters.sortBy]);
 
   // Filter and sort requests (driver applications)
   const filteredRequests = useMemo(() => {
@@ -269,20 +292,6 @@ const Users = () => {
       : activeTab === "Drivers"
       ? driverTotalPages
       : Math.ceil(apiApplications.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-
-  // For drivers, use filtered and paginated data
-  const currentDrivers = filteredDrivers.slice(startIndex, endIndex);
-  const currentRequests =
-    activeTab === "Requests"
-      ? filteredRequests
-      : filteredRequests.slice(startIndex, endIndex);
-
-  // Reset to page 1 when search results change
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -334,7 +343,7 @@ const Users = () => {
 
       {activeTab === "Users" ? (
         <UsersTable
-          users={currentUsers}
+          users={displayUsers}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
@@ -342,7 +351,7 @@ const Users = () => {
         />
       ) : activeTab === "Drivers" ? (
         <DriversTable
-          drivers={currentDrivers}
+          drivers={displayDrivers}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
@@ -350,7 +359,7 @@ const Users = () => {
         />
       ) : (
         <RequestsTable
-          requests={currentRequests}
+          requests={filteredRequests}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}

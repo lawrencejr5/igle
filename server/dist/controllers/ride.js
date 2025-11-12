@@ -804,25 +804,59 @@ const admin_get_rides = (req, res) => __awaiter(void 0, void 0, void 0, function
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.max(1, Number(req.query.limit) || 20);
         const skip = (page - 1) * limit;
-        const status = req.query.status;
+        const { status, search, dateFrom, dateTo } = req.query;
         const filter = {};
         if (status)
             filter.status = status;
-        const [total, rides] = yield Promise.all([
-            ride_1.default.countDocuments(filter),
-            ride_1.default.find(filter)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .populate({ path: "rider", select: "name phone" })
-                .populate({
-                path: "driver",
-                select: "user vehicle_type vehicle",
-                populate: { path: "user", select: "name phone" },
-            }),
-        ]);
+        // Date range filters
+        if (dateFrom || dateTo) {
+            filter.createdAt = {};
+            if (dateFrom) {
+                filter.createdAt.$gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = endDate;
+            }
+        }
+        // Get all rides with populated data for search
+        let rides = yield ride_1.default.find(filter)
+            .sort({ createdAt: -1 })
+            .populate({ path: "rider", select: "name phone" })
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle",
+            populate: { path: "user", select: "name phone" },
+        });
+        // Apply search filter if provided
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase();
+            rides = rides.filter((ride) => {
+                var _a, _b, _c, _d, _e;
+                const id = ride._id.toString().toLowerCase();
+                const riderName = (((_a = ride.rider) === null || _a === void 0 ? void 0 : _a.name) || "").toLowerCase();
+                const driverName = (((_c = (_b = ride.driver) === null || _b === void 0 ? void 0 : _b.user) === null || _c === void 0 ? void 0 : _c.name) || "").toLowerCase();
+                const pickupAddress = (((_d = ride.pickup) === null || _d === void 0 ? void 0 : _d.address) || "").toLowerCase();
+                const destinationAddress = (((_e = ride.destination) === null || _e === void 0 ? void 0 : _e.address) || "").toLowerCase();
+                const vehicle = (ride.vehicle || "").toLowerCase();
+                const rideStatus = (ride.status || "").toLowerCase();
+                return (id.includes(searchLower) ||
+                    riderName.includes(searchLower) ||
+                    driverName.includes(searchLower) ||
+                    pickupAddress.includes(searchLower) ||
+                    destinationAddress.includes(searchLower) ||
+                    vehicle.includes(searchLower) ||
+                    rideStatus.includes(searchLower));
+            });
+        }
+        // Get total count and apply pagination
+        const total = rides.length;
+        const paginatedRides = rides.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
-        return res.status(200).json({ msg: "success", rides, total, page, pages });
+        return res
+            .status(200)
+            .json({ msg: "success", rides: paginatedRides, total, page, pages });
     }
     catch (err) {
         console.error("admin_get_rides error:", err);

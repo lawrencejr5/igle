@@ -13,7 +13,6 @@ import {
   MdChat,
 } from "react-icons/md";
 import { Feedback } from "../../context/FeedbackContext";
-import "../styles/style.scss";
 
 interface FeedbackDetailsModalProps {
   feedback: Feedback;

@@ -14,17 +14,50 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.delete_task = exports.update_task = exports.create_task = exports.get_task = exports.get_tasks = void 0;
 const task_1 = __importDefault(require("../models/task"));
-// List tasks (supports query filters like active=true)
+// List tasks (supports pagination, search, and filters)
 const get_tasks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { active, type, search, dateFrom, dateTo, page = 1, limit = 10, } = req.query;
         const queries = {};
-        const { active, type } = req.query;
+        // Active filter
         if (active !== undefined)
             queries.active = active === "true";
+        // Type filter
         if (type)
             queries.type = type;
-        const tasks = yield task_1.default.find(queries).sort({ createdAt: -1 });
-        res.status(200).json({ msg: "success", tasks });
+        // Date range filter
+        if (dateFrom || dateTo) {
+            queries.createdAt = {};
+            if (dateFrom)
+                queries.createdAt.$gte = new Date(dateFrom);
+            if (dateTo)
+                queries.createdAt.$lte = new Date(dateTo);
+        }
+        // Search filter (search across title, description, type)
+        if (search) {
+            const searchRegex = new RegExp(search, "i");
+            queries.$or = [
+                { title: searchRegex },
+                { description: searchRegex },
+                { type: searchRegex },
+            ];
+        }
+        // Pagination
+        const pageNum = parseInt(page, 10);
+        const limitNum = parseInt(limit, 10);
+        const skip = (pageNum - 1) * limitNum;
+        const [tasks, total] = yield Promise.all([
+            task_1.default.find(queries).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+            task_1.default.countDocuments(queries),
+        ]);
+        const pages = Math.ceil(total / limitNum);
+        res.status(200).json({
+            msg: "success",
+            tasks,
+            total,
+            page: pageNum,
+            pages,
+        });
     }
     catch (err) {
         console.error(err);

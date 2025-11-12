@@ -55,6 +55,9 @@ interface ReportContextType {
       status?: string;
       category?: string;
       reporter?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
     }
   ) => Promise<void>;
   fetchReportDetail: (reportId: string) => Promise<void>;
@@ -102,6 +105,9 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({
       status?: string;
       category?: string;
       reporter?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
     }
   ) => {
     setLoading(true);
@@ -110,6 +116,9 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({
       if (filters?.status) params.status = filters.status;
       if (filters?.category) params.category = filters.category;
       if (filters?.reporter) params.reporter = filters.reporter;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters?.dateTo) params.dateTo = filters.dateTo;
 
       const response = await axios.get<{
         msg: string;

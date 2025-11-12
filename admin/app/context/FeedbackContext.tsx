@@ -40,6 +40,9 @@ interface FeedbackContextType {
     filters?: {
       type?: string;
       user?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
     }
   ) => Promise<void>;
   fetchFeedbackDetail: (feedbackId: string) => Promise<void>;
@@ -84,6 +87,9 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
     filters?: {
       type?: string;
       user?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
     }
   ) => {
     setLoading(true);
@@ -91,6 +97,9 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({
       const params: any = { page, limit };
       if (filters?.type) params.type = filters.type;
       if (filters?.user) params.user = filters.user;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters?.dateTo) params.dateTo = filters.dateTo;
 
       const response = await axios.get<{
         msg: string;

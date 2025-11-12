@@ -942,21 +942,64 @@ export const admin_get_drivers = async (req: Request, res: Response) => {
     const limit = Math.max(1, Number(req.query.limit) || 20);
     const skip = (page - 1) * limit;
 
+    const { status, search, dateFrom, dateTo } = req.query as any;
+
     const filter: any = { application: "approved" };
 
-    const [total, drivers] = await Promise.all([
-      Driver.countDocuments(filter),
-      Driver.find(filter)
-        .populate("user")
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 }),
-    ]);
+    // Status filter
+    if (status) {
+      if (status === "active") filter.is_active = true;
+      else if (status === "suspended") filter.is_active = false;
+    }
+
+    // Date range filters
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        filter.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = endDate;
+      }
+    }
+
+    // Get all drivers with populated data for search
+    let drivers = await Driver.find(filter)
+      .populate("user")
+      .sort({ createdAt: -1 });
+
+    // Apply search filter if provided
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase();
+      drivers = drivers.filter((driver: any) => {
+        const id = driver._id.toString().toLowerCase();
+        const userName = (driver.user?.name || "").toLowerCase();
+        const userEmail = (driver.user?.email || "").toLowerCase();
+        const userPhone = (driver.user?.phone || "").toLowerCase();
+        const vehicleType = (driver.vehicle_type || "").toLowerCase();
+        const plateNumber = (driver.vehicle?.plate_number || "").toLowerCase();
+
+        return (
+          id.includes(searchLower) ||
+          userName.includes(searchLower) ||
+          userEmail.includes(searchLower) ||
+          userPhone.includes(searchLower) ||
+          vehicleType.includes(searchLower) ||
+          plateNumber.includes(searchLower)
+        );
+      });
+    }
+
+    // Get total count and apply pagination
+    const total = drivers.length;
+    const paginatedDrivers = drivers.slice(skip, skip + limit);
 
     const pages = Math.ceil(total / limit);
     return res
       .status(200)
-      .json({ msg: "success", drivers, total, page, pages });
+      .json({ msg: "success", drivers: paginatedDrivers, total, page, pages });
   } catch (err) {
     console.error("admin_get_drivers error:", err);
     return res.status(500).json({ msg: "Server error." });

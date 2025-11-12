@@ -317,7 +317,8 @@ export const admin_get_transactions = async (req: Request, res: Response) => {
     const limit = Math.max(1, Number(req.query.limit) || 20);
     const skip = (page - 1) * limit;
 
-    const { type, status, wallet_id, owner_id } = req.query as any;
+    const { type, status, wallet_id, owner_id, search, dateFrom, dateTo } =
+      req.query as any;
 
     const filter: any = {};
     if (type) filter.type = type;
@@ -331,20 +332,61 @@ export const admin_get_transactions = async (req: Request, res: Response) => {
       filter.wallet_id = { $in: ids } as any;
     }
 
-    const [total, transactions] = await Promise.all([
-      Transaction.countDocuments(filter),
-      Transaction.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate("ride_id")
-        .populate({ path: "wallet_id", populate: { path: "owner_id" } }),
-    ]);
+    // Date range filters
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        filter.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = endDate;
+      }
+    }
+
+    // First, get all transactions with populated data for search
+    let transactions = await Transaction.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("ride_id")
+      .populate({ path: "wallet_id", populate: { path: "owner_id" } });
+
+    // Apply search filter if provided
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase();
+      transactions = transactions.filter((txn: any) => {
+        const id = txn._id.toString().toLowerCase();
+        const reference = (txn.reference || "").toLowerCase();
+        const userName = (txn.wallet_id?.owner_id?.name || "").toLowerCase();
+        const userEmail = (txn.wallet_id?.owner_id?.email || "").toLowerCase();
+        const txnType = (txn.type || "").toLowerCase();
+        const channel = (txn.channel || "").toLowerCase();
+
+        return (
+          id.includes(searchLower) ||
+          reference.includes(searchLower) ||
+          userName.includes(searchLower) ||
+          userEmail.includes(searchLower) ||
+          txnType.includes(searchLower) ||
+          channel.includes(searchLower)
+        );
+      });
+    }
+
+    // Get total count and apply pagination
+    const total = transactions.length;
+    const paginatedTransactions = transactions.slice(skip, skip + limit);
 
     const pages = Math.ceil(total / limit);
     return res
       .status(200)
-      .json({ msg: "success", transactions, total, page, pages });
+      .json({
+        msg: "success",
+        transactions: paginatedTransactions,
+        total,
+        page,
+        pages,
+      });
   } catch (err) {
     console.error("admin_get_transactions error:", err);
     return res.status(500).json({ msg: "Server error." });

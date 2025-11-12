@@ -27,10 +27,16 @@ const Transactions = () => {
     totalPages: apiTotalPages,
   } = useTransactionContext();
 
-  // Fetch transactions on mount and when page changes
+  // Fetch transactions whenever page, search, or filters change
   useEffect(() => {
-    fetchTransactions(currentPage, ITEMS_PER_PAGE);
-  }, [currentPage]);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchTransactions(currentPage, ITEMS_PER_PAGE, filterParams);
+  }, [currentPage, searchQuery, filters]);
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -54,9 +60,9 @@ const Transactions = () => {
     );
   }, [filters]);
 
-  const filteredTransactions = useMemo(() => {
-    // Transform API transactions to UI format
-    const transformedTransactions = transactions.map((transaction) => ({
+  // Transform API transactions to UI format
+  const displayTransactions = useMemo(() => {
+    let result = transactions.map((transaction) => ({
       id: transaction._id,
       userId: transaction.wallet_id.owner_id._id,
       userName: transaction.wallet_id.owner_id.name || "Unknown User",
@@ -79,44 +85,7 @@ const Transactions = () => {
       updatedAt: new Date(transaction.updatedAt),
     }));
 
-    let result = [...transformedTransactions];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (transaction) =>
-          transaction.id.toLowerCase().includes(query) ||
-          transaction.userName.toLowerCase().includes(query) ||
-          transaction.type.toLowerCase().includes(query) ||
-          transaction.channel.toLowerCase().includes(query) ||
-          transaction.status.toLowerCase().includes(query) ||
-          (transaction.reference &&
-            transaction.reference.toLowerCase().includes(query)) ||
-          transaction.userType.toLowerCase().includes(query)
-      );
-    }
-
-    if (filters.status) {
-      result = result.filter(
-        (transaction) => transaction.status === filters.status
-      );
-    }
-
-    if (filters.dateFrom) {
-      const fromDate = new Date(filters.dateFrom);
-      result = result.filter(
-        (transaction) => new Date(transaction.createdAt) >= fromDate
-      );
-    }
-
-    if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      result = result.filter(
-        (transaction) => new Date(transaction.createdAt) <= toDate
-      );
-    }
-
+    // Apply client-side sorting only (filtering/search now handled by backend)
     if (filters.sortBy) {
       switch (filters.sortBy) {
         case "name-asc":
@@ -149,22 +118,20 @@ const Transactions = () => {
     }
 
     return result;
-  }, [transactions, searchQuery, filters]);
-
-  // Use API pagination instead of client-side slicing
-  const totalPages = apiTotalPages;
-  const currentTransactions = filteredTransactions;
-
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  }, [transactions, filters.sortBy]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   const handleRefresh = () => {
-    fetchTransactions(currentPage, ITEMS_PER_PAGE);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchTransactions(currentPage, ITEMS_PER_PAGE, filterParams);
   };
 
   return (
@@ -208,9 +175,9 @@ const Transactions = () => {
       />
 
       <TransactionsTable
-        transactions={currentTransactions}
+        transactions={displayTransactions}
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={apiTotalPages}
         onPageChange={handlePageChange}
         onRefresh={handleRefresh}
       />

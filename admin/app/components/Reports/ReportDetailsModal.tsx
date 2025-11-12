@@ -9,7 +9,6 @@ import {
   MdWarning,
 } from "react-icons/md";
 import { Report } from "../../context/ReportContext";
-import "../styles/style.scss";
 
 interface ReportDetailsModalProps {
   report: Report;

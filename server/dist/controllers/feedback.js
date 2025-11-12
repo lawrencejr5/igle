@@ -94,24 +94,60 @@ const get_all_feedbacks = (req, res) => __awaiter(void 0, void 0, void 0, functi
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.max(1, Number(req.query.limit) || 20);
         const skip = (page - 1) * limit;
-        const { type, user } = req.query;
+        const { type, user, search, dateFrom, dateTo } = req.query;
         const filter = {};
         if (type)
             filter.type = type;
         if (user)
             filter.user = user;
-        const [total, feedbacks] = yield Promise.all([
-            feedback_1.default.countDocuments(filter),
-            feedback_1.default.find(filter)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .populate("user", "name email phone"),
-        ]);
+        // Date range filters
+        if (dateFrom || dateTo) {
+            filter.createdAt = {};
+            if (dateFrom) {
+                filter.createdAt.$gte = new Date(dateFrom);
+            }
+            if (dateTo) {
+                const endDate = new Date(dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                filter.createdAt.$lte = endDate;
+            }
+        }
+        // Get all feedbacks with populated data for search
+        let feedbacks = yield feedback_1.default.find(filter)
+            .sort({ createdAt: -1 })
+            .populate("user", "name email phone");
+        // Apply search filter if provided
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase();
+            feedbacks = feedbacks.filter((feedback) => {
+                var _a, _b;
+                const id = feedback._id.toString().toLowerCase();
+                const userName = (((_a = feedback.user) === null || _a === void 0 ? void 0 : _a.name) || "").toLowerCase();
+                const userEmail = (((_b = feedback.user) === null || _b === void 0 ? void 0 : _b.email) || "").toLowerCase();
+                const message = (feedback.message || "").toLowerCase();
+                const feedbackType = (feedback.type || "").toLowerCase();
+                const contact = (feedback.contact || "").toLowerCase();
+                return (id.includes(searchLower) ||
+                    userName.includes(searchLower) ||
+                    userEmail.includes(searchLower) ||
+                    message.includes(searchLower) ||
+                    feedbackType.includes(searchLower) ||
+                    contact.includes(searchLower));
+            });
+        }
+        // Get total count and apply pagination
+        const total = feedbacks.length;
+        const paginatedFeedbacks = feedbacks.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
         return res
             .status(200)
-            .json({ msg: "success", feedbacks, total, page, pages });
+            .json({
+            msg: "success",
+            feedbacks: paginatedFeedbacks,
+            total,
+            page,
+            pages,
+        });
     }
     catch (err) {
         console.error("get_all_feedbacks error:", err);

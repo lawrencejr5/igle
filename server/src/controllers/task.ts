@@ -1,17 +1,63 @@
 import { Request, Response } from "express";
 import Task from "../models/task";
 
-// List tasks (supports query filters like active=true)
+// List tasks (supports pagination, search, and filters)
 export const get_tasks = async (req: Request, res: Response) => {
   try {
-    const queries: any = {};
-    const { active, type } = req.query;
+    const {
+      active,
+      type,
+      search,
+      dateFrom,
+      dateTo,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
+    const queries: any = {};
+
+    // Active filter
     if (active !== undefined) queries.active = active === "true";
+
+    // Type filter
     if (type) queries.type = type;
 
-    const tasks = await Task.find(queries).sort({ createdAt: -1 });
-    res.status(200).json({ msg: "success", tasks });
+    // Date range filter
+    if (dateFrom || dateTo) {
+      queries.createdAt = {};
+      if (dateFrom) queries.createdAt.$gte = new Date(dateFrom as string);
+      if (dateTo) queries.createdAt.$lte = new Date(dateTo as string);
+    }
+
+    // Search filter (search across title, description, type)
+    if (search) {
+      const searchRegex = new RegExp(search as string, "i");
+      queries.$or = [
+        { title: searchRegex },
+        { description: searchRegex },
+        { type: searchRegex },
+      ];
+    }
+
+    // Pagination
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [tasks, total] = await Promise.all([
+      Task.find(queries).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Task.countDocuments(queries),
+    ]);
+
+    const pages = Math.ceil(total / limitNum);
+
+    res.status(200).json({
+      msg: "success",
+      tasks,
+      total,
+      page: pageNum,
+      pages,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error." });

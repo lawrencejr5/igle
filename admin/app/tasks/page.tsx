@@ -45,34 +45,38 @@ const TasksPage = () => {
     endUserTask,
     deleteUserTask,
     restartUserTask,
+    totalPages,
+    currentPage,
   } = useTaskContext();
 
-  // Fetch tasks and user tasks on mount
+  // Fetch tasks with filters whenever dependencies change
   useEffect(() => {
-    fetchTasks();
-    fetchUserTasks();
-  }, []);
+    if (activeTab === "tasks") {
+      const filterParams: any = {};
+      if (taskFilters.status === "active") filterParams.active = true;
+      if (taskFilters.status === "inactive") filterParams.active = false;
+      if (taskTypeFilter !== "all") filterParams.type = taskTypeFilter;
+      if (taskFilters.dateFrom) filterParams.dateFrom = taskFilters.dateFrom;
+      if (taskFilters.dateTo) filterParams.dateTo = taskFilters.dateTo;
+      if (searchQuery.trim()) filterParams.search = searchQuery.trim();
 
-  const filteredTasks = useMemo(() => {
-    let filtered = tasks.filter((task) => {
-      const matchesSearch =
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      fetchTasks(currentTasksPage, itemsPerPage, filterParams);
+    }
+  }, [activeTab, currentTasksPage, searchQuery, taskFilters, taskTypeFilter]);
 
-      const matchesStatus =
-        !taskFilters.status ||
-        (taskFilters.status === "active" && task.active) ||
-        (taskFilters.status === "inactive" && !task.active);
+  // Fetch user tasks on mount
+  useEffect(() => {
+    if (activeTab === "userTasks") {
+      fetchUserTasks();
+    }
+  }, [activeTab]);
 
-      const matchesType =
-        taskTypeFilter === "all" || task.type === taskTypeFilter;
-
-      return matchesSearch && matchesStatus && matchesType;
-    });
+  // Sort tasks (client-side sorting only, filtering is done on backend)
+  const displayTasks = useMemo(() => {
+    let result = [...tasks];
 
     if (taskFilters.sortBy) {
-      filtered.sort((a, b) => {
+      result.sort((a, b) => {
         if (taskFilters.sortBy === "newest") {
           return (
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -90,8 +94,8 @@ const TasksPage = () => {
       });
     }
 
-    return filtered;
-  }, [tasks, searchQuery, taskFilters, taskTypeFilter]);
+    return result;
+  }, [tasks, taskFilters.sortBy]);
 
   const filteredUserTasks = useMemo(() => {
     let filtered = userTasks.filter((userTask) => {
@@ -129,15 +133,12 @@ const TasksPage = () => {
     return filtered;
   }, [userTasks, searchQuery, userTaskFilters]);
 
-  const totalTasksPages = Math.ceil(filteredTasks.length / itemsPerPage);
-  const paginatedTasks = filteredTasks.slice(
-    (currentTasksPage - 1) * itemsPerPage,
-    currentTasksPage * itemsPerPage
-  );
+  // Calculate pagination based on which tab is active
+  const totalTasksPages =
+    activeTab === "tasks"
+      ? totalPages
+      : Math.ceil(filteredUserTasks.length / itemsPerPage);
 
-  const totalUserTasksPages = Math.ceil(
-    filteredUserTasks.length / itemsPerPage
-  );
   const paginatedUserTasks = filteredUserTasks.slice(
     (currentUserTasksPage - 1) * itemsPerPage,
     currentUserTasksPage * itemsPerPage
@@ -287,15 +288,13 @@ const TasksPage = () => {
 
         <div className="results-info">
           Showing{" "}
-          {activeTab === "tasks"
-            ? filteredTasks.length
-            : filteredUserTasks.length}{" "}
+          {activeTab === "tasks" ? tasks.length : filteredUserTasks.length}{" "}
           {activeTab === "tasks" ? "tasks" : "user tasks"}
         </div>
 
         {activeTab === "tasks" ? (
           <TasksTable
-            tasks={paginatedTasks}
+            tasks={displayTasks}
             currentPage={currentTasksPage}
             totalPages={totalTasksPages}
             onPageChange={setCurrentTasksPage}
@@ -304,7 +303,7 @@ const TasksPage = () => {
           <UserTasksTable
             userTasks={paginatedUserTasks}
             currentPage={currentUserTasksPage}
-            totalPages={totalUserTasksPages}
+            totalPages={totalTasksPages}
             onPageChange={setCurrentUserTasksPage}
             onDelete={handleDeleteUserTask}
             onEndTask={handleEndUserTask}
@@ -315,7 +314,7 @@ const TasksPage = () => {
         {showCreateModal && (
           <CreateTaskModal
             onClose={() => setShowCreateModal(false)}
-            onTaskCreated={() => fetchTasks()}
+            onTaskCreated={() => fetchTasks(currentTasksPage, itemsPerPage)}
           />
         )}
       </div>

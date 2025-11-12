@@ -27,10 +27,16 @@ const Deliveries = () => {
     totalPages: apiTotalPages,
   } = useDeliveryContext();
 
-  // Fetch deliveries on mount and when page changes
+  // Fetch deliveries whenever page, search, or filters change
   useEffect(() => {
-    fetchDeliveries(currentPage, ITEMS_PER_PAGE);
-  }, [currentPage]);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchDeliveries(currentPage, ITEMS_PER_PAGE, filterParams);
+  }, [currentPage, searchQuery, filters]);
 
   const handleFilterClick = () => {
     setIsFilterOpen((prev) => !prev);
@@ -55,52 +61,9 @@ const Deliveries = () => {
     );
   }, [filters]);
 
-  // Filter and sort deliveries - Transform API data to match UI Delivery interface
-  const filteredDeliveries = useMemo(() => {
-    // Transform API deliveries to UI format
-
+  // Apply client-side sorting only (filtering/search now handled by backend)
+  const displayDeliveries = useMemo(() => {
     let result = [...deliveries];
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (delivery) =>
-          delivery._id.toLowerCase().includes(query) ||
-          delivery.sender.name.toLowerCase().includes(query) ||
-          (delivery.driver?.user.name &&
-            delivery.driver.user.name.toLowerCase().includes(query)) ||
-          (delivery.to?.name &&
-            delivery.to.name.toLowerCase().includes(query)) ||
-          delivery.pickup.address.toLowerCase().includes(query) ||
-          delivery.dropoff.address.toLowerCase().includes(query) ||
-          delivery.status.toLowerCase().includes(query) ||
-          delivery.vehicle.toLowerCase().includes(query) ||
-          (delivery.package.type &&
-            delivery.package.type.toLowerCase().includes(query))
-      );
-    }
-
-    // Apply status filter
-    if (filters.status) {
-      result = result.filter((delivery) => delivery.status === filters.status);
-    }
-
-    // Apply date filters
-    if (filters.dateFrom) {
-      const fromDate = new Date(filters.dateFrom);
-      result = result.filter(
-        (delivery) => new Date(delivery.createdAt) >= fromDate
-      );
-    }
-
-    if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999); // Include the entire day
-      result = result.filter(
-        (delivery) => new Date(delivery.createdAt) <= toDate
-      );
-    }
 
     // Apply sorting
     if (filters.sortBy) {
@@ -135,23 +98,20 @@ const Deliveries = () => {
     }
 
     return result;
-  }, [deliveries, searchQuery, filters]);
-
-  // Use API pagination instead of client-side slicing
-  const totalPages = apiTotalPages;
-  const currentDeliveries = filteredDeliveries;
-
-  // Reset to page 1 when search results change
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  }, [deliveries, filters.sortBy]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   const handleRefresh = () => {
-    fetchDeliveries(currentPage, ITEMS_PER_PAGE);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchDeliveries(currentPage, ITEMS_PER_PAGE, filterParams);
   };
 
   return (
@@ -200,9 +160,9 @@ const Deliveries = () => {
       />
 
       <DeliveriesTable
-        deliveries={currentDeliveries}
+        deliveries={displayDeliveries}
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={apiTotalPages}
         onPageChange={handlePageChange}
         onRefresh={handleRefresh}
       />

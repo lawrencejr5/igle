@@ -77,7 +77,13 @@ interface DriverContextType {
   fetchDrivers: (
     page?: number,
     limit?: number,
-    includeDeleted?: boolean
+    includeDeleted?: boolean,
+    filters?: {
+      status?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
   ) => Promise<void>;
   fetchDriverDetails: (
     driverId: string,
@@ -115,11 +121,27 @@ export const DriverProvider: React.FC<{ children: ReactNode }> = ({
   const { showAlert } = useAlert();
 
   // Fetch paginated list of drivers
-  const fetchDrivers = async (page = 1, limit = 20, includeDeleted = false) => {
+  const fetchDrivers = async (
+    page = 1,
+    limit = 20,
+    includeDeleted = false,
+    filters?: {
+      status?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => {
     try {
       setLoading(true);
+      const params: any = { page, limit, include_deleted: includeDeleted };
+      if (filters?.status) params.status = filters.status;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters?.dateTo) params.dateTo = filters.dateTo;
+
       const response = await axios.get(`${API_URL}/admin/drivers`, {
-        params: { page, limit, include_deleted: includeDeleted },
+        params,
       });
 
       if (response.data) {

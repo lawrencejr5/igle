@@ -86,7 +86,20 @@ interface TaskContextType {
   currentTask: Task | null;
   userTasks: UserTask[];
   loading: boolean;
-  fetchTasks: (filters?: { active?: boolean; type?: string }) => Promise<void>;
+  totalTasks: number;
+  totalPages: number;
+  currentPage: number;
+  fetchTasks: (
+    page?: number,
+    limit?: number,
+    filters?: {
+      active?: boolean;
+      type?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => Promise<void>;
   fetchTaskDetails: (taskId: string) => Promise<void>;
   createTask: (payload: CreateTaskPayload) => Promise<boolean>;
   updateTask: (taskId: string, payload: UpdateTaskPayload) => Promise<boolean>;
@@ -107,6 +120,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [userTasks, setUserTasks] = useState<UserTask[]>([]);
   const [loading, setLoading] = useState(false);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { showAlert } = useAlert();
 
@@ -126,23 +142,42 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   };
 
-  // Fetch tasks list with optional filters
-  const fetchTasks = async (filters?: { active?: boolean; type?: string }) => {
+  // Fetch tasks list with optional filters and pagination
+  const fetchTasks = async (
+    page: number = 1,
+    limit: number = 10,
+    filters?: {
+      active?: boolean;
+      type?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ) => {
     setLoading(true);
     try {
-      const params: any = {};
+      const params: any = { page, limit };
       if (filters?.active !== undefined) params.active = filters.active;
       if (filters?.type) params.type = filters.type;
+      if (filters?.search) params.search = filters.search;
+      if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
+      if (filters?.dateTo) params.dateTo = filters.dateTo;
 
-      const response = await axios.get<{ msg: string; tasks: Task[] }>(
-        TASK_API_URL,
-        {
-          ...getAuthHeaders(),
-          params,
-        }
-      );
+      const response = await axios.get<{
+        msg: string;
+        tasks: Task[];
+        total: number;
+        page: number;
+        pages: number;
+      }>(TASK_API_URL, {
+        ...getAuthHeaders(),
+        params,
+      });
 
       setTasks(response.data.tasks);
+      setTotalTasks(response.data.total);
+      setTotalPages(response.data.pages);
+      setCurrentPage(response.data.page);
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       showAlert(error.response?.data?.msg || "Failed to fetch tasks", "error");
@@ -379,6 +414,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     currentTask,
     userTasks,
     loading,
+    totalTasks,
+    totalPages,
+    currentPage,
     fetchTasks,
     fetchTaskDetails,
     createTask,

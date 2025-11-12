@@ -29,13 +29,25 @@ const Rides = () => {
     sortBy: "",
   });
 
-  // Fetch rides when component mounts or page changes
+  // Fetch rides whenever page, search, or filters change
   useEffect(() => {
-    fetchRides(currentPage, ITEMS_PER_PAGE);
-  }, [currentPage]);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchRides(currentPage, ITEMS_PER_PAGE, filterParams);
+  }, [currentPage, searchQuery, filters]);
 
   const handleRefresh = () => {
-    fetchRides(currentPage, ITEMS_PER_PAGE);
+    const filterParams: any = {};
+    if (filters.status) filterParams.status = filters.status;
+    if (filters.dateFrom) filterParams.dateFrom = filters.dateFrom;
+    if (filters.dateTo) filterParams.dateTo = filters.dateTo;
+    if (searchQuery.trim()) filterParams.search = searchQuery.trim();
+
+    fetchRides(currentPage, ITEMS_PER_PAGE, filterParams);
   };
 
   const handleFilterClick = () => {
@@ -61,43 +73,9 @@ const Rides = () => {
     );
   }, [filters]);
 
-  // Filter and sort rides
-  const filteredRides = useMemo(() => {
-    // Convert API rides to display format matching Ride interface
+  // Apply client-side sorting only (filtering/search now handled by backend)
+  const displayRides = useMemo(() => {
     let result = [...apiRides];
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (ride) =>
-          ride._id.toLowerCase().includes(query) ||
-          ride.rider.name.toLowerCase().includes(query) ||
-          (ride.driver?.user.name &&
-            ride.driver?.user.name.toLowerCase().includes(query)) ||
-          ride.pickup.address.toLowerCase().includes(query) ||
-          ride.destination.address.toLowerCase().includes(query) ||
-          ride.status.toLowerCase().includes(query) ||
-          ride.vehicle.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply status filter
-    if (filters.status) {
-      result = result.filter((ride) => ride.status === filters.status);
-    }
-
-    // Apply date filters
-    if (filters.dateFrom) {
-      const fromDate = new Date(filters.dateFrom);
-      result = result.filter((ride) => new Date(ride.createdAt) >= fromDate);
-    }
-
-    if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      result = result.filter((ride) => new Date(ride.createdAt) <= toDate);
-    }
 
     // Apply sorting
     if (filters.sortBy) {
@@ -125,23 +103,14 @@ const Rides = () => {
         case "date-asc":
           result.sort(
             (a, b) =>
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
           break;
       }
     }
 
     return result;
-  }, [apiRides, searchQuery, filters]);
-
-  // Use API pagination
-  const totalPages = apiTotalPages;
-  const currentRides = filteredRides;
-
-  // Reset to page 1 when search results change
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  }, [apiRides, filters.sortBy]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -193,9 +162,9 @@ const Rides = () => {
       />
 
       <RidesTable
-        rides={currentRides}
+        rides={displayRides}
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={apiTotalPages}
         onPageChange={handlePageChange}
         onRefresh={handleRefresh}
       />

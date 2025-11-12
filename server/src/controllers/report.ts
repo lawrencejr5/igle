@@ -40,30 +40,69 @@ export const get_reports = async (req: Request, res: Response) => {
     const limit = Math.max(1, Number(req.query.limit) || 20);
     const skip = (page - 1) * limit;
 
-    const { status, category, reporter } = req.query as any;
+    const { status, category, reporter, search, dateFrom, dateTo } =
+      req.query as any;
+
     const filter: any = {};
     if (status) filter.status = status;
     if (category) filter.category = category;
     if (reporter) filter.reporter = reporter;
 
-    const [total, reports] = await Promise.all([
-      Report.countDocuments(filter),
-      Report.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate("reporter", "name email phone")
-        .populate({
-          path: "driver",
-          select: "user",
-          populate: { path: "user", select: "name" },
-        }),
-    ]);
+    // Date range filters
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        filter.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = endDate;
+      }
+    }
+
+    // Get all reports with populated data for search
+    let reports = await Report.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("reporter", "name email phone")
+      .populate({
+        path: "driver",
+        select: "user",
+        populate: { path: "user", select: "name" },
+      });
+
+    // Apply search filter if provided
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase();
+      reports = reports.filter((report: any) => {
+        const id = report._id.toString().toLowerCase();
+        const reporterName = (report.reporter?.name || "").toLowerCase();
+        const reporterEmail = (report.reporter?.email || "").toLowerCase();
+        const driverName = (report.driver?.user?.name || "").toLowerCase();
+        const description = (report.description || "").toLowerCase();
+        const reportCategory = (report.category || "").toLowerCase();
+        const reportStatus = (report.status || "").toLowerCase();
+
+        return (
+          id.includes(searchLower) ||
+          reporterName.includes(searchLower) ||
+          reporterEmail.includes(searchLower) ||
+          driverName.includes(searchLower) ||
+          description.includes(searchLower) ||
+          reportCategory.includes(searchLower) ||
+          reportStatus.includes(searchLower)
+        );
+      });
+    }
+
+    // Get total count and apply pagination
+    const total = reports.length;
+    const paginatedReports = reports.slice(skip, skip + limit);
 
     const pages = Math.ceil(total / limit);
     return res
       .status(200)
-      .json({ msg: "success", reports, total, page, pages });
+      .json({ msg: "success", reports: paginatedReports, total, page, pages });
   } catch (err) {
     console.error("get_reports error:", err);
     res.status(500).json({ msg: "Server error." });
