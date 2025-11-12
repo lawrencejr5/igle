@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
-import TransactionsTable from "../components/TransactionsTable";
+import TransactionsTable from "../components/Transactions/TransactionsTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
 import { useTransactionContext } from "../context/TransactionContext";
 

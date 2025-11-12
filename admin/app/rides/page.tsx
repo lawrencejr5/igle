@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
-import RidesTable from "../components/RidesTable";
+import RidesTable from "../components/Rides/RidesTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
 import { useRideContext, Ride as ApiRide } from "../context/RideContext";
 

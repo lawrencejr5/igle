@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
-import DeliveriesTable from "../components/DeliveriesTable";
+import DeliveriesTable from "../components/Deliveries/DeliveriesTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
 import { useDeliveryContext } from "../context/DeliveryContext";
 

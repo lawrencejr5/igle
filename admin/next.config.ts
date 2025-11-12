@@ -6,8 +6,9 @@ const nextConfig: NextConfig = {
   // Allow external image hosts used by our seed data (avatars, placeholders)
   images: {
     domains: ["i.pravatar.cc", "placehold.co", "res.cloudinary.com"],
-    // If you prefer pattern matching instead, use `remotePatterns`.
+    unoptimized: true,
   },
+  output: "export",
 };
 
 export default nextConfig;

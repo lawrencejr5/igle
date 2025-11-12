@@ -1,0 +1,194 @@
+"use client";
+
+import { useState } from "react";
+import { Feedback } from "../../context/FeedbackContext";
+import FeedbackActionsMenu from "./FeedbackActionsMenu";
+import FeedbackDetailsModal from "./FeedbackDetailsModal";
+import Pagination from "../Pagination";
+import ConfirmModal from "../ConfirmModal";
+
+interface FeedbacksTableProps {
+  feedbacks: Feedback[];
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onDelete?: (feedbackId: string) => void;
+}
+
+const FeedbacksTable = ({
+  feedbacks,
+  currentPage,
+  totalPages,
+  onPageChange,
+  onDelete,
+}: FeedbacksTableProps) => {
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
+    null
+  );
+  const [feedbackToDelete, setFeedbackToDelete] = useState<Feedback | null>(
+    null
+  );
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  const handleViewDetails = (feedback: Feedback) => {
+    setSelectedFeedback(feedback);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedFeedback(null);
+  };
+
+  const handleDelete = (feedback: Feedback) => {
+    setFeedbackToDelete(feedback);
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (feedbackToDelete && onDelete) {
+      await onDelete(feedbackToDelete._id);
+      setShowConfirmDelete(false);
+      setFeedbackToDelete(null);
+    }
+  };
+
+  const getTypeClass = (type: string) => {
+    switch (type) {
+      case "bug":
+        return "feedback-type feedback-type--bug";
+      case "feature":
+        return "feedback-type feedback-type--feature";
+      case "general":
+        return "feedback-type feedback-type--general";
+      default:
+        return "feedback-type";
+    }
+  };
+
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const truncateMessage = (message: string, maxLength: number = 80) => {
+    if (message.length <= maxLength) return message;
+    return message.substring(0, maxLength) + "...";
+  };
+
+  return (
+    <>
+      <div className="table-container">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Feedback ID</th>
+              <th>User</th>
+              <th>Type</th>
+              <th>Message</th>
+              <th>Contact</th>
+              <th>Images</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {feedbacks.map((feedback) => (
+              <tr key={feedback._id}>
+                <td>
+                  <span className="feedback-id">{feedback._id}</span>
+                </td>
+                <td>
+                  {feedback.user ? (
+                    <div className="user-cell">
+                      <div className="user-cell__avatar">
+                        {feedback.user.name.charAt(0)}
+                      </div>
+                      <span className="user-cell__name">
+                        {feedback.user.name}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="user-cell user-cell--anonymous">
+                      <div className="user-cell__avatar">A</div>
+                      <span className="user-cell__name">Anonymous</span>
+                    </div>
+                  )}
+                </td>
+                <td>
+                  <span className={getTypeClass(feedback.type)}>
+                    {feedback.type}
+                  </span>
+                </td>
+                <td>
+                  <div className="feedback-message">
+                    {truncateMessage(feedback.message)}
+                  </div>
+                </td>
+                <td>
+                  {feedback.contact ? (
+                    <span className="feedback-contact">{feedback.contact}</span>
+                  ) : (
+                    <span className="text-muted">N/A</span>
+                  )}
+                </td>
+                <td>
+                  {feedback.images && feedback.images.length > 0 ? (
+                    <span className="feedback-images-badge">
+                      {feedback.images.length} image
+                      {feedback.images.length > 1 ? "s" : ""}
+                    </span>
+                  ) : (
+                    <span className="text-muted">None</span>
+                  )}
+                </td>
+                <td>{formatDate(feedback.createdAt)}</td>
+                <td>
+                  <FeedbackActionsMenu
+                    feedback={feedback}
+                    onViewDetails={handleViewDetails}
+                    onDelete={handleDelete}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      )}
+
+      {selectedFeedback && (
+        <FeedbackDetailsModal
+          feedback={selectedFeedback as any}
+          onClose={handleCloseModal}
+        />
+      )}
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Delete Feedback"
+        message="Are you sure you want to delete this feedback? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirmDelete(false);
+          setFeedbackToDelete(null);
+        }}
+        variant="danger"
+      />
+    </>
+  );
+};
+
+export default FeedbacksTable;

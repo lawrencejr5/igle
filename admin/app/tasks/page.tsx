@@ -6,9 +6,9 @@ import DashboardLayout from "../components/DashboardLayout";
 import TabSwitcher from "../components/TabSwitcher";
 import SearchBar from "../components/SearchBar";
 import FilterButton from "../components/FilterButton";
-import TasksTable from "../components/TasksTable";
-import UserTasksTable from "../components/UserTasksTable";
-import CreateTaskModal from "../components/CreateTaskModal";
+import TasksTable from "../components/Tasks/TasksTable";
+import UserTasksTable from "../components/UserTasks/UserTasksTable";
+import CreateTaskModal from "../components/Tasks/CreateTaskModal";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
 import { useTaskContext } from "../context/TaskContext";
 

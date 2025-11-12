@@ -1,8 +1,8 @@
 import DashboardLayout from "./components/DashboardLayout";
-import AccountBalance from "./components/AccountBalance";
-import StatsCards from "./components/StatsCards";
-import MapSection from "./components/MapSection";
-import ActivityChart from "./components/ActivityChart";
+import AccountBalance from "./components/Overview/AccountBalance";
+import StatsCards from "./components/Overview/StatsCards";
+import MapSection from "./components/Overview/MapSection";
+import ActivityChart from "./components/Overview/ActivityChart";
 
 const Overview = () => {
   return (

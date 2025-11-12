@@ -3,8 +3,8 @@
 import { useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 import TabSwitcher from "../components/TabSwitcher";
-import ProfileSettings from "../components/ProfileSettings";
-import SystemSettings from "../components/SystemSettings";
+import ProfileSettings from "../components/Settings/ProfileSettings";
+import SystemSettings from "../components/Settings/SystemSettings";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<
