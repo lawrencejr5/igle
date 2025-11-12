@@ -604,11 +604,27 @@ export const admin_get_users = async (req: Request, res: Response) => {
     const total = users.length;
     const paginatedUsers = users.slice(skip, skip + limit);
 
+    // Get completed rides and deliveries count for each paginated user
+    const usersWithCounts = await Promise.all(
+      paginatedUsers.map(async (user: any) => {
+        const [numRides, numDeliveries] = await Promise.all([
+          Ride.countDocuments({ rider: user._id, status: "completed" }),
+          Delivery.countDocuments({ sender: user._id, status: "delivered" }),
+        ]);
+
+        return {
+          ...user.toObject(),
+          numRides,
+          numDeliveries,
+        };
+      })
+    );
+
     const pages = Math.ceil(total / limit);
 
     return res
       .status(200)
-      .json({ msg: "success", users: paginatedUsers, total, page, pages });
+      .json({ msg: "success", users: usersWithCounts, total, page, pages });
   } catch (err) {
     console.error("admin_get_users error:", err);
     return res.status(500).json({ msg: "Server error." });

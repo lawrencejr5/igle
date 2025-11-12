@@ -19,14 +19,11 @@ export interface User {
   is_online?: boolean;
   is_blocked?: boolean;
   is_deleted?: boolean;
+  numRides: number;
+  numDeliveries: number;
   driver_application: "none" | "rejected" | "submitted" | "approved";
   createdAt: string;
   updatedAt: string;
-}
-
-export interface UserDetails extends User {
-  numRides?: number;
-  numDeliveries?: number;
 }
 
 interface UsersListResponse {
@@ -38,7 +35,7 @@ interface UsersListResponse {
 
 interface UserContextType {
   users: User[];
-  currentUser: UserDetails | null;
+  currentUser: User | null;
   totalUsers: number;
   currentPage: number;
   totalPages: number;
@@ -66,7 +63,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [users, setUsers] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<UserDetails | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);

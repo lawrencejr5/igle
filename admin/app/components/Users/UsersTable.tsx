@@ -146,8 +146,8 @@ const UsersTable = ({
               <th>Full Name</th>
               <th>Email</th>
               <th>Phone</th>
-              {/* <th>Rides</th>
-              <th>Deliveries</th> */}
+              <th>Rides</th>
+              <th>Deliveries</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -165,8 +165,8 @@ const UsersTable = ({
                 </td>
                 <td>{user.email}</td>
                 <td>{user.phone || "N/A"}</td>
-                {/* <td>0</td>
-                <td>0</td> */}
+                <td>{user.numRides}</td>
+                <td>{user.numDeliveries}</td>
                 <td>
                   <span className={`status-badge ${getStatusClass(user)}`}>
                     {user.is_blocked

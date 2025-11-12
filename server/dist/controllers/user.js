@@ -574,10 +574,19 @@ const admin_get_users = (req, res) => __awaiter(void 0, void 0, void 0, function
         // Get total count and apply pagination
         const total = users.length;
         const paginatedUsers = users.slice(skip, skip + limit);
+        // Get completed rides and deliveries count for each paginated user
+        const usersWithCounts = yield Promise.all(paginatedUsers.map((user) => __awaiter(void 0, void 0, void 0, function* () {
+            const [numRides, numDeliveries] = yield Promise.all([
+                ride_1.default.countDocuments({ rider: user._id, status: "completed" }),
+                delivery_1.default.countDocuments({ sender: user._id, status: "delivered" }),
+            ]);
+            return Object.assign(Object.assign({}, user.toObject()), { numRides,
+                numDeliveries });
+        })));
         const pages = Math.ceil(total / limit);
         return res
             .status(200)
-            .json({ msg: "success", users: paginatedUsers, total, page, pages });
+            .json({ msg: "success", users: usersWithCounts, total, page, pages });
     }
     catch (err) {
         console.error("admin_get_users error:", err);
