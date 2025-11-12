@@ -146,84 +146,36 @@ const Users = () => {
 
   // No display mapping for users; use apiUsers directly
 
-  // Filter and sort drivers
+  // Filter and sort drivers (using real Driver fields)
   const filteredDrivers = useMemo(() => {
-    // Helper function to capitalize vehicle type
-    const capitalizeVehicleType = (
-      type: string
-    ): "Cab" | "Bike" | "SUV" | "Keke" | "Van" | "Truck" => {
-      const typeMap: {
-        [key: string]: "Cab" | "Bike" | "SUV" | "Keke" | "Van" | "Truck";
-      } = {
-        bike: "Bike",
-        keke: "Keke",
-        cab: "Cab",
-        suv: "SUV",
-        van: "Van",
-        truck: "Truck",
-      };
-      return typeMap[type.toLowerCase()] || "Cab";
-    };
-
-    // Convert API drivers to display format
-    let result = apiDrivers.map((driver) => ({
-      id: driver._id,
-      fullname: driver.user.name,
-      email: driver.user.email,
-      phone: driver.user.phone || "N/A",
-      vehicleType: capitalizeVehicleType(driver.vehicle_type),
-      vehicleName:
-        driver.vehicle.brand && driver.vehicle.model
-          ? `${driver.vehicle.brand} ${driver.vehicle.model}`
-          : "N/A",
-      rating: driver.rating || 0,
-      reviewsCount: driver.num_of_reviews || 0,
-      status: (driver.is_blocked
-        ? "Suspended"
-        : driver.is_online
-        ? "Online"
-        : "Offline") as "Online" | "Offline" | "Suspended",
-    }));
-
+    let result = [...apiDrivers];
     // Apply search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (driver) =>
-          driver.fullname.toLowerCase().includes(query) ||
-          driver.email.toLowerCase().includes(query) ||
-          driver.phone.includes(query) ||
-          driver.vehicleType.toLowerCase().includes(query) ||
-          driver.vehicleName.toLowerCase().includes(query) ||
-          driver.status.toLowerCase().includes(query)
+          driver.user.name.toLowerCase().includes(query) ||
+          driver.user.email.toLowerCase().includes(query) ||
+          (driver.user.phone && driver.user.phone.includes(query)) ||
+          driver.vehicle_type.toLowerCase().includes(query) ||
+          (driver.vehicle.brand &&
+            driver.vehicle.brand.toLowerCase().includes(query)) ||
+          (driver.vehicle.model &&
+            driver.vehicle.model.toLowerCase().includes(query))
       );
     }
-
     // Apply status filter
     if (filters.status) {
-      result = result.filter((driver) => driver.status === filters.status);
+      result = result.filter((driver) => {
+        if (filters.status === "Online")
+          return driver.is_online && !driver.is_blocked;
+        if (filters.status === "Offline")
+          return !driver.is_online && !driver.is_blocked;
+        if (filters.status === "Suspended") return driver.is_blocked;
+        return true;
+      });
     }
-
-    // Apply sorting
-    if (filters.sortBy) {
-      switch (filters.sortBy) {
-        case "name-asc":
-          result.sort((a, b) => a.fullname.localeCompare(b.fullname));
-          break;
-        case "name-desc":
-          result.sort((a, b) => b.fullname.localeCompare(a.fullname));
-          break;
-        case "rides-desc":
-        case "deliveries-desc":
-          result.sort((a, b) => b.rating - a.rating);
-          break;
-        case "rides-asc":
-        case "deliveries-asc":
-          result.sort((a, b) => a.rating - b.rating);
-          break;
-      }
-    }
-
+    // Optionally add sorting here if needed
     return result;
   }, [apiDrivers, searchQuery, filters]);
 
@@ -320,9 +272,8 @@ const Users = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
 
-  // For drivers and requests, use paginated data
-  // Use API drivers directly for DriversTable (filteredDrivers is display-mapped, not context type)
-  const currentDrivers = apiDrivers;
+  // For drivers, use filtered and paginated data
+  const currentDrivers = filteredDrivers.slice(startIndex, endIndex);
   const currentRequests =
     activeTab === "Requests"
       ? filteredRequests

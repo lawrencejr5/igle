@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Ride } from "../../data/rides";
+import { Ride } from "../../context/RideContext";
 import Pagination from "../Pagination";
 import RideActionsMenu from "./RideActionsMenu";
 import RideDetailsModal from "./RideDetailsModal";
@@ -68,7 +68,7 @@ const RidesTable = ({
   };
 
   const handleViewDetails = (rideId: string) => {
-    const ride = rides.find((r) => r.id === rideId);
+    const ride = rides.find((r) => r._id === rideId);
     if (ride) {
       setSelectedRide(ride);
       setIsModalOpen(true);
@@ -135,25 +135,27 @@ const RidesTable = ({
           </thead>
           <tbody>
             {rides.map((ride) => (
-              <tr key={ride.id}>
+              <tr key={ride._id}>
                 <td>
-                  <span className="ride-id">{ride.id}</span>
+                  <span className="ride-id">{ride._id}</span>
                 </td>
                 <td>
                   <div className="user-cell">
                     <div className="user-cell__avatar">
-                      {ride.riderName.charAt(0)}
+                      {ride.rider.name.charAt(0)}
                     </div>
-                    <span className="user-cell__name">{ride.riderName}</span>
+                    <span className="user-cell__name">{ride.rider.name}</span>
                   </div>
                 </td>
                 <td>
-                  {ride.driverName ? (
+                  {ride.driver?.user.name ? (
                     <div className="user-cell">
                       <div className="user-cell__avatar">
-                        {ride.driverName.charAt(0)}
+                        {ride.driver?.user.name.charAt(0)}
                       </div>
-                      <span className="user-cell__name">{ride.driverName}</span>
+                      <span className="user-cell__name">
+                        {ride.driver?.user.name}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-muted">Unassigned</span>
@@ -211,7 +213,7 @@ const RidesTable = ({
                 </td>
                 <td>
                   <RideActionsMenu
-                    rideId={ride.id}
+                    rideId={ride._id}
                     rideStatus={ride.status}
                     onViewDetails={handleViewDetails}
                     onCancel={handleCancel}
@@ -234,7 +236,7 @@ const RidesTable = ({
       <RideDetailsModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        ride={selectedRide}
+        ride={selectedRide!}
       />
 
       <ConfirmModal

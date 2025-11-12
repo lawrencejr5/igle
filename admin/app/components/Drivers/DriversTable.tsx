@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Driver } from "../../context/DriverContext";
 import Pagination from "../Pagination";
-import ActionMenu from "../ActionMenu";
+import ActionMenu from "../Users/ActionMenu";
 import DriverDetailsModal from "./DriverDetailsModal";
 import EditDriverModal from "./EditDriverModal";
 import ConfirmModal from "../ConfirmModal";
@@ -25,9 +25,7 @@ const DriversTable = ({
   onPageChange,
   onRefresh,
 }: DriversTableProps) => {
-  const { fetchDriverDetails, editDriver, deleteDriver, blockDriver } =
-    useDriverContext();
-  const { showAlert } = useAlert();
+  const { fetchDriverDetails, deleteDriver, blockDriver } = useDriverContext();
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -44,19 +42,6 @@ const DriversTable = ({
     message: "",
     onConfirm: () => {},
   });
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case "Online":
-        return "status-badge--active";
-      case "Offline":
-        return "status-badge--inactive";
-      case "Suspended":
-        return "status-badge--suspended";
-      default:
-        return "";
-    }
-  };
 
   const handleViewDetails = async (driverId: string) => {
     try {

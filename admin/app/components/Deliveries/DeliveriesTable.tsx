@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Delivery } from "../../data/deliveries";
+import { Delivery } from "../../context/DeliveryContext";
 import Pagination from "../Pagination";
 import DeliveryActionsMenu from "./DeliveryActionsMenu";
 import DeliveryDetailsModal from "./DeliveryDetailsModal";
@@ -140,28 +140,28 @@ const DeliveriesTable = ({
           </thead>
           <tbody>
             {deliveries.map((delivery) => (
-              <tr key={delivery.id}>
+              <tr key={delivery._id}>
                 <td>
-                  <span className="delivery-id">{delivery.id}</span>
+                  <span className="delivery-id">{delivery._id}</span>
                 </td>
                 <td>
                   <div className="user-cell">
                     <div className="user-cell__avatar">
-                      {delivery.senderName.charAt(0)}
+                      {delivery.sender.name.charAt(0)}
                     </div>
                     <span className="user-cell__name">
-                      {delivery.senderName}
+                      {delivery.sender.name}
                     </span>
                   </div>
                 </td>
                 <td>
-                  {delivery.driverName ? (
+                  {delivery.driver?.user.name ? (
                     <div className="user-cell">
                       <div className="user-cell__avatar">
-                        {delivery.driverName.charAt(0)}
+                        {delivery.driver?.user.name.charAt(0)}
                       </div>
                       <span className="user-cell__name">
-                        {delivery.driverName}
+                        {delivery.driver?.user.name}
                       </span>
                     </div>
                   ) : (
@@ -249,7 +249,7 @@ const DeliveriesTable = ({
                 </td>
                 <td>
                   <DeliveryActionsMenu
-                    deliveryId={delivery.id}
+                    deliveryId={delivery._id}
                     deliveryStatus={delivery.status}
                     onViewDetails={handleViewDetails}
                     onCancel={handleCancel}

@@ -18,8 +18,7 @@ import {
   MdInventory,
   MdWarning,
 } from "react-icons/md";
-import { Delivery } from "../../data/deliveries";
-import { useDeliveryContext } from "../../context/DeliveryContext";
+import { useDeliveryContext, Delivery } from "../../context/DeliveryContext";
 
 interface DeliveryDetailsModalProps {
   isOpen: boolean;
@@ -35,53 +34,6 @@ const DeliveryDetailsModal = ({
   const { currentDelivery } = useDeliveryContext();
 
   // Transform API delivery to UI format if using context delivery
-  const displayDelivery = currentDelivery
-    ? {
-        id: currentDelivery._id,
-        senderId: currentDelivery.sender._id,
-        senderName: currentDelivery.sender.name,
-        senderPhone: currentDelivery.sender.phone,
-        senderProfilePic: currentDelivery.sender.profile_pic,
-        driverId: currentDelivery.driver?._id,
-        driverName: currentDelivery.driver?.user.name,
-        driverPhone: currentDelivery.driver?.user.phone,
-        driverProfilePic: currentDelivery.driver?.user.profile_pic,
-        pickup: currentDelivery.pickup,
-        dropoff: currentDelivery.dropoff,
-        to: currentDelivery.to,
-        package: currentDelivery.package,
-        status: currentDelivery.status,
-        fare: currentDelivery.fare,
-        distance_km: currentDelivery.distance_km,
-        duration_mins: currentDelivery.duration_mins,
-        vehicle: currentDelivery.vehicle,
-        payment_status: currentDelivery.payment_status,
-        payment_method: currentDelivery.payment_method,
-        timestamps: {
-          accepted_at: currentDelivery.timestamps.accepted_at
-            ? new Date(currentDelivery.timestamps.accepted_at)
-            : undefined,
-          picked_up_at: currentDelivery.timestamps.picked_up_at
-            ? new Date(currentDelivery.timestamps.picked_up_at)
-            : undefined,
-          delivered_at: currentDelivery.timestamps.delivered_at
-            ? new Date(currentDelivery.timestamps.delivered_at)
-            : undefined,
-          cancelled_at: currentDelivery.timestamps.cancelled_at
-            ? new Date(currentDelivery.timestamps.cancelled_at)
-            : undefined,
-        },
-        cancelled: currentDelivery.cancelled,
-        driver_earnings: currentDelivery.driver_earnings,
-        commission: currentDelivery.commission,
-        scheduled: currentDelivery.scheduled,
-        scheduled_time: currentDelivery.scheduled_time
-          ? new Date(currentDelivery.scheduled_time)
-          : null,
-        createdAt: new Date(currentDelivery.createdAt),
-        updatedAt: new Date(currentDelivery.updatedAt),
-      }
-    : delivery;
 
   useEffect(() => {
     // Prevent body scroll when modal is open
@@ -113,7 +65,7 @@ const DeliveryDetailsModal = ({
     };
   }, [isOpen, onClose]);
 
-  if (!displayDelivery) return null;
+  if (!delivery) return null;
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -204,17 +156,15 @@ const DeliveryDetailsModal = ({
           {/* Delivery ID and Status Section */}
           <div className="user-details-modal__profile">
             <div className="user-details-modal__avatar">
-              {displayDelivery.id.charAt(0)}
+              {delivery?._id.charAt(0)}
             </div>
             <div className="user-details-modal__profile-info">
-              <h3 className="user-details-modal__name">{displayDelivery.id}</h3>
+              <h3 className="user-details-modal__name">{delivery?._id}</h3>
               <span
-                className={`status-badge ${getStatusClass(
-                  displayDelivery.status
-                )}`}
+                className={`status-badge ${getStatusClass(delivery?.status!)}`}
               >
-                {displayDelivery.status.charAt(0).toUpperCase() +
-                  displayDelivery.status.slice(1).replace("_", " ")}
+                {delivery?.status.charAt(0).toUpperCase()! +
+                  delivery?.status.slice(1).replace("_", " ")}
               </span>
             </div>
           </div>
@@ -232,7 +182,7 @@ const DeliveryDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Sender</span>
                   <span className="user-details-modal__info-value">
-                    {displayDelivery.senderName}
+                    {delivery?.sender.name}
                   </span>
                 </div>
               </div>
@@ -244,7 +194,7 @@ const DeliveryDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Driver</span>
                   <span className="user-details-modal__info-value">
-                    {displayDelivery.driverName || "Unassigned"}
+                    {delivery?.driver?.user.name || "Unassigned"}
                   </span>
                 </div>
               </div>
@@ -252,7 +202,7 @@ const DeliveryDetailsModal = ({
           </div>
 
           {/* Recipient Information */}
-          {displayDelivery.to && (
+          {delivery?.to && (
             <div className="user-details-modal__section">
               <h4 className="user-details-modal__section-title">
                 Recipient Information
@@ -265,12 +215,12 @@ const DeliveryDetailsModal = ({
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">Name</span>
                     <span className="user-details-modal__info-value">
-                      {displayDelivery.to.name || "N/A"}
+                      {delivery?.to.name || "N/A"}
                     </span>
                   </div>
                 </div>
 
-                {displayDelivery.to.phone && (
+                {delivery?.to.phone && (
                   <div className="user-details-modal__info-item">
                     <div className="user-details-modal__info-icon">
                       <MdPhone />
@@ -280,7 +230,7 @@ const DeliveryDetailsModal = ({
                         Phone
                       </span>
                       <span className="user-details-modal__info-value">
-                        {displayDelivery.to.phone}
+                        {delivery?.to.phone}
                       </span>
                     </div>
                   </div>
@@ -302,11 +252,11 @@ const DeliveryDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Pickup</span>
                   <span className="user-details-modal__info-value">
-                    {displayDelivery.pickup.address}
+                    {delivery?.pickup.address}
                   </span>
                   <span className="user-details-modal__info-subtext">
-                    {displayDelivery.pickup.coordinates[0]},{" "}
-                    {displayDelivery.pickup.coordinates[1]}
+                    {delivery?.pickup.coordinates[0]},{" "}
+                    {delivery?.pickup.coordinates[1]}
                   </span>
                 </div>
               </div>
@@ -320,11 +270,11 @@ const DeliveryDetailsModal = ({
                     Dropoff
                   </span>
                   <span className="user-details-modal__info-value">
-                    {displayDelivery.dropoff.address}
+                    {delivery?.dropoff.address}
                   </span>
                   <span className="user-details-modal__info-subtext">
-                    {displayDelivery.dropoff.coordinates[0]},{" "}
-                    {displayDelivery.dropoff.coordinates[1]}
+                    {delivery?.dropoff.coordinates[0]},{" "}
+                    {delivery?.dropoff.coordinates[1]}
                   </span>
                 </div>
               </div>
@@ -344,12 +294,12 @@ const DeliveryDetailsModal = ({
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Type</span>
                   <span className="user-details-modal__info-value">
-                    {getPackageTypeDisplay(displayDelivery.package.type)}
+                    {getPackageTypeDisplay(delivery?.package.type)}
                   </span>
                 </div>
               </div>
 
-              {displayDelivery.package.description && (
+              {delivery?.package.description && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-icon">
                     <MdInventory />
@@ -359,7 +309,7 @@ const DeliveryDetailsModal = ({
                       Description
                     </span>
                     <span className="user-details-modal__info-value">
-                      {displayDelivery.package.description}
+                      {delivery?.package.description}
                     </span>
                   </div>
                 </div>
@@ -374,12 +324,12 @@ const DeliveryDetailsModal = ({
                     Fragile
                   </span>
                   <span className="user-details-modal__info-value">
-                    {displayDelivery.package.fragile ? "Yes" : "No"}
+                    {delivery?.package.fragile ? "Yes" : "No"}
                   </span>
                 </div>
               </div>
 
-              {displayDelivery.package.amount && (
+              {delivery?.package.amount && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-icon">
                     <MdAttachMoney />
@@ -389,7 +339,7 @@ const DeliveryDetailsModal = ({
                       Package Value
                     </span>
                     <span className="user-details-modal__info-value">
-                      {formatCurrency(displayDelivery.package.amount)}
+                      {formatCurrency(delivery?.package.amount)}
                     </span>
                   </div>
                 </div>
@@ -409,7 +359,7 @@ const DeliveryDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {getVehicleDisplay(displayDelivery.vehicle)}
+                    {getVehicleDisplay(delivery?.vehicle!)}
                   </span>
                   <span className="user-details-modal__stat-label">
                     Vehicle Type
@@ -423,7 +373,7 @@ const DeliveryDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {displayDelivery.distance_km} km
+                    {delivery?.distance_km} km
                   </span>
                   <span className="user-details-modal__stat-label">
                     Distance
@@ -437,7 +387,7 @@ const DeliveryDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {displayDelivery.duration_mins} mins
+                    {delivery?.duration_mins} mins
                   </span>
                   <span className="user-details-modal__stat-label">
                     Duration
@@ -451,7 +401,7 @@ const DeliveryDetailsModal = ({
                 </div>
                 <div className="user-details-modal__stat-content">
                   <span className="user-details-modal__stat-value">
-                    {formatCurrency(displayDelivery.fare)}
+                    {formatCurrency(delivery?.fare!)}
                   </span>
                   <span className="user-details-modal__stat-label">
                     Delivery Fare
@@ -476,8 +426,8 @@ const DeliveryDetailsModal = ({
                     Payment Status
                   </span>
                   <span className="user-details-modal__info-value">
-                    {displayDelivery.payment_status.charAt(0).toUpperCase() +
-                      displayDelivery.payment_status.slice(1)}
+                    {delivery?.payment_status.charAt(0).toUpperCase()! +
+                      delivery?.payment_status.slice(1)}
                   </span>
                 </div>
               </div>
@@ -491,8 +441,8 @@ const DeliveryDetailsModal = ({
                     Payment Method
                   </span>
                   <span className="user-details-modal__info-value">
-                    {displayDelivery.payment_method.charAt(0).toUpperCase() +
-                      displayDelivery.payment_method.slice(1)}
+                    {delivery?.payment_method.charAt(0).toUpperCase()! +
+                      delivery?.payment_method.slice(1)}
                   </span>
                 </div>
               </div>
@@ -506,7 +456,7 @@ const DeliveryDetailsModal = ({
                     Driver Earnings
                   </span>
                   <span className="user-details-modal__info-value">
-                    {formatCurrency(displayDelivery.driver_earnings)}
+                    {formatCurrency(delivery?.driver_earnings!)}
                   </span>
                 </div>
               </div>
@@ -520,7 +470,7 @@ const DeliveryDetailsModal = ({
                     Commission
                   </span>
                   <span className="user-details-modal__info-value">
-                    {formatCurrency(displayDelivery.commission)}
+                    {formatCurrency(delivery?.commission!)}
                   </span>
                 </div>
               </div>
@@ -528,7 +478,7 @@ const DeliveryDetailsModal = ({
           </div>
 
           {/* Scheduled Information */}
-          {displayDelivery.scheduled && (
+          {delivery?.scheduled && (
             <div className="user-details-modal__section">
               <h4 className="user-details-modal__section-title">
                 Schedule Information
@@ -543,7 +493,7 @@ const DeliveryDetailsModal = ({
                       Scheduled For
                     </span>
                     <span className="user-details-modal__info-value">
-                      {formatDate(displayDelivery.scheduled_time || undefined)}
+                      {formatDate(delivery?.scheduled_time || undefined)}
                     </span>
                   </div>
                 </div>
@@ -552,7 +502,7 @@ const DeliveryDetailsModal = ({
           )}
 
           {/* Cancellation Information */}
-          {displayDelivery.cancelled && (
+          {delivery?.cancelled && (
             <div className="user-details-modal__section">
               <h4 className="user-details-modal__section-title">
                 Cancellation Details
@@ -567,8 +517,8 @@ const DeliveryDetailsModal = ({
                       Cancelled By
                     </span>
                     <span className="user-details-modal__info-value">
-                      {displayDelivery.cancelled.by?.charAt(0).toUpperCase() +
-                        (displayDelivery.cancelled.by?.slice(1) || "")}
+                      {delivery?.cancelled.by?.charAt(0).toUpperCase() +
+                        (delivery?.cancelled.by?.slice(1) || "")}
                     </span>
                   </div>
                 </div>
@@ -582,7 +532,7 @@ const DeliveryDetailsModal = ({
                       Reason
                     </span>
                     <span className="user-details-modal__info-value">
-                      {displayDelivery.cancelled.reason || "N/A"}
+                      {delivery?.cancelled.reason || "N/A"}
                     </span>
                   </div>
                 </div>
@@ -600,58 +550,58 @@ const DeliveryDetailsModal = ({
                     Created At
                   </span>
                   <span className="user-details-modal__info-value">
-                    {formatDate(displayDelivery.createdAt)}
+                    {formatDate(delivery?.createdAt)}
                   </span>
                 </div>
               </div>
 
-              {displayDelivery.timestamps.accepted_at && (
+              {delivery?.timestamps.accepted_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
                       Accepted At
                     </span>
                     <span className="user-details-modal__info-value">
-                      {formatDate(displayDelivery.timestamps.accepted_at)}
+                      {formatDate(delivery?.timestamps.accepted_at)}
                     </span>
                   </div>
                 </div>
               )}
 
-              {displayDelivery.timestamps.picked_up_at && (
+              {delivery?.timestamps.picked_up_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
                       Picked Up At
                     </span>
                     <span className="user-details-modal__info-value">
-                      {formatDate(displayDelivery.timestamps.picked_up_at)}
+                      {formatDate(delivery?.timestamps.picked_up_at)}
                     </span>
                   </div>
                 </div>
               )}
 
-              {displayDelivery.timestamps.delivered_at && (
+              {delivery?.timestamps.delivered_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
                       Delivered At
                     </span>
                     <span className="user-details-modal__info-value">
-                      {formatDate(displayDelivery.timestamps.delivered_at)}
+                      {formatDate(delivery?.timestamps.delivered_at)}
                     </span>
                   </div>
                 </div>
               )}
 
-              {displayDelivery.timestamps.cancelled_at && (
+              {delivery?.timestamps.cancelled_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
                       Cancelled At
                     </span>
                     <span className="user-details-modal__info-value">
-                      {formatDate(displayDelivery.timestamps.cancelled_at)}
+                      {formatDate(delivery?.timestamps.cancelled_at)}
                     </span>
                   </div>
                 </div>

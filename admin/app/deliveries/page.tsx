@@ -58,63 +58,18 @@ const Deliveries = () => {
   // Filter and sort deliveries - Transform API data to match UI Delivery interface
   const filteredDeliveries = useMemo(() => {
     // Transform API deliveries to UI format
-    const transformedDeliveries = deliveries.map((delivery) => ({
-      id: delivery._id,
-      senderId: delivery.sender._id,
-      senderName: delivery.sender.name,
-      senderPhone: delivery.sender.phone,
-      senderProfilePic: delivery.sender.profile_pic,
-      driverId: delivery.driver?._id,
-      driverName: delivery.driver?.user.name,
-      driverPhone: delivery.driver?.user.phone,
-      driverProfilePic: delivery.driver?.user.profile_pic,
-      pickup: delivery.pickup,
-      dropoff: delivery.dropoff,
-      to: delivery.to,
-      package: delivery.package,
-      status: delivery.status,
-      fare: delivery.fare,
-      distance_km: delivery.distance_km,
-      duration_mins: delivery.duration_mins,
-      vehicle: delivery.vehicle,
-      payment_status: delivery.payment_status,
-      payment_method: delivery.payment_method,
-      timestamps: {
-        accepted_at: delivery.timestamps.accepted_at
-          ? new Date(delivery.timestamps.accepted_at)
-          : undefined,
-        picked_up_at: delivery.timestamps.picked_up_at
-          ? new Date(delivery.timestamps.picked_up_at)
-          : undefined,
-        delivered_at: delivery.timestamps.delivered_at
-          ? new Date(delivery.timestamps.delivered_at)
-          : undefined,
-        cancelled_at: delivery.timestamps.cancelled_at
-          ? new Date(delivery.timestamps.cancelled_at)
-          : undefined,
-      },
-      cancelled: delivery.cancelled,
-      driver_earnings: delivery.driver_earnings,
-      commission: delivery.commission,
-      scheduled: delivery.scheduled,
-      scheduled_time: delivery.scheduled_time
-        ? new Date(delivery.scheduled_time)
-        : null,
-      createdAt: new Date(delivery.createdAt),
-      updatedAt: new Date(delivery.updatedAt),
-    }));
 
-    let result = [...transformedDeliveries];
+    let result = [...deliveries];
 
     // Apply search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (delivery) =>
-          delivery.id.toLowerCase().includes(query) ||
-          delivery.senderName.toLowerCase().includes(query) ||
-          (delivery.driverName &&
-            delivery.driverName.toLowerCase().includes(query)) ||
+          delivery._id.toLowerCase().includes(query) ||
+          delivery.sender.name.toLowerCase().includes(query) ||
+          (delivery.driver?.user.name &&
+            delivery.driver.user.name.toLowerCase().includes(query)) ||
           (delivery.to?.name &&
             delivery.to.name.toLowerCase().includes(query)) ||
           delivery.pickup.address.toLowerCase().includes(query) ||
@@ -151,10 +106,10 @@ const Deliveries = () => {
     if (filters.sortBy) {
       switch (filters.sortBy) {
         case "name-asc":
-          result.sort((a, b) => a.senderName.localeCompare(b.senderName));
+          result.sort((a, b) => a.sender.name.localeCompare(b.sender.name));
           break;
         case "name-desc":
-          result.sort((a, b) => b.senderName.localeCompare(a.senderName));
+          result.sort((a, b) => b.sender.name.localeCompare(a.sender.name));
           break;
         case "rides-desc":
         case "deliveries-desc":

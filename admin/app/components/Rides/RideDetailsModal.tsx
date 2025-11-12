@@ -14,7 +14,7 @@ import {
   MdSchedule,
   MdCancel,
 } from "react-icons/md";
-import { Ride } from "../../data/rides";
+import { Ride } from "../../context/RideContext";
 
 interface RideDetailsModalProps {
   isOpen: boolean;
@@ -91,7 +91,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
     return `₦${amount.toLocaleString()}`;
   };
 
-  const formatDate = (date: Date | undefined) => {
+  const formatDate = (date: string | undefined) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleString("en-US", {
       month: "short",
@@ -135,10 +135,10 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
           {/* Ride ID and Status Section */}
           <div className="user-details-modal__profile">
             <div className="user-details-modal__avatar">
-              {ride.id.charAt(0)}
+              {ride._id.charAt(0)}
             </div>
             <div className="user-details-modal__profile-info">
-              <h3 className="user-details-modal__name">{ride.id}</h3>
+              <h3 className="user-details-modal__name">{ride._id}</h3>
               <span className={`status-badge ${getStatusClass(ride.status)}`}>
                 {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
               </span>
@@ -158,7 +158,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Rider</span>
                   <span className="user-details-modal__info-value">
-                    {ride.riderName}
+                    {ride.rider.name}
                   </span>
                 </div>
               </div>
@@ -170,7 +170,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
                 <div className="user-details-modal__info-content">
                   <span className="user-details-modal__info-label">Driver</span>
                   <span className="user-details-modal__info-value">
-                    {ride.driverName || "Unassigned"}
+                    {ride.driver?.user.name || "Unassigned"}
                   </span>
                 </div>
               </div>
@@ -440,7 +440,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
                 </div>
               </div>
 
-              {ride.timestamps.accepted_at && (
+              {ride.timestamps?.accepted_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
@@ -453,7 +453,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
                 </div>
               )}
 
-              {ride.timestamps.arrived_at && (
+              {ride.timestamps?.arrived_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
@@ -466,7 +466,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
                 </div>
               )}
 
-              {ride.timestamps.started_at && (
+              {ride.timestamps?.started_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
@@ -479,7 +479,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
                 </div>
               )}
 
-              {ride.timestamps.completed_at && (
+              {ride.timestamps?.completed_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">
@@ -492,7 +492,7 @@ const RideDetailsModal = ({ isOpen, onClose, ride }: RideDetailsModalProps) => {
                 </div>
               )}
 
-              {ride.timestamps.cancelled_at && (
+              {ride.timestamps?.cancelled_at && (
                 <div className="user-details-modal__info-item">
                   <div className="user-details-modal__info-content">
                     <span className="user-details-modal__info-label">

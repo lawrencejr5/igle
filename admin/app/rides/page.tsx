@@ -6,7 +6,7 @@ import FilterButton from "../components/FilterButton";
 import SearchBar from "../components/SearchBar";
 import RidesTable from "../components/Rides/RidesTable";
 import FilterDrawer, { FilterValues } from "../components/FilterDrawer";
-import { useRideContext, Ride as ApiRide } from "../context/RideContext";
+import { useRideContext, Ride } from "../context/RideContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -64,63 +64,17 @@ const Rides = () => {
   // Filter and sort rides
   const filteredRides = useMemo(() => {
     // Convert API rides to display format matching Ride interface
-    let result = apiRides.map((ride) => ({
-      id: ride._id,
-      riderId: ride.rider._id,
-      riderName: ride.rider.name,
-      driverId: ride.driver?._id,
-      driverName: ride.driver?.user.name,
-      pickup: {
-        address: ride.pickup.address,
-        coordinates: ride.pickup.coordinates,
-      },
-      destination: {
-        address: ride.destination.address,
-        coordinates: ride.destination.coordinates,
-      },
-      status: ride.status,
-      fare: ride.fare,
-      vehicle: ride.vehicle,
-      distance_km: ride.distance_km,
-      duration_mins: ride.duration_mins,
-      payment_status: ride.payment_status,
-      payment_method: ride.payment_method,
-      driver_earnings: ride.driver_earnings,
-      driver_paid: ride.driver_paid,
-      commission: ride.commission,
-      scheduled: ride.scheduled,
-      scheduled_time: ride.scheduled_time
-        ? new Date(ride.scheduled_time)
-        : null,
-      cancelled: ride.cancelled,
-      timestamps: {
-        accepted_at: ride.timestamps?.accepted_at
-          ? new Date(ride.timestamps.accepted_at)
-          : undefined,
-        arrived_at: ride.timestamps?.arrived_at
-          ? new Date(ride.timestamps.arrived_at)
-          : undefined,
-        started_at: ride.timestamps?.started_at
-          ? new Date(ride.timestamps.started_at)
-          : undefined,
-        completed_at: ride.timestamps?.completed_at
-          ? new Date(ride.timestamps.completed_at)
-          : undefined,
-        cancelled_at: ride.timestamps?.cancelled_at
-          ? new Date(ride.timestamps.cancelled_at)
-          : undefined,
-      },
-      createdAt: new Date(ride.createdAt),
-    }));
+    let result = [...apiRides];
 
     // Apply search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (ride) =>
-          ride.id.toLowerCase().includes(query) ||
-          ride.riderName.toLowerCase().includes(query) ||
-          (ride.driverName && ride.driverName.toLowerCase().includes(query)) ||
+          ride._id.toLowerCase().includes(query) ||
+          ride.rider.name.toLowerCase().includes(query) ||
+          (ride.driver?.user.name &&
+            ride.driver?.user.name.toLowerCase().includes(query)) ||
           ride.pickup.address.toLowerCase().includes(query) ||
           ride.destination.address.toLowerCase().includes(query) ||
           ride.status.toLowerCase().includes(query) ||
@@ -149,10 +103,10 @@ const Rides = () => {
     if (filters.sortBy) {
       switch (filters.sortBy) {
         case "name-asc":
-          result.sort((a, b) => a.riderName.localeCompare(b.riderName));
+          result.sort((a, b) => a.rider.name.localeCompare(b.rider.name));
           break;
         case "name-desc":
-          result.sort((a, b) => b.riderName.localeCompare(a.riderName));
+          result.sort((a, b) => b.rider.name.localeCompare(a.rider.name));
           break;
         case "rides-desc":
         case "deliveries-desc":
