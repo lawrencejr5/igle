@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Modal,
   View,
@@ -10,6 +10,9 @@ import {
 } from "react-native";
 import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
+import EditProfileModal from "./EditProfileModal";
+import VehicleInformationModal from "./VehicleInformationModal";
+import DocumentsModal from "./DocumentsModal";
 
 type UserAccountModalProps = {
   visible: boolean;
@@ -21,6 +24,9 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
   onClose,
 }) => {
   const { driver } = useDriverAuthContext();
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [vehicleInfoVisible, setVehicleInfoVisible] = useState(false);
+  const [documentsVisible, setDocumentsVisible] = useState(false);
 
   return (
     <Modal transparent visible={visible} animationType="slide">
@@ -116,21 +122,30 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
             {/* Account Settings */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Account Settings</Text>
-              <TouchableOpacity style={styles.settingItem}>
+              <TouchableOpacity
+                style={styles.settingItem}
+                onPress={() => setEditProfileVisible(true)}
+              >
                 <View style={styles.settingLeft}>
                   <Ionicons name="person-outline" size={20} color="#fff" />
                   <Text style={styles.settingText}>Edit Profile</Text>
                 </View>
                 <FontAwesome name="chevron-right" size={16} color="#666" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.settingItem}>
+              <TouchableOpacity
+                style={styles.settingItem}
+                onPress={() => setVehicleInfoVisible(true)}
+              >
                 <View style={styles.settingLeft}>
                   <Ionicons name="car-outline" size={20} color="#fff" />
                   <Text style={styles.settingText}>Vehicle Information</Text>
                 </View>
                 <FontAwesome name="chevron-right" size={16} color="#666" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.settingItem}>
+              <TouchableOpacity
+                style={styles.settingItem}
+                onPress={() => setDocumentsVisible(true)}
+              >
                 <View style={styles.settingLeft}>
                   <Ionicons
                     name="document-text-outline"
@@ -141,7 +156,7 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
                 </View>
                 <FontAwesome name="chevron-right" size={16} color="#666" />
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={[styles.settingItem, styles.logoutButton]}
               >
                 <View style={styles.settingLeft}>
@@ -150,10 +165,24 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
                     Logout
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </ScrollView>
         </View>
+
+        {/* Edit Modals */}
+        <EditProfileModal
+          visible={editProfileVisible}
+          onClose={() => setEditProfileVisible(false)}
+        />
+        <VehicleInformationModal
+          visible={vehicleInfoVisible}
+          onClose={() => setVehicleInfoVisible(false)}
+        />
+        <DocumentsModal
+          visible={documentsVisible}
+          onClose={() => setDocumentsVisible(false)}
+        />
       </View>
     </Modal>
   );

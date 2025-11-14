@@ -5,17 +5,8 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Image,
-  Modal,
-  Pressable,
-  FlatList,
 } from "react-native";
-import React, {
-  useState,
-  useEffect,
-  Dispatch,
-  SetStateAction,
-  FC,
-} from "react";
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 
 import * as Linking from "expo-linking";
 
@@ -33,36 +24,24 @@ import { useNotificationContext } from "../context/NotificationContext";
 import RideRoute from "./RideRoute";
 
 import EarningsModal from "./screens/DriverEarnings";
-import UserAccountModal from "./screens/UserAccountModal";
+import DriverAccountModal from "./screens/DriverAccountModal";
 import { useMapContext } from "../context/MapContext";
 
 const DriverRideModal = () => {
-  const { driver, driverSocket } = useDriverAuthContext();
+  const { driver } = useDriverAuthContext();
   const { setMapPadding } = useMapContext();
   const {
-    fetchActiveRide,
     setDriveStatus,
     driveStatus,
-    fetchIncomingRideData,
     incomingRideData,
-    setIncomingRideData,
     ongoingRideData,
     setLocationModalOpen,
     // delivery
     jobType,
     setJobType,
-    fetchActiveDelivery,
-    fetchIncomingDeliveryData,
     incomingDeliveryData,
-    setIncomingDeliveryData,
-    acceptDeliveryRequest,
     ongoingDeliveryData: ongoingDelivery,
-    updateDeliveryStatus,
-    setOngoingDeliveryData: setOngoingDelivery,
-    setToPickupRouteCoords,
-    setToDestinationRouteCoords,
   } = useDriverContext();
-  const { showNotification } = useNotificationContext();
 
   const [openEarnings, setOpenEarnings] = useState(false);
   const [openAccount, setOpenAccount] = useState(false);
@@ -166,7 +145,7 @@ const DriverRideModal = () => {
             visible={openEarnings}
             onClose={() => setOpenEarnings(false)}
           />
-          <UserAccountModal
+          <DriverAccountModal
             visible={openAccount}
             onClose={() => setOpenAccount(false)}
           />

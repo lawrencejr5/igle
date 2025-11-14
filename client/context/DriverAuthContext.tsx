@@ -62,11 +62,18 @@ interface DriverType {
   vehicle_brand: string;
   vehicle_model: string;
   vehicle_color: string;
+  vehicle_year: string;
+  vehicle_exterior: string;
+  vehicle_interior: string;
   socket_id?: string;
   vehicle_type?: "cab" | "keke" | "suv" | "bike" | "van" | "truck";
   vehicle?: Vehicle;
   driver_licence?: DriverLicence;
-  driver_licence_number?: number;
+  driver_licence_number?: string;
+  driver_licence_expiry_date?: string;
+  driver_licence_front?: string;
+  driver_licence_back?: string;
+  driver_licence_selfie?: string;
   date_of_birth?: string;
   driver_license_image?: string;
   is_online?: boolean;
@@ -167,9 +174,24 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           is_available,
           rating,
           profile_img,
+          date_of_birth,
           user: { name, email, phone, createdAt },
-          vehicle: { brand, model, color, plate_number },
-          driver_licence: { number: driver_licence_number },
+          vehicle: {
+            brand,
+            model,
+            color,
+            plate_number,
+            year,
+            exterior_image,
+            interior_image,
+          },
+          driver_licence: {
+            number: driver_licence_number,
+            expiry_date: driver_licence_expiry_date,
+            front_image,
+            back_image,
+            selfie_with_licence,
+          },
         } = data.driver;
 
         const driverInfo = {
@@ -180,12 +202,20 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           name,
           email,
           phone,
+          date_of_birth,
           total_trips,
           vehicle_brand: brand,
           vehicle_model: model,
           vehicle_color: color,
+          vehicle_year: year,
+          vehicle_exterior: exterior_image,
+          vehicle_interior: interior_image,
           plate_number,
           driver_licence_number,
+          driver_licence_expiry_date,
+          driver_licence_front: front_image,
+          driver_licence_back: back_image,
+          driver_licence_selfie: selfie_with_licence,
           is_available,
           rating,
           createdAt,
@@ -342,7 +372,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (data.driver) {
-        setDriver(data.driver);
+        await getDriverProfile();
         showNotification("Updated successfully", "success");
       }
     } catch (error: any) {

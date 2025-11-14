@@ -67,7 +67,18 @@ DriverRouter.patch(
 );
 DriverRouter.patch("/online", set_driver_online_status);
 DriverRouter.patch("/rating", update_driver_rating);
-DriverRouter.patch("/info", update_driver_info);
+DriverRouter.patch(
+  "/info",
+  upload.fields([
+    { name: "profile_img", maxCount: 1 },
+    { name: "vehicle_exterior", maxCount: 1 },
+    { name: "vehicle_interior", maxCount: 1 },
+    { name: "license_front", maxCount: 1 },
+    { name: "license_back", maxCount: 1 },
+    { name: "selfie_with_license", maxCount: 1 },
+  ]),
+  update_driver_info
+);
 DriverRouter.get("/ride/active", get_driver_active_ride);
 DriverRouter.get("/delivery/active", get_driver_active_delivery);
 DriverRouter.get("/rides/completed", get_driver_completed_rides);

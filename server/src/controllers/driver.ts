@@ -634,20 +634,175 @@ export const update_driver_info = async (
     const driver_id = await get_driver_id(req.user?.id!);
     const updateData = req.body;
 
-    const driver = await Driver.findByIdAndUpdate(driver_id, updateData, {
-      new: true,
-    });
-
+    const driver = await Driver.findById(driver_id);
     if (!driver) {
+      res.status(404).json({ msg: "Driver not found." });
+      return;
+    }
+
+    const files: any = (req as any).files || {};
+
+    // Handle profile image upload
+    if (
+      files.profile_img &&
+      Array.isArray(files.profile_img) &&
+      files.profile_img[0] &&
+      files.profile_img[0].path
+    ) {
+      const filePath = files.profile_img[0].path;
+      try {
+        const uploaded = await uploadToCloudinary(
+          filePath,
+          "igle_images/driver_profile"
+        );
+        if (uploaded && uploaded.url) updateData.profile_img = uploaded.url;
+      } finally {
+        await safeUnlink(filePath);
+      }
+    }
+
+    // Handle vehicle images
+    if (
+      updateData.vehicle ||
+      files.vehicle_exterior ||
+      files.vehicle_interior
+    ) {
+      const vehicleData = updateData.vehicle || driver.vehicle || {};
+
+      // Upload exterior image if provided
+      if (
+        files.vehicle_exterior &&
+        Array.isArray(files.vehicle_exterior) &&
+        files.vehicle_exterior[0] &&
+        files.vehicle_exterior[0].path
+      ) {
+        const filePath = files.vehicle_exterior[0].path;
+        try {
+          const uploaded = await uploadToCloudinary(
+            filePath,
+            "igle_images/vehicle"
+          );
+          if (uploaded && uploaded.url)
+            vehicleData.exterior_image = uploaded.url;
+        } finally {
+          await safeUnlink(filePath);
+        }
+      }
+
+      // Upload interior image if provided
+      if (
+        files.vehicle_interior &&
+        Array.isArray(files.vehicle_interior) &&
+        files.vehicle_interior[0] &&
+        files.vehicle_interior[0].path
+      ) {
+        const filePath = files.vehicle_interior[0].path;
+        try {
+          const uploaded = await uploadToCloudinary(
+            filePath,
+            "igle_images/vehicle"
+          );
+          if (uploaded && uploaded.url)
+            vehicleData.interior_image = uploaded.url;
+        } finally {
+          await safeUnlink(filePath);
+        }
+      }
+
+      updateData.vehicle = vehicleData;
+    }
+
+    // Handle driver licence images
+    if (
+      updateData.driver_licence ||
+      files.license_front ||
+      files.license_back ||
+      files.selfie_with_license
+    ) {
+      const licenceData =
+        updateData.driver_licence || driver.driver_licence || {};
+
+      // Upload front image if provided
+      if (
+        files.license_front &&
+        Array.isArray(files.license_front) &&
+        files.license_front[0] &&
+        files.license_front[0].path
+      ) {
+        const filePath = files.license_front[0].path;
+        try {
+          const uploaded = await uploadToCloudinary(
+            filePath,
+            "igle_images/driver_license"
+          );
+          if (uploaded && uploaded.url) licenceData.front_image = uploaded.url;
+        } finally {
+          await safeUnlink(filePath);
+        }
+      }
+
+      // Upload back image if provided
+      if (
+        files.license_back &&
+        Array.isArray(files.license_back) &&
+        files.license_back[0] &&
+        files.license_back[0].path
+      ) {
+        const filePath = files.license_back[0].path;
+        try {
+          const uploaded = await uploadToCloudinary(
+            filePath,
+            "igle_images/driver_license"
+          );
+          if (uploaded && uploaded.url) licenceData.back_image = uploaded.url;
+        } finally {
+          await safeUnlink(filePath);
+        }
+      }
+
+      // Upload selfie with licence if provided
+      if (
+        files.selfie_with_license &&
+        Array.isArray(files.selfie_with_license) &&
+        files.selfie_with_license[0] &&
+        files.selfie_with_license[0].path
+      ) {
+        const filePath = files.selfie_with_license[0].path;
+        try {
+          const uploaded = await uploadToCloudinary(
+            filePath,
+            "igle_images/driver_license"
+          );
+          if (uploaded && uploaded.url)
+            licenceData.selfie_with_licence = uploaded.url;
+        } finally {
+          await safeUnlink(filePath);
+        }
+      }
+
+      updateData.driver_licence = licenceData;
+    }
+
+    // Update driver with all data
+    const updatedDriver = await Driver.findByIdAndUpdate(
+      driver_id,
+      updateData,
+      {
+        new: true,
+      }
+    ).populate("user");
+
+    if (!updatedDriver) {
       res.status(404).json({ msg: "Driver not found." });
       return;
     }
 
     res.status(200).json({
       msg: "Driver information updated successfully",
-      driver,
+      driver: updatedDriver,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ msg: "Server error." });
   }
 };
