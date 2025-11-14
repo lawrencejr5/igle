@@ -289,23 +289,15 @@ const SideNav: React.FC<{
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
+                    router.push("/(driver)/reviews");
                   }}
                 >
-                  <Feather name="help-circle" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Support</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.sidenav_content_box}
-                  onPress={() => {
-                    closeSideNav();
-                  }}
-                >
-                  <FontAwesome name="star" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Rate us</Text>
+                  <View style={styles.sidenav_content_box}>
+                    <Ionicons name="star" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Reviews</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
 

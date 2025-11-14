@@ -15,7 +15,6 @@ import * as Location from "expo-location";
 
 import { useDriverAuthContext } from "./DriverAuthContext";
 import { useNotificationContext } from "./NotificationContext";
-import { useWalletContext } from "./WalletContext";
 import { useMapContext } from "./MapContext";
 import { useLoading } from "./LoadingContext";
 
@@ -337,14 +336,20 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
     };
 
+    const on_reviewed = (_data: any) => {
+      showNotification(_data.msg, "success");
+    };
+
     driverSocket.on("paid_for_ride", paidForRideHandler);
     driverSocket.on("delivery_paid", delivery_paid_func);
     driverSocket.on("delivery_cancel", delivery_cancel_func);
+    driverSocket.on("driver_reviewed", on_reviewed);
 
     return () => {
       driverSocket.off("paid_for_ride", paidForRideHandler);
       driverSocket.off("delivery_paid", delivery_paid_func);
       driverSocket.off("delivery_cancel", delivery_cancel_func);
+      driverSocket.off("driver_reviewed", on_reviewed);
     };
   }, [driverSocket, ongoingDelivery, incomingDeliveryData]);
 
@@ -993,6 +998,36 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Driver reviews state and functions
+  const [driverReviews, setDriverReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [averageRating, setAverageRating] = useState<number>(0);
+  const [ratingsCount, setRatingsCount] = useState<number>(0);
+
+  const fetchDriverReviews = async (): Promise<void> => {
+    try {
+      setReviewsLoading(true);
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(`${API_URLS.rating}/driver`, {
+        params: { driver_id: driver?.driver_id },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (data) {
+        setDriverReviews(data.reviews || []);
+        setAverageRating(data.average_rating || 0);
+        setRatingsCount(data.ratings_count || 0);
+      }
+    } catch (error: any) {
+      console.error("Error fetching reviews:", error);
+      showNotification("Failed to load reviews", "error");
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   return (
     <DriverContext.Provider
       value={{
@@ -1051,6 +1086,13 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         fetchCancelledDeliveries,
         fetchMoreCancelledDeliveries,
         cancelledDeliveriesLoadingMore,
+
+        // Reviews
+        driverReviews,
+        reviewsLoading,
+        averageRating,
+        ratingsCount,
+        fetchDriverReviews,
       }}
     >
       {children}
@@ -1131,6 +1173,13 @@ interface DriverConextType {
   fetchCancelledDeliveries: (reset?: boolean) => Promise<void>;
   fetchMoreCancelledDeliveries: () => Promise<void>;
   cancelledDeliveriesLoadingMore: boolean;
+
+  // Reviews
+  driverReviews: any[];
+  reviewsLoading: boolean;
+  averageRating: number;
+  ratingsCount: number;
+  fetchDriverReviews: () => Promise<void>;
 }
 
 export default DriverContextPrvider;
