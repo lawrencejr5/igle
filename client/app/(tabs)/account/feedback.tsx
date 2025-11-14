@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Alert,
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -17,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFeedbackContext } from "../../../context/FeedbackContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import CustomDropdown from "../../../components/CustomDropdown";
+import Notification from "../../../components/Notification";
 
 const FEEDBACK_TYPES = [
   { key: "bug", label: "Bug report" },
@@ -31,7 +31,7 @@ const Feedback = () => {
   const [submitting, setSubmitting] = useState<boolean>(false);
 
   const { sendFeedback, sending } = useFeedbackContext();
-  const { showNotification } = useNotificationContext();
+  const { showNotification, notification } = useNotificationContext();
 
   const pickImage = async () => {
     try {
@@ -63,10 +63,7 @@ const Feedback = () => {
 
   const submit = async () => {
     if (!message.trim()) {
-      showNotification(
-        "Please write your feedback. A short message helps us understand the issue.",
-        "error"
-      );
+      showNotification("Please write your feedback.", "error");
       return;
     }
     setSubmitting(true);
@@ -85,78 +82,81 @@ const Feedback = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.headerRow}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => router.replace("/(tabs)/account")}
-          >
-            <AntDesign name="arrowleft" size={22} color="#fff" />
-          </Pressable>
-          <Text style={styles.title}>Help & Feedback</Text>
-        </View>
-
-        <Text style={styles.label}>Type</Text>
-
-        <View style={{ backgroundColor: "#1f1f1f", borderRadius: 7 }}>
-          <CustomDropdown
-            options={FEEDBACK_TYPES}
-            value={type}
-            onChange={(k) => setType(k)}
-          />
-        </View>
-
-        <Text style={styles.label}>Message</Text>
-        <TextInput
-          value={message}
-          onChangeText={setMessage}
-          placeholder="Describe the issue or suggestion..."
-          placeholderTextColor="#8a8a8a"
-          style={[styles.textArea, styles.textAreaLarge]}
-          multiline
-          numberOfLines={12}
-          textAlignVertical="top"
-        />
-
-        <Text style={styles.label}>Screenshots (optional)</Text>
-        <View style={styles.imagesRow}>
-          <TouchableOpacity
-            style={styles.addImageBtn}
-            onPress={pickImage}
-            activeOpacity={0.7}
-          >
-            <AntDesign name="plus" size={20} color="#fff" />
-            <Text style={styles.addImageText}>Add</Text>
-          </TouchableOpacity>
-          {images.map((uri) => (
-            <View key={uri} style={styles.imageWrap}>
-              <Image source={{ uri }} style={styles.thumb} />
-              <Pressable
-                style={styles.removeBtn}
-                onPress={() => removeImage(uri)}
-              >
-                <AntDesign name="close" size={14} color="#fff" />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-
-        <TouchableOpacity
-          style={[styles.submitBtn, styles.submitBtnWhite]}
-          onPress={submit}
-          disabled={submitting || sending}
-          activeOpacity={0.8}
+    <>
+      {notification.visible && <Notification notification={notification} />}
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={[styles.submitText, styles.submitTextDark]}>
-            {submitting || sending ? "Sending..." : "Send feedback"}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+          <View style={styles.headerRow}>
+            <Pressable
+              style={styles.backButton}
+              onPress={() => router.replace("/(tabs)/account")}
+            >
+              <AntDesign name="arrowleft" size={22} color="#fff" />
+            </Pressable>
+            <Text style={styles.title}>Help & Feedback</Text>
+          </View>
+
+          <Text style={styles.label}>Type</Text>
+
+          <View style={{ backgroundColor: "#1f1f1f", borderRadius: 7 }}>
+            <CustomDropdown
+              options={FEEDBACK_TYPES}
+              value={type}
+              onChange={(k) => setType(k)}
+            />
+          </View>
+
+          <Text style={styles.label}>Message</Text>
+          <TextInput
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Describe the issue or suggestion..."
+            placeholderTextColor="#8a8a8a"
+            style={[styles.textArea, styles.textAreaLarge]}
+            multiline
+            numberOfLines={12}
+            textAlignVertical="top"
+          />
+
+          <Text style={styles.label}>Screenshots (optional)</Text>
+          <View style={styles.imagesRow}>
+            <TouchableOpacity
+              style={styles.addImageBtn}
+              onPress={pickImage}
+              activeOpacity={0.7}
+            >
+              <AntDesign name="plus" size={20} color="#fff" />
+              <Text style={styles.addImageText}>Add</Text>
+            </TouchableOpacity>
+            {images.map((uri) => (
+              <View key={uri} style={styles.imageWrap}>
+                <Image source={{ uri }} style={styles.thumb} />
+                <Pressable
+                  style={styles.removeBtn}
+                  onPress={() => removeImage(uri)}
+                >
+                  <AntDesign name="close" size={14} color="#fff" />
+                </Pressable>
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.submitBtn, styles.submitBtnWhite]}
+            onPress={submit}
+            disabled={submitting || sending}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.submitText, styles.submitTextDark]}>
+              {submitting || sending ? "Sending..." : "Send feedback"}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 };
 
