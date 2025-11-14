@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import Rating from "../models/rating";
 import Driver from "../models/driver";
 
+import { io } from "../server";
+import { get_driver_socket_id } from "../utils/get_id";
+
 export const create_rating = async (req: Request, res: Response) => {
   try {
     const user = req.user?.id;
@@ -34,6 +37,14 @@ export const create_rating = async (req: Request, res: Response) => {
       driverData.rating = average;
       driverData.num_of_reviews += 1;
       await driverData.save();
+
+      const driver_socket = await get_driver_socket_id(driver);
+      if (!driver_socket) console.log("driver socket not found");
+      else {
+        io.to(driver_socket).emit("driver_reviewed", {
+          msg: "You were just reviewed",
+        });
+      }
     }
 
     res.status(201).json({ msg: "Rating submitted", rating: newRating });

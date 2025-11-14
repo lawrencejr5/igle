@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.get_user_ratings = exports.get_driver_ratings = exports.get_ride_ratings = exports.create_rating = void 0;
 const rating_1 = __importDefault(require("../models/rating"));
 const driver_1 = __importDefault(require("../models/driver"));
+const server_1 = require("../server");
+const get_id_1 = require("../utils/get_id");
 const create_rating = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -46,6 +48,14 @@ const create_rating = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             driverData.rating = average;
             driverData.num_of_reviews += 1;
             yield driverData.save();
+            const driver_socket = yield (0, get_id_1.get_driver_socket_id)(driver);
+            if (!driver_socket)
+                console.log("driver socket not found");
+            else {
+                server_1.io.to(driver_socket).emit("driver_reviewed", {
+                    msg: "You were just reviewed",
+                });
+            }
         }
         res.status(201).json({ msg: "Rating submitted", rating: newRating });
     }
