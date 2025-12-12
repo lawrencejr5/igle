@@ -16,6 +16,8 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Entypo from "@expo/vector-icons/Entypo";
 import { router } from "expo-router";
 
+import * as Haptics from "expo-haptics";
+
 import { useAuthContext } from "../context/AuthContext";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
 import { useNotificationContext } from "../context/NotificationContext";
@@ -31,6 +33,7 @@ const SideNav: React.FC<{
 
   const go_to_driver = () => {
     if (signedIn?.is_driver) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.replace("../(driver)/home");
     } else {
       if (signedIn?.driver_application === "none")
@@ -305,7 +308,10 @@ const SideNav: React.FC<{
               <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
                 <Pressable
                   style={styles.switch_btn}
-                  onPress={() => router.replace("../(tabs)/home")}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.replace("../(tabs)/home");
+                  }}
                 >
                   <Text style={styles.switch_btn_text}>Rider mode</Text>
                 </Pressable>

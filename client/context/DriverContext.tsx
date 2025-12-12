@@ -13,6 +13,8 @@ import React, {
 import MapView from "react-native-maps";
 import * as Location from "expo-location";
 
+import * as Haptics from "expo-haptics";
+
 import { useDriverAuthContext } from "./DriverAuthContext";
 import { useNotificationContext } from "./NotificationContext";
 import { useMapContext } from "./MapContext";
@@ -449,6 +451,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   // Driver status functions
   const setAvailability = async (): Promise<void> => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
       // Prevent going offline when an active ride or delivery exists
       if (driver?.is_available && (ongoingRideData || ongoingDeliveryData)) {

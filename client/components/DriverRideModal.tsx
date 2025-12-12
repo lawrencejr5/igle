@@ -9,6 +9,7 @@ import {
 import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 
 import * as Linking from "expo-linking";
+import * as Haptics from "expo-haptics";
 
 import {
   Ionicons,
@@ -26,6 +27,7 @@ import RideRoute from "./RideRoute";
 import EarningsModal from "./screens/DriverEarnings";
 import DriverAccountModal from "./screens/DriverAccountModal";
 import { useMapContext } from "../context/MapContext";
+import { ActivityIndicator } from "react-native";
 
 const DriverRideModal = () => {
   const { driver } = useDriverAuthContext();
@@ -91,7 +93,13 @@ const DriverRideModal = () => {
           padding: 20,
         }}
       >
-        <TouchableWithoutFeedback onPress={() => setLocationModalOpen(true)}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+            setLocationModalOpen(true);
+          }}
+        >
           <View style={styles.locationButton}>
             <Ionicons name="location" size={24} color="#fff" />
           </View>
@@ -171,6 +179,19 @@ const OfflineMode = ({
   const { setAvailability, ongoingDeliveryData, ongoingRideData } =
     useDriverContext();
 
+  const [btnLoading, setBtnLoading] = useState<boolean>(false);
+
+  const availability_func = async () => {
+    setBtnLoading(true);
+    try {
+      await setAvailability();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setBtnLoading(false);
+    }
+  };
+
   return (
     <View style={styles.main_modal}>
       <TouchableOpacity
@@ -188,22 +209,30 @@ const OfflineMode = ({
       </TouchableOpacity>
       {driver?.is_available ? (
         <TouchableOpacity
-          activeOpacity={0.7}
+          activeOpacity={0.5}
           disabled={!!ongoingDeliveryData || !!ongoingRideData}
-          onPress={async () => await setAvailability()}
+          onPress={availability_func}
           style={[styles.status, { backgroundColor: "#40863456" }]}
         >
-          <Text style={[styles.status_text, { color: "#33b735" }]}>
-            You're online
-          </Text>
+          {btnLoading ? (
+            <ActivityIndicator color={"#33b735"} />
+          ) : (
+            <Text style={[styles.status_text, { color: "#33b735" }]}>
+              You're online
+            </Text>
+          )}
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={async () => await setAvailability()}
+          activeOpacity={0.5}
+          onPress={availability_func}
           style={styles.status}
         >
-          <Text style={styles.status_text}>You're offline</Text>
+          {btnLoading ? (
+            <ActivityIndicator color={"#d12705"} />
+          ) : (
+            <Text style={styles.status_text}>You're offline</Text>
+          )}
         </TouchableOpacity>
       )}
 
@@ -1875,12 +1904,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#ff44002a",
     paddingHorizontal: 30,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 50,
+    width: 160,
   },
   status_text: {
     fontFamily: "raleway-bold",
     fontSize: 12,
     color: "#d12705",
+    textAlign: "center",
   },
   locationButton: {
     backgroundColor: "#121212",

@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useSegments } from "expo-router";
 
+import * as Haptics from "expo-haptics";
+
 import { Tabs } from "expo-router";
 
 const TabsLayout = () => {
@@ -41,6 +43,11 @@ const TabsLayout = () => {
       }}
     >
       <Tabs
+        screenListeners={{
+          tabPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          },
+        }}
         screenOptions={{
           headerShown: false,
           tabBarStyle: {

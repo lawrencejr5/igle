@@ -154,138 +154,134 @@ const HomePage = () => {
 
   return (
     <>
-      {driverLoading ? (
-        <AppLoading />
-      ) : (
-        <>
-          {notification.visible && <Notification notification={notification} />}
-          <View style={styles.container}>
-            {/* Map */}
-            {region && (
-              <MapView
-                style={styles.map}
-                provider={PROVIDER_GOOGLE}
-                ref={mapRef}
-                initialRegion={region}
-                customMapStyle={darkMapStyle}
-                paddingAdjustmentBehavior="always"
-                mapPadding={mapPadding}
-                onMapLoaded={loadMap}
+      <>
+        {notification.visible && <Notification notification={notification} />}
+        <View style={styles.container}>
+          {/* Map */}
+          {region && (
+            <MapView
+              style={styles.map}
+              provider={PROVIDER_GOOGLE}
+              ref={mapRef}
+              initialRegion={region}
+              customMapStyle={darkMapStyle}
+              paddingAdjustmentBehavior="always"
+              mapPadding={mapPadding}
+              onMapLoaded={loadMap}
+            >
+              {/* Driver's current position */}
+              <Marker
+                // tracksViewChanges={tracksViewChanges}
+                coordinate={driverMarkerCoordinate}
+                title="You are here!"
+                anchor={{ x: 0.3, y: 0.4 }}
               >
-                {/* Driver's current position */}
+                <View style={styles.markerIcon}>
+                  <Image
+                    source={getDriverVehicleIcon()}
+                    style={styles.markerImage}
+                  />
+                </View>
+              </Marker>
+
+              {/* Pickup marker (for both rides and deliveries) - only show when arriving */}
+              {hasPickup && driveStatus === "arriving" && (
                 <Marker
-                  // tracksViewChanges={tracksViewChanges}
-                  coordinate={driverMarkerCoordinate}
-                  title="You are here!"
+                  coordinate={{
+                    latitude: pickupCoordsArr![0],
+                    longitude: pickupCoordsArr![1],
+                  }}
+                  title={jobType === "delivery" ? "Pickup" : "Pickup"}
                   anchor={{ x: 0.3, y: 0.4 }}
                 >
                   <View style={styles.markerIcon}>
                     <Image
-                      source={getDriverVehicleIcon()}
-                      style={styles.markerImage}
+                      source={require("../../assets/images/user.png")}
+                      style={[styles.markerImage, { height: 30, width: 30 }]}
                     />
                   </View>
                 </Marker>
+              )}
 
-                {/* Pickup marker (for both rides and deliveries) - only show when arriving */}
-                {hasPickup && driveStatus === "arriving" && (
+              {/* Destination/Dropoff marker */}
+              {hasDestination &&
+                ((jobType === "ride" &&
+                  (driveStatus === "arrived" || driveStatus === "ongoing")) ||
+                  (jobType === "delivery" &&
+                    driveStatus !== "completed" &&
+                    memoizedDestinationRouteCoords)) && (
                   <Marker
                     coordinate={{
-                      latitude: pickupCoordsArr![0],
-                      longitude: pickupCoordsArr![1],
+                      latitude: destinationCoordsArr![0],
+                      longitude: destinationCoordsArr![1],
                     }}
-                    title={jobType === "delivery" ? "Pickup" : "Pickup"}
-                    anchor={{ x: 0.3, y: 0.4 }}
+                    title={jobType === "delivery" ? "Dropoff" : "Destination"}
+                    anchor={{ x: 0.2, y: 0.2 }}
                   >
-                    <View style={styles.markerIcon}>
-                      <Image
-                        source={require("../../assets/images/user.png")}
-                        style={[styles.markerImage, { height: 30, width: 30 }]}
+                    <View
+                      style={{
+                        backgroundColor: "white",
+                        padding: 4,
+                        borderRadius: 2,
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: "black",
+                          padding: 4,
+                          borderRadius: 2,
+                        }}
                       />
                     </View>
                   </Marker>
                 )}
 
-                {/* Destination/Dropoff marker */}
-                {hasDestination &&
-                  ((jobType === "ride" &&
-                    (driveStatus === "arrived" || driveStatus === "ongoing")) ||
-                    (jobType === "delivery" &&
-                      driveStatus !== "completed" &&
-                      memoizedDestinationRouteCoords)) && (
-                    <Marker
-                      coordinate={{
-                        latitude: destinationCoordsArr![0],
-                        longitude: destinationCoordsArr![1],
-                      }}
-                      title={jobType === "delivery" ? "Dropoff" : "Destination"}
-                      anchor={{ x: 0.2, y: 0.2 }}
-                    >
-                      <View
-                        style={{
-                          backgroundColor: "white",
-                          padding: 4,
-                          borderRadius: 2,
-                        }}
-                      >
-                        <View
-                          style={{
-                            backgroundColor: "black",
-                            padding: 4,
-                            borderRadius: 2,
-                          }}
-                        />
-                      </View>
-                    </Marker>
-                  )}
+              {Array.isArray(memoizedPickupRouteCoords) &&
+                memoizedPickupRouteCoords.length > 1 && (
+                  <Polyline
+                    coordinates={memoizedPickupRouteCoords}
+                    strokeColor="#fff"
+                    strokeWidth={2}
+                  />
+                )}
 
-                {Array.isArray(memoizedPickupRouteCoords) &&
-                  memoizedPickupRouteCoords.length > 1 && (
-                    <Polyline
-                      coordinates={memoizedPickupRouteCoords}
-                      strokeColor="#fff"
-                      strokeWidth={2}
-                    />
-                  )}
+              {Array.isArray(memoizedDestinationRouteCoords) &&
+                memoizedDestinationRouteCoords.length > 1 && (
+                  <Polyline
+                    coordinates={memoizedDestinationRouteCoords}
+                    strokeColor="#fff"
+                    strokeWidth={3}
+                  />
+                )}
+            </MapView>
+          )}
 
-                {Array.isArray(memoizedDestinationRouteCoords) &&
-                  memoizedDestinationRouteCoords.length > 1 && (
-                    <Polyline
-                      coordinates={memoizedDestinationRouteCoords}
-                      strokeColor="#fff"
-                      strokeWidth={3}
-                    />
-                  )}
-              </MapView>
-            )}
-
-            {/* Nav */}
-            <View style={styles.nav_container}>
-              <TouchableWithoutFeedback onPress={() => setSideNavOpen(true)}>
-                <View style={styles.nav_box}>
-                  <Feather name="menu" size={22} color="white" />
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-
-            {/* Side nav */}
-            <SideNav
-              open={sideNavOpen}
-              setSideNavOpen={setSideNavOpen}
-              mode="driver"
-            />
-
-            {/* Location Update Modal */}
-            <LocationUpdateModal
-              visible={locationModalOpen}
-              onClose={() => setLocationModalOpen(false)}
-            />
-
-            {/* Searching for drivers */}
-            <DriverRideModal />
+          {/* Nav */}
+          <View style={styles.nav_container}>
+            <TouchableWithoutFeedback onPress={() => setSideNavOpen(true)}>
+              <View style={styles.nav_box}>
+                <Feather name="menu" size={22} color="white" />
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </>
-      )}
+
+          {/* Side nav */}
+          <SideNav
+            open={sideNavOpen}
+            setSideNavOpen={setSideNavOpen}
+            mode="driver"
+          />
+
+          {/* Location Update Modal */}
+          <LocationUpdateModal
+            visible={locationModalOpen}
+            onClose={() => setLocationModalOpen(false)}
+          />
+
+          {/* Searching for drivers */}
+          <DriverRideModal />
+        </View>
+      </>
     </>
   );
 };
