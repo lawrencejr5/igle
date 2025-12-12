@@ -372,7 +372,9 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       if (data.driver) {
-        await getDriverProfile();
+        setDriver((prev) =>
+          prev ? { ...prev, date_of_birth: data.driver.date_of_birth } : null
+        );
         showNotification("Updated successfully", "success");
       }
     } catch (error: any) {

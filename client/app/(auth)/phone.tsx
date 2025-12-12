@@ -39,7 +39,7 @@ const AddPhone = () => {
     try {
       await updatePhone(phone.trim());
       setTimeout(() => {
-        router.push("/(tabs)/home");
+        router.replace("/(tabs)/home");
       }, 1500);
     } catch (err: any) {
       showNotification(err.message || "An error occured", "error");

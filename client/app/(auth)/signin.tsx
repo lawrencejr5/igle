@@ -74,9 +74,9 @@ const Signin = () => {
       const is_driver = await AsyncStorage.getItem("is_driver");
       setTimeout(() => {
         if (is_driver === "true") {
-          router.push("/(driver)/home");
+          router.replace("/(driver)/home");
         } else {
-          router.push("/(tabs)/home");
+          router.replace("/(tabs)/home");
         }
       }, 1500);
     } catch (err: any) {
@@ -193,7 +193,7 @@ const Signin = () => {
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "space-between",
+              justifyContent: "center",
               marginTop: 30,
             }}
           >
@@ -217,17 +217,8 @@ const Signin = () => {
                 style={styles.oauth_img}
               />
               <Text style={styles.oauth_text}>
-                {googleLoading ? "Signing in..." : "Google"}
+                {googleLoading ? "Signing in..." : "Continue with Google"}
               </Text>
-            </TouchableOpacity>
-
-            {/* Sign with apple */}
-            <TouchableOpacity activeOpacity={0.7} style={styles.oauth_btn}>
-              <Image
-                source={require("../../assets/images/icons/apple-logo-white.png")}
-                style={styles.oauth_img}
-              />
-              <Text style={styles.oauth_text}>Apple</Text>
             </TouchableOpacity>
           </View>
 
