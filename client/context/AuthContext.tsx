@@ -318,13 +318,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       // If user hasn't added a phone number, navigate to phone update
       const hasPhone = !!data.user?.phone;
       if (!hasPhone) {
-        router.push("/(auth)/phone");
+        router.replace("/(auth)/phone");
       } else {
         // Navigate based on role
         if (data.user.is_driver) {
-          router.push("/(driver)/home");
+          router.replace("/(driver)/home");
         } else {
-          router.push("/(tabs)/home");
+          router.replace("/(tabs)/home");
         }
       }
 
@@ -356,11 +356,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       // New accounts or accounts without phone must update phone first
       if (data.isNew || !hasPhone) {
-        router.push("/(auth)/phone");
+        router.replace("/(auth)/phone");
       } else if (is_driver) {
-        router.push("/(driver)/home");
+        router.replace("/(driver)/home");
       } else {
-        router.push("/(tabs)/home");
+        router.replace("/(tabs)/home");
       }
     } catch (err: any) {
       showNotification(

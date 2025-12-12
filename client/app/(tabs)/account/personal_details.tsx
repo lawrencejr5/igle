@@ -126,8 +126,9 @@ const PersonalDetails = () => {
               <Feather name="chevron-right" color={"#fff"} size={24} />
             </Pressable>
             <Pressable
+              disabled
               onPress={() => setOpenEmailModal(true)}
-              style={styles.item_container}
+              style={[styles.item_container, { backgroundColor: "#151515ff" }]}
             >
               <View>
                 <Text style={styles.item_header_text}>Email:</Text>

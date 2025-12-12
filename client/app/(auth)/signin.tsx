@@ -71,14 +71,6 @@ const Signin = () => {
     setLoading(true);
     try {
       await login(email.trim(), password);
-      const is_driver = await AsyncStorage.getItem("is_driver");
-      setTimeout(() => {
-        if (is_driver === "true") {
-          router.replace("/(driver)/home");
-        } else {
-          router.replace("/(tabs)/home");
-        }
-      }, 1500);
     } catch (err: any) {
       showNotification(err.message, "error");
     } finally {

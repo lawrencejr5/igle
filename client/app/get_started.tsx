@@ -105,7 +105,7 @@ const StartScreen = () => {
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.sign_btn}
-          onPress={() => router.push("/(auth)/signin")}
+          onPress={() => router.replace("/(auth)/signin")}
         >
           <Image
             source={require("../assets/images/icons/mail.png")}
