@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 
+import * as Haptics from "expo-haptics";
+
 import { router } from "expo-router";
 import { useRideContext } from "../../../context/RideContext";
 import { useDeliverContext } from "../../../context/DeliveryContext";
@@ -51,7 +53,6 @@ const Home = () => {
   const { signedIn, getUserData } = useAuthContext();
   const {
     setRideStatus,
-    setModalUp,
     ongoingRideData,
     ongoingRide,
     getActiveRide,
@@ -290,7 +291,9 @@ const Home = () => {
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             setRideStatus("booking");
-                            setModalUp(true);
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light
+                            );
                             router.push("../(book)/book_ride");
                           }}
                         >
@@ -314,7 +317,9 @@ const Home = () => {
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             setRideStatus("booking");
-                            setModalUp(true);
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light
+                            );
                             router.push("../(book)/book_delivery");
                           }}
                         >
@@ -338,7 +343,7 @@ const Home = () => {
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             setRideStatus("booking");
-                            setModalUp(true);
+
                             router.push("../(book)/book_ride");
                           }}
                         >
@@ -375,6 +380,7 @@ const Home = () => {
                     <Pressable
                       style={styles.serviceCard}
                       onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                         router.push("../(book)/book_ride");
                       }}
                     >
@@ -391,7 +397,10 @@ const Home = () => {
 
                     <Pressable
                       style={styles.serviceCard}
-                      onPress={() => router.push("../(book)/book_delivery")}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        router.push("../(book)/book_delivery");
+                      }}
                     >
                       <View style={styles.serviceIconBox}>
                         <Feather name="truck" size={16} color="#fff" />
@@ -534,6 +543,7 @@ const OngoingCard = ({
   const statusColors = getStatusColor(ongoing.status);
 
   const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to appropriate screen based on activity type
     if (activity.type === "ride") {
       // Navigate to ride tracking or ride details
@@ -604,6 +614,8 @@ const SavedPlaces = () => {
     place_id: string;
     place_name: string;
   }) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
       // Set the pickup location to current location
       if (region?.latitude && region?.longitude) {

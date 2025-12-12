@@ -11,6 +11,8 @@ import React, {
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import * as Haptics from "expo-haptics";
+
 import { API_URLS } from "../data/constants";
 import { useNotificationContext } from "./NotificationContext";
 import { useAuthContext } from "./AuthContext";
@@ -357,6 +359,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   }, [signedIn]);
 
   useEffect(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (deliveryStatus === "") {
       deliveryModalRef.current?.snapToIndex(0);
     }

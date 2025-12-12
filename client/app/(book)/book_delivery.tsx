@@ -1,6 +1,8 @@
 import { StyleSheet, View, Pressable, Image } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 
+import * as Haptics from "expo-haptics";
+
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Notification from "../../components/Notification";
@@ -245,6 +247,8 @@ const BookDelivery = () => {
         <View style={styles.nav_container}>
           <Pressable
             onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
               // Statuses where back button should just go back without modal navigation
               const directBackStatuses = [
                 "searching",

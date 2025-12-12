@@ -10,7 +10,9 @@ import React, {
 } from "react";
 
 import { Animated } from "react-native";
+
 import * as Notifications from "expo-notifications";
+import * as Haptics from "expo-haptics";
 
 // Status type
 type StatusType = "error" | "success" | "";
@@ -62,6 +64,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const scale = useRef(new Animated.Value(0)).current;
 
   const notify = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     Animated.parallel([
       Animated.spring(scale, {
         friction: 7,

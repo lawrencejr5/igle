@@ -18,6 +18,8 @@ import React, {
   SetStateAction,
 } from "react";
 
+import * as Haptics from "expo-haptics";
+
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useWalletContext } from "../../context/WalletContext";
 import { useNotificationContext } from "../../context/NotificationContext";
@@ -48,6 +50,8 @@ const WalletScreen: FC<{
   }, [open]);
 
   const closeWallet = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     setOpen(false);
     setBtnLoading(false);
     setAmount("");

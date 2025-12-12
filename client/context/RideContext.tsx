@@ -11,6 +11,8 @@ import React, {
   useMemo,
 } from "react";
 
+import * as Haptics from "expo-haptics";
+
 import { TextInput, Platform, BackHandler } from "react-native";
 
 import axios from "axios";
@@ -318,6 +320,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   }, [userSocket]);
 
   useEffect(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (rideStatus === "") {
       routeModalRef.current?.snapToIndex(1);
     }

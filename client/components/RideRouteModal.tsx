@@ -43,7 +43,9 @@ import { useRideContext } from "../context/RideContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useWalletContext } from "../context/WalletContext";
 import { useHistoryContext } from "../context/HistoryContext";
+
 import * as Linking from "expo-linking";
+import * as Haptics from "expo-haptics";
 
 import RideRoute from "./RideRoute";
 import DateTimePicker from "@react-native-community/datetimepicker";

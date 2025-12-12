@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 
+import * as Haptics from "expo-haptics";
+
 import Entypo from "@expo/vector-icons/Entypo";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -84,7 +86,10 @@ const Account = () => {
           >
             {/* Account name */}
             <Pressable
-              onPress={() => router.push("./account/personal_details")}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("./account/personal_details");
+              }}
               style={{
                 flexDirection: "row",
                 justifyContent: "flex-start",
@@ -119,7 +124,10 @@ const Account = () => {
 
             {/* Wallet */}
             <Pressable
-              onPress={() => setWalletOpen((prev: any) => !prev)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setWalletOpen((prev: any) => !prev);
+              }}
               style={{
                 backgroundColor: "#2c2c2c",
                 paddingVertical: 15,
@@ -178,13 +186,20 @@ const Account = () => {
               </Text>
               <TouchableOpacity
                 style={styles.setting_box}
-                onPress={() => router.push("./account/personal_details")}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+                  router.push("./account/personal_details");
+                }}
               >
                 <FontAwesome name="user" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Personal details</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => router.push("./account/notifications")}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push("./account/notifications");
+                }}
                 style={styles.setting_box}
               >
                 <Feather name="bell" size={20} color="#c6c6c6" />
@@ -192,21 +207,30 @@ const Account = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => router.push("./account/security")}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push("./account/security");
+                }}
                 style={styles.setting_box}
               >
                 <Feather name="lock" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Security</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => router.push("./account/saved_places")}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push("./account/saved_places");
+                }}
                 style={styles.setting_box}
               >
                 <Entypo name="location-pin" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Saved places</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => router.push("./account/feedback")}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push("./account/feedback");
+                }}
                 style={styles.setting_box}
               >
                 <Feather name="help-circle" size={20} color="#c6c6c6" />

@@ -1,6 +1,8 @@
 import { StyleSheet, View, Image, Pressable } from "react-native";
 import React, { useState, useEffect } from "react";
 
+import * as Haptics from "expo-haptics";
+
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import Feather from "@expo/vector-icons/Feather";
@@ -226,7 +228,7 @@ const BookRide = () => {
                         }}
                       />
                     </Marker>
-                  )}{" "}
+                  )}
                 {/* Route polyline - show when route is available */}
                 {rideRouteCoords.length > 0 &&
                   rideStatus !== "track_driver" &&
@@ -244,6 +246,8 @@ const BookRide = () => {
             <View style={styles.nav_container}>
               <Pressable
                 onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
                   // Statuses where back button should just go back without modal navigation
                   const directBackStatuses = [
                     "searching",
