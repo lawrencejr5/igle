@@ -11,7 +11,6 @@ import React, {
 
 import { Animated } from "react-native";
 
-import * as Notifications from "expo-notifications";
 import * as Haptics from "expo-haptics";
 
 // Status type
@@ -102,47 +101,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setNotification({ visible: true, message, status });
     notify();
   };
-
-  // Notification listeners (foreground receive + response)
-  useEffect(() => {
-    // Prevent the system from showing a native notification when app is foregrounded
-    // Notifications.setNotificationHandler({
-    //   handleNotification: async () => ({
-    //     shouldShowAlert: false,
-    //     shouldPlaySound: false,
-    //     shouldSetBadge: false,
-    //   }),
-    // });
-
-    const receivedListener = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        try {
-          const content = notification.request.content;
-          const body = content.body || content.title || "";
-          // Use in-app notification UI
-          if (body) showNotification(body, "success");
-        } catch (e) {
-          console.log("Error handling received notification:", e);
-        }
-      }
-    );
-
-    const responseListener =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        try {
-          const data = response.notification.request.content.data;
-          // Placeholder: future deep-linking / navigation can use `data`
-          console.log("Notification response:", data);
-        } catch (e) {
-          console.log("Error handling notification response:", e);
-        }
-      });
-
-    return () => {
-      receivedListener.remove();
-      responseListener.remove();
-    };
-  }, []);
 
   return (
     <NotificationContext.Provider

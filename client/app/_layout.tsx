@@ -28,6 +28,7 @@ import TransactionContextProvider from "../context/TransactionContext";
 import DeliverProvider from "../context/DeliveryContext";
 import FeedbackProvider from "../context/FeedbackContext";
 import OnboardingProvider from "../context/OnboardingContext";
+import { PushNotificationProvider } from "../context/PushNotificationContext";
 
 const RootLayout = () => {
   const [theme, setTheme] = useState("dark");
@@ -49,47 +50,49 @@ const RootLayout = () => {
 
   return (
     <GestureHandlerRootView>
-      <LoadingProvider>
-        <NotificationProvider>
-          <OnboardingProvider>
-            <ReportProvider>
-              <ActivityProvider>
-                <WalletProvider>
-                  <TransactionContextProvider>
-                    <MapContextProvider>
-                      <SavedPlaceProvider>
-                        <HistoryProvider>
-                          <RatingProvider>
-                            <DriverAuthProvider>
-                              <AuthProvider>
-                                <RideContextProvider>
-                                  <DeliverProvider>
-                                    <DriverContextPrvider>
-                                      <FeedbackProvider>
-                                        <TaskProvider>
-                                          <Stack
-                                            screenOptions={{
-                                              headerShown: false,
-                                            }}
-                                          />
-                                        </TaskProvider>
-                                      </FeedbackProvider>
-                                    </DriverContextPrvider>
-                                  </DeliverProvider>
-                                </RideContextProvider>
-                              </AuthProvider>
-                            </DriverAuthProvider>
-                          </RatingProvider>
-                        </HistoryProvider>
-                      </SavedPlaceProvider>
-                    </MapContextProvider>
-                  </TransactionContextProvider>
-                </WalletProvider>
-              </ActivityProvider>
-            </ReportProvider>
-          </OnboardingProvider>
-        </NotificationProvider>
-      </LoadingProvider>
+      <PushNotificationProvider>
+        <LoadingProvider>
+          <NotificationProvider>
+            <OnboardingProvider>
+              <ReportProvider>
+                <ActivityProvider>
+                  <WalletProvider>
+                    <TransactionContextProvider>
+                      <MapContextProvider>
+                        <SavedPlaceProvider>
+                          <HistoryProvider>
+                            <RatingProvider>
+                              <DriverAuthProvider>
+                                <AuthProvider>
+                                  <RideContextProvider>
+                                    <DeliverProvider>
+                                      <DriverContextPrvider>
+                                        <FeedbackProvider>
+                                          <TaskProvider>
+                                            <Stack
+                                              screenOptions={{
+                                                headerShown: false,
+                                              }}
+                                            />
+                                          </TaskProvider>
+                                        </FeedbackProvider>
+                                      </DriverContextPrvider>
+                                    </DeliverProvider>
+                                  </RideContextProvider>
+                                </AuthProvider>
+                              </DriverAuthProvider>
+                            </RatingProvider>
+                          </HistoryProvider>
+                        </SavedPlaceProvider>
+                      </MapContextProvider>
+                    </TransactionContextProvider>
+                  </WalletProvider>
+                </ActivityProvider>
+              </ReportProvider>
+            </OnboardingProvider>
+          </NotificationProvider>
+        </LoadingProvider>
+      </PushNotificationProvider>
     </GestureHandlerRootView>
   );
 };
