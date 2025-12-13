@@ -21,6 +21,8 @@ import Report from "../models/report";
 import { cloudinary } from "../middleware/upload";
 import axios from "axios";
 
+import { sendNotification } from "../utils/expo_push";
+
 const jwt_secret = process.env.JWT_SECRET;
 
 export const register = async (req: Request, res: Response) => {
@@ -516,7 +518,6 @@ export const send_test_push = async (req: Request, res: Response) => {
     if (!user_id) return res.status(401).json({ msg: "Unauthorized" });
 
     const { get_user_push_tokens } = await import("../utils/get_id");
-    const { sendExpoPush } = await import("../utils/expo_push");
 
     const tokens = await get_user_push_tokens(user_id);
     console.log("[test_push] tokens for user", user_id, tokens);
@@ -526,8 +527,8 @@ export const send_test_push = async (req: Request, res: Response) => {
         .status(400)
         .json({ msg: "No push tokens registered for this user" });
 
-    const result = await sendExpoPush(
-      tokens,
+    const result = await sendNotification(
+      [user_id],
       "Test Notification",
       "This is a test push from server",
       { type: "test_push" }

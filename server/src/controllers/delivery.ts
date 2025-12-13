@@ -10,7 +10,7 @@ import {
   get_driver_push_tokens,
   get_user_push_tokens,
 } from "../utils/get_id";
-import { sendExpoPush } from "../utils/expo_push";
+import { sendNotification } from "../utils/expo_push";
 import { complete_delivery } from "../utils/complete_delivery";
 import { Types } from "mongoose";
 import Activity from "../models/activity";
@@ -103,8 +103,8 @@ export const request_delivery = async (
               } else {
                 const tokens = await get_driver_push_tokens(driverId);
                 if (tokens.length) {
-                  await sendExpoPush(
-                    tokens,
+                  await sendNotification(
+                    [driverId],
                     "New delivery request",
                     "A nearby sender needs a delivery",
                     {
@@ -189,8 +189,8 @@ export const retry_delivery = async (
               } else {
                 const tokens = await get_driver_push_tokens(driverId);
                 if (tokens.length) {
-                  await sendExpoPush(
-                    tokens,
+                  await sendNotification(
+                    [driverId],
                     "New delivery request",
                     "A nearby sender needs a delivery",
                     {
@@ -279,8 +279,8 @@ export const rebook_delivery = async (
               } else {
                 const tokens = await get_driver_push_tokens(driverId);
                 if (tokens.length) {
-                  await sendExpoPush(
-                    tokens,
+                  await sendNotification(
+                    [driverId],
                     "New delivery request",
                     "A nearby sender needs a delivery",
                     {
@@ -883,15 +883,13 @@ export const admin_get_deliveries = async (req: Request, res: Response) => {
     const paginatedDeliveries = deliveries.slice(skip, skip + limit);
 
     const pages = Math.ceil(total / limit);
-    return res
-      .status(200)
-      .json({
-        msg: "success",
-        deliveries: paginatedDeliveries,
-        total,
-        page,
-        pages,
-      });
+    return res.status(200).json({
+      msg: "success",
+      deliveries: paginatedDeliveries,
+      total,
+      page,
+      pages,
+    });
   } catch (err) {
     console.error("admin_get_deliveries error:", err);
     return res.status(500).json({ msg: "Server error." });
@@ -1011,18 +1009,28 @@ export const admin_cancel_delivery = async (req: Request, res: Response) => {
         : [];
 
       if (senderTokens.length) {
-        await sendExpoPush(senderTokens, "Delivery cancelled", reason, {
-          type: "delivery_cancelled",
-          deliveryId: delivery._id,
-          by: "admin",
-        });
+        await sendNotification(
+          [String(delivery.sender)],
+          "Delivery cancelled",
+          reason,
+          {
+            type: "delivery_cancelled",
+            deliveryId: delivery._id,
+            by: "admin",
+          }
+        );
       }
       if (driverTokens.length) {
-        await sendExpoPush(driverTokens, "Delivery cancelled", reason, {
-          type: "delivery_cancelled",
-          deliveryId: delivery._id,
-          by: "admin",
-        });
+        await sendNotification(
+          [String(delivery.driver)],
+          "Delivery cancelled",
+          reason,
+          {
+            type: "delivery_cancelled",
+            deliveryId: delivery._id,
+            by: "admin",
+          }
+        );
       }
     } catch (e) {
       console.error(

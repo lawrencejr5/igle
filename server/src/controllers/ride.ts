@@ -19,7 +19,7 @@ import { calculate_commission } from "../utils/calc_commision";
 import { complete_ride } from "../utils/complete_ride";
 
 import { io } from "../server";
-import { sendExpoPush } from "../utils/expo_push";
+import { sendNotification } from "../utils/expo_push";
 
 // 🔄 Helper: Expire a ride
 const expire_ride = async (ride_id: string, user_id?: string) => {
@@ -113,8 +113,8 @@ export const request_ride = async (
               } else {
                 const tokens = await get_driver_push_tokens(driverId);
                 if (tokens.length) {
-                  await sendExpoPush(
-                    tokens,
+                  await sendNotification(
+                    [driverId],
                     "New ride request",
                     "A nearby rider needs a ride",
                     {
@@ -199,8 +199,8 @@ export const retry_ride = async (
               } else {
                 const tokens = await get_driver_push_tokens(driverId);
                 if (tokens.length) {
-                  await sendExpoPush(
-                    tokens,
+                  await sendNotification(
+                    [driverId],
                     "New ride request",
                     "A nearby rider needs a ride",
                     {
@@ -295,8 +295,8 @@ export const rebook_ride = async (
               } else {
                 const tokens = await get_driver_push_tokens(driverId);
                 if (tokens.length) {
-                  await sendExpoPush(
-                    tokens,
+                  await sendNotification(
+                    [driverId],
                     "New ride request",
                     "A nearby rider needs a ride",
                     {
@@ -522,8 +522,8 @@ export const accept_ride = async (
           const tokens = await get_user_push_tokens(ride.rider);
           if (tokens.length) {
             console.log("Sending 'Driver on the way' push to tokens:", tokens);
-            const res = await sendExpoPush(
-              tokens,
+            const res = await sendNotification(
+              [String(ride.rider)],
               "Driver on the way",
               "A driver has accepted your ride",
               {
@@ -531,7 +531,7 @@ export const accept_ride = async (
                 rideId: ride._id,
               }
             );
-            console.log("sendExpoPush result:", res);
+            console.log("sendNotification result:", res);
           }
         }
       } catch (e) {
@@ -616,8 +616,8 @@ export const cancel_ride = async (
         : [];
 
       if (riderTokens.length) {
-        await sendExpoPush(
-          riderTokens,
+        await sendNotification(
+          [String(ride.rider)],
           "Ride cancelled",
           reason || "Ride was cancelled",
           {
@@ -629,8 +629,8 @@ export const cancel_ride = async (
       }
 
       if (driverTokens.length) {
-        await sendExpoPush(
-          driverTokens,
+        await sendNotification(
+          [String(ride.driver)],
           "Ride cancelled",
           reason || "Ride was cancelled",
           {
@@ -704,8 +704,8 @@ export const update_ride_status = async (
               ? await get_user_push_tokens(ride.rider)
               : [];
             if (tokens.length) {
-              await sendExpoPush(
-                tokens,
+              await sendNotification(
+                [String(ride.rider)],
                 "Your ride has arrived",
                 "Your driver has arrived at pickup.",
                 {
@@ -782,8 +782,8 @@ export const update_ride_status = async (
               : [];
             if (tokens.length) {
               console.log("Sending 'Ride completed' push to tokens:", tokens);
-              const res = await sendExpoPush(
-                tokens,
+              const res = await sendNotification(
+                [String(ride.rider)],
                 "Ride completed",
                 `Your ride to ${ride.destination.address} has been completed`,
                 {
@@ -791,7 +791,7 @@ export const update_ride_status = async (
                   rideId: ride._id,
                 }
               );
-              console.log("sendExpoPush result:", res);
+              console.log("sendNotification result:", res);
             }
           } catch (e) {
             console.error("Failed to send completed push to rider:", e);
@@ -1083,18 +1083,23 @@ export const admin_cancel_ride = async (req: Request, res: Response) => {
         : [];
 
       if (riderTokens.length) {
-        await sendExpoPush(riderTokens, "Ride cancelled", reason, {
+        await sendNotification([String(ride.rider)], "Ride cancelled", reason, {
           type: "ride_cancelled",
           rideId: ride._id,
           by: "admin",
         });
       }
       if (driverTokens.length) {
-        await sendExpoPush(driverTokens, "Ride cancelled", reason, {
-          type: "ride_cancelled",
-          rideId: ride._id,
-          by: "admin",
-        });
+        await sendNotification(
+          [String(ride.driver)],
+          "Ride cancelled",
+          reason,
+          {
+            type: "ride_cancelled",
+            rideId: ride._id,
+            by: "admin",
+          }
+        );
       }
     } catch (e) {
       console.error("Failed to send cancel push notifications:", e);

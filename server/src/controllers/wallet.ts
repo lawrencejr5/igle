@@ -15,7 +15,7 @@ import {
   initialize_paystack_transaction,
   verify_paystack_transaction,
 } from "../utils/paystack";
-import { sendExpoPush } from "../utils/expo_push";
+import { sendNotification } from "../utils/expo_push";
 import { get_user_push_tokens, get_driver_push_tokens } from "../utils/get_id";
 import Activity from "../models/activity";
 
@@ -125,8 +125,8 @@ export const verify_payment = async (req: any, res: any) => {
           });
 
           if (tokens.length) {
-            await sendExpoPush(
-              tokens,
+            await sendNotification(
+              [req.user?.id],
               "Wallet funded",
               `Your wallet was credited with ${transaction.amount}`,
               {
@@ -208,8 +208,8 @@ export const request_withdrawal = async (req: any, res: any) => {
     try {
       const tokens = await get_user_push_tokens(req.user?.id);
       if (tokens.length) {
-        await sendExpoPush(
-          tokens,
+        await sendNotification(
+          [req.user?.id],
           "Withdrawal successful",
           `You have withdrawn ${amount} from your wallet`,
           {

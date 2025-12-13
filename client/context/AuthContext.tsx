@@ -33,6 +33,8 @@ import { API_URLS } from "../data/constants";
 import { useActivityContext } from "./ActivityContext";
 import { useSavedPlaceContext } from "./SavedPlaceContext";
 
+import { registerForPushNotificationsAsync } from "../utils/registerPushNotification";
+
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -116,6 +118,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await AsyncStorage.setItem("token", data.token);
 
       await getUserData();
+      await registerPushToken();
 
       showNotification("Registration successful", "success");
     } catch (err: any) {
@@ -313,7 +316,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "is_driver",
         JSON.stringify(data.user.is_driver)
       );
+
       await getUserData();
+      await registerPushToken();
 
       // If user hasn't added a phone number, navigate to phone update
       const hasPhone = !!data.user?.phone;
@@ -415,37 +420,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   // Push notification helpers -------------------------------------------------
-  const registerForPushNotificationsAsync = async (): Promise<
-    string | null
-  > => {
-    try {
-      if (!Device.isDevice) {
-        console.log("Must use physical device for Push Notifications");
-        return null;
-      }
-
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== "granted") {
-        console.log("Failed to get push token permission");
-        return null;
-      }
-
-      const tokenData = await Notifications.getExpoPushTokenAsync();
-      const token = tokenData.data;
-      return token;
-    } catch (err) {
-      console.log("Error getting push token:", err);
-      return null;
-    }
-  };
-
   const registerPushToken = async () => {
     try {
       const pushToken = await registerForPushNotificationsAsync();
