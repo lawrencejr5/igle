@@ -39,7 +39,3 @@ yarn-error.*
 
 # environment variables
 .env
-
-# firebase
-google-services.json
-igleride-admin-firebase-adminsdk-fbsvc-0f00db2d61.json
