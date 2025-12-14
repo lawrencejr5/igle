@@ -489,11 +489,10 @@ export const accept_ride = async (
               "Driver on the way",
               "A driver has accepted your ride",
               {
-                type: "ride_accepted",
+                type: "ride_booking",
                 rideId: ride._id,
               }
             );
-            console.log("sendNotification result:", res);
           }
         }
       } catch (e) {
@@ -589,7 +588,6 @@ export const cancel_ride = async (
           {
             type: "ride_cancelled",
             rideId: ride._id,
-            by,
           }
         );
       }
@@ -604,7 +602,7 @@ export const cancel_ride = async (
           {
             type: "ride_cancelled",
             rideId: ride._id,
-            by,
+            role: "driver",
           }
         );
       }
@@ -676,7 +674,7 @@ export const update_ride_status = async (
                 "Your ride has arrived",
                 "Your driver has arrived at pickup.",
                 {
-                  type: "ride_arrived",
+                  type: "ride_booking",
                   rideId: ride._id,
                 }
               );
@@ -720,7 +718,7 @@ export const update_ride_status = async (
               "Your ride has started",
               "Your driver has started the ride.",
               {
-                type: "ride_arrived",
+                type: "ride_booking",
                 rideId: ride._id,
               }
             );
@@ -768,7 +766,6 @@ export const update_ride_status = async (
                   rideId: ride._id,
                 }
               );
-              console.log("sendNotification result:", res);
             }
           } catch (e) {
             console.error("Failed to send completed push to rider:", e);
@@ -1059,22 +1056,30 @@ export const admin_cancel_ride = async (req: Request, res: Response) => {
         ? await get_driver_push_tokens(ride.driver)
         : [];
 
+      const driver_user_id = get_driver_user_id(String(ride.driver));
+
       if (riderTokens.length) {
-        await sendNotification([String(ride.rider)], "Ride cancelled", reason, {
-          type: "ride_cancelled",
-          rideId: ride._id,
-          by: "admin",
-        });
-      }
-      if (driverTokens.length) {
         await sendNotification(
-          [String(ride.driver)],
+          [String(ride.rider)],
           "Ride cancelled",
-          reason,
+          "Ride was cancelled by Igle",
           {
             type: "ride_cancelled",
             rideId: ride._id,
             by: "admin",
+          }
+        );
+      }
+      if (driverTokens.length) {
+        await sendNotification(
+          [String(driver_user_id)],
+          "Ride cancelled",
+          "Ride was cancelled by Igle",
+          {
+            type: "ride_cancelled",
+            rideId: ride._id,
+            by: "admin",
+            role: "driver",
           }
         );
       }

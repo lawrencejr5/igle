@@ -465,10 +465,9 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     if (tokens.length) {
                         console.log("Sending 'Driver on the way' push to tokens:", tokens);
                         const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Driver on the way", "A driver has accepted your ride", {
-                            type: "ride_accepted",
+                            type: "ride_booking",
                             rideId: ride._id,
                         });
-                        console.log("sendNotification result:", res);
                     }
                 }
             }
@@ -542,14 +541,13 @@ const cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "rider" ? "you" : "the driver"}`, {
                     type: "ride_cancelled",
                     rideId: ride._id,
-                    by,
                 });
             }
             if (driverTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "driver" ? "you" : "rider"}`, {
                     type: "ride_cancelled",
                     rideId: ride._id,
-                    by,
+                    role: "driver",
                 });
             }
         }
@@ -607,7 +605,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     try {
                         if (tokens.length) {
                             yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has arrived", "Your driver has arrived at pickup.", {
-                                type: "ride_arrived",
+                                type: "ride_booking",
                                 rideId: ride._id,
                             });
                         }
@@ -646,7 +644,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 else {
                     if (tokens.length) {
                         yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has started", "Your driver has started the ride.", {
-                            type: "ride_arrived",
+                            type: "ride_booking",
                             rideId: ride._id,
                         });
                     }
@@ -683,7 +681,6 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                                 type: "ride_completed",
                                 rideId: ride._id,
                             });
-                            console.log("sendNotification result:", res);
                         }
                     }
                     catch (e) {
@@ -944,18 +941,20 @@ const admin_cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, functi
             const driverTokens = (ride === null || ride === void 0 ? void 0 : ride.driver)
                 ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
                 : [];
+            const driver_user_id = (0, get_id_1.get_driver_user_id)(String(ride.driver));
             if (riderTokens.length) {
-                yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", reason, {
+                yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", "Ride was cancelled by Igle", {
                     type: "ride_cancelled",
                     rideId: ride._id,
                     by: "admin",
                 });
             }
             if (driverTokens.length) {
-                yield (0, expo_push_1.sendNotification)([String(ride.driver)], "Ride cancelled", reason, {
+                yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", "Ride was cancelled by Igle", {
                     type: "ride_cancelled",
                     rideId: ride._id,
                     by: "admin",
+                    role: "driver",
                 });
             }
         }

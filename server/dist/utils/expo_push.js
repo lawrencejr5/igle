@@ -22,6 +22,8 @@ const sendNotification = (userIds_1, title_1, body_1, ...args_1) => __awaiter(vo
         // 1. Find all users involved (e.g., the passenger and driver)
         const users = yield user_1.default.find({ _id: { $in: userIds } });
         let messages = [];
+        // Helper map to track which user owns which token (for cleanup later)
+        const tokenToUserMap = {};
         // 2. Loop through each user and their tokens
         for (let user of users) {
             // Check if user has tokens
@@ -33,6 +35,8 @@ const sendNotification = (userIds_1, title_1, body_1, ...args_1) => __awaiter(vo
                     console.error(`Push token ${token} is not a valid Expo push token`);
                     continue;
                 }
+                // Map token to userId so we can remove it if it turns out to be dead
+                tokenToUserMap[token] = user._id.toString();
                 // Construct the message
                 messages.push({
                     to: token,
@@ -43,6 +47,9 @@ const sendNotification = (userIds_1, title_1, body_1, ...args_1) => __awaiter(vo
                 });
             }
         }
+        // Return early if no messages to send
+        if (messages.length === 0)
+            return;
         // 3. Chunk and Send (Expo requires batching)
         let chunks = expo.chunkPushNotifications(messages);
         let tickets = [];
@@ -50,6 +57,27 @@ const sendNotification = (userIds_1, title_1, body_1, ...args_1) => __awaiter(vo
             try {
                 let ticketChunk = yield expo.sendPushNotificationsAsync(chunk);
                 tickets.push(...ticketChunk);
+                // 👇👇 CLEANUP LOGIC: Remove dead tokens immediately 👇👇
+                for (let i = 0; i < ticketChunk.length; i++) {
+                    const ticket = ticketChunk[i];
+                    // If Expo says there was an error delivery...
+                    if (ticket.status === "error") {
+                        // Check specifically if the device is no longer registered (App Uninstalled)
+                        if (ticket.details &&
+                            ticket.details.error === "DeviceNotRegistered") {
+                            const badToken = chunk[i].to;
+                            const userId = tokenToUserMap[badToken];
+                            if (userId) {
+                                console.log(`Removing dead token: ${badToken} for user ${userId}`);
+                                // Remove the bad token from the specific user's array
+                                yield user_1.default.findByIdAndUpdate(userId, {
+                                    $pull: { expo_push_tokens: badToken },
+                                });
+                            }
+                        }
+                    }
+                }
+                // 👆👆 END CLEANUP LOGIC 👆👆
             }
             catch (error) {
                 console.error("Error sending chunk", error);

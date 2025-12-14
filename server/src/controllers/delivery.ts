@@ -101,19 +101,6 @@ export const request_delivery = async (
                 io.to(driverSocket).emit("delivery_request", {
                   delivery_id: new_delivery._id,
                 });
-              } else {
-                const tokens = await get_driver_push_tokens(driverId);
-                if (tokens.length) {
-                  await sendNotification(
-                    [driverId],
-                    "New delivery request",
-                    "A nearby sender needs a delivery",
-                    {
-                      type: "delivery_request",
-                      deliveryId: new_delivery._id,
-                    }
-                  );
-                }
               }
             } catch (e) {
               console.error("Failed to notify driver", d._id, e);
@@ -187,19 +174,6 @@ export const retry_delivery = async (
                   delivery_id: delivery._id,
                   msg: "Retrying delivery request",
                 });
-              } else {
-                const tokens = await get_driver_push_tokens(driverId);
-                if (tokens.length) {
-                  await sendNotification(
-                    [driverId],
-                    "New delivery request",
-                    "A nearby sender needs a delivery",
-                    {
-                      type: "delivery_request",
-                      deliveryId: delivery._id,
-                    }
-                  );
-                }
               }
             } catch (e) {
               console.error("Failed to notify driver", d._id, e);
@@ -277,19 +251,6 @@ export const rebook_delivery = async (
                   delivery_id: new_delivery._id,
                   msg: "Delivery rebooked",
                 });
-              } else {
-                const tokens = await get_driver_push_tokens(driverId);
-                if (tokens.length) {
-                  await sendNotification(
-                    [driverId],
-                    "New delivery request",
-                    "A nearby sender needs a delivery",
-                    {
-                      type: "delivery_request",
-                      deliveryId: new_delivery._id,
-                    }
-                  );
-                }
               }
             } catch (e) {
               console.error("Failed to notify driver", d._id, e);
@@ -551,7 +512,7 @@ export const accept_delivery = async (
         "Delivery accepted",
         "A driver has accepted to deliver your package",
         {
-          type: "delivery_accepted",
+          type: "delivery_booking",
           deliveryId: delivery._id,
         }
       );
@@ -623,6 +584,7 @@ export const cancel_delivery = async (
         {
           type: "delivery_cancelled",
           deliveryId: delivery._id,
+          role: "driver",
         }
       );
 
@@ -677,7 +639,7 @@ export const update_delivery_status = async (
             "Driver arrived",
             `Your driver has arrived`,
             {
-              type: "driver_arrived",
+              type: "delivery_booking",
               deliveryId: delivery._id,
             }
           );
@@ -712,7 +674,7 @@ export const update_delivery_status = async (
             "Delivery picked up",
             `Your driver has picked up your delivery`,
             {
-              type: "delivery_picked_uo",
+              type: "delivery_booking",
               deliveryId: delivery._id,
             }
           );
@@ -747,7 +709,7 @@ export const update_delivery_status = async (
             "Delivery in transit",
             `Your delivery is on it's way to the receiver`,
             {
-              type: "driver-arrived",
+              type: "delivery_booking",
               deliveryId: delivery._id,
             }
           );
@@ -781,7 +743,7 @@ export const update_delivery_status = async (
             "Delivery delivered",
             `Your delivery has been delivered`,
             {
-              type: "driver-arrived",
+              type: "delivery_completed",
               deliveryId: delivery._id,
             }
           );
@@ -1091,6 +1053,8 @@ export const admin_cancel_delivery = async (req: Request, res: Response) => {
     delivery.cancelled = { by: "admin", reason } as any;
     await delivery.save();
 
+    const driver_user_id = await get_driver_user_id(String(delivery.sender));
+
     try {
       const senderTokens = delivery?.sender
         ? await get_user_push_tokens(delivery.sender!.toString())
@@ -1103,7 +1067,7 @@ export const admin_cancel_delivery = async (req: Request, res: Response) => {
         await sendNotification(
           [String(delivery.sender)],
           "Delivery cancelled",
-          reason,
+          "This delivery was cancelled by Igle",
           {
             type: "delivery_cancelled",
             deliveryId: delivery._id,
@@ -1113,13 +1077,14 @@ export const admin_cancel_delivery = async (req: Request, res: Response) => {
       }
       if (driverTokens.length) {
         await sendNotification(
-          [String(delivery.driver)],
+          [String(driver_user_id)],
           "Delivery cancelled",
-          reason,
+          "This delivery was cancelled by Igle",
           {
             type: "delivery_cancelled",
             deliveryId: delivery._id,
             by: "admin",
+            role: "driver",
           }
         );
       }
