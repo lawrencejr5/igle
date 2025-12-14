@@ -130,7 +130,7 @@ const request_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
                         else {
                             const tokens = yield (0, get_id_1.get_driver_push_tokens)(driverId);
                             if (tokens.length) {
-                                yield (0, expo_push_1.sendExpoPush)(tokens, "New delivery request", "A nearby sender needs a delivery", {
+                                yield (0, expo_push_1.sendNotification)([driverId], "New delivery request", "A nearby sender needs a delivery", {
                                     type: "delivery_request",
                                     deliveryId: new_delivery._id,
                                 });
@@ -199,7 +199,7 @@ const retry_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function*
                         else {
                             const tokens = yield (0, get_id_1.get_driver_push_tokens)(driverId);
                             if (tokens.length) {
-                                yield (0, expo_push_1.sendExpoPush)(tokens, "New delivery request", "A nearby sender needs a delivery", {
+                                yield (0, expo_push_1.sendNotification)([driverId], "New delivery request", "A nearby sender needs a delivery", {
                                     type: "delivery_request",
                                     deliveryId: delivery._id,
                                 });
@@ -277,7 +277,7 @@ const rebook_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
                         else {
                             const tokens = yield (0, get_id_1.get_driver_push_tokens)(driverId);
                             if (tokens.length) {
-                                yield (0, expo_push_1.sendExpoPush)(tokens, "New delivery request", "A nearby sender needs a delivery", {
+                                yield (0, expo_push_1.sendNotification)([driverId], "New delivery request", "A nearby sender needs a delivery", {
                                     type: "delivery_request",
                                     deliveryId: new_delivery._id,
                                 });
@@ -509,6 +509,12 @@ const accept_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
                 delivery_id,
                 driver_id,
             });
+        const user_tokens = yield (0, get_id_1.get_user_push_tokens)(delivery.sender);
+        if (user_tokens.length > 0)
+            yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery accepted", "A driver has accepted to deliver your package", {
+                type: "delivery_accepted",
+                deliveryId: delivery._id,
+            });
         // Notify all drivers that this delivery has been taken so they drop the card
         server_1.io.emit("delivery_taken", { delivery_id });
         delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { accepted_at: new Date() });
@@ -537,6 +543,19 @@ const cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
             server_1.io.to(user_socket).emit("delivery_cancel", { reason, by, delivery_id });
         if (driver_socket)
             server_1.io.to(driver_socket).emit("delivery_cancel", { reason, by, delivery_id });
+        const user_tokens = yield (0, get_id_1.get_user_push_tokens)(delivery.sender);
+        const driver_tokens = yield (0, get_id_1.get_driver_push_tokens)(String(delivery.driver));
+        const driver_user_id = yield (0, get_id_1.get_driver_user_id)(String(delivery.driver));
+        if (user_tokens.length > 0)
+            yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "sender" ? "you" : "the driver"}`, {
+                type: "delivery_cancelled",
+                deliveryId: delivery._id,
+            });
+        if (driver_tokens.length > 0)
+            yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "driver" ? "you" : "the sender"}`, {
+                type: "delivery_cancelled",
+                deliveryId: delivery._id,
+            });
         delivery.status = "cancelled";
         delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { cancelled_at: new Date() });
         delivery.cancelled = { by, reason };
@@ -565,6 +584,7 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 .status(404)
                 .json({ msg: "Delivery not found or not assigned to you" });
         const sender_socket = yield (0, get_id_1.get_user_socket_id)(delivery.sender.toString());
+        const user_tokens = yield (0, get_id_1.get_user_push_tokens)(delivery.sender);
         switch (status) {
             case "arrived":
                 // Only allow marking as arrived when delivery was accepted
@@ -573,6 +593,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         msg: "Delivery must be 'accepted' before driver can mark as arrived",
                     });
                 }
+                if (user_tokens.length > 0)
+                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Driver arrived", `Your driver has arrived`, {
+                        type: "driver_arrived",
+                        deliveryId: delivery._id,
+                    });
                 delivery.status = "arrived";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { arrived_at: new Date() });
                 if (sender_socket)
@@ -591,6 +616,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         msg: "Payment must be completed before package can be picked up",
                     });
                 }
+                if (user_tokens.length > 0)
+                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery picked up", `Your driver has picked up your delivery`, {
+                        type: "delivery_picked_uo",
+                        deliveryId: delivery._id,
+                    });
                 delivery.status = "picked_up";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { picked_up_at: new Date() });
                 if (sender_socket)
@@ -609,6 +639,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         msg: "Payment must be completed before transit can start",
                     });
                 }
+                if (user_tokens.length > 0)
+                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery in transit", `Your delivery is on it's way to the receiver`, {
+                        type: "driver-arrived",
+                        deliveryId: delivery._id,
+                    });
                 delivery.status = "in_transit";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { in_transit_at: new Date() });
                 if (sender_socket)
@@ -623,6 +658,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 }
                 // set delivered timestamp
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { delivered_at: new Date() });
+                if (user_tokens.length > 0)
+                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery delivered", `Your delivery has been delivered`, {
+                        type: "driver-arrived",
+                        deliveryId: delivery._id,
+                    });
                 // attempt to complete delivery (credit driver, record commission, etc.)
                 const result = yield (0, complete_delivery_1.complete_delivery)(delivery);
                 if (!result.success) {
@@ -671,7 +711,7 @@ const pay_for_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const transaction = yield debit_wallet({
             wallet_id: new mongoose_1.Types.ObjectId(wallet._id),
             amount: delivery.fare,
-            type: "payment",
+            type: "delivery_payment",
             channel: "wallet",
             ride_id: new mongoose_1.Types.ObjectId(delivery._id),
             reference: (yield Promise.resolve().then(() => __importStar(require("../utils/gen_unique_ref")))).generate_unique_reference(),
@@ -784,9 +824,7 @@ const admin_get_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const total = deliveries.length;
         const paginatedDeliveries = deliveries.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
-        return res
-            .status(200)
-            .json({
+        return res.status(200).json({
             msg: "success",
             deliveries: paginatedDeliveries,
             total,
@@ -899,14 +937,14 @@ const admin_cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 ? yield (0, get_id_1.get_driver_push_tokens)(delivery.driver.toString())
                 : [];
             if (senderTokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(senderTokens, "Delivery cancelled", reason, {
+                yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery cancelled", reason, {
                     type: "delivery_cancelled",
                     deliveryId: delivery._id,
                     by: "admin",
                 });
             }
             if (driverTokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(driverTokens, "Delivery cancelled", reason, {
+                yield (0, expo_push_1.sendNotification)([String(delivery.driver)], "Delivery cancelled", reason, {
                     type: "delivery_cancelled",
                     deliveryId: delivery._id,
                     by: "admin",

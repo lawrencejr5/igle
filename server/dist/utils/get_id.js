@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_driver_push_tokens = exports.get_user_push_tokens = exports.get_driver_socket_id = exports.get_user_socket_id = exports.get_driver_id = void 0;
+exports.get_driver_push_tokens = exports.get_user_push_tokens = exports.get_driver_socket_id = exports.get_user_socket_id = exports.get_driver_user_id = exports.get_driver_id = void 0;
 const driver_1 = __importDefault(require("../models/driver"));
 const user_1 = __importDefault(require("../models/user"));
 const get_driver_id = (user_id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -20,6 +20,11 @@ const get_driver_id = (user_id) => __awaiter(void 0, void 0, void 0, function* (
     return driver === null || driver === void 0 ? void 0 : driver._id;
 });
 exports.get_driver_id = get_driver_id;
+const get_driver_user_id = (driver_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const driver = yield driver_1.default.findById(driver_id);
+    return driver === null || driver === void 0 ? void 0 : driver.user;
+});
+exports.get_driver_user_id = get_driver_user_id;
 const get_user_socket_id = (user_id) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_1.default.findById(user_id);
     return user === null || user === void 0 ? void 0 : user.socket_id;

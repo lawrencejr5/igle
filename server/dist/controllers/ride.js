@@ -137,15 +137,6 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                                 ride_id: new_ride._id,
                             });
                         }
-                        else {
-                            const tokens = yield (0, get_id_2.get_driver_push_tokens)(driverId);
-                            if (tokens.length) {
-                                yield (0, expo_push_1.sendExpoPush)(tokens, "New ride request", "A nearby rider needs a ride", {
-                                    type: "new_ride_request",
-                                    rideId: new_ride._id,
-                                });
-                            }
-                        }
                     }
                     catch (e) {
                         console.error("Failed to notify driver", d._id, e);
@@ -209,15 +200,6 @@ const retry_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                             server_1.io.to(driverSocket).emit("new_ride_request", {
                                 ride_id: ride._id,
                             });
-                        }
-                        else {
-                            const tokens = yield (0, get_id_2.get_driver_push_tokens)(driverId);
-                            if (tokens.length) {
-                                yield (0, expo_push_1.sendExpoPush)(tokens, "New ride request", "A nearby rider needs a ride", {
-                                    type: "new_ride_request",
-                                    rideId: ride._id,
-                                });
-                            }
                         }
                     }
                     catch (e) {
@@ -289,15 +271,6 @@ const rebook_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                             server_1.io.to(driverSocket).emit("new_ride_request", {
                                 ride_id: new_ride._id,
                             });
-                        }
-                        else {
-                            const tokens = yield (0, get_id_2.get_driver_push_tokens)(driverId);
-                            if (tokens.length) {
-                                yield (0, expo_push_1.sendExpoPush)(tokens, "New ride request", "A nearby rider needs a ride", {
-                                    type: "new_ride_request",
-                                    rideId: new_ride._id,
-                                });
-                            }
                         }
                     }
                     catch (e) {
@@ -491,11 +464,11 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     const tokens = yield (0, get_id_2.get_user_push_tokens)(ride.rider);
                     if (tokens.length) {
                         console.log("Sending 'Driver on the way' push to tokens:", tokens);
-                        const res = yield (0, expo_push_1.sendExpoPush)(tokens, "Driver on the way", "A driver has accepted your ride", {
+                        const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Driver on the way", "A driver has accepted your ride", {
                             type: "ride_accepted",
                             rideId: ride._id,
                         });
-                        console.log("sendExpoPush result:", res);
+                        console.log("sendNotification result:", res);
                     }
                 }
             }
@@ -564,15 +537,16 @@ const cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             const driverTokens = (ride === null || ride === void 0 ? void 0 : ride.driver)
                 ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
                 : [];
+            const driver_user_id = yield (0, get_id_1.get_driver_user_id)(String(ride.driver));
             if (riderTokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(riderTokens, "Ride cancelled", reason || "Ride was cancelled", {
+                yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "rider" ? "you" : "the driver"}`, {
                     type: "ride_cancelled",
                     rideId: ride._id,
                     by,
                 });
             }
             if (driverTokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(driverTokens, "Ride cancelled", reason || "Ride was cancelled", {
+                yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "driver" ? "you" : "rider"}`, {
                     type: "ride_cancelled",
                     rideId: ride._id,
                     by,
@@ -614,6 +588,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
         }
         const user_socket = yield (0, get_id_1.get_user_socket_id)(ride.rider);
         const driver_socket = yield (0, get_id_1.get_driver_socket_id)(ride.driver);
+        const tokens = (ride === null || ride === void 0 ? void 0 : ride.rider) ? yield (0, get_id_2.get_user_push_tokens)(ride.rider) : [];
         switch (status) {
             // arrived at destination
             case "arrived":
@@ -630,11 +605,8 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     });
                 else {
                     try {
-                        const tokens = (ride === null || ride === void 0 ? void 0 : ride.rider)
-                            ? yield (0, get_id_2.get_user_push_tokens)(ride.rider)
-                            : [];
                         if (tokens.length) {
-                            yield (0, expo_push_1.sendExpoPush)(tokens, "Your ride has arrived", "Your driver has arrived at pickup.", {
+                            yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has arrived", "Your driver has arrived at pickup.", {
                                 type: "ride_arrived",
                                 rideId: ride._id,
                             });
@@ -666,10 +638,19 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     return;
                 }
                 // Emitting ride status
-                if (user_socket)
+                if (user_socket) {
                     server_1.io.to(user_socket).emit("ride_in_progress", {
                         msg: "Your ride has arrived",
                     });
+                }
+                else {
+                    if (tokens.length) {
+                        yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has started", "Your driver has started the ride.", {
+                            type: "ride_arrived",
+                            rideId: ride._id,
+                        });
+                    }
+                }
                 if (driver_socket)
                     server_1.io.to(driver_socket).emit("ride_in_progress", {
                         msg: "You have arrived",
@@ -696,16 +677,13 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     });
                 else {
                     try {
-                        const tokens = (ride === null || ride === void 0 ? void 0 : ride.rider)
-                            ? yield (0, get_id_2.get_user_push_tokens)(ride.rider)
-                            : [];
                         if (tokens.length) {
                             console.log("Sending 'Ride completed' push to tokens:", tokens);
-                            const res = yield (0, expo_push_1.sendExpoPush)(tokens, "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
+                            const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
                                 type: "ride_completed",
                                 rideId: ride._id,
                             });
-                            console.log("sendExpoPush result:", res);
+                            console.log("sendNotification result:", res);
                         }
                     }
                     catch (e) {
@@ -756,7 +734,7 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const transaction = yield (0, wallet_2.debit_wallet)({
             wallet_id: new mongoose_1.Types.ObjectId(wallet._id),
             amount: ride.fare,
-            type: "payment",
+            type: "ride_payment",
             channel: "wallet",
             ride_id: new mongoose_1.Types.ObjectId(ride._id),
             reference: (0, gen_unique_ref_1.generate_unique_reference)(),
@@ -967,14 +945,14 @@ const admin_cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
                 : [];
             if (riderTokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(riderTokens, "Ride cancelled", reason, {
+                yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", reason, {
                     type: "ride_cancelled",
                     rideId: ride._id,
                     by: "admin",
                 });
             }
             if (driverTokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(driverTokens, "Ride cancelled", reason, {
+                yield (0, expo_push_1.sendNotification)([String(ride.driver)], "Ride cancelled", reason, {
                     type: "ride_cancelled",
                     rideId: ride._id,
                     by: "admin",

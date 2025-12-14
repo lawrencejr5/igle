@@ -31,12 +31,12 @@ const complete_ride = (ride) => __awaiter(void 0, void 0, void 0, function* () {
         yield transaction_1.default.create({
             wallet_id: new mongoose_1.Types.ObjectId(wallet._id),
             amount: ride.driver_earnings,
-            type: "payment",
+            type: "driver_payment",
             channel: "wallet",
             status: "pending",
             ride_id: new mongoose_1.Types.ObjectId(ride._id),
             reference,
-            metadata: { for: "driver_wallet_crediting" },
+            metadata: { for: "driver_wallet_crediting", type: "ride" },
         });
         yield (0, wallet_2.credit_wallet)(reference);
         const fund_app_wallet = yield app_wallet_1.default.findOneAndUpdate({}, { $inc: { balance: Number(ride.commission) } }, { new: true });

@@ -10,6 +10,7 @@ import {
   get_driver_id,
   get_user_socket_id,
   get_driver_socket_id,
+  get_driver_user_id,
 } from "../utils/get_id";
 import { get_user_push_tokens, get_driver_push_tokens } from "../utils/get_id";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
@@ -110,19 +111,6 @@ export const request_ride = async (
                 io.to(driverSocket).emit("new_ride_request", {
                   ride_id: new_ride._id,
                 });
-              } else {
-                const tokens = await get_driver_push_tokens(driverId);
-                if (tokens.length) {
-                  await sendNotification(
-                    [driverId],
-                    "New ride request",
-                    "A nearby rider needs a ride",
-                    {
-                      type: "new_ride_request",
-                      rideId: new_ride._id,
-                    }
-                  );
-                }
               }
             } catch (e) {
               console.error("Failed to notify driver", d._id, e);
@@ -196,19 +184,6 @@ export const retry_ride = async (
                 io.to(driverSocket).emit("new_ride_request", {
                   ride_id: ride._id,
                 });
-              } else {
-                const tokens = await get_driver_push_tokens(driverId);
-                if (tokens.length) {
-                  await sendNotification(
-                    [driverId],
-                    "New ride request",
-                    "A nearby rider needs a ride",
-                    {
-                      type: "new_ride_request",
-                      rideId: ride._id,
-                    }
-                  );
-                }
               }
             } catch (e) {
               console.error("Failed to notify driver", d._id, e);
@@ -292,19 +267,6 @@ export const rebook_ride = async (
                 io.to(driverSocket).emit("new_ride_request", {
                   ride_id: new_ride._id,
                 });
-              } else {
-                const tokens = await get_driver_push_tokens(driverId);
-                if (tokens.length) {
-                  await sendNotification(
-                    [driverId],
-                    "New ride request",
-                    "A nearby rider needs a ride",
-                    {
-                      type: "new_ride_request",
-                      rideId: new_ride._id,
-                    }
-                  );
-                }
               }
             } catch (e) {
               console.error("Failed to notify driver", d._id, e);
@@ -615,11 +577,15 @@ export const cancel_ride = async (
         ? await get_driver_push_tokens(ride.driver)
         : [];
 
+      const driver_user_id = await get_driver_user_id(String(ride.driver!));
+
       if (riderTokens.length) {
         await sendNotification(
           [String(ride.rider)],
           "Ride cancelled",
-          reason || "Ride was cancelled",
+          `Ride to ${ride.destination.address} cancelled by ${
+            ride.cancelled.by === "rider" ? "you" : "the driver"
+          }`,
           {
             type: "ride_cancelled",
             rideId: ride._id,
@@ -630,9 +596,11 @@ export const cancel_ride = async (
 
       if (driverTokens.length) {
         await sendNotification(
-          [String(ride.driver)],
+          [String(driver_user_id)],
           "Ride cancelled",
-          reason || "Ride was cancelled",
+          `Ride to ${ride.destination.address} cancelled by ${
+            ride.cancelled.by === "driver" ? "you" : "rider"
+          }`,
           {
             type: "ride_cancelled",
             rideId: ride._id,
@@ -684,6 +652,8 @@ export const update_ride_status = async (
     const user_socket = await get_user_socket_id(ride.rider!);
     const driver_socket = await get_driver_socket_id(ride.driver!);
 
+    const tokens = ride?.rider ? await get_user_push_tokens(ride.rider) : [];
+
     switch (status) {
       // arrived at destination
       case "arrived":
@@ -700,9 +670,6 @@ export const update_ride_status = async (
           });
         else {
           try {
-            const tokens = ride?.rider
-              ? await get_user_push_tokens(ride.rider)
-              : [];
             if (tokens.length) {
               await sendNotification(
                 [String(ride.rider)],
@@ -742,10 +709,23 @@ export const update_ride_status = async (
           return;
         }
         // Emitting ride status
-        if (user_socket)
+        if (user_socket) {
           io.to(user_socket).emit("ride_in_progress", {
             msg: "Your ride has arrived",
           });
+        } else {
+          if (tokens.length) {
+            await sendNotification(
+              [String(ride.rider)],
+              "Your ride has started",
+              "Your driver has started the ride.",
+              {
+                type: "ride_arrived",
+                rideId: ride._id,
+              }
+            );
+          }
+        }
         if (driver_socket)
           io.to(driver_socket).emit("ride_in_progress", {
             msg: "You have arrived",
@@ -777,9 +757,6 @@ export const update_ride_status = async (
           });
         else {
           try {
-            const tokens = ride?.rider
-              ? await get_user_push_tokens(ride.rider)
-              : [];
             if (tokens.length) {
               console.log("Sending 'Ride completed' push to tokens:", tokens);
               const res = await sendNotification(
@@ -846,7 +823,7 @@ export const pay_for_ride = async (req: Request, res: Response) => {
     const transaction = await debit_wallet({
       wallet_id: new Types.ObjectId(wallet._id as string),
       amount: ride.fare,
-      type: "payment",
+      type: "ride_payment",
       channel: "wallet",
       ride_id: new Types.ObjectId(ride._id as string),
       reference: generate_unique_reference(),

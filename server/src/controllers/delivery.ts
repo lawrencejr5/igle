@@ -9,6 +9,7 @@ import {
   get_driver_id,
   get_driver_push_tokens,
   get_user_push_tokens,
+  get_driver_user_id,
 } from "../utils/get_id";
 import { sendNotification } from "../utils/expo_push";
 import { complete_delivery } from "../utils/complete_delivery";
@@ -543,6 +544,18 @@ export const accept_delivery = async (
         driver_id,
       });
 
+    const user_tokens = await get_user_push_tokens(delivery.sender);
+    if (user_tokens.length > 0)
+      await sendNotification(
+        [String(delivery.sender)],
+        "Delivery accepted",
+        "A driver has accepted to deliver your package",
+        {
+          type: "delivery_accepted",
+          deliveryId: delivery._id,
+        }
+      );
+
     // Notify all drivers that this delivery has been taken so they drop the card
     io.emit("delivery_taken", { delivery_id });
 
@@ -580,6 +593,39 @@ export const cancel_delivery = async (
     if (driver_socket)
       io.to(driver_socket).emit("delivery_cancel", { reason, by, delivery_id });
 
+    const user_tokens = await get_user_push_tokens(delivery.sender);
+    const driver_tokens = await get_driver_push_tokens(
+      String(delivery.driver!)
+    );
+
+    const driver_user_id = await get_driver_user_id(String(delivery.driver!));
+
+    if (user_tokens.length > 0)
+      await sendNotification(
+        [String(delivery.sender)],
+        "Delivery cancelled",
+        `Delivery was cancelled by ${
+          delivery.cancelled!.by === "sender" ? "you" : "the driver"
+        }`,
+        {
+          type: "delivery_cancelled",
+          deliveryId: delivery._id,
+        }
+      );
+
+    if (driver_tokens.length > 0)
+      await sendNotification(
+        [String(driver_user_id)],
+        "Delivery cancelled",
+        `Delivery was cancelled by ${
+          delivery.cancelled!.by === "driver" ? "you" : "the sender"
+        }`,
+        {
+          type: "delivery_cancelled",
+          deliveryId: delivery._id,
+        }
+      );
+
     delivery.status = "cancelled" as any;
     delivery.timestamps = {
       ...(delivery.timestamps as any),
@@ -614,6 +660,7 @@ export const update_delivery_status = async (
         .json({ msg: "Delivery not found or not assigned to you" });
 
     const sender_socket = await get_user_socket_id(delivery.sender!.toString());
+    const user_tokens = await get_user_push_tokens(delivery.sender);
 
     switch (status) {
       case "arrived":
@@ -623,6 +670,17 @@ export const update_delivery_status = async (
             msg: "Delivery must be 'accepted' before driver can mark as arrived",
           });
         }
+
+        if (user_tokens.length > 0)
+          await sendNotification(
+            [String(delivery.sender)],
+            "Driver arrived",
+            `Your driver has arrived`,
+            {
+              type: "driver_arrived",
+              deliveryId: delivery._id,
+            }
+          );
 
         delivery.status = "arrived" as any;
         delivery.timestamps = {
@@ -648,6 +706,17 @@ export const update_delivery_status = async (
           });
         }
 
+        if (user_tokens.length > 0)
+          await sendNotification(
+            [String(delivery.sender)],
+            "Delivery picked up",
+            `Your driver has picked up your delivery`,
+            {
+              type: "delivery_picked_uo",
+              deliveryId: delivery._id,
+            }
+          );
+
         delivery.status = "picked_up" as any;
         delivery.timestamps = {
           ...(delivery.timestamps as any),
@@ -672,6 +741,17 @@ export const update_delivery_status = async (
           });
         }
 
+        if (user_tokens.length > 0)
+          await sendNotification(
+            [String(delivery.sender)],
+            "Delivery in transit",
+            `Your delivery is on it's way to the receiver`,
+            {
+              type: "driver-arrived",
+              deliveryId: delivery._id,
+            }
+          );
+
         delivery.status = "in_transit" as any;
         delivery.timestamps = {
           ...(delivery.timestamps as any),
@@ -694,6 +774,17 @@ export const update_delivery_status = async (
           ...(delivery.timestamps as any),
           delivered_at: new Date(),
         } as any;
+
+        if (user_tokens.length > 0)
+          await sendNotification(
+            [String(delivery.sender)],
+            "Delivery delivered",
+            `Your delivery has been delivered`,
+            {
+              type: "driver-arrived",
+              deliveryId: delivery._id,
+            }
+          );
 
         // attempt to complete delivery (credit driver, record commission, etc.)
         const result = await complete_delivery(delivery as any);
@@ -750,7 +841,7 @@ export const pay_for_delivery = async (
     const transaction = await debit_wallet({
       wallet_id: new Types.ObjectId(wallet._id as string),
       amount: delivery.fare,
-      type: "payment",
+      type: "delivery_payment",
       channel: "wallet",
       ride_id: new Types.ObjectId(delivery._id as string),
       reference: (

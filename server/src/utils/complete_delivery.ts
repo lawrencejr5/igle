@@ -24,12 +24,12 @@ export const complete_delivery = async (delivery: DeliveryType) => {
     await Transaction.create({
       wallet_id: new Types.ObjectId(wallet._id as string),
       amount: delivery.driver_earnings,
-      type: "payment",
+      type: "driver_payment",
       channel: "wallet",
       status: "pending",
-      ride_id: new Types.ObjectId(delivery._id as string),
+      delivery_id: new Types.ObjectId(delivery._id as string),
       reference,
-      metadata: { for: "driver_wallet_crediting" },
+      metadata: { for: "driver_wallet_crediting", type: "delivery" },
     });
 
     await credit_wallet(reference);

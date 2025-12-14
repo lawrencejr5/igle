@@ -2,11 +2,17 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface TransactionType extends Document {
   wallet_id: Types.ObjectId;
-  type: "funding" | "payment" | "payout";
+  type:
+    | "funding"
+    | "ride_payment"
+    | "delivery_payment"
+    | "driver_payment"
+    | "payout";
   amount: number;
   status?: "pending" | "success" | "failed";
   channel: "card" | "transfer" | "cash" | "wallet";
   ride_id?: Types.ObjectId;
+  delivery_id?: Types.ObjectId;
   reference?: string;
   metadata?: Record<string, any>;
   createdAt?: Date;
@@ -17,7 +23,13 @@ const TransactionSchema = new Schema<TransactionType>(
   {
     type: {
       type: String,
-      enum: ["funding", "payment", "payout"],
+      enum: [
+        "funding",
+        "ride_payment",
+        "delivery_payment",
+        "driver_payment",
+        "payout",
+      ],
       required: true,
     },
 
@@ -31,7 +43,14 @@ const TransactionSchema = new Schema<TransactionType>(
       type: Schema.Types.ObjectId,
       ref: "Ride",
       required: function () {
-        return this.type === "payment";
+        return this.type === "ride_payment";
+      },
+    },
+    delivery_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Delivery",
+      required: function () {
+        return this.type === "delivery_payment";
       },
     },
 
@@ -56,7 +75,21 @@ const TransactionSchema = new Schema<TransactionType>(
   { timestamps: true }
 );
 
-export default mongoose.model<TransactionType>(
+const TransactionModel = mongoose.model<TransactionType>(
   "Transaction",
   TransactionSchema
 );
+export default TransactionModel;
+
+const update_db = async () => {
+  try {
+    const data = await TransactionModel.updateMany(
+      { "metadata.for": "driver_wallet_crediting" },
+      { type: "driver_payment" }
+    );
+    console.log(data.matchedCount);
+  } catch (err) {
+    console.log(err);
+  }
+};
+// update_db();

@@ -32,12 +32,27 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const TransactionSchema = new mongoose_1.Schema({
     type: {
         type: String,
-        enum: ["funding", "payment", "payout"],
+        enum: [
+            "funding",
+            "ride_payment",
+            "delivery_payment",
+            "driver_payment",
+            "payout",
+        ],
         required: true,
     },
     wallet_id: {
@@ -49,7 +64,14 @@ const TransactionSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Ride",
         required: function () {
-            return this.type === "payment";
+            return this.type === "ride_payment";
+        },
+    },
+    delivery_id: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Delivery",
+        required: function () {
+            return this.type === "delivery_payment";
         },
     },
     amount: { type: Number, required: true },
@@ -66,4 +88,15 @@ const TransactionSchema = new mongoose_1.Schema({
     reference: { type: String, unique: true },
     metadata: { type: mongoose_1.Schema.Types.Mixed }, // any extra info (e.g., driver id, transfer details)
 }, { timestamps: true });
-exports.default = mongoose_1.default.model("Transaction", TransactionSchema);
+const TransactionModel = mongoose_1.default.model("Transaction", TransactionSchema);
+exports.default = TransactionModel;
+const update_db = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield TransactionModel.updateMany({ "metadata.for": "driver_wallet_crediting" }, { type: "driver_payment" });
+        console.log(data.matchedCount);
+    }
+    catch (err) {
+        console.log(err);
+    }
+});
+// update_db();

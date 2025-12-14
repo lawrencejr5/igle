@@ -89,7 +89,7 @@ const paystack_redirect = (req, res) => {
 };
 exports.paystack_redirect = paystack_redirect;
 const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const { reference } = req.query;
         const result = yield (0, paystack_1.verify_paystack_transaction)(reference);
@@ -122,7 +122,7 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
                         metadata: { owner_id: ownerId },
                     });
                     if (tokens.length) {
-                        yield (0, expo_push_1.sendExpoPush)(tokens, "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
+                        yield (0, expo_push_1.sendNotification)([(_b = req.user) === null || _b === void 0 ? void 0 : _b.id], "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
                             type: "wallet_funded",
                             reference: transaction.reference,
                         });
@@ -143,7 +143,7 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.verify_payment = verify_payment;
 const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     try {
         const amount = Number(req.body.amount);
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
@@ -191,7 +191,7 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
         try {
             const tokens = yield (0, get_id_2.get_user_push_tokens)((_c = req.user) === null || _c === void 0 ? void 0 : _c.id);
             if (tokens.length) {
-                yield (0, expo_push_1.sendExpoPush)(tokens, "Withdrawal successful", `You have withdrawn ${amount} from your wallet`, {
+                yield (0, expo_push_1.sendNotification)([(_d = req.user) === null || _d === void 0 ? void 0 : _d.id], "Withdrawal successful", `You have withdrawn ${amount} from your wallet`, {
                     type: "withdrawal_success",
                 });
             }
@@ -202,7 +202,7 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.json({ msg: "Withdrawal successful", transfer: transfer.data.data });
     }
     catch (err) {
-        console.error(((_d = err.response) === null || _d === void 0 ? void 0 : _d.data) || err.message);
+        console.error(((_e = err.response) === null || _e === void 0 ? void 0 : _e.data) || err.message);
         res.status(500).json({ msg: "Withdrawal failed", error: err.message });
     }
 });

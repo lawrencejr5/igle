@@ -8,6 +8,11 @@ export const get_driver_id = async (user_id: string) => {
   return driver?._id;
 };
 
+export const get_driver_user_id = async (driver_id: string) => {
+  const driver = await Driver.findById(driver_id);
+  return driver?.user;
+};
+
 export const get_user_socket_id = async (user_id: string | Types.ObjectId) => {
   const user = await User.findById(user_id);
   return user?.socket_id;

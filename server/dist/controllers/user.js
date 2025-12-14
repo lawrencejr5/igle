@@ -62,6 +62,7 @@ const activity_1 = __importDefault(require("../models/activity"));
 const report_1 = __importDefault(require("../models/report"));
 const upload_1 = require("../middleware/upload");
 const axios_1 = __importDefault(require("axios"));
+const expo_push_1 = require("../utils/expo_push");
 const jwt_secret = process.env.JWT_SECRET;
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -503,14 +504,13 @@ const send_test_push = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (!user_id)
             return res.status(401).json({ msg: "Unauthorized" });
         const { get_user_push_tokens } = yield Promise.resolve().then(() => __importStar(require("../utils/get_id")));
-        const { sendExpoPush } = yield Promise.resolve().then(() => __importStar(require("../utils/expo_push")));
         const tokens = yield get_user_push_tokens(user_id);
         console.log("[test_push] tokens for user", user_id, tokens);
         if (!tokens || tokens.length === 0)
             return res
                 .status(400)
                 .json({ msg: "No push tokens registered for this user" });
-        const result = yield sendExpoPush(tokens, "Test Notification", "This is a test push from server", { type: "test_push" });
+        const result = yield (0, expo_push_1.sendNotification)([user_id], "Test Notification", "This is a test push from server", { type: "test_push" });
         console.log("[test_push] sendExpoPush result:", result);
         return res.json({ msg: "Test push sent", result });
     }

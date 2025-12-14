@@ -5,7 +5,7 @@ import { Types } from "mongoose";
 interface WalletInput {
   wallet_id: Types.ObjectId;
   amount: number;
-  type: "funding" | "payment" | "payout";
+  type: "funding" | "ride_payment" | "delivery_payment" | "payout";
   channel: "card" | "transfer" | "cash" | "wallet";
   ride_id?: Types.ObjectId;
   reference?: string;
@@ -37,6 +37,7 @@ export const credit_wallet = async (reference: string) => {
 export const debit_wallet = async ({
   wallet_id,
   ride_id,
+  type,
   amount,
   reference,
   status = "success",
@@ -52,7 +53,7 @@ export const debit_wallet = async ({
 
   const transaction = await Transaction.create({
     wallet_id,
-    type: "payment",
+    type,
     amount,
     status,
     channel: "wallet",
