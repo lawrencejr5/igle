@@ -7,7 +7,8 @@ import React, {
   ReactNode,
 } from "react";
 import * as Notifications from "expo-notifications";
-import { registerForPushNotificationsAsync } from "../utils/registerPushNotification"; // 👈 Import your helper function here
+import { router } from "expo-router"; // 👈 Added router import
+import { registerForPushNotificationsAsync } from "../utils/registerPushNotification";
 
 interface NotificationContextType {
   expoPushToken: string | null;
@@ -53,8 +54,6 @@ export const PushNotificationProvider: React.FC<
         setExpoPushToken(token ?? null);
         if (token) {
           console.log("Token received:", token);
-          // TODO for Igle: Send this token to your backend (Convex) here
-          // e.g., saveUserToken({ token });
         }
       })
       .catch((err) => {
@@ -67,21 +66,71 @@ export const PushNotificationProvider: React.FC<
       Notifications.addNotificationReceivedListener((notification) => {
         setNotification(notification);
         // You can trigger custom logic here, like refreshing the 'Rides' list
+        console.log("Foreground notification received:", notification);
       });
 
     // 3. Listener: Handle user tapping on a notification
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log("User interacted with notification:", response);
-        // You can navigate to the specific ride details screen here
+        const data = response.notification.request.content.data;
+        console.log("User interacted with notification. Payload:", data);
+        try {
+          if (data?.role === "driver") {
+            if (data?.type === "delivery_cancelled") {
+              router.push(`/(driver)/deliveries`);
+            }
+            if (data?.type === "ride_cancelled") {
+              router.push(`/(driver)/rides`);
+            }
+          } else {
+            if (data?.type === "ride_booking") {
+              router.push("/(book)/book_ride");
+            }
+            if (data?.type === "delivery_booking") {
+              router.push("/(book)/book_delivery");
+            }
+
+            // Delivery cancelled or completed
+            if (
+              ["delivery_cancelled", "delivery_completed"].includes(
+                data?.type as any
+              )
+            ) {
+              if (data.delivery_id) {
+                router.push({
+                  pathname: "/(tabs)/delivery/delivery_detail/[delivery_id]", // Note: Use the bracket name here
+                  params: { delivery_id: data.delivery_id as any },
+                });
+              } else {
+                router.push("/(tabs)/delivery");
+              }
+            }
+
+            // Ride cancelled or completed
+            if (
+              ["ride_cancelled", "ride_completed"].includes(data?.type as any)
+            ) {
+              if (data.ride_id) {
+                router.push({
+                  pathname: "/(tabs)/rides/ride_detail/[ride_id]",
+                  params: { ride_id: data.ride_id as any },
+                });
+              } else {
+                console.warn("Missing ride_id in notification payload");
+              }
+            }
+          }
+        } catch (error) {
+          console.log("Navigation failed", error);
+        }
       });
 
     return () => {
       if (notificationListener.current) {
-        notificationListener.current?.remove();
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        responseListener.current?.remove();
+        responseListener.current.remove();
       }
     };
   }, []);

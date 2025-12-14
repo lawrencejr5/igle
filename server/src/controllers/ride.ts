@@ -490,7 +490,7 @@ export const accept_ride = async (
               "A driver has accepted your ride",
               {
                 type: "ride_booking",
-                rideId: ride._id,
+                ride_id: ride._id,
               }
             );
           }
@@ -587,7 +587,7 @@ export const cancel_ride = async (
           }`,
           {
             type: "ride_cancelled",
-            rideId: ride._id,
+            ride_id: ride._id,
           }
         );
       }
@@ -601,7 +601,7 @@ export const cancel_ride = async (
           }`,
           {
             type: "ride_cancelled",
-            rideId: ride._id,
+            ride_id: ride._id,
             role: "driver",
           }
         );
@@ -675,7 +675,7 @@ export const update_ride_status = async (
                 "Your driver has arrived at pickup.",
                 {
                   type: "ride_booking",
-                  rideId: ride._id,
+                  ride_id: ride._id,
                 }
               );
             }
@@ -719,7 +719,7 @@ export const update_ride_status = async (
               "Your driver has started the ride.",
               {
                 type: "ride_booking",
-                rideId: ride._id,
+                ride_id: ride._id,
               }
             );
           }
@@ -763,7 +763,7 @@ export const update_ride_status = async (
                 `Your ride to ${ride.destination.address} has been completed`,
                 {
                   type: "ride_completed",
-                  rideId: ride._id,
+                  ride_id: ride._id,
                 }
               );
             }
@@ -1065,7 +1065,7 @@ export const admin_cancel_ride = async (req: Request, res: Response) => {
           "Ride was cancelled by Igle",
           {
             type: "ride_cancelled",
-            rideId: ride._id,
+            ride_id: ride._id,
             by: "admin",
           }
         );
@@ -1077,7 +1077,7 @@ export const admin_cancel_ride = async (req: Request, res: Response) => {
           "Ride was cancelled by Igle",
           {
             type: "ride_cancelled",
-            rideId: ride._id,
+            ride_id: ride._id,
             by: "admin",
             role: "driver",
           }

@@ -466,7 +466,7 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                         console.log("Sending 'Driver on the way' push to tokens:", tokens);
                         const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Driver on the way", "A driver has accepted your ride", {
                             type: "ride_booking",
-                            rideId: ride._id,
+                            ride_id: ride._id,
                         });
                     }
                 }
@@ -540,13 +540,13 @@ const cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             if (riderTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "rider" ? "you" : "the driver"}`, {
                     type: "ride_cancelled",
-                    rideId: ride._id,
+                    ride_id: ride._id,
                 });
             }
             if (driverTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "driver" ? "you" : "rider"}`, {
                     type: "ride_cancelled",
-                    rideId: ride._id,
+                    ride_id: ride._id,
                     role: "driver",
                 });
             }
@@ -606,7 +606,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                         if (tokens.length) {
                             yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has arrived", "Your driver has arrived at pickup.", {
                                 type: "ride_booking",
-                                rideId: ride._id,
+                                ride_id: ride._id,
                             });
                         }
                     }
@@ -645,7 +645,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     if (tokens.length) {
                         yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has started", "Your driver has started the ride.", {
                             type: "ride_booking",
-                            rideId: ride._id,
+                            ride_id: ride._id,
                         });
                     }
                 }
@@ -679,7 +679,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                             console.log("Sending 'Ride completed' push to tokens:", tokens);
                             const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
                                 type: "ride_completed",
-                                rideId: ride._id,
+                                ride_id: ride._id,
                             });
                         }
                     }
@@ -945,14 +945,14 @@ const admin_cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, functi
             if (riderTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", "Ride was cancelled by Igle", {
                     type: "ride_cancelled",
-                    rideId: ride._id,
+                    ride_id: ride._id,
                     by: "admin",
                 });
             }
             if (driverTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", "Ride was cancelled by Igle", {
                     type: "ride_cancelled",
-                    rideId: ride._id,
+                    ride_id: ride._id,
                     by: "admin",
                     role: "driver",
                 });

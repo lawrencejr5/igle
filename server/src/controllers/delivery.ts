@@ -513,7 +513,7 @@ export const accept_delivery = async (
         "A driver has accepted to deliver your package",
         {
           type: "delivery_booking",
-          deliveryId: delivery._id,
+          delivery_id: delivery._id,
         }
       );
 
@@ -570,7 +570,7 @@ export const cancel_delivery = async (
         }`,
         {
           type: "delivery_cancelled",
-          deliveryId: delivery._id,
+          delivery_id: delivery._id,
         }
       );
 
@@ -583,7 +583,7 @@ export const cancel_delivery = async (
         }`,
         {
           type: "delivery_cancelled",
-          deliveryId: delivery._id,
+          delivery_id: delivery._id,
           role: "driver",
         }
       );
@@ -640,7 +640,7 @@ export const update_delivery_status = async (
             `Your driver has arrived`,
             {
               type: "delivery_booking",
-              deliveryId: delivery._id,
+              delivery_id: delivery._id,
             }
           );
 
@@ -675,7 +675,7 @@ export const update_delivery_status = async (
             `Your driver has picked up your delivery`,
             {
               type: "delivery_booking",
-              deliveryId: delivery._id,
+              delivery_id: delivery._id,
             }
           );
 
@@ -710,7 +710,7 @@ export const update_delivery_status = async (
             `Your delivery is on it's way to the receiver`,
             {
               type: "delivery_booking",
-              deliveryId: delivery._id,
+              delivery_id: delivery._id,
             }
           );
 
@@ -744,7 +744,7 @@ export const update_delivery_status = async (
             `Your delivery has been delivered`,
             {
               type: "delivery_completed",
-              deliveryId: delivery._id,
+              delivery_id: delivery._id,
             }
           );
 
@@ -1070,7 +1070,7 @@ export const admin_cancel_delivery = async (req: Request, res: Response) => {
           "This delivery was cancelled by Igle",
           {
             type: "delivery_cancelled",
-            deliveryId: delivery._id,
+            delivery_id: delivery._id,
             by: "admin",
           }
         );
@@ -1082,7 +1082,7 @@ export const admin_cancel_delivery = async (req: Request, res: Response) => {
           "This delivery was cancelled by Igle",
           {
             type: "delivery_cancelled",
-            deliveryId: delivery._id,
+            delivery_id: delivery._id,
             by: "admin",
             role: "driver",
           }

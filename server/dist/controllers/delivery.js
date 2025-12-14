@@ -486,7 +486,7 @@ const accept_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
         if (user_tokens.length > 0)
             yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery accepted", "A driver has accepted to deliver your package", {
                 type: "delivery_booking",
-                deliveryId: delivery._id,
+                delivery_id: delivery._id,
             });
         // Notify all drivers that this delivery has been taken so they drop the card
         server_1.io.emit("delivery_taken", { delivery_id });
@@ -522,12 +522,12 @@ const cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
         if (user_tokens.length > 0)
             yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "sender" ? "you" : "the driver"}`, {
                 type: "delivery_cancelled",
-                deliveryId: delivery._id,
+                delivery_id: delivery._id,
             });
         if (driver_tokens.length > 0)
             yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "driver" ? "you" : "the sender"}`, {
                 type: "delivery_cancelled",
-                deliveryId: delivery._id,
+                delivery_id: delivery._id,
                 role: "driver",
             });
         delivery.status = "cancelled";
@@ -570,7 +570,7 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 if (user_tokens.length > 0)
                     yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Driver arrived", `Your driver has arrived`, {
                         type: "delivery_booking",
-                        deliveryId: delivery._id,
+                        delivery_id: delivery._id,
                     });
                 delivery.status = "arrived";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { arrived_at: new Date() });
@@ -593,7 +593,7 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 if (user_tokens.length > 0)
                     yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery picked up", `Your driver has picked up your delivery`, {
                         type: "delivery_booking",
-                        deliveryId: delivery._id,
+                        delivery_id: delivery._id,
                     });
                 delivery.status = "picked_up";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { picked_up_at: new Date() });
@@ -616,7 +616,7 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 if (user_tokens.length > 0)
                     yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery in transit", `Your delivery is on it's way to the receiver`, {
                         type: "delivery_booking",
-                        deliveryId: delivery._id,
+                        delivery_id: delivery._id,
                     });
                 delivery.status = "in_transit";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { in_transit_at: new Date() });
@@ -635,7 +635,7 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 if (user_tokens.length > 0)
                     yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery delivered", `Your delivery has been delivered`, {
                         type: "delivery_completed",
-                        deliveryId: delivery._id,
+                        delivery_id: delivery._id,
                     });
                 // attempt to complete delivery (credit driver, record commission, etc.)
                 const result = yield (0, complete_delivery_1.complete_delivery)(delivery);
@@ -914,14 +914,14 @@ const admin_cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, fu
             if (senderTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery cancelled", "This delivery was cancelled by Igle", {
                     type: "delivery_cancelled",
-                    deliveryId: delivery._id,
+                    delivery_id: delivery._id,
                     by: "admin",
                 });
             }
             if (driverTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Delivery cancelled", "This delivery was cancelled by Igle", {
                     type: "delivery_cancelled",
-                    deliveryId: delivery._id,
+                    delivery_id: delivery._id,
                     by: "admin",
                     role: "driver",
                 });

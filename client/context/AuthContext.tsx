@@ -118,7 +118,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await AsyncStorage.setItem("token", data.token);
 
       await getUserData();
-      await registerPushToken();
 
       showNotification("Registration successful", "success");
     } catch (err: any) {
@@ -318,7 +317,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
 
       await getUserData();
-      await registerPushToken();
 
       // If user hasn't added a phone number, navigate to phone update
       const hasPhone = !!data.user?.phone;
@@ -411,6 +409,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         driver_application,
         is_driver,
       });
+      await registerPushToken();
       await getWalletBalance("User");
     } catch (err) {
       console.log("Failed to fetch user data:", err);
@@ -424,6 +423,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     try {
       const pushToken = await registerForPushNotificationsAsync();
       if (!pushToken) return;
+
+      const savedToken = await AsyncStorage.getItem("expoPushToken");
+      if (savedToken === pushToken) return;
 
       await AsyncStorage.setItem("expoPushToken", pushToken);
 
@@ -507,7 +509,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     // Unregister push token for this device (best-effort)
-    //   await unregisterPushToken();
+    await unregisterPushToken();
 
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
