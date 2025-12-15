@@ -10,7 +10,7 @@ import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 import { darkMapStyle } from "../../data/map.dark";
 
@@ -29,7 +29,11 @@ const BookDelivery = () => {
     deliveryRouteCoords,
     deliveryPickupMarker,
     deliveryDropoffMarker,
+    fetchUserActiveDelivery,
+    fetchUserOngoingDeliveries,
   } = useDeliverContext();
+
+  const { timestamp } = useLocalSearchParams();
 
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
 
@@ -37,6 +41,11 @@ const BookDelivery = () => {
   const loadMap = () => {
     setTracksViewChanges(false);
   };
+
+  useEffect(() => {
+    fetchUserActiveDelivery();
+    fetchUserOngoingDeliveries();
+  }, [timestamp]);
 
   useEffect(() => {
     if (!region) return;

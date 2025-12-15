@@ -19,7 +19,7 @@ import { useLoading } from "../../context/LoadingContext";
 import AppLoading from "../../loadings/AppLoading";
 import { useRideContext } from "../../context/RideContext";
 import { useAuthContext } from "../../context/AuthContext";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 const BookRide = () => {
   const { notification } = useNotificationContext();
@@ -41,13 +41,22 @@ const BookRide = () => {
     rideRouteCoords,
     ridePickupMarker,
     rideDestinationMarker,
+    getActiveRide,
+    getOngoingRide,
   } = useRideContext();
+
+  const { timestamp } = useLocalSearchParams();
 
   const { appLoading } = useLoading();
 
   useEffect(() => {
     getPlaceName(region.latitude, region.longitude);
   }, [region]);
+
+  useEffect(() => {
+    getActiveRide();
+    getOngoingRide();
+  }, [timestamp]);
 
   useEffect(() => {
     if (!region) return;

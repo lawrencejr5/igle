@@ -84,10 +84,20 @@ export const PushNotificationProvider: React.FC<
             }
           } else {
             if (data?.type === "ride_booking") {
-              router.push("/(book)/book_ride");
+              router.push({
+                pathname: "/(book)/book_ride",
+                params: {
+                  timestamp: Date.now(),
+                },
+              });
             }
             if (data?.type === "delivery_booking") {
-              router.push("/(book)/book_delivery");
+              router.push({
+                pathname: "/(book)/book_delivery",
+                params: {
+                  timestamp: Date.now(),
+                },
+              });
             }
 
             // Delivery cancelled or completed
