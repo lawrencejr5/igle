@@ -457,24 +457,21 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 rider_socket_id,
             });
         }
-        else {
-            // Rider is not connected via socket — send push notification
-            try {
-                if (ride && ride.rider) {
-                    const tokens = yield (0, get_id_2.get_user_push_tokens)(ride.rider);
-                    if (tokens.length) {
-                        console.log("Sending 'Driver on the way' push to tokens:", tokens);
-                        const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Driver on the way", "A driver has accepted your ride", {
-                            type: "ride_booking",
-                            ride_id: ride._id,
-                        });
-                    }
+        // Send notification to rider regardless of socket connection
+        try {
+            if (ride && ride.rider) {
+                const tokens = yield (0, get_id_2.get_user_push_tokens)(ride.rider);
+                if (tokens.length) {
+                    console.log("Sending 'Driver on the way' push to tokens:", tokens);
+                    const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Driver on the way", "A driver has accepted your ride", {
+                        type: "ride_booking",
+                        ride_id: ride._id,
+                    });
                 }
             }
-            catch (e) {
-                console.error("Failed to get/send rider push tokens on accept:", e);
-            }
-            console.log("socket not found");
+        }
+        catch (e) {
+            console.error("Failed to get/send rider push tokens on accept:", e);
         }
         server_1.io.emit("ride_taken", {
             ride_id,
@@ -537,12 +534,14 @@ const cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
                 : [];
             const driver_user_id = yield (0, get_id_1.get_driver_user_id)(String(ride.driver));
+            // Send notification to rider if tokens exist
             if (riderTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "rider" ? "you" : "the driver"}`, {
                     type: "ride_cancelled",
                     ride_id: ride._id,
                 });
             }
+            // Send notification to driver if tokens exist
             if (driverTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "driver" ? "you" : "rider"}`, {
                     type: "ride_cancelled",
@@ -601,18 +600,17 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     server_1.io.to(user_socket).emit("ride_arrival", {
                         msg: "Your ride has arrived",
                     });
-                else {
-                    try {
-                        if (tokens.length) {
-                            yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has arrived", "Your driver has arrived at pickup.", {
-                                type: "ride_booking",
-                                ride_id: ride._id,
-                            });
-                        }
+                // Send notification regardless of socket connection
+                try {
+                    if (tokens.length) {
+                        yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has arrived", "Your driver has arrived at pickup.", {
+                            type: "ride_booking",
+                            ride_id: ride._id,
+                        });
                     }
-                    catch (e) {
-                        console.error("Failed to send arrived push to rider:", e);
-                    }
+                }
+                catch (e) {
+                    console.error("Failed to send arrived push to rider:", e);
                 }
                 if (driver_socket)
                     server_1.io.to(driver_socket).emit("ride_arrival", {
@@ -641,13 +639,12 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                         msg: "Your ride has arrived",
                     });
                 }
-                else {
-                    if (tokens.length) {
-                        yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has started", "Your driver has started the ride.", {
-                            type: "ride_booking",
-                            ride_id: ride._id,
-                        });
-                    }
+                // Send notification regardless of socket connection
+                if (tokens.length) {
+                    yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has started", "Your driver has started the ride.", {
+                        type: "ride_booking",
+                        ride_id: ride._id,
+                    });
                 }
                 if (driver_socket)
                     server_1.io.to(driver_socket).emit("ride_in_progress", {
@@ -673,19 +670,18 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     server_1.io.to(user_socket).emit("ride_completed", {
                         msg: "Your ride has been completed",
                     });
-                else {
-                    try {
-                        if (tokens.length) {
-                            console.log("Sending 'Ride completed' push to tokens:", tokens);
-                            const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
-                                type: "ride_completed",
-                                ride_id: ride._id,
-                            });
-                        }
+                // Send notification regardless of socket connection
+                try {
+                    if (tokens.length) {
+                        console.log("Sending 'Ride completed' push to tokens:", tokens);
+                        const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
+                            type: "ride_completed",
+                            ride_id: ride._id,
+                        });
                     }
-                    catch (e) {
-                        console.error("Failed to send completed push to rider:", e);
-                    }
+                }
+                catch (e) {
+                    console.error("Failed to send completed push to rider:", e);
                 }
                 if (driver_socket)
                     server_1.io.to(driver_socket).emit("ride_completed", {

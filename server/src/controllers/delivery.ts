@@ -505,17 +505,16 @@ export const accept_delivery = async (
         driver_id,
       });
 
-    const user_tokens = await get_user_push_tokens(delivery.sender);
-    if (user_tokens.length > 0)
-      await sendNotification(
-        [String(delivery.sender)],
-        "Delivery accepted",
-        "A driver has accepted to deliver your package",
-        {
-          type: "delivery_booking",
-          delivery_id: delivery._id,
-        }
-      );
+    // Send notification regardless of socket connection
+    await sendNotification(
+      [String(delivery.sender)],
+      "Delivery accepted",
+      "A driver has accepted to deliver your package",
+      {
+        type: "delivery_booking",
+        delivery_id: delivery._id,
+      }
+    );
 
     // Notify all drivers that this delivery has been taken so they drop the card
     io.emit("delivery_taken", { delivery_id });
@@ -561,6 +560,7 @@ export const cancel_delivery = async (
 
     const driver_user_id = await get_driver_user_id(String(delivery.driver!));
 
+    // Send notification to sender if tokens exist
     if (user_tokens.length > 0)
       await sendNotification(
         [String(delivery.sender)],
@@ -574,6 +574,7 @@ export const cancel_delivery = async (
         }
       );
 
+    // Send notification to driver if tokens exist
     if (driver_tokens.length > 0)
       await sendNotification(
         [String(driver_user_id)],
@@ -633,16 +634,16 @@ export const update_delivery_status = async (
           });
         }
 
-        if (user_tokens.length > 0)
-          await sendNotification(
-            [String(delivery.sender)],
-            "Driver arrived",
-            `Your driver has arrived`,
-            {
-              type: "delivery_booking",
-              delivery_id: delivery._id,
-            }
-          );
+        // Send notification regardless of token presence
+        await sendNotification(
+          [String(delivery.sender)],
+          "Driver arrived",
+          `Your driver has arrived`,
+          {
+            type: "delivery_booking",
+            delivery_id: delivery._id,
+          }
+        );
 
         delivery.status = "arrived" as any;
         delivery.timestamps = {
@@ -668,16 +669,16 @@ export const update_delivery_status = async (
           });
         }
 
-        if (user_tokens.length > 0)
-          await sendNotification(
-            [String(delivery.sender)],
-            "Delivery picked up",
-            `Your driver has picked up your delivery`,
-            {
-              type: "delivery_booking",
-              delivery_id: delivery._id,
-            }
-          );
+        // Send notification regardless of token presence
+        await sendNotification(
+          [String(delivery.sender)],
+          "Delivery picked up",
+          `Your driver has picked up your delivery`,
+          {
+            type: "delivery_booking",
+            delivery_id: delivery._id,
+          }
+        );
 
         delivery.status = "picked_up" as any;
         delivery.timestamps = {
@@ -703,16 +704,16 @@ export const update_delivery_status = async (
           });
         }
 
-        if (user_tokens.length > 0)
-          await sendNotification(
-            [String(delivery.sender)],
-            "Delivery in transit",
-            `Your delivery is on it's way to the receiver`,
-            {
-              type: "delivery_booking",
-              delivery_id: delivery._id,
-            }
-          );
+        // Send notification regardless of token presence
+        await sendNotification(
+          [String(delivery.sender)],
+          "Delivery in transit",
+          `Your delivery is on it's way to the receiver`,
+          {
+            type: "delivery_booking",
+            delivery_id: delivery._id,
+          }
+        );
 
         delivery.status = "in_transit" as any;
         delivery.timestamps = {
@@ -737,16 +738,16 @@ export const update_delivery_status = async (
           delivered_at: new Date(),
         } as any;
 
-        if (user_tokens.length > 0)
-          await sendNotification(
-            [String(delivery.sender)],
-            "Delivery delivered",
-            `Your delivery has been delivered`,
-            {
-              type: "delivery_completed",
-              delivery_id: delivery._id,
-            }
-          );
+        // Send notification regardless of token presence
+        await sendNotification(
+          [String(delivery.sender)],
+          "Delivery delivered",
+          `Your delivery has been delivered`,
+          {
+            type: "delivery_completed",
+            delivery_id: delivery._id,
+          }
+        );
 
         // attempt to complete delivery (credit driver, record commission, etc.)
         const result = await complete_delivery(delivery as any);

@@ -482,12 +482,11 @@ const accept_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
                 delivery_id,
                 driver_id,
             });
-        const user_tokens = yield (0, get_id_1.get_user_push_tokens)(delivery.sender);
-        if (user_tokens.length > 0)
-            yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery accepted", "A driver has accepted to deliver your package", {
-                type: "delivery_booking",
-                delivery_id: delivery._id,
-            });
+        // Send notification regardless of socket connection
+        yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery accepted", "A driver has accepted to deliver your package", {
+            type: "delivery_booking",
+            delivery_id: delivery._id,
+        });
         // Notify all drivers that this delivery has been taken so they drop the card
         server_1.io.emit("delivery_taken", { delivery_id });
         delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { accepted_at: new Date() });
@@ -519,11 +518,13 @@ const cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
         const user_tokens = yield (0, get_id_1.get_user_push_tokens)(delivery.sender);
         const driver_tokens = yield (0, get_id_1.get_driver_push_tokens)(String(delivery.driver));
         const driver_user_id = yield (0, get_id_1.get_driver_user_id)(String(delivery.driver));
+        // Send notification to sender if tokens exist
         if (user_tokens.length > 0)
             yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "sender" ? "you" : "the driver"}`, {
                 type: "delivery_cancelled",
                 delivery_id: delivery._id,
             });
+        // Send notification to driver if tokens exist
         if (driver_tokens.length > 0)
             yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "driver" ? "you" : "the sender"}`, {
                 type: "delivery_cancelled",
@@ -567,11 +568,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         msg: "Delivery must be 'accepted' before driver can mark as arrived",
                     });
                 }
-                if (user_tokens.length > 0)
-                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Driver arrived", `Your driver has arrived`, {
-                        type: "delivery_booking",
-                        delivery_id: delivery._id,
-                    });
+                // Send notification regardless of token presence
+                yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Driver arrived", `Your driver has arrived`, {
+                    type: "delivery_booking",
+                    delivery_id: delivery._id,
+                });
                 delivery.status = "arrived";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { arrived_at: new Date() });
                 if (sender_socket)
@@ -590,11 +591,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         msg: "Payment must be completed before package can be picked up",
                     });
                 }
-                if (user_tokens.length > 0)
-                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery picked up", `Your driver has picked up your delivery`, {
-                        type: "delivery_booking",
-                        delivery_id: delivery._id,
-                    });
+                // Send notification regardless of token presence
+                yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery picked up", `Your driver has picked up your delivery`, {
+                    type: "delivery_booking",
+                    delivery_id: delivery._id,
+                });
                 delivery.status = "picked_up";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { picked_up_at: new Date() });
                 if (sender_socket)
@@ -613,11 +614,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         msg: "Payment must be completed before transit can start",
                     });
                 }
-                if (user_tokens.length > 0)
-                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery in transit", `Your delivery is on it's way to the receiver`, {
-                        type: "delivery_booking",
-                        delivery_id: delivery._id,
-                    });
+                // Send notification regardless of token presence
+                yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery in transit", `Your delivery is on it's way to the receiver`, {
+                    type: "delivery_booking",
+                    delivery_id: delivery._id,
+                });
                 delivery.status = "in_transit";
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { in_transit_at: new Date() });
                 if (sender_socket)
@@ -632,11 +633,11 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 }
                 // set delivered timestamp
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { delivered_at: new Date() });
-                if (user_tokens.length > 0)
-                    yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery delivered", `Your delivery has been delivered`, {
-                        type: "delivery_completed",
-                        delivery_id: delivery._id,
-                    });
+                // Send notification regardless of token presence
+                yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery delivered", `Your delivery has been delivered`, {
+                    type: "delivery_completed",
+                    delivery_id: delivery._id,
+                });
                 // attempt to complete delivery (credit driver, record commission, etc.)
                 const result = yield (0, complete_delivery_1.complete_delivery)(delivery);
                 if (!result.success) {
