@@ -8,13 +8,14 @@ import {
   Dimensions,
   PixelRatio,
   TextInput,
-  Image,
   Pressable,
   ActivityIndicator,
   Linking,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Image } from "expo-image";
+
 import { ScrollView } from "react-native-gesture-handler";
 
 import { Picker } from "@react-native-picker/picker";

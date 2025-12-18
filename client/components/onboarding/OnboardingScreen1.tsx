@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { Image } from "expo-image";
 
 const { width, height } = Dimensions.get("window");
 

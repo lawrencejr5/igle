@@ -1,11 +1,12 @@
 import {
-  Image,
   ScrollView,
   Text,
   TouchableWithoutFeedback,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState, useEffect, FC } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";

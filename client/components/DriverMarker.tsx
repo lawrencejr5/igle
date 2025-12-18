@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { View, Image, Animated, StyleSheet, Easing } from "react-native";
+import { View, Animated, StyleSheet, Easing } from "react-native";
+import { Image } from "expo-image";
+
 import { Marker } from "react-native-maps";
 
 type Coord = { latitude: number; longitude: number };

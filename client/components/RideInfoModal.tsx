@@ -6,8 +6,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
+
 import Feather from "@expo/vector-icons/Feather";
 
 type RideInfoModalProps = {

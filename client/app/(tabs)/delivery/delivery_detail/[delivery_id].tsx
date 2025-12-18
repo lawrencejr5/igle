@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import {
-  Image,
   ScrollView,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { Image } from "expo-image";
+
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";

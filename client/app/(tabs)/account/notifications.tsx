@@ -4,8 +4,9 @@ import {
   View,
   Pressable,
   ActivityIndicator,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useEffect } from "react";
 
 import { useActivityContext } from "../../../context/ActivityContext";

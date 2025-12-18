@@ -4,11 +4,12 @@ import {
   View,
   FlatList,
   TouchableOpacity,
-  Image,
   RefreshControl,
   ScrollView,
   Pressable,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState, useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";

@@ -4,9 +4,10 @@ import {
   View,
   ScrollView,
   Pressable,
-  Image,
   RefreshControl,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState, useEffect } from "react";
 import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";

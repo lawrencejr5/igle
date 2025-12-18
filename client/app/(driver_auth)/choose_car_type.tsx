@@ -1,11 +1,12 @@
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState } from "react";
 import Header from "../../components/driver_reg/Header";
 import { router } from "expo-router";

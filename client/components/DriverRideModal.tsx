@@ -4,8 +4,9 @@ import {
   View,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 
 import * as Linking from "expo-linking";

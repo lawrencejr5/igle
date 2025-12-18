@@ -2,7 +2,6 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   TouchableWithoutFeedback,
   Linking,
   ScrollView,
@@ -11,6 +10,8 @@ import {
   RefreshControl,
   FlatList,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState, useCallback, useEffect } from "react";
 
 import { router } from "expo-router";

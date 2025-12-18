@@ -1,9 +1,6 @@
-import {
-  StyleSheet,
-  View,
-  TouchableWithoutFeedback,
-  Image,
-} from "react-native";
+import { StyleSheet, View, TouchableWithoutFeedback } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState, useEffect, useMemo } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";

@@ -6,10 +6,11 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Image,
   ActivityIndicator,
   Pressable,
 } from "react-native";
+import { Image } from "expo-image";
+
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useCallback, useState } from "react";
 import * as ImagePicker from "expo-image-picker";

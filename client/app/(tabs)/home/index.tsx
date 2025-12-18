@@ -3,12 +3,14 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Image,
   ScrollView,
   Pressable,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+
+import { Image } from "expo-image";
+
 import React, { useState, useRef, useEffect } from "react";
 
 import * as Haptics from "expo-haptics";

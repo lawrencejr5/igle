@@ -2,13 +2,14 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   ScrollView,
   TouchableWithoutFeedback,
   Pressable,
   TouchableOpacity,
   RefreshControl,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState } from "react";
 
 import * as Haptics from "expo-haptics";

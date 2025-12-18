@@ -1,10 +1,6 @@
-import {
-  Image,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import { Image } from "expo-image";
+
 import React from "react";
 import { router } from "expo-router";
 import Header from "../../components/driver_reg/Header";

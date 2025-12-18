@@ -6,9 +6,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Image,
-  ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 

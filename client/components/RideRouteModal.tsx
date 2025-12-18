@@ -3,7 +3,6 @@ import {
   Text,
   View,
   TouchableWithoutFeedback,
-  Image,
   TextInput,
   FlatList,
   Pressable,
@@ -13,6 +12,8 @@ import {
   Dimensions,
   PixelRatio,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, {
   useState,
   useEffect,

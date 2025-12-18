@@ -8,8 +8,9 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
+
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";

@@ -2,11 +2,12 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   Pressable,
   Modal,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, {
   Dispatch,
   FC,

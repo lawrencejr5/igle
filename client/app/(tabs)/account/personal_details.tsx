@@ -3,11 +3,12 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   Modal,
   TextInput,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { Dispatch, SetStateAction, FC, useState } from "react";
 
 import { SafeAreaView } from "react-native-safe-area-context";

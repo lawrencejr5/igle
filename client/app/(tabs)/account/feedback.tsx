@@ -6,9 +6,10 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Image,
   ScrollView,
 } from "react-native";
+import { Image } from "expo-image";
+
 import { AntDesign } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";

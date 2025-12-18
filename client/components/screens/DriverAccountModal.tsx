@@ -4,10 +4,11 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+import { Image } from "expo-image";
+
 import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import EditProfileModal from "./EditProfileModal";

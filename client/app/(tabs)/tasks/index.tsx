@@ -4,8 +4,9 @@ import {
   View,
   ScrollView,
   RefreshControl,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState } from "react";
 import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";

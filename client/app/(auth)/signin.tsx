@@ -3,9 +3,10 @@ import {
   Text,
   TextInput,
   View,
-  Image,
   TouchableOpacity,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { useState } from "react";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";

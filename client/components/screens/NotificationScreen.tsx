@@ -4,9 +4,10 @@ import {
   View,
   TouchableWithoutFeedback,
   Modal,
-  Image,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
+
 import React, { FC } from "react";
 
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
