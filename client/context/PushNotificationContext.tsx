@@ -66,14 +66,12 @@ export const PushNotificationProvider: React.FC<
       Notifications.addNotificationReceivedListener((notification) => {
         setNotification(notification);
         // You can trigger custom logic here, like refreshing the 'Rides' list
-        console.log("Foreground notification received:", notification);
       });
 
     // 3. Listener: Handle user tapping on a notification
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
-        console.log("User interacted with notification. Payload:", data);
         try {
           if (data?.role === "driver") {
             if (data?.type === "delivery_cancelled") {

@@ -375,7 +375,7 @@ export const get_user_active_ride = async (
     const ride = await Ride.findOne({
       rider: user_id,
       status: { $in: ["pending", "accepted", "ongoing", "arrived", "expired"] },
-      scheduled: false,
+      // scheduled: false,
     })
       .sort({ createdAt: -1 })
       .populate({
@@ -484,8 +484,8 @@ export const accept_ride = async (
       if (ride && ride.rider) {
         const tokens = await get_user_push_tokens(ride.rider);
         if (tokens.length) {
-          console.log("Sending 'Driver on the way' push to tokens:", tokens);
-          const res = await sendNotification(
+          console.log("Sending 'Driver on the way' push notification");
+          await sendNotification(
             [String(ride.rider)],
             "Driver on the way",
             "A driver has accepted your ride",

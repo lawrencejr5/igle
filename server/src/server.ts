@@ -28,9 +28,10 @@ import ReportRouter from "./routes/report";
 import AdminRouter from "./routes/admin";
 import AppWalletRouter from "./routes/app_wallet";
 import SystemSettingsRouter from "./routes/system_settings";
+import RatingRouter from "./routes/rating";
 
 import { handle_socket_events } from "./sockets";
-import RatingRouter from "./routes/rating";
+import { agenda } from "./jobs/agenda";
 
 app.use(cors());
 app.use(express.json());
@@ -75,7 +76,9 @@ export { io };
 const start_server = async (): Promise<void> => {
   try {
     await connect_db(mongo_url);
-    http_server.listen(port, () =>
+    await agenda.start();
+
+    await http_server.listen(port, () =>
       console.log(`Connected! Server running at port ${port}...`)
     );
   } catch (err) {

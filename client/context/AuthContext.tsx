@@ -1,4 +1,3 @@
-import { StyleSheet, Text, View } from "react-native";
 import React, {
   useState,
   useEffect,
@@ -10,8 +9,6 @@ import React, {
 import axios from "axios";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
 
 import { jwtDecode } from "jwt-decode";
 

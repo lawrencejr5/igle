@@ -33,9 +33,6 @@ import {
   Ionicons,
   FontAwesome5,
   MaterialCommunityIcons,
-  Entypo,
-  Feather,
-  FontAwesome6,
 } from "@expo/vector-icons";
 
 import { useAuthContext } from "../context/AuthContext";
@@ -46,15 +43,12 @@ import { useWalletContext } from "../context/WalletContext";
 import { useHistoryContext } from "../context/HistoryContext";
 
 import * as Linking from "expo-linking";
-import * as Haptics from "expo-haptics";
 
 import RideRoute from "./RideRoute";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import ReportDriverModal from "./ReportDriverModal";
 import RideInfoModal from "./RideInfoModal";
 
-import { router, useNavigation } from "expo-router";
-import { useSavedPlaceContext } from "../context/SavedPlaceContext";
 import { useRatingContext } from "../context/RatingContext";
 import DriverCard, { DriverDetailsModal } from "./DriverCard";
 
@@ -124,24 +118,40 @@ const RideRouteModal = () => {
       // Don't override if user is actively tracking driver or ride
       if (rideStatus === "track_driver" || rideStatus === "track_ride") return;
 
-      if (
-        ongoingRideData.status === "pending" ||
-        ongoingRideData.status === "expired"
-      ) {
-        setRideStatus("searching");
-      }
-      if (ongoingRideData.status === "accepted") {
-        setRideStatus("accepted");
-      }
-      if (ongoingRideData.status === "arrived") {
-        if (ongoingRideData.payment_status === "paid") {
-          setRideStatus("paid");
-        } else {
-          setRideStatus("pay");
+      if (ongoingRideData.scheduled) {
+        if (
+          ongoingRideData.status === "pending" ||
+          ongoingRideData.status === "expired"
+        ) {
+          setRideStatus("searching");
         }
-      }
-      if (ongoingRideData.status === "ongoing") {
-        setRideStatus("paid");
+        if (ongoingRideData.status === "accepted") {
+          if (ongoingRideData.payment_status === "paid") {
+            setRideStatus("paid");
+          } else {
+            setRideStatus("accepted");
+          }
+        }
+      } else {
+        if (
+          ongoingRideData.status === "pending" ||
+          ongoingRideData.status === "expired"
+        ) {
+          setRideStatus("searching");
+        }
+        if (ongoingRideData.status === "accepted") {
+          setRideStatus("accepted");
+        }
+        if (ongoingRideData.status === "arrived") {
+          if (ongoingRideData.payment_status === "paid") {
+            setRideStatus("paid");
+          } else {
+            setRideStatus("pay");
+          }
+        }
+        if (ongoingRideData.status === "ongoing") {
+          setRideStatus("paid");
+        }
       }
     } else {
       // Don't override if user is already in choosing_car state (e.g., from saved places)
@@ -978,8 +988,13 @@ const SearchingModal = () => {
 const AcceptedModal = () => {
   const { region, mapRef } = useMapContext();
 
-  const { cancelling, cancelRideRequest, ongoingRideData, setRideStatus } =
-    useRideContext();
+  const {
+    cancelling,
+    cancelRideRequest,
+    ongoingRideData,
+    setRideStatus,
+    payForRide,
+  } = useRideContext();
 
   const { showNotification } = useNotificationContext();
 
@@ -1012,6 +1027,8 @@ const AcceptedModal = () => {
     }, 1000);
   };
 
+  const { rideDetails } = useMapContext();
+
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -1019,33 +1036,61 @@ const AcceptedModal = () => {
       </Text>
 
       <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
-        This driver is on his way...
+        {ongoingRideData?.scheduled
+          ? "Pay for the ride to schedule it"
+          : "This driver is on his way..."}
       </Text>
 
       {/* Ride request card */}
       {ongoingRideData && <RideRequestCard />}
 
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={{
-          width: "100%",
-          padding: 10,
-          borderRadius: 50,
-          backgroundColor: "#fff",
-          marginTop: 20,
-        }}
-        onPress={track_driver}
-      >
-        <Text
+      {ongoingRideData?.scheduled ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
           style={{
-            fontFamily: "raleway-bold",
-            color: "#121212",
-            textAlign: "center",
+            width: "100%",
+            padding: 10,
+            borderRadius: 50,
+            backgroundColor: "#fff",
+            marginTop: 20,
+          }}
+          onPress={() => {
+            setRideStatus("paying");
           }}
         >
-          Track driver
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={{
+              fontFamily: "raleway-bold",
+              color: "#121212",
+              textAlign: "center",
+            }}
+          >
+            Pay for ride (NGN {rideDetails?.amount})
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={{
+            width: "100%",
+            padding: 10,
+            borderRadius: 50,
+            backgroundColor: "#fff",
+            marginTop: 20,
+          }}
+          onPress={track_driver}
+        >
+          <Text
+            style={{
+              fontFamily: "raleway-bold",
+              color: "#121212",
+              textAlign: "center",
+            }}
+          >
+            Track driver
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
         <Text
@@ -1136,27 +1181,51 @@ const PayModal = () => {
 
       <RideRequestCard />
 
-      <Pressable
-        style={{
-          marginVertical: 50,
-          padding: 10,
-          borderRadius: 30,
-          backgroundColor: "#fff",
-        }}
-        onPress={() => {
-          setRideStatus("paying");
-        }}
-      >
-        <Text
+      {ongoingRideData?.payment_status === "paid" ? (
+        <Pressable
           style={{
-            textAlign: "center",
-            fontFamily: "raleway-bold",
-            color: "#121212",
+            marginVertical: 50,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
+          }}
+          onPress={() => {
+            setRideStatus("paid");
           }}
         >
-          Pay NGN {ongoingRideData?.fare.toLocaleString()}
-        </Text>
-      </Pressable>
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            I have paid! 😁
+          </Text>
+        </Pressable>
+      ) : (
+        <Pressable
+          style={{
+            marginVertical: 50,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
+          }}
+          onPress={() => {
+            setRideStatus("paying");
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            Pay NGN {ongoingRideData?.fare.toLocaleString()}
+          </Text>
+        </Pressable>
+      )}
     </>
   );
 };
@@ -1283,11 +1352,11 @@ const PaidModal = () => {
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
-        {pickupTime === "later" || ongoingRideData?.scheduled_time
+        {ongoingRideData?.scheduled
           ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
           : "Alright, hang tight, we'll take it from here..."}
       </Text>
-      {pickupTime === "later" || ongoingRideData?.scheduled_time ? (
+      {ongoingRideData?.scheduled ? (
         <TouchableOpacity
           activeOpacity={0.7}
           style={{
@@ -1516,12 +1585,13 @@ const RateModal = () => {
   const { rating, review, setRating, setReview, createRating, ratingLoading } =
     useRatingContext();
 
-  const { resetRide, ongoingRideData } = useRideContext();
+  const { resetRide, ongoingRideData, getActiveRide } = useRideContext();
 
   const rate_driver = async () => {
     try {
       ongoingRideData &&
         (await createRating(ongoingRideData._id, ongoingRideData.driver._id));
+      await getActiveRide();
       resetRide();
     } catch (error) {
       console.log(error);
@@ -1652,7 +1722,10 @@ const RateModal = () => {
         >
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={resetRide}
+            onPress={async () => {
+              await getActiveRide();
+              resetRide();
+            }}
             style={{
               backgroundColor: "transparent",
               borderColor: "#fff",
@@ -1977,18 +2050,9 @@ const RideRequestCard = () => {
         </Text>
         <Text style={styles.priceText}>
           {ongoingRideData?.fare.toLocaleString()} NGN
+          {ongoingRideData?.payment_status === "paid" ? " (Paid)" : undefined}
         </Text>
       </View>
-      {/* <Text
-          style={{
-            marginVertical: 20,
-            color: "#fff",
-            fontFamily: "raleway-regular",
-            fontSize: 12,
-          }}
-        >
-          *Please ensure the driver has arrived before paying for this ride
-        </Text> */}
     </View>
   );
 };
@@ -2203,7 +2267,7 @@ const styles = StyleSheet.create({
   priceText: {
     color: "#fff",
     fontFamily: "poppins-bold",
-    fontSize: 18,
+    fontSize: 16,
   },
   actionBtnsRow: {
     marginTop: 20,

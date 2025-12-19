@@ -54,6 +54,7 @@ const Home = () => {
 
   const { signedIn, getUserData } = useAuthContext();
   const {
+    rideStatus,
     setRideStatus,
     ongoingRideData,
     ongoingRide,
@@ -83,6 +84,11 @@ const Home = () => {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    if (rideStatus === "booking") return;
+    getOngoingActivity();
+  }, [rideStatus]);
 
   // Logic to determine ongoing activity priority
   const getOngoingActivity = (): {
@@ -500,6 +506,8 @@ const OngoingCard = ({
         status:
           rideData.status === "expired"
             ? "timed out"
+            : rideData.scheduled
+            ? "scheduled"
             : rideData.status || "pending",
         driver: rideData.driver?.user?.name || "Driver",
       };

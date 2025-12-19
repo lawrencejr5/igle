@@ -66,6 +66,7 @@ interface Ride {
   status: RideStatus;
   fare: number;
   payment_status: string;
+  scheduled: boolean;
   scheduled_time?: Date;
   createdAt: Date;
   driver: {
@@ -230,8 +231,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       try {
         await fetchOngoingRideData(ride_id);
         await getDriverData(driver_id);
+        await getActiveRide();
         setRideStatus("accepted");
-        console.log("accepted", data);
       } catch (error: any) {
         throw new Error("An error occured");
       }
@@ -253,13 +254,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     };
 
     const onRideArrival = async (data: any) => {
+      await getActiveRide();
       showNotification("Your ride has arrived", "success");
       setRideStatus("pay");
     };
 
     const onRideStarted = async (data: any) => {
+      await getActiveRide();
       showNotification("Your ride has started", "success");
-      console.log("Your ride has started");
     };
 
     const onRideCompleted = async (data: any) => {
@@ -268,6 +270,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
       await getUserCompletedRides();
       await fetchActivities();
+      // await getActiveRide();
 
       if (region) mapRef.current.animateToRegion(region, 1000);
     };
