@@ -8,6 +8,7 @@ interface WalletInput {
   type: "funding" | "ride_payment" | "delivery_payment" | "payout";
   channel: "card" | "transfer" | "cash" | "wallet";
   ride_id?: Types.ObjectId;
+  delivery_id?: Types.ObjectId;
   reference?: string;
   status?: "pending" | "success" | "failed";
   metadata?: Record<string, any>;
@@ -37,6 +38,7 @@ export const credit_wallet = async (reference: string) => {
 export const debit_wallet = async ({
   wallet_id,
   ride_id,
+  delivery_id,
   type,
   amount,
   reference,
@@ -57,7 +59,8 @@ export const debit_wallet = async ({
     amount,
     status,
     channel: "wallet",
-    ride_id,
+    ride_id: ride_id && ride_id,
+    delivery_id: delivery_id && delivery_id,
     reference,
     metadata,
   });

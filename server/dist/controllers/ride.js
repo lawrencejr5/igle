@@ -751,6 +751,23 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         catch (e) {
             console.error("Failed to emit paid_for_ride socket to driver:", e);
         }
+        // Send push notification to driver when payment is made
+        if (ride === null || ride === void 0 ? void 0 : ride.driver) {
+            try {
+                const driver_user_id = yield (0, get_id_1.get_driver_user_id)(ride.driver);
+                const driver_tokens = yield (0, get_id_2.get_driver_push_tokens)(ride.driver.toString());
+                if (driver_tokens.length > 0) {
+                    yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Payment received", "Rider has paid for the ride", {
+                        type: "ride_payment",
+                        ride_id: ride._id,
+                        role: "driver",
+                    });
+                }
+            }
+            catch (e) {
+                console.error("Failed to send payment notification to driver:", e);
+            }
+        }
         res.status(200).json({ msg: "Payment successful", transaction });
     }
     catch (err) {

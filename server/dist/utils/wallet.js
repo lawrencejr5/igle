@@ -33,7 +33,7 @@ const credit_wallet = (reference) => __awaiter(void 0, void 0, void 0, function*
     return { balance: wallet.balance, transaction };
 });
 exports.credit_wallet = credit_wallet;
-const debit_wallet = (_a) => __awaiter(void 0, [_a], void 0, function* ({ wallet_id, ride_id, type, amount, reference, status = "success", metadata, }) {
+const debit_wallet = (_a) => __awaiter(void 0, [_a], void 0, function* ({ wallet_id, ride_id, delivery_id, type, amount, reference, status = "success", metadata, }) {
     const wallet = yield wallet_1.default.findById(wallet_id);
     if (!wallet)
         throw new Error("no_wallet");
@@ -47,7 +47,8 @@ const debit_wallet = (_a) => __awaiter(void 0, [_a], void 0, function* ({ wallet
         amount,
         status,
         channel: "wallet",
-        ride_id,
+        ride_id: ride_id && ride_id,
+        delivery_id: delivery_id && delivery_id,
         reference,
         metadata,
     });

@@ -801,7 +801,7 @@ export const pay_for_delivery = async (
       amount: delivery.fare,
       type: "delivery_payment",
       channel: "wallet",
-      ride_id: new Types.ObjectId(delivery._id as string),
+      delivery_id: new Types.ObjectId(delivery._id as string),
       reference: (
         await import("../utils/gen_unique_ref")
       ).generate_unique_reference(),
@@ -819,6 +819,29 @@ export const pay_for_delivery = async (
       );
       if (driver_socket) {
         io.to(driver_socket).emit("delivery_paid", { delivery_id });
+      }
+
+      // Send push notification to driver
+      try {
+        const driver_user_id = await get_driver_user_id(delivery.driver);
+        const driver_tokens = await get_driver_push_tokens(
+          delivery.driver.toString()
+        );
+
+        if (driver_tokens.length > 0) {
+          await sendNotification(
+            [String(driver_user_id)],
+            "Payment received",
+            "Sender has paid for the delivery",
+            {
+              type: "delivery_payment",
+              delivery_id: delivery._id,
+              role: "driver",
+            }
+          );
+        }
+      } catch (e) {
+        console.error("Failed to send payment notification to driver:", e);
       }
     }
 
