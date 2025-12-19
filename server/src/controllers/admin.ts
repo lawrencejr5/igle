@@ -214,7 +214,7 @@ export const upload_profile_pic = async (req: Request, res: Response) => {
       }
     }
 
-    admin.profile_pic = uploadedFile.url;
+    admin.profile_pic = uploadedFile.secure_url;
     admin.profile_pic_public_id = uploadedFile.public_id;
     await admin.save();
 

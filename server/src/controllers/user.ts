@@ -267,7 +267,7 @@ export const upload_profile_pic = async (req: Request, res: Response) => {
       await cloudinary.uploader.destroy(user.profile_pic_public_id);
     }
 
-    user.profile_pic = uploadedFile.url;
+    user.profile_pic = uploadedFile.secure_url;
     user.profile_pic_public_id = uploadedFile.public_id;
 
     await user.save();

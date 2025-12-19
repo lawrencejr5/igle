@@ -24,6 +24,7 @@ const uploadToCloudinary = (filePath, folder) => __awaiter(void 0, void 0, void 
         });
         return {
             url: uploaded.url,
+            secure_url: uploaded.secure_url,
             public_id: uploaded.public_id,
         };
     }

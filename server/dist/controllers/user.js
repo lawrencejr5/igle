@@ -287,7 +287,7 @@ const upload_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (user.profile_pic_public_id) {
             yield upload_1.cloudinary.uploader.destroy(user.profile_pic_public_id);
         }
-        user.profile_pic = uploadedFile.url;
+        user.profile_pic = uploadedFile.secure_url;
         user.profile_pic_public_id = uploadedFile.public_id;
         yield user.save();
         res.status(201).json({ msg: "Profile pic has been updated" });

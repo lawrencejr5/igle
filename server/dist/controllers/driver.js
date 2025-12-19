@@ -138,7 +138,7 @@ const upload_driver_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0
             // remove multer temp file
             yield safeUnlink(filePath);
         }
-        if (!uploaded || !uploaded.url) {
+        if (!uploaded || !uploaded.secure_url) {
             res.status(500).json({ msg: "Failed to upload image" });
             return;
         }
@@ -148,7 +148,7 @@ const upload_driver_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0
             return;
         }
         // Save new profile image URL
-        driver.profile_img = uploaded.url;
+        driver.profile_img = uploaded.secure_url;
         yield driver.save();
         res
             .status(200)
@@ -357,8 +357,8 @@ const update_vehicle_info = (req, res) => __awaiter(void 0, void 0, void 0, func
             const filePath = files.vehicle_exterior[0].path;
             try {
                 const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/vehicle");
-                if (uploaded && uploaded.url)
-                    exterior_image_url = uploaded.url;
+                if (uploaded && uploaded.secure_url)
+                    exterior_image_url = uploaded.secure_url;
             }
             finally {
                 yield safeUnlink(filePath);
@@ -372,8 +372,8 @@ const update_vehicle_info = (req, res) => __awaiter(void 0, void 0, void 0, func
             const filePath = files.vehicle_interior[0].path;
             try {
                 const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/vehicle");
-                if (uploaded && uploaded.url)
-                    interior_image_url = uploaded.url;
+                if (uploaded && uploaded.secure_url)
+                    interior_image_url = uploaded.secure_url;
             }
             finally {
                 yield safeUnlink(filePath);
@@ -429,8 +429,8 @@ const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, fu
             const filePath = files.license_front[0].path;
             try {
                 const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
-                if (uploaded && uploaded.url)
-                    front_image_url = uploaded.url;
+                if (uploaded && uploaded.secure_url)
+                    front_image_url = uploaded.secure_url;
             }
             finally {
                 yield safeUnlink(filePath);
@@ -443,8 +443,8 @@ const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, fu
             const filePath = files.license_back[0].path;
             try {
                 const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
-                if (uploaded && uploaded.url)
-                    back_image_url = uploaded.url;
+                if (uploaded && uploaded.secure_url)
+                    back_image_url = uploaded.secure_url;
             }
             finally {
                 yield safeUnlink(filePath);
@@ -456,8 +456,8 @@ const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, fu
             const filePath = selfieFile.path;
             try {
                 const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
-                if (uploaded && uploaded.url)
-                    selfie_image_url = uploaded.url;
+                if (uploaded && uploaded.secure_url)
+                    selfie_image_url = uploaded.secure_url;
             }
             finally {
                 yield safeUnlink(filePath);
@@ -566,8 +566,8 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
             const filePath = files.profile_img[0].path;
             try {
                 const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_profile");
-                if (uploaded && uploaded.url)
-                    updateData.profile_img = uploaded.url;
+                if (uploaded && uploaded.secure_url)
+                    updateData.profile_img = uploaded.secure_url;
             }
             finally {
                 yield safeUnlink(filePath);
@@ -586,8 +586,8 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 const filePath = files.vehicle_exterior[0].path;
                 try {
                     const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/vehicle");
-                    if (uploaded && uploaded.url)
-                        vehicleData.exterior_image = uploaded.url;
+                    if (uploaded && uploaded.secure_url)
+                        vehicleData.exterior_image = uploaded.secure_url;
                 }
                 finally {
                     yield safeUnlink(filePath);
@@ -601,8 +601,8 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 const filePath = files.vehicle_interior[0].path;
                 try {
                     const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/vehicle");
-                    if (uploaded && uploaded.url)
-                        vehicleData.interior_image = uploaded.url;
+                    if (uploaded && uploaded.secure_url)
+                        vehicleData.interior_image = uploaded.secure_url;
                 }
                 finally {
                     yield safeUnlink(filePath);
@@ -624,8 +624,8 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 const filePath = files.license_front[0].path;
                 try {
                     const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
-                    if (uploaded && uploaded.url)
-                        licenceData.front_image = uploaded.url;
+                    if (uploaded && uploaded.secure_url)
+                        licenceData.front_image = uploaded.secure_url;
                 }
                 finally {
                     yield safeUnlink(filePath);
@@ -639,8 +639,8 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 const filePath = files.license_back[0].path;
                 try {
                     const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
-                    if (uploaded && uploaded.url)
-                        licenceData.back_image = uploaded.url;
+                    if (uploaded && uploaded.secure_url)
+                        licenceData.back_image = uploaded.secure_url;
                 }
                 finally {
                     yield safeUnlink(filePath);
@@ -654,8 +654,8 @@ const update_driver_info = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 const filePath = files.selfie_with_license[0].path;
                 try {
                     const uploaded = yield (0, upload_file_1.uploadToCloudinary)(filePath, "igle_images/driver_license");
-                    if (uploaded && uploaded.url)
-                        licenceData.selfie_with_licence = uploaded.url;
+                    if (uploaded && uploaded.secure_url)
+                        licenceData.selfie_with_licence = uploaded.secure_url;
                 }
                 finally {
                     yield safeUnlink(filePath);

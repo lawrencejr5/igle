@@ -110,7 +110,7 @@ export const upload_driver_profile_pic = async (
       await safeUnlink(filePath);
     }
 
-    if (!uploaded || !uploaded.url) {
+    if (!uploaded || !uploaded.secure_url) {
       res.status(500).json({ msg: "Failed to upload image" });
       return;
     }
@@ -122,7 +122,7 @@ export const upload_driver_profile_pic = async (
     }
 
     // Save new profile image URL
-    driver.profile_img = uploaded.url;
+    driver.profile_img = uploaded.secure_url;
     await driver.save();
 
     res
@@ -380,7 +380,8 @@ export const update_vehicle_info = async (
           filePath,
           "igle_images/vehicle"
         );
-        if (uploaded && uploaded.url) exterior_image_url = uploaded.url;
+        if (uploaded && uploaded.secure_url)
+          exterior_image_url = uploaded.secure_url;
       } finally {
         await safeUnlink(filePath);
       }
@@ -399,7 +400,8 @@ export const update_vehicle_info = async (
           filePath,
           "igle_images/vehicle"
         );
-        if (uploaded && uploaded.url) interior_image_url = uploaded.url;
+        if (uploaded && uploaded.secure_url)
+          interior_image_url = uploaded.secure_url;
       } finally {
         await safeUnlink(filePath);
       }
@@ -478,7 +480,8 @@ export const update_driver_license = async (
           filePath,
           "igle_images/driver_license"
         );
-        if (uploaded && uploaded.url) front_image_url = uploaded.url;
+        if (uploaded && uploaded.secure_url)
+          front_image_url = uploaded.secure_url;
       } finally {
         await safeUnlink(filePath);
       }
@@ -496,7 +499,8 @@ export const update_driver_license = async (
           filePath,
           "igle_images/driver_license"
         );
-        if (uploaded && uploaded.url) back_image_url = uploaded.url;
+        if (uploaded && uploaded.secure_url)
+          back_image_url = uploaded.secure_url;
       } finally {
         await safeUnlink(filePath);
       }
@@ -512,7 +516,8 @@ export const update_driver_license = async (
           filePath,
           "igle_images/driver_license"
         );
-        if (uploaded && uploaded.url) selfie_image_url = uploaded.url;
+        if (uploaded && uploaded.secure_url)
+          selfie_image_url = uploaded.secure_url;
       } finally {
         await safeUnlink(filePath);
       }
@@ -655,7 +660,8 @@ export const update_driver_info = async (
           filePath,
           "igle_images/driver_profile"
         );
-        if (uploaded && uploaded.url) updateData.profile_img = uploaded.url;
+        if (uploaded && uploaded.secure_url)
+          updateData.profile_img = uploaded.secure_url;
       } finally {
         await safeUnlink(filePath);
       }
@@ -682,8 +688,8 @@ export const update_driver_info = async (
             filePath,
             "igle_images/vehicle"
           );
-          if (uploaded && uploaded.url)
-            vehicleData.exterior_image = uploaded.url;
+          if (uploaded && uploaded.secure_url)
+            vehicleData.exterior_image = uploaded.secure_url;
         } finally {
           await safeUnlink(filePath);
         }
@@ -702,8 +708,8 @@ export const update_driver_info = async (
             filePath,
             "igle_images/vehicle"
           );
-          if (uploaded && uploaded.url)
-            vehicleData.interior_image = uploaded.url;
+          if (uploaded && uploaded.secure_url)
+            vehicleData.interior_image = uploaded.secure_url;
         } finally {
           await safeUnlink(filePath);
         }
@@ -735,7 +741,8 @@ export const update_driver_info = async (
             filePath,
             "igle_images/driver_license"
           );
-          if (uploaded && uploaded.url) licenceData.front_image = uploaded.url;
+          if (uploaded && uploaded.secure_url)
+            licenceData.front_image = uploaded.secure_url;
         } finally {
           await safeUnlink(filePath);
         }
@@ -754,7 +761,8 @@ export const update_driver_info = async (
             filePath,
             "igle_images/driver_license"
           );
-          if (uploaded && uploaded.url) licenceData.back_image = uploaded.url;
+          if (uploaded && uploaded.secure_url)
+            licenceData.back_image = uploaded.secure_url;
         } finally {
           await safeUnlink(filePath);
         }
@@ -773,8 +781,8 @@ export const update_driver_info = async (
             filePath,
             "igle_images/driver_license"
           );
-          if (uploaded && uploaded.url)
-            licenceData.selfie_with_licence = uploaded.url;
+          if (uploaded && uploaded.secure_url)
+            licenceData.selfie_with_licence = uploaded.secure_url;
         } finally {
           await safeUnlink(filePath);
         }

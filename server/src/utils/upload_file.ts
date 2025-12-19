@@ -7,7 +7,7 @@ import { cloudinary } from "../middleware/upload";
 export const uploadToCloudinary = async (
   filePath?: string,
   folder?: string
-): Promise<{ url: string; public_id: string } | null> => {
+): Promise<{ url: string; secure_url: string; public_id: string } | null> => {
   if (!filePath) return null;
   try {
     const uploaded = await cloudinary.uploader.upload(filePath, {
@@ -15,6 +15,7 @@ export const uploadToCloudinary = async (
     });
     return {
       url: uploaded.url,
+      secure_url: uploaded.secure_url,
       public_id: uploaded.public_id as string,
     };
   } catch (err) {

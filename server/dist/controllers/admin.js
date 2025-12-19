@@ -207,7 +207,7 @@ const upload_profile_pic = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 console.warn("Failed to destroy old admin profile pic", err);
             }
         }
-        admin.profile_pic = uploadedFile.url;
+        admin.profile_pic = uploadedFile.secure_url;
         admin.profile_pic_public_id = uploadedFile.public_id;
         yield admin.save();
         res.status(201).json({

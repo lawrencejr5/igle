@@ -36,7 +36,7 @@ const add_feedback = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     catch (e) {
                         /* ignore */
                     }
-                    return (resu === null || resu === void 0 ? void 0 : resu.url) || null;
+                    return (resu === null || resu === void 0 ? void 0 : resu.secure_url) || null;
                 }
                 catch (e) {
                     console.error("Failed to upload feedback image:", e);
@@ -139,9 +139,7 @@ const get_all_feedbacks = (req, res) => __awaiter(void 0, void 0, void 0, functi
         const total = feedbacks.length;
         const paginatedFeedbacks = feedbacks.slice(skip, skip + limit);
         const pages = Math.ceil(total / limit);
-        return res
-            .status(200)
-            .json({
+        return res.status(200).json({
             msg: "success",
             feedbacks: paginatedFeedbacks,
             total,

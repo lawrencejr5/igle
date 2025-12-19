@@ -23,7 +23,7 @@ export const add_feedback = async (req: Request, res: Response) => {
             } catch (e) {
               /* ignore */
             }
-            return resu?.url || null;
+            return resu?.secure_url || null;
           } catch (e) {
             console.error("Failed to upload feedback image:", e);
             return null;
@@ -133,15 +133,13 @@ export const get_all_feedbacks = async (req: Request, res: Response) => {
     const paginatedFeedbacks = feedbacks.slice(skip, skip + limit);
 
     const pages = Math.ceil(total / limit);
-    return res
-      .status(200)
-      .json({
-        msg: "success",
-        feedbacks: paginatedFeedbacks,
-        total,
-        page,
-        pages,
-      });
+    return res.status(200).json({
+      msg: "success",
+      feedbacks: paginatedFeedbacks,
+      total,
+      page,
+      pages,
+    });
   } catch (err) {
     console.error("get_all_feedbacks error:", err);
     res.status(500).json({ msg: "Server error." });
