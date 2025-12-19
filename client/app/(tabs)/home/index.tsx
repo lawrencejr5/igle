@@ -55,6 +55,7 @@ const Home = () => {
   const { signedIn, getUserData } = useAuthContext();
   const {
     rideStatus,
+    setPickupTime,
     setRideStatus,
     ongoingRideData,
     ongoingRide,
@@ -86,7 +87,6 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (rideStatus === "booking") return;
     getOngoingActivity();
   }, [rideStatus]);
 
@@ -351,7 +351,7 @@ const Home = () => {
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             setRideStatus("booking");
-
+                            setPickupTime("later");
                             router.push("../(book)/book_ride");
                           }}
                         >

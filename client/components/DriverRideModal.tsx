@@ -55,7 +55,14 @@ const DriverRideModal = () => {
       setJobType("ride");
       switch (ongoingRideData.status) {
         case "accepted":
-          setDriveStatus("accepted");
+          if (
+            ongoingRideData.scheduled &&
+            ongoingRideData.payment_status === "paid"
+          ) {
+            setDriveStatus("searching");
+          } else {
+            setDriveStatus("accepted");
+          }
           break;
         case "arrived":
           setDriveStatus("arrived");
@@ -434,11 +441,17 @@ const IncomingModal = () => {
 };
 
 const AcceptedModal = () => {
-  const { ongoingRideData, setDriveStatus } = useDriverContext();
+  const { ongoingRideData, setDriveStatus, setIncomingRideData } =
+    useDriverContext();
+  const { showNotification } = useNotificationContext();
+
+  const paid = ongoingRideData?.payment_status === "paid";
 
   return (
     <>
-      <Text style={styles.rideStatusText}>Ongoing ride</Text>
+      <Text style={styles.rideStatusText}>
+        {ongoingRideData?.scheduled_time ? "Scheduled ride" : "Ongoing ride"}
+      </Text>
 
       {/* Ride request card */}
       <View style={styles.rideRequestCard}>
@@ -495,13 +508,44 @@ const AcceptedModal = () => {
         </Text>
 
         {/* Action btns */}
-
         <View style={styles.navigateBtnRow}>
-          <TouchableWithoutFeedback onPress={() => setDriveStatus("arriving")}>
-            <View style={styles.navigateBtn}>
+          {ongoingRideData?.scheduled ? (
+            <TouchableOpacity
+              style={[styles.navigateBtn, { opacity: !paid ? 0.7 : 1 }]}
+              onPress={() => {
+                showNotification("Ride schedule confirmed", "success");
+                setDriveStatus("searching");
+                setIncomingRideData(null);
+              }}
+              disabled={!paid}
+            >
+              <Text style={styles.navigateBtnText}>{"Confirm schedule"}</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.navigateBtn}
+              onPress={() => setDriveStatus("arriving")}
+            >
               <Text style={styles.navigateBtnText}>Navigate to pickup</Text>
-            </View>
-          </TouchableWithoutFeedback>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={{ padding: 10, marginTop: 10 }}
+            onPress={() => {
+              setDriveStatus("searching");
+              setIncomingRideData(null);
+            }}
+          >
+            <Text
+              style={{
+                color: "#ff0000",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              Cancel ride
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </>

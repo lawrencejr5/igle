@@ -55,6 +55,7 @@ interface Ride {
   status: RideStatus;
   fare: number;
   payment_status: string;
+  scheduled?: boolean;
   scheduled_time?: Date;
   driver: {
     _id: string;
