@@ -554,20 +554,16 @@ export const cancel_delivery = async (
       io.to(driver_socket).emit("delivery_cancel", { reason, by, delivery_id });
 
     const user_tokens = await get_user_push_tokens(delivery.sender);
-    const driver_tokens = await get_driver_push_tokens(
-      String(delivery.driver!)
-    );
+    const driver_tokens = await get_driver_push_tokens(delivery.driver!);
 
-    const driver_user_id = await get_driver_user_id(String(delivery.driver!));
+    const driver_user_id = await get_driver_user_id(delivery.driver!);
 
     // Send notification to sender if tokens exist
     if (user_tokens.length > 0)
       await sendNotification(
         [String(delivery.sender)],
         "Delivery cancelled",
-        `Delivery was cancelled by ${
-          delivery.cancelled!.by === "sender" ? "you" : "the driver"
-        }`,
+        `Delivery was cancelled by ${by === "sender" ? "you" : "the driver"}`,
         {
           type: "delivery_cancelled",
           delivery_id: delivery._id,
@@ -579,9 +575,7 @@ export const cancel_delivery = async (
       await sendNotification(
         [String(driver_user_id)],
         "Delivery cancelled",
-        `Delivery was cancelled by ${
-          delivery.cancelled!.by === "driver" ? "you" : "the sender"
-        }`,
+        `Delivery was cancelled by ${by === "driver" ? "you" : "the sender"}`,
         {
           type: "delivery_cancelled",
           delivery_id: delivery._id,
@@ -599,6 +593,7 @@ export const cancel_delivery = async (
 
     res.status(200).json({ msg: "Delivery cancelled successfully.", delivery });
   } catch (err: any) {
+    console.log(err);
     res.status(500).json({ msg: "Server error.", error: err });
   }
 };
@@ -1054,7 +1049,7 @@ export const admin_cancel_delivery = async (req: Request, res: Response) => {
     delivery.cancelled = { by: "admin", reason } as any;
     await delivery.save();
 
-    const driver_user_id = await get_driver_user_id(String(delivery.sender));
+    const driver_user_id = await get_driver_user_id(delivery.sender);
 
     try {
       const senderTokens = delivery?.sender

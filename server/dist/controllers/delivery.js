@@ -516,17 +516,17 @@ const cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
         if (driver_socket)
             server_1.io.to(driver_socket).emit("delivery_cancel", { reason, by, delivery_id });
         const user_tokens = yield (0, get_id_1.get_user_push_tokens)(delivery.sender);
-        const driver_tokens = yield (0, get_id_1.get_driver_push_tokens)(String(delivery.driver));
-        const driver_user_id = yield (0, get_id_1.get_driver_user_id)(String(delivery.driver));
+        const driver_tokens = yield (0, get_id_1.get_driver_push_tokens)(delivery.driver);
+        const driver_user_id = yield (0, get_id_1.get_driver_user_id)(delivery.driver);
         // Send notification to sender if tokens exist
         if (user_tokens.length > 0)
-            yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "sender" ? "you" : "the driver"}`, {
+            yield (0, expo_push_1.sendNotification)([String(delivery.sender)], "Delivery cancelled", `Delivery was cancelled by ${by === "sender" ? "you" : "the driver"}`, {
                 type: "delivery_cancelled",
                 delivery_id: delivery._id,
             });
         // Send notification to driver if tokens exist
         if (driver_tokens.length > 0)
-            yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Delivery cancelled", `Delivery was cancelled by ${delivery.cancelled.by === "driver" ? "you" : "the sender"}`, {
+            yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Delivery cancelled", `Delivery was cancelled by ${by === "driver" ? "you" : "the sender"}`, {
                 type: "delivery_cancelled",
                 delivery_id: delivery._id,
                 role: "driver",
@@ -538,6 +538,7 @@ const cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(200).json({ msg: "Delivery cancelled successfully.", delivery });
     }
     catch (err) {
+        console.log(err);
         res.status(500).json({ msg: "Server error.", error: err });
     }
 });
@@ -904,7 +905,7 @@ const admin_cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, fu
         delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { cancelled_at: new Date() });
         delivery.cancelled = { by: "admin", reason };
         yield delivery.save();
-        const driver_user_id = yield (0, get_id_1.get_driver_user_id)(String(delivery.sender));
+        const driver_user_id = yield (0, get_id_1.get_driver_user_id)(delivery.sender);
         try {
             const senderTokens = (delivery === null || delivery === void 0 ? void 0 : delivery.sender)
                 ? yield (0, get_id_1.get_user_push_tokens)(delivery.sender.toString())

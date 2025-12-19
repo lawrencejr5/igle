@@ -533,17 +533,17 @@ const cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             const driverTokens = (ride === null || ride === void 0 ? void 0 : ride.driver)
                 ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
                 : [];
-            const driver_user_id = yield (0, get_id_1.get_driver_user_id)(String(ride.driver));
+            const driver_user_id = yield (0, get_id_1.get_driver_user_id)(ride.driver);
             // Send notification to rider if tokens exist
             if (riderTokens.length) {
-                yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "rider" ? "you" : "the driver"}`, {
+                yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${by === "rider" ? "you" : "the driver"}`, {
                     type: "ride_cancelled",
                     ride_id: ride._id,
                 });
             }
             // Send notification to driver if tokens exist
             if (driverTokens.length) {
-                yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${ride.cancelled.by === "driver" ? "you" : "rider"}`, {
+                yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Ride cancelled", `Ride to ${ride.destination.address} cancelled by ${by === "driver" ? "you" : "rider"}`, {
                     type: "ride_cancelled",
                     ride_id: ride._id,
                     role: "driver",
@@ -937,7 +937,7 @@ const admin_cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, functi
             const driverTokens = (ride === null || ride === void 0 ? void 0 : ride.driver)
                 ? yield (0, get_id_2.get_driver_push_tokens)(ride.driver)
                 : [];
-            const driver_user_id = (0, get_id_1.get_driver_user_id)(String(ride.driver));
+            const driver_user_id = (0, get_id_1.get_driver_user_id)(ride.driver);
             if (riderTokens.length) {
                 yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride cancelled", "Ride was cancelled by Igle", {
                     type: "ride_cancelled",

@@ -21,7 +21,7 @@ const get_driver_id = (user_id) => __awaiter(void 0, void 0, void 0, function* (
 });
 exports.get_driver_id = get_driver_id;
 const get_driver_user_id = (driver_id) => __awaiter(void 0, void 0, void 0, function* () {
-    const driver = yield driver_1.default.findById(driver_id);
+    const driver = yield driver_1.default.findOne({ _id: driver_id });
     return driver === null || driver === void 0 ? void 0 : driver.user;
 });
 exports.get_driver_user_id = get_driver_user_id;

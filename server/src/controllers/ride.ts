@@ -575,7 +575,7 @@ export const cancel_ride = async (
         ? await get_driver_push_tokens(ride.driver)
         : [];
 
-      const driver_user_id = await get_driver_user_id(String(ride.driver!));
+      const driver_user_id = await get_driver_user_id(ride.driver!);
 
       // Send notification to rider if tokens exist
       if (riderTokens.length) {
@@ -583,7 +583,7 @@ export const cancel_ride = async (
           [String(ride.rider)],
           "Ride cancelled",
           `Ride to ${ride.destination.address} cancelled by ${
-            ride.cancelled.by === "rider" ? "you" : "the driver"
+            by === "rider" ? "you" : "the driver"
           }`,
           {
             type: "ride_cancelled",
@@ -598,7 +598,7 @@ export const cancel_ride = async (
           [String(driver_user_id)],
           "Ride cancelled",
           `Ride to ${ride.destination.address} cancelled by ${
-            ride.cancelled.by === "driver" ? "you" : "rider"
+            by === "driver" ? "you" : "rider"
           }`,
           {
             type: "ride_cancelled",
@@ -1058,7 +1058,7 @@ export const admin_cancel_ride = async (req: Request, res: Response) => {
         ? await get_driver_push_tokens(ride.driver)
         : [];
 
-      const driver_user_id = get_driver_user_id(String(ride.driver));
+      const driver_user_id = get_driver_user_id(ride.driver!);
 
       if (riderTokens.length) {
         await sendNotification(
