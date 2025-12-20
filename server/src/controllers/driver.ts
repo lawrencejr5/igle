@@ -1,4 +1,4 @@
-import { application, Request, Response } from "express";
+import { Request, Response } from "express";
 
 import Driver from "../models/driver";
 import Wallet from "../models/wallet";

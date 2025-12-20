@@ -4,6 +4,7 @@ import Wallet from "../models/wallet";
 import AppWallet from "../models/app_wallet";
 import Commission from "../models/commission";
 import Transaction from "../models/transaction";
+import Driver from "../models/driver";
 
 import { credit_wallet } from "../utils/wallet";
 
@@ -33,6 +34,8 @@ export const complete_delivery = async (delivery: DeliveryType) => {
     });
 
     await credit_wallet(reference);
+
+    await Driver.findByIdAndUpdate(delivery.driver, { is_busy: false });
 
     const fund_app_wallet = await AppWallet.findOneAndUpdate(
       {},

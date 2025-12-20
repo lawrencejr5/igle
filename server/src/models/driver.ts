@@ -24,6 +24,7 @@ export interface DriverType extends Document {
   date_of_birth: string;
   is_online: boolean;
   is_available: boolean;
+  is_busy: boolean;
   current_location: {
     type: string;
     coordinates: [number, number];
@@ -90,6 +91,7 @@ const DriverSchema = new Schema<DriverType>(
     date_of_birth: { type: String },
     is_online: { type: Boolean, default: false },
     is_available: { type: Boolean, default: true },
+    is_busy: { type: Boolean, default: false },
     current_location: {
       type: {
         type: String,

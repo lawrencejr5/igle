@@ -495,6 +495,8 @@ export const accept_delivery = async (
       { new: true }
     );
 
+    await Driver.findByIdAndUpdate(driver_id, { is_busy: true });
+
     if (!delivery)
       return res.status(400).json({ msg: "Could not accept delivery" });
 
@@ -553,6 +555,16 @@ export const cancel_delivery = async (
     if (driver_socket)
       io.to(driver_socket).emit("delivery_cancel", { reason, by, delivery_id });
 
+    delivery.status = "cancelled" as any;
+    delivery.timestamps = {
+      ...(delivery.timestamps as any),
+      cancelled_at: new Date(),
+    } as any;
+    delivery.cancelled = { by, reason } as any;
+    await delivery.save();
+
+    await Driver.findByIdAndUpdate(delivery.driver, { is_busy: false });
+
     const user_tokens = await get_user_push_tokens(delivery.sender);
     const driver_tokens = await get_driver_push_tokens(delivery.driver!);
 
@@ -582,14 +594,6 @@ export const cancel_delivery = async (
           role: "driver",
         }
       );
-
-    delivery.status = "cancelled" as any;
-    delivery.timestamps = {
-      ...(delivery.timestamps as any),
-      cancelled_at: new Date(),
-    } as any;
-    delivery.cancelled = { by, reason } as any;
-    await delivery.save();
 
     res.status(200).json({ msg: "Delivery cancelled successfully.", delivery });
   } catch (err: any) {

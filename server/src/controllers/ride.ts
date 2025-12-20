@@ -20,10 +20,11 @@ import { calculate_commission } from "../utils/calc_commision";
 import { complete_ride } from "../utils/complete_ride";
 
 import { io } from "../server";
+import { agenda } from "../jobs/agenda";
 import { sendNotification } from "../utils/expo_push";
 
 // 🔄 Helper: Expire a ride
-const expire_ride = async (ride_id: string, user_id?: string) => {
+export const expire_ride = async (ride_id: string, user_id?: string) => {
   const ride = await Ride.findById(ride_id);
   if (!ride || !["pending", "scheduled"].includes(ride.status)) return;
   ride.status = "expired";
@@ -94,6 +95,34 @@ export const request_ride = async (
         ? new Date(scheduled_time as string)
         : null,
     });
+
+    if (scheduled_time) {
+      // Calculate trigger time: e.g., 20 minutes BEFORE the scheduled time
+      // so the system starts looking for drivers ahead of time.
+      const reminder_time = new Date(
+        new Date(scheduled_time as string).getTime() - 15 * 60000
+      );
+      const dispatch_time = new Date(
+        new Date(scheduled_time as string).getTime() - 10 * 60000
+      );
+
+      // Pass the ride_id to the worker
+      await agenda.schedule(reminder_time, "send_ride_reminder", {
+        ride_id: new_ride._id,
+        user: new_ride.rider,
+      });
+      await agenda.schedule(dispatch_time, "enable_scheduled_ride", {
+        ride_id: new_ride._id,
+        user: new_ride.rider,
+        driver: new_ride.driver,
+        vehicle: new_ride.vehicle,
+      });
+
+      res.status(201).json({
+        msg: "Ride scheduled successfully",
+        ride: new_ride,
+      });
+    }
 
     // Notify only drivers of the requested vehicle type
     try {
@@ -374,8 +403,16 @@ export const get_user_active_ride = async (
     const user_id = req.user?.id;
     const ride = await Ride.findOne({
       rider: user_id,
-      status: { $in: ["pending", "accepted", "ongoing", "arrived", "expired"] },
-      // scheduled: false,
+      status: {
+        $in: [
+          "pending",
+          "scheduled",
+          "accepted",
+          "ongoing",
+          "arrived",
+          "expired",
+        ],
+      },
     })
       .sort({ createdAt: -1 })
       .populate({
@@ -468,6 +505,8 @@ export const accept_ride = async (
       { new: true }
     );
 
+    await Driver.findByIdAndUpdate(driver_id, { is_busy: true });
+
     const rider_socket_id = await get_user_socket_id(ride?.rider!);
     const rider_socket = io.sockets.sockets.get(rider_socket_id!);
 
@@ -546,6 +585,8 @@ export const cancel_ride = async (
       });
       return;
     }
+
+    await Driver.findByIdAndUpdate(ride.driver, { is_busy: false });
 
     // Emitting ride cancellation
     const user_socket = await get_user_socket_id(ride.rider!);
