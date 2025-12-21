@@ -1465,6 +1465,7 @@ const SelectPickupTimeModal = () => {
   const handleSelect = (item: "now" | "later") => {
     setPickupTime(item);
   };
+
   return (
     <Modal
       visible={pickupModal}

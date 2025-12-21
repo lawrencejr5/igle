@@ -298,7 +298,6 @@ const Home = () => {
                         <TouchableOpacity
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
-                            setRideStatus("booking");
                             Haptics.impactAsync(
                               Haptics.ImpactFeedbackStyle.Light
                             );
@@ -324,7 +323,6 @@ const Home = () => {
                         <TouchableOpacity
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
-                            setRideStatus("booking");
                             Haptics.impactAsync(
                               Haptics.ImpactFeedbackStyle.Light
                             );
@@ -350,7 +348,9 @@ const Home = () => {
                         <TouchableOpacity
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
-                            setRideStatus("booking");
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light
+                            );
                             setPickupTime("later");
                             router.push("../(book)/book_ride");
                           }}
