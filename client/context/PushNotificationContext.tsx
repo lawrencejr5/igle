@@ -80,6 +80,9 @@ export const PushNotificationProvider: React.FC<
             if (data?.type === "ride_cancelled") {
               router.push(`/(driver)/rides`);
             }
+            if (data?.type === "ride_booking") {
+              router.push("/(driver)/home");
+            }
           } else {
             if (data?.type === "ride_booking") {
               router.push({

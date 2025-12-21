@@ -471,7 +471,7 @@ export const accept_ride = async (
       {
         _id: ride_id,
         status: { $in: ["pending", "scheduled"] },
-        driver: { $exists: false },
+        driver: null,
       },
       {
         driver: driver_id,

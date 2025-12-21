@@ -16,6 +16,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import RideRoute from "../../components/RideRoute";
 import { useDriverContext } from "../../context/DriverContext";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const RidesPage = () => {
   const [activeTab, setActiveTab] = useState<
@@ -169,6 +170,8 @@ const OngoingRide = ({ data }: { data: any }) => {
     switch (status) {
       case "ongoing":
         return "#e6a518ff";
+      case "accepted":
+        return "#186ae6ff";
       case "completed":
         return "#4CAF50";
       case "cancelled":
@@ -205,10 +208,52 @@ const OngoingRide = ({ data }: { data: any }) => {
             <Text
               style={[
                 styles.rideStatus,
-                { color: getStatusColor(data.status) },
+                {
+                  color: data.scheduled
+                    ? "#e6a518ff"
+                    : getStatusColor(data.status),
+                  textTransform: "capitalize",
+                  paddingHorizontal: 10,
+                },
               ]}
             >
-              {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+              {data.scheduled ? "Scheduled" : data.status}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              marginTop: 6,
+              marginBottom: 10,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+              alignSelf: "flex-start",
+            }}
+          >
+            <MaterialIcons name="event" color={"#ffb536"} size={16} />
+            <Text
+              style={{
+                color: "#ffb536",
+                fontFamily: "poppins-regular",
+                fontSize: 13,
+              }}
+            >
+              {(() => {
+                try {
+                  const d = new Date(data.scheduled_time as any);
+                  return d.toLocaleString(undefined, {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                } catch (e) {
+                  return String(data.scheduled_time);
+                }
+              })()}
             </Text>
           </View>
 

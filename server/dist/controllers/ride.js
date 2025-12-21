@@ -456,7 +456,7 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const ride = yield ride_1.default.findOneAndUpdate({
             _id: ride_id,
             status: { $in: ["pending", "scheduled"] },
-            driver: { $exists: false },
+            driver: null,
         }, {
             driver: driver_id,
             status: "accepted",

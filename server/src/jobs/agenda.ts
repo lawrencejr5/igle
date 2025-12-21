@@ -88,7 +88,7 @@ agenda.define("send_ride_reminder", async (job: Job) => {
       [user],
       "Scheduled ride reminder ⏰",
       `Your ride from ${ride.pickup.address} to ${ride.destination.address} would be active in the next 10 mins, please make your self available at the pickup.`,
-      { type: "ride_schedule_reminder" }
+      { type: "ride_booking" }
     );
   }
 });
@@ -107,8 +107,8 @@ agenda.define("enable_scheduled_ride", async (job: Job) => {
     await sendNotification(
       [user],
       "Driver Busy - Searching...",
-      "Your preferred driver is busy. We are finding you a new driver nearby.",
-      { type: "ride_searching" }
+      "Your preferred driver is busy. We are trying to assign a new driver nearby to you.",
+      { type: "ride_booking" }
     );
 
     const drivers = await Driver.find({ vehicle_type: vehicle });
@@ -148,13 +148,13 @@ agenda.define("enable_scheduled_ride", async (job: Job) => {
         [user],
         "Scheduled ride is now active!",
         `Your ride from ${ride.pickup.address} to ${ride.destination.address} is now active, the driver should be on his way.`,
-        { type: "ride_schedule_active" }
+        { type: "ride_booking" }
       );
       await sendNotification(
         [driver],
         "Scheduled ride is now active!",
         `Your ride to ${ride.destination.address} is now active, start heading to from ${ride.pickup.address}.`,
-        { type: "ride_schedule_active", role: "driver" }
+        { type: "ride_booking", role: "driver" }
       );
     }
   }

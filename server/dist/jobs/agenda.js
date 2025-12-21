@@ -75,7 +75,7 @@ exports.agenda.define("send_ride_reminder", (job) => __awaiter(void 0, void 0, v
     const { ride_id, user } = job.attrs.data;
     const ride = yield ride_1.default.findById(ride_id);
     if (ride) {
-        yield (0, expo_push_1.sendNotification)([user], "Scheduled ride reminder ⏰", `Your ride from ${ride.pickup.address} to ${ride.destination.address} would be active in the next 10 mins, please make your self available at the pickup.`, { type: "ride_schedule_reminder" });
+        yield (0, expo_push_1.sendNotification)([user], "Scheduled ride reminder ⏰", `Your ride from ${ride.pickup.address} to ${ride.destination.address} would be active in the next 10 mins, please make your self available at the pickup.`, { type: "ride_booking" });
     }
 }));
 exports.agenda.define("enable_scheduled_ride", (job) => __awaiter(void 0, void 0, void 0, function* () {
@@ -87,7 +87,7 @@ exports.agenda.define("enable_scheduled_ride", (job) => __awaiter(void 0, void 0
             driver: null,
             status: "pending",
         });
-        yield (0, expo_push_1.sendNotification)([user], "Driver Busy - Searching...", "Your preferred driver is busy. We are finding you a new driver nearby.", { type: "ride_searching" });
+        yield (0, expo_push_1.sendNotification)([user], "Driver Busy - Searching...", "Your preferred driver is busy. We are trying to assign a new driver nearby to you.", { type: "ride_booking" });
         const drivers = yield driver_1.default.find({ vehicle_type: vehicle });
         // notify connected drivers via sockets and offline via push
         yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
@@ -114,8 +114,8 @@ exports.agenda.define("enable_scheduled_ride", (job) => __awaiter(void 0, void 0
         const ride = yield ride_1.default.findByIdAndUpdate(ride_id, { scheduled: false }, { new: true });
         yield driver_1.default.findByIdAndUpdate(driver, { is_busy: true });
         if (ride) {
-            yield (0, expo_push_1.sendNotification)([user], "Scheduled ride is now active!", `Your ride from ${ride.pickup.address} to ${ride.destination.address} is now active, the driver should be on his way.`, { type: "ride_schedule_active" });
-            yield (0, expo_push_1.sendNotification)([driver], "Scheduled ride is now active!", `Your ride to ${ride.destination.address} is now active, start heading to from ${ride.pickup.address}.`, { type: "ride_schedule_active", role: "driver" });
+            yield (0, expo_push_1.sendNotification)([user], "Scheduled ride is now active!", `Your ride from ${ride.pickup.address} to ${ride.destination.address} is now active, the driver should be on his way.`, { type: "ride_booking" });
+            yield (0, expo_push_1.sendNotification)([driver], "Scheduled ride is now active!", `Your ride to ${ride.destination.address} is now active, start heading to from ${ride.pickup.address}.`, { type: "ride_booking", role: "driver" });
         }
     }
 }));
