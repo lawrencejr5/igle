@@ -474,6 +474,7 @@ const accept_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
             status: { $in: ["pending", "scheduled"] },
             driver: { $exists: false },
         }, { driver: driver_id, status: "accepted" }, { new: true });
+        yield driver_1.default.findByIdAndUpdate(driver_id, { is_busy: true });
         if (!delivery)
             return res.status(400).json({ msg: "Could not accept delivery" });
         const sender_socket = yield (0, get_id_1.get_user_socket_id)(delivery.sender.toString());
@@ -515,6 +516,11 @@ const cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
             server_1.io.to(user_socket).emit("delivery_cancel", { reason, by, delivery_id });
         if (driver_socket)
             server_1.io.to(driver_socket).emit("delivery_cancel", { reason, by, delivery_id });
+        delivery.status = "cancelled";
+        delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { cancelled_at: new Date() });
+        delivery.cancelled = { by, reason };
+        yield delivery.save();
+        yield driver_1.default.findByIdAndUpdate(delivery.driver, { is_busy: false });
         const user_tokens = yield (0, get_id_1.get_user_push_tokens)(delivery.sender);
         const driver_tokens = yield (0, get_id_1.get_driver_push_tokens)(delivery.driver);
         const driver_user_id = yield (0, get_id_1.get_driver_user_id)(delivery.driver);
@@ -531,10 +537,6 @@ const cancel_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
                 delivery_id: delivery._id,
                 role: "driver",
             });
-        delivery.status = "cancelled";
-        delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { cancelled_at: new Date() });
-        delivery.cancelled = { by, reason };
-        yield delivery.save();
         res.status(200).json({ msg: "Delivery cancelled successfully.", delivery });
     }
     catch (err) {

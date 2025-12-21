@@ -141,12 +141,13 @@ agenda.define("enable_scheduled_ride", async (job: Job) => {
       { new: true }
     );
 
+    await Driver.findByIdAndUpdate(driver, { is_busy: true });
+
     if (ride) {
       await sendNotification(
         [user],
         "Scheduled ride is now active!",
-        `Your ride from ${ride.pickup.address} to ${ride.destination.address} 
-          is now active, the driver should be on his way.`,
+        `Your ride from ${ride.pickup.address} to ${ride.destination.address} is now active, the driver should be on his way.`,
         { type: "ride_schedule_active" }
       );
       await sendNotification(

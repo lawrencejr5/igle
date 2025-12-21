@@ -74,6 +74,7 @@ const DriverSchema = new mongoose_1.Schema({
     date_of_birth: { type: String },
     is_online: { type: Boolean, default: false },
     is_available: { type: Boolean, default: true },
+    is_busy: { type: Boolean, default: false },
     current_location: {
         type: {
             type: String,

@@ -18,6 +18,7 @@ const wallet_1 = __importDefault(require("../models/wallet"));
 const app_wallet_1 = __importDefault(require("../models/app_wallet"));
 const commission_1 = __importDefault(require("../models/commission"));
 const transaction_1 = __importDefault(require("../models/transaction"));
+const driver_1 = __importDefault(require("../models/driver"));
 const wallet_2 = require("../utils/wallet");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const task_progress_1 = require("./task_progress");
@@ -39,6 +40,7 @@ const complete_delivery = (delivery) => __awaiter(void 0, void 0, void 0, functi
             metadata: { for: "driver_wallet_crediting", type: "delivery" },
         });
         yield (0, wallet_2.credit_wallet)(reference);
+        yield driver_1.default.findByIdAndUpdate(delivery.driver, { is_busy: false });
         const fund_app_wallet = yield app_wallet_1.default.findOneAndUpdate({}, { $inc: { balance: Number(delivery.commission) } }, { new: true });
         if (!fund_app_wallet)
             throw new Error("Funding app wallet failed");

@@ -96,34 +96,6 @@ export const request_ride = async (
         : null,
     });
 
-    if (scheduled_time) {
-      // Calculate trigger time: e.g., 20 minutes BEFORE the scheduled time
-      // so the system starts looking for drivers ahead of time.
-      const reminder_time = new Date(
-        new Date(scheduled_time as string).getTime() - 15 * 60000
-      );
-      const dispatch_time = new Date(
-        new Date(scheduled_time as string).getTime() - 10 * 60000
-      );
-
-      // Pass the ride_id to the worker
-      await agenda.schedule(reminder_time, "send_ride_reminder", {
-        ride_id: new_ride._id,
-        user: new_ride.rider,
-      });
-      await agenda.schedule(dispatch_time, "enable_scheduled_ride", {
-        ride_id: new_ride._id,
-        user: new_ride.rider,
-        driver: new_ride.driver,
-        vehicle: new_ride.vehicle,
-      });
-
-      res.status(201).json({
-        msg: "Ride scheduled successfully",
-        ride: new_ride,
-      });
-    }
-
     // Notify only drivers of the requested vehicle type
     try {
       if (vehicle) {
@@ -501,11 +473,28 @@ export const accept_ride = async (
         status: { $in: ["pending", "scheduled"] },
         driver: { $exists: false },
       },
-      { driver: driver_id, status: "accepted" },
+      {
+        driver: driver_id,
+        status: "accepted",
+        "timestamps.accepted_at": new Date(), // <--- Add this here
+      },
       { new: true }
     );
 
-    await Driver.findByIdAndUpdate(driver_id, { is_busy: true });
+    if (!ride) {
+      res.status(404).json({ msg: "Ride is no longer available." });
+      return;
+    }
+
+    io.emit("ride_taken", {
+      ride_id,
+      msg: "This ride has been taken by another driver",
+      driver_id,
+    });
+
+    await Driver.findByIdAndUpdate(driver_id, {
+      is_busy: ride?.scheduled ? false : true,
+    });
 
     const rider_socket_id = await get_user_socket_id(ride?.rider!);
     const rider_socket = io.sockets.sockets.get(rider_socket_id!);
@@ -518,44 +507,41 @@ export const accept_ride = async (
       });
     }
 
+    if (ride?.scheduled_time) {
+      // Calculate trigger time: e.g., 20 minutes BEFORE the scheduled time
+      // so the system starts looking for drivers ahead of time.
+      const reminder_time = new Date(
+        new Date(ride?.scheduled_time).getTime() - 15 * 60000
+      );
+      const dispatch_time = new Date(
+        new Date(ride?.scheduled_time).getTime() - 10 * 60000
+      );
+
+      // Pass the ride_id to the worker
+      await agenda.schedule(reminder_time, "send_ride_reminder", {
+        ride_id,
+        user: ride.rider,
+      });
+      await agenda.schedule(dispatch_time, "enable_scheduled_ride", {
+        ride_id,
+        user: ride.rider,
+        driver: driver_id,
+        vehicle: ride.vehicle,
+      });
+    }
+
     // Send notification to rider regardless of socket connection
-    try {
-      if (ride && ride.rider) {
-        const tokens = await get_user_push_tokens(ride.rider);
-        if (tokens.length) {
-          console.log("Sending 'Driver on the way' push notification");
-          await sendNotification(
-            [String(ride.rider)],
-            "Driver on the way",
-            "A driver has accepted your ride",
-            {
-              type: "ride_booking",
-              ride_id: ride._id,
-            }
-          );
+    if (ride && ride.rider) {
+      await sendNotification(
+        [String(ride.rider)],
+        `${ride.scheduled ? "Scheduled ride accepted" : "Driver on the way"}`,
+        "A driver has accepted your ride",
+        {
+          type: "ride_booking",
+          ride_id: ride._id,
         }
-      }
-    } catch (e) {
-      console.error("Failed to get/send rider push tokens on accept:", e);
+      );
     }
-
-    io.emit("ride_taken", {
-      ride_id,
-      msg: "This ride has been taken by another driver",
-      driver_id,
-    });
-
-    if (!ride) {
-      res.status(404).json({ msg: "Ride is no longer available." });
-      return;
-    }
-
-    if (!ride.timestamps) {
-      ride.timestamps = {};
-    }
-
-    ride.timestamps.accepted_at = new Date();
-    await ride.save();
 
     res.status(200).json({ msg: "Ride accepted successfully", ride });
   } catch (err) {

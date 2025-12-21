@@ -45,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.admin_delete_ride = exports.admin_cancel_ride = exports.admin_get_ride = exports.admin_get_rides = exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_ongoing_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = void 0;
+exports.admin_delete_ride = exports.admin_cancel_ride = exports.admin_get_ride = exports.admin_get_rides = exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_ongoing_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = exports.expire_ride = void 0;
 const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
@@ -59,6 +59,7 @@ const calc_fare_1 = require("../utils/calc_fare");
 const calc_commision_1 = require("../utils/calc_commision");
 const complete_ride_1 = require("../utils/complete_ride");
 const server_1 = require("../server");
+const agenda_1 = require("../jobs/agenda");
 const expo_push_1 = require("../utils/expo_push");
 // 🔄 Helper: Expire a ride
 const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -83,6 +84,7 @@ const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, func
         msg: "This ride has expired",
     });
 });
+exports.expire_ride = expire_ride;
 const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -154,7 +156,7 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
         }
         // Start expiration timeout
-        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 30000);
+        setTimeout(() => (0, exports.expire_ride)(new_ride._id, new_ride.rider.toString()), 30000);
         res.status(201).json({
             msg: scheduled_time ? "Scheduled ride created" : "Ride request created",
             ride: new_ride,
@@ -220,7 +222,7 @@ const retry_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             ride,
         });
         // Start expiration timeout
-        setTimeout(() => expire_ride(ride._id, ride.rider.toString()), 30000);
+        setTimeout(() => (0, exports.expire_ride)(ride._id, ride.rider.toString()), 30000);
     }
     catch (err) {
         res.status(500).json({ msg: "Failed to retry ride", err: err.message });
@@ -291,7 +293,7 @@ const rebook_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             ride: new_ride,
         });
         // Start expiration timeout
-        setTimeout(() => expire_ride(new_ride._id, new_ride.rider.toString()), 30000);
+        setTimeout(() => (0, exports.expire_ride)(new_ride._id, new_ride.rider.toString()), 30000);
     }
     catch (err) {
         res.status(500).json({ msg: "Failed to rebook ride", err: err.message });
@@ -365,8 +367,16 @@ const get_user_active_ride = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const ride = yield ride_1.default.findOne({
             rider: user_id,
-            status: { $in: ["pending", "accepted", "ongoing", "arrived", "expired"] },
-            scheduled: false,
+            status: {
+                $in: [
+                    "pending",
+                    "scheduled",
+                    "accepted",
+                    "ongoing",
+                    "arrived",
+                    "expired",
+                ],
+            },
         })
             .sort({ createdAt: -1 })
             .populate({
@@ -447,7 +457,23 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             _id: ride_id,
             status: { $in: ["pending", "scheduled"] },
             driver: { $exists: false },
-        }, { driver: driver_id, status: "accepted" }, { new: true });
+        }, {
+            driver: driver_id,
+            status: "accepted",
+            "timestamps.accepted_at": new Date(), // <--- Add this here
+        }, { new: true });
+        if (!ride) {
+            res.status(404).json({ msg: "Ride is no longer available." });
+            return;
+        }
+        server_1.io.emit("ride_taken", {
+            ride_id,
+            msg: "This ride has been taken by another driver",
+            driver_id,
+        });
+        yield driver_1.default.findByIdAndUpdate(driver_id, {
+            is_busy: (ride === null || ride === void 0 ? void 0 : ride.scheduled) ? false : true,
+        });
         const rider_socket_id = yield (0, get_id_1.get_user_socket_id)(ride === null || ride === void 0 ? void 0 : ride.rider);
         const rider_socket = server_1.io.sockets.sockets.get(rider_socket_id);
         if (rider_socket) {
@@ -457,36 +483,30 @@ const accept_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 rider_socket_id,
             });
         }
+        if (ride === null || ride === void 0 ? void 0 : ride.scheduled_time) {
+            // Calculate trigger time: e.g., 20 minutes BEFORE the scheduled time
+            // so the system starts looking for drivers ahead of time.
+            const reminder_time = new Date(new Date(ride === null || ride === void 0 ? void 0 : ride.scheduled_time).getTime() - 15 * 60000);
+            const dispatch_time = new Date(new Date(ride === null || ride === void 0 ? void 0 : ride.scheduled_time).getTime() - 10 * 60000);
+            // Pass the ride_id to the worker
+            yield agenda_1.agenda.schedule(reminder_time, "send_ride_reminder", {
+                ride_id,
+                user: ride.rider,
+            });
+            yield agenda_1.agenda.schedule(dispatch_time, "enable_scheduled_ride", {
+                ride_id,
+                user: ride.rider,
+                driver: driver_id,
+                vehicle: ride.vehicle,
+            });
+        }
         // Send notification to rider regardless of socket connection
-        try {
-            if (ride && ride.rider) {
-                const tokens = yield (0, get_id_2.get_user_push_tokens)(ride.rider);
-                if (tokens.length) {
-                    console.log("Sending 'Driver on the way' push to tokens:", tokens);
-                    const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Driver on the way", "A driver has accepted your ride", {
-                        type: "ride_booking",
-                        ride_id: ride._id,
-                    });
-                }
-            }
+        if (ride && ride.rider) {
+            yield (0, expo_push_1.sendNotification)([String(ride.rider)], `${ride.scheduled ? "Scheduled ride accepted" : "Driver on the way"}`, "A driver has accepted your ride", {
+                type: "ride_booking",
+                ride_id: ride._id,
+            });
         }
-        catch (e) {
-            console.error("Failed to get/send rider push tokens on accept:", e);
-        }
-        server_1.io.emit("ride_taken", {
-            ride_id,
-            msg: "This ride has been taken by another driver",
-            driver_id,
-        });
-        if (!ride) {
-            res.status(404).json({ msg: "Ride is no longer available." });
-            return;
-        }
-        if (!ride.timestamps) {
-            ride.timestamps = {};
-        }
-        ride.timestamps.accepted_at = new Date();
-        yield ride.save();
         res.status(200).json({ msg: "Ride accepted successfully", ride });
     }
     catch (err) {
@@ -511,6 +531,7 @@ const cancel_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             });
             return;
         }
+        yield driver_1.default.findByIdAndUpdate(ride.driver, { is_busy: false });
         // Emitting ride cancellation
         const user_socket = yield (0, get_id_1.get_user_socket_id)(ride.rider);
         const driver_socket = yield (0, get_id_1.get_driver_socket_id)(ride.driver);

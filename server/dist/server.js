@@ -38,8 +38,9 @@ const report_1 = __importDefault(require("./routes/report"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const app_wallet_1 = __importDefault(require("./routes/app_wallet"));
 const system_settings_1 = __importDefault(require("./routes/system_settings"));
-const sockets_1 = require("./sockets");
 const rating_1 = __importDefault(require("./routes/rating"));
+const sockets_1 = require("./sockets");
+const agenda_1 = require("./jobs/agenda");
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use("/api/v1/users", user_1.default);
@@ -76,7 +77,8 @@ io.on("connection", (socket) => {
 const start_server = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield (0, connect_db_1.connect_db)(mongo_url);
-        http_server.listen(port, () => console.log(`Connected! Server running at port ${port}...`));
+        yield agenda_1.agenda.start();
+        yield http_server.listen(port, () => console.log(`Connected! Server running at port ${port}...`));
     }
     catch (err) {
         console.log(err);
