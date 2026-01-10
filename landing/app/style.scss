@@ -1,0 +1,484 @@
+// src/styles/style.scss
+@use "sass:color"; // <--- 1. IMPORT THIS MODULE
+
+// Variables
+$color-bg: #ffffff;
+$color-text: #121212;
+$color-accent: #121212;
+$color-accent-text: #ffffff;
+$font-stack:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+
+// Reset & Global
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: $color-bg;
+    color: $color-text;
+    font-family: $font-stack;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+// Utility
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background-color: $color-accent;
+    color: $color-accent-text;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.8;
+    }
+
+    &.btn-outline {
+        background-color: transparent;
+        border: 2px solid $color-accent;
+        color: $color-accent;
+    }
+}
+
+// Sections
+header {
+    padding: 15px 0;
+    border-bottom: 1px solid color.change($color-text, $alpha: 0.1);
+    background-color: rgba(255, 255, 255, 0.9); // Slight transparency
+    backdrop-filter: blur(10px); // Cool blur effect on scroll
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        // Logo Image Sizing
+        .logo img {
+            height: 60px; // Adjust this based on your actual logo aspect ratio
+            width: auto;
+            display: block;
+        }
+
+        // Container for Links and Button
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        // The Text Links
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            list-style: none;
+
+            li a {
+                font-size: 0.9rem;
+                font-weight: 500;
+                color: $color-text;
+                transition: opacity 0.2s;
+
+                &:hover {
+                    opacity: 0.6;
+                }
+            }
+        }
+
+        // The "Get App" Button
+        // ... existing header styles ...
+
+        // The Wrapper
+        .download-dropdown {
+            position: relative; // Important! anchors the absolute menu
+        }
+
+        // The Button (Updated)
+        .header-btn {
+            background-color: $color-accent;
+            color: $color-accent-text;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            &:hover {
+                opacity: 0.9;
+            }
+        }
+
+        // The Dropdown Menu
+        .dropdown-menu {
+            position: absolute;
+            top: 120%; // Pushes it slightly below the button
+            right: 0; // Aligns to the right edge of the button
+            width: 200px;
+            background-color: #ffffff;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); // Soft shadow
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            animation: slideIn 0.2s ease;
+
+            .dropdown-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+                color: $color-text;
+                font-size: 0.95rem;
+                font-weight: 500;
+                transition: background 0.2s;
+                border-bottom: 1px solid #f9f9f9;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                &:hover {
+                    background-color: #f5f5f5;
+                }
+
+                svg {
+                    color: #555; // Dark grey icons
+                }
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    }
+}
+
+.hero {
+    padding: 100px 0;
+    text-align: center;
+
+    h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        line-height: 1.1;
+    }
+
+    p {
+        font-size: 1.25rem;
+        // <--- 2. FIXED: Replaced lighten() with color.adjust()
+        color: color.adjust($color-text, $lightness: 30%);
+        max-width: 600px;
+        margin: 0 auto 40px;
+    }
+
+    .download-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .hero-image {
+        margin-top: 60px;
+        width: 100%;
+        height: 400px;
+        background-color: #f5f5f5;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-image: url("/images/banner1.jpg"); // Path starts from 'public'
+        background-size: cover; // Ensures image covers the whole box
+        background-position: center; // Centers the image so faces aren't cropped out
+        background-repeat: no-repeat;
+    }
+}
+
+.services {
+    padding: 100px 0;
+    background-color: #fafafa; // Light contrast against the white cards
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+
+        h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 15px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: color.adjust($color-text, $lightness: 30%); // Using the fix from earlier
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    }
+
+    .service-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); // Responsive grid
+        gap: 40px;
+    }
+
+    // The New Elegant Card
+    .service-card {
+        background: #ffffff;
+        border-radius: 24px; // Very rounded corners for modern look
+        overflow: hidden; // Keeps image inside the rounded corners
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05); // Very soft, expensive-looking shadow
+        transition:
+            transform 0.3s ease,
+            box-shadow 0.3s ease;
+
+        &:hover {
+            transform: translateY(-8px); // Subtle lift on hover
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+
+            // Zoom the image slightly when card is hovered
+            .card-image img {
+                transform: scale(1.05);
+            }
+        }
+
+        .card-image {
+            width: 100%;
+            height: 280px; // Fixed height for consistency
+            overflow: hidden;
+            background-color: #eee; // Placeholder color while image loads
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover; // Ensures image covers area without stretching
+                transition: transform 0.5s ease; // Smooth zoom effect
+            }
+        }
+
+        .card-content {
+            padding: 35px;
+
+            h3 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 15px;
+            }
+
+            p {
+                color: color.adjust($color-text, $lightness: 25%);
+                font-size: 1.05rem;
+                line-height: 1.7;
+                margin-bottom: 25px;
+            }
+
+            .text-link {
+                font-weight: 600;
+                font-size: 1rem;
+                border-bottom: 1px solid $color-text;
+                padding-bottom: 2px;
+
+                &:hover {
+                    color: color.adjust($color-text, $lightness: 30%);
+                    border-color: color.adjust($color-text, $lightness: 30%);
+                }
+            }
+        }
+    }
+}
+
+// Mobile adjustment
+@media (max-width: 768px) {
+    .services {
+        .section-header h2 {
+            font-size: 2.2rem;
+        }
+        .card-image {
+            height: 220px;
+        }
+    }
+}
+.faq {
+    padding: 100px 0;
+
+    h2 {
+        font-size: 2.5rem;
+        text-align: center;
+        margin-bottom: 60px;
+    }
+
+    .faq-list {
+        max-width: 800px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px; // Space between items
+    }
+
+    .faq-item {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 0; // Padding is handled inside children
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+            border-color: darken(#eee, 10%);
+        }
+
+        // When open, change border/style
+        &.open {
+            border-color: $color-text;
+
+            // Rotate the plus sign into an X or just hide vertical line
+            .icon .vertical-line {
+                transform: rotate(90deg); // Turns the plus into a minus
+                opacity: 0;
+            }
+
+            .faq-answer {
+                grid-template-rows: 1fr; // Expands the grid
+                opacity: 1;
+                padding-bottom: 24px;
+            }
+        }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+
+            h3 {
+                font-size: 1.15rem;
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .icon {
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                svg {
+                    transition: transform 0.3s ease;
+                }
+
+                .vertical-line {
+                    transition:
+                        transform 0.2s ease,
+                        opacity 0.2s ease;
+                    transform-origin: center;
+                }
+            }
+        }
+
+        // The Magic Animation Part
+        .faq-answer {
+            display: grid;
+            grid-template-rows: 0fr; // Collapsed state
+            transition:
+                grid-template-rows 0.3s ease-out,
+                padding 0.3s ease;
+            padding: 0 24px; // Horizontal padding
+            opacity: 0.8;
+
+            .answer-content {
+                overflow: hidden;
+                p {
+                    color: color.adjust($color-text, $lightness: 20%);
+                    line-height: 1.6;
+                }
+            }
+        }
+    }
+}
+
+footer {
+    background-color: $color-text;
+    color: $color-bg;
+    padding: 60px 0;
+    margin-top: 40px;
+
+    .footer-content {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 40px;
+    }
+
+    .footer-links {
+        display: flex;
+        gap: 30px;
+
+        a:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .copyright {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+}
+
+// Mobile Responsiveness
+@media (max-width: 768px) {
+    header nav .nav-links {
+        display: none; // Hides links on mobile, keeps Logo and 'Get App' button
+    }
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    .footer-links {
+        justify-content: center;
+    }
+}
