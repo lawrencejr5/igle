@@ -1,0 +1,175 @@
+$primary-color: #000000; // Keep it stark and minimal
+$secondary-color: #666666;
+$accent-color: #0070f3; // Standard Next.js blue, or change to Igle brand color
+$bg-color: #ffffff;
+$font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+    sans-serif;
+
+.container {
+    background-color: $bg-color;
+    color: $primary-color;
+    font-family: $font-family;
+    line-height: 1.6;
+    padding: 4rem 1.5rem;
+    min-height: 100vh;
+}
+
+.wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.header {
+    margin-bottom: 4rem;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 2rem;
+
+    // 1. Top Navigation (Back Button)
+    .topNav {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .backButton {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: $secondary-color;
+        text-decoration: none;
+        transition: color 0.2s ease;
+
+        &:hover {
+            color: $primary-color;
+            text-decoration: underline;
+        }
+    }
+
+    // 2. Main Row (Logo Left / Text Right)
+    .mainHeaderRow {
+        display: flex;
+        justify-content: space-between; // Pushes items to edges
+        align-items: flex-end; // Aligns bottom of logo with bottom of text
+        flex-wrap: wrap; // Allows wrapping on mobile
+        gap: 20px;
+    }
+
+    // Left Side: Brand
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+
+        .appName {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: $primary-color;
+            letter-spacing: -0.03em;
+        }
+    }
+
+    // Right Side: Title
+    .titleSection {
+        text-align: right; // Aligns text to the right
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+
+        .lastUpdated {
+            color: $secondary-color;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 0;
+        }
+    }
+}
+
+.content {
+    section {
+        margin-bottom: 3rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        color: $primary-color;
+        letter-spacing: -0.01em;
+    }
+
+    h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: #333;
+    }
+
+    p {
+        margin-bottom: 1rem;
+        color: #444;
+        font-size: 1rem;
+    }
+
+    ul {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 1.5rem;
+
+        li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #444;
+
+            &::before {
+                content: "•";
+                position: absolute;
+                left: 0;
+                color: $secondary-color;
+            }
+
+            strong {
+                color: $primary-color;
+                font-weight: 600;
+            }
+        }
+    }
+
+    a {
+        color: $accent-color;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.2s ease;
+
+        &:hover {
+            border-bottom-color: $accent-color;
+        }
+    }
+}
+
+.footer {
+    margin-top: 5rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eaeaea;
+    text-align: center;
+    color: $secondary-color;
+    font-size: 0.85rem;
+}
+
+// Mobile Responsiveness
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2rem;
+    }
+
+    .container {
+        padding: 2rem 1rem;
+    }
+}

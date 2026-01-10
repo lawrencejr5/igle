@@ -1,0 +1,200 @@
+// styles/About.module.scss
+
+$primary-color: #000000;
+$secondary-color: #666666;
+$accent-color: #0070f3; // Or your Igle brand color
+$bg-color: #ffffff;
+$light-gray: #f9f9f9;
+
+.container {
+    background-color: $bg-color;
+    color: $primary-color;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    padding: 3rem 1.5rem;
+    min-height: 100vh;
+}
+
+.wrapper {
+    max-width: 1000px; // Wider than privacy policy for visual layout
+    margin: 0 auto;
+}
+
+// -- Reuse Header Logic (Keep consistent) --
+.header {
+    margin-bottom: 4rem;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 2rem;
+
+    .topNav {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .backButton {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: $secondary-color;
+        text-decoration: none;
+        transition: color 0.2s ease;
+        &:hover {
+            color: $primary-color;
+            text-decoration: underline;
+        }
+    }
+
+    .mainHeaderRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        .appName {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: $primary-color;
+            letter-spacing: -0.03em;
+        }
+    }
+
+    .titleSection {
+        text-align: right;
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin: 0;
+        }
+        .subtitle {
+            color: $secondary-color;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+    }
+}
+
+// -- About Page Specific Content --
+
+.heroText {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: #333;
+    max-width: 800px;
+    margin-bottom: 4rem;
+    line-height: 1.5;
+
+    strong {
+        color: $primary-color;
+        font-weight: 600;
+    }
+}
+
+.section {
+    margin-bottom: 5rem;
+
+    h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        position: relative;
+        display: inline-block;
+
+        &::after {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 3px;
+            background: $primary-color;
+            margin-top: 10px;
+        }
+    }
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.card {
+    background: $light-gray;
+    padding: 2rem;
+    border-radius: 16px;
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: translateY(-5px);
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    p {
+        color: $secondary-color;
+        font-size: 1rem;
+    }
+}
+
+.valuesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 3rem;
+    margin-top: 2rem;
+
+    .valueItem {
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            font-size: 0.95rem;
+            color: $secondary-color;
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.footer {
+    border-top: 1px solid #eaeaea;
+    padding-top: 2rem;
+    text-align: center;
+    color: $secondary-color;
+    font-size: 0.85rem;
+}
+
+// Mobile Responsiveness
+@media (max-width: 600px) {
+    .mainHeaderRow {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    .titleSection {
+        text-align: left !important;
+        margin-top: 1rem;
+    }
+    .heroText {
+        font-size: 1.2rem;
+    }
+}

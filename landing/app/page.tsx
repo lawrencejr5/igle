@@ -26,13 +26,13 @@ export default function Home() {
             <div className="nav-actions">
               <ul className="nav-links">
                 <li>
-                  <a href="#">About Igle</a>
+                  <a href="/about">About Igle</a>
                 </li>
                 <li>
-                  <a href="#">Terms & Conditions</a>
+                  <a href="/terms-and-conditions">Terms & Conditions</a>
                 </li>
                 <li>
-                  <a href="#">Privacy Policy</a>
+                  <a href="/privacy-policy">Privacy Policy</a>
                 </li>
               </ul>
               <GetAppBtn />
@@ -183,9 +183,9 @@ export default function Home() {
               <p>Ride & Deliver.</p>
             </div>
             <div className="footer-links">
-              <a href="#">About Us</a>
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms & Conditions</a>
+              <a href="/about">About Us</a>
+              <a href="/terms-and-conditions">Privacy Policy</a>
+              <a href="/privacy-policy">Terms & Conditions</a>
             </div>
           </div>
           <div className="copyright">
