@@ -57,7 +57,11 @@ export default function Home() {
 
             <div className="download-buttons">
               {/* Apple Store Button */}
-              <a href="#" className="btn">
+              <a
+                href="https://apps.apple.com/app/igle/id6471822837"
+                target="_blank"
+                className="btn"
+              >
                 <img
                   src="/icons/apple.png"
                   alt="appstore icon"
@@ -68,7 +72,11 @@ export default function Home() {
               </a>
 
               {/* Google Play Button */}
-              <a href="#" className="btn btn-outline">
+              <a
+                href="https://play.google.com/store/apps/details?id=com.lawrencejr.igle"
+                target="_blank"
+                className="btn btn-outline"
+              >
                 <img
                   src="/icons/google-play.png"
                   alt="playstore icon"

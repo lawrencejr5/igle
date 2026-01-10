@@ -29,7 +29,11 @@ export default function GetAppBtn() {
       {isOpen && (
         <div className="dropdown-menu">
           {/* App Store Option */}
-          <a href="#" className="dropdown-item">
+          <a
+            href="https://apps.apple.com/app/igle/id6471822837"
+            target="_blank"
+            className="dropdown-item"
+          >
             <img
               src="/icons/apple-black.png"
               alt="appstore icon"
@@ -40,7 +44,11 @@ export default function GetAppBtn() {
           </a>
 
           {/* Google Play Option */}
-          <a href="#" className="dropdown-item">
+          <a
+            href="https://play.google.com/store/apps/details?id=com.lawrencejr.igle"
+            target="_blank"
+            className="dropdown-item"
+          >
             <img
               src="/icons/google-play.png"
               alt="playstore icon"
