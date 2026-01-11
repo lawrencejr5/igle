@@ -18,6 +18,9 @@ import { SystemSettingsProvider } from "./context/SystemSettingsContext";
 export const metadata: Metadata = {
   title: "Igle ride admin",
   description: "Admin dashboard of igle ride",
+  icons: {
+    icon: "/images/logo-rounded.png",
+  },
 };
 
 export default function RootLayout({

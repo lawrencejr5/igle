@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Igle Ride",
   description: "Whatever Igle's motto is",
+  icons: {
+    icon: "/images/logo-rounded.png",
+  },
 };
 
 export default function RootLayout({
