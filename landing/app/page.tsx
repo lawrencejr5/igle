@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import GetAppBtn from "./components/GetAppBtn";
 import FaqItem from "./components/FaqItem";
 
@@ -17,22 +18,22 @@ export default function Home() {
         <div className="container">
           <nav>
             {/* Left: Logo Image */}
-            <a href="/" className="logo">
+            <Link href="/" className="logo">
               {/* standard img tag to avoid next/image complexity */}
               <img src="/images/igle-white.png" alt="Igle Logo" />
-            </a>
+            </Link>
 
             {/* Right: Nav Links + Button */}
             <div className="nav-actions">
               <ul className="nav-links">
                 <li>
-                  <a href="/about">About Igle</a>
+                  <Link href="/about">About Igle</Link>
                 </li>
                 <li>
-                  <a href="/terms-and-conditions">Terms & Conditions</a>
+                  <Link href="/terms-and-conditions">Terms & Conditions</Link>
                 </li>
                 <li>
-                  <a href="/privacy-policy">Privacy Policy</a>
+                  <Link href="/privacy-policy">Privacy Policy</Link>
                 </li>
               </ul>
               <GetAppBtn />
@@ -121,9 +122,9 @@ export default function Home() {
                     Commute with confidence. From budget-friendly rides to
                     premium comfort, get to your destination safely and on time.
                   </p>
-                  <a href="#" className="text-link">
+                  <Link href="#" className="text-link">
                     Book a ride &rarr;
-                  </a>
+                  </Link>
                 </div>
               </div>
 
@@ -142,9 +143,9 @@ export default function Home() {
                     Send packages across town in minutes. Real-time tracking,
                     secure handling, and proof of delivery right on your phone.
                   </p>
-                  <a href="#" className="text-link">
+                  <Link href="#" className="text-link">
                     Send a package &rarr;
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -183,9 +184,9 @@ export default function Home() {
               <p>Ride & Deliver.</p>
             </div>
             <div className="footer-links">
-              <a href="/about">About Us</a>
-              <a href="/terms-and-conditions">Privacy Policy</a>
-              <a href="/privacy-policy">Terms & Conditions</a>
+              <Link href="/about">About Us</Link>
+              <Link href="/terms-and-conditions">Privacy Policy</Link>
+              <Link href="/privacy-policy">Terms & Conditions</Link>
             </div>
           </div>
           <div className="copyright">

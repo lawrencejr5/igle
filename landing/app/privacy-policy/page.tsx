@@ -45,7 +45,7 @@ const PrivacyPolicy = () => {
                     style={{ objectFit: "contain", borderRadius: "10px" }}
                   />
                 </div>
-                <span className={styles.appName}>Igle.</span>
+                <span className={styles.appName}>Igle</span>
               </div>
 
               {/* Right: Privacy Policy Title */}
