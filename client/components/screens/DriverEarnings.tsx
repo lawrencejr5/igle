@@ -21,7 +21,7 @@ type EarningsModalProps = {
 };
 
 const TransactionItem: React.FC<{ item: any }> = ({ item }) => {
-  const isEarning = item.type !== "driver_payment";
+  const isEarning = item.type === "driver_payment";
   const date = new Date(item.createdAt);
 
   return (
