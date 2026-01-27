@@ -113,7 +113,7 @@ const RideRouteModal = () => {
       // Fetch ride route with pickup and destination coordinates
       fetchRideRoute(
         ongoingRideData.pickup.coordinates,
-        ongoingRideData.destination.coordinates
+        ongoingRideData.destination.coordinates,
       );
       // Don't override if user is actively tracking driver or ride
       if (rideStatus === "track_driver" || rideStatus === "track_ride") return;
@@ -355,7 +355,7 @@ const StartModal = () => {
             set_destination_func(
               rideHistory[0].place_id,
               rideHistory[0].place_name,
-              rideHistory[0].place_sub_name
+              rideHistory[0].place_sub_name,
             )
           }
         >
@@ -515,6 +515,7 @@ const BookingModal: FC<{
       <View style={[styles.suggestions_container]}>
         {activeSuggestion === "pickup" ? (
           <FlatList
+            keyboardShouldPersistTaps="handled"
             data={pickupSuggestions}
             keyExtractor={(item) => item.place_id}
             renderItem={({ item }) => (
@@ -523,7 +524,7 @@ const BookingModal: FC<{
                 onPress={() =>
                   set_pickup_func(
                     item.place_id,
-                    item.structured_formatting.main_text
+                    item.structured_formatting.main_text,
                   )
                 }
               >
@@ -541,6 +542,7 @@ const BookingModal: FC<{
           />
         ) : activeSuggestion === "destination" ? (
           <FlatList
+            keyboardShouldPersistTaps="handled"
             data={destinationSuggestions}
             keyExtractor={(item) => item.place_id}
             renderItem={({ item }) => (
@@ -550,7 +552,7 @@ const BookingModal: FC<{
                   set_destination_func(
                     item.place_id,
                     item.structured_formatting.main_text,
-                    item.structured_formatting.secondary_text
+                    item.structured_formatting.secondary_text,
                   )
                 }
               >
@@ -568,6 +570,7 @@ const BookingModal: FC<{
           />
         ) : (
           <FlatList
+            keyboardShouldPersistTaps="handled"
             data={rideHistory as any}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
@@ -577,7 +580,7 @@ const BookingModal: FC<{
                   set_destination_func(
                     item.place_id,
                     item.place_name,
-                    item.place_sub_name
+                    item.place_sub_name,
                   )
                 }
               >
@@ -704,7 +707,7 @@ const ChooseRideModal = () => {
           { address: destination, coordinates: destinationCoords! },
           Number(rideDetails?.amount),
           selectedRideType,
-          scheduledTime
+          scheduledTime,
         );
       } else {
         await rideRequest(
@@ -714,7 +717,7 @@ const ChooseRideModal = () => {
           },
           { address: destination, coordinates: destinationCoords! },
           Number(rideDetails?.amount),
-          selectedRideType
+          selectedRideType,
         );
       }
 
@@ -826,7 +829,7 @@ const SearchingModal = () => {
   const { region, mapRef } = useMapContext();
 
   const [searchText, setSearchText] = useState<string>(
-    "Searching for drivers..."
+    "Searching for drivers...",
   );
 
   const {
@@ -1022,7 +1025,7 @@ const AcceptedModal = () => {
             latitude: ongoingRideData.driver.current_location.coordinates[0],
             longitude: ongoingRideData.driver.current_location.coordinates[1],
           },
-          1000
+          1000,
         );
     }, 1000);
   };
@@ -1344,7 +1347,7 @@ const PaidModal = () => {
               latitude: ongoingRideData.pickup.coordinates[0],
               longitude: ongoingRideData.pickup.coordinates[1],
             },
-            1000
+            1000,
           );
       }, 1000);
   };
@@ -1808,7 +1811,7 @@ const PickupTimeModal: FC<{
         setShowDate(false);
       }
     },
-    [scheduledTime]
+    [scheduledTime],
   );
 
   const onTimeChange = useCallback(
@@ -1822,7 +1825,7 @@ const PickupTimeModal: FC<{
       }
       setShowTime(false);
     },
-    [scheduledTime]
+    [scheduledTime],
   );
 
   const {
@@ -1844,7 +1847,7 @@ const PickupTimeModal: FC<{
     if (scheduledTime < minAllowed) {
       showNotification(
         "Please select a time at least 30 mins from now.",
-        "error"
+        "error",
       );
       return;
     }

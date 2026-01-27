@@ -261,7 +261,7 @@ export const get_driver_earnings_stats = async (
       {
         $match: {
           wallet_id: wallet._id,
-          type: "payment",
+          type: "driver_payment",
           status: "success",
           createdAt: { $gte: startOfToday },
         },
@@ -279,7 +279,7 @@ export const get_driver_earnings_stats = async (
       {
         $match: {
           wallet_id: wallet._id,
-          type: "payment",
+          type: "driver_payment",
           status: "success",
           createdAt: { $gte: startOfWeek },
         },

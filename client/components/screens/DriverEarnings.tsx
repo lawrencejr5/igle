@@ -21,7 +21,7 @@ type EarningsModalProps = {
 };
 
 const TransactionItem: React.FC<{ item: any }> = ({ item }) => {
-  const isEarning = item.type === "payment";
+  const isEarning = item.type !== "driver_payment";
   const date = new Date(item.createdAt);
 
   return (
@@ -252,16 +252,6 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
                     </Text>
                   </View>
                 </View>
-
-                {/* Breakdown */}
-                {/* <View style={styles.breakdown}>
-                  <Text style={styles.breakdownText}>Tips: ₦3,500</Text>
-                  <Text style={styles.breakdownText}>Commission: -₦8,200</Text>
-                  <Text style={styles.breakdownText}>Balance: ₦15,000</Text>
-                  <Text style={styles.breakdownText}>
-                    Next payout: 20 Sept, 2025
-                  </Text>
-                </View> */}
 
                 {/* Recent Transactions Header */}
                 <Text style={[styles.sectionTitle, { marginTop: 20 }]}>

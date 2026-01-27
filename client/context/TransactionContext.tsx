@@ -126,7 +126,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       const { data } = await axios.post(
         `${API_URLS.transactions}/driver/withdraw`,
         { amount },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       // Add the new transaction to the list
@@ -147,7 +147,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.get(
         `${API_URLS.transactions}/driver/earnings-stats`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       setStats(data.stats);
@@ -181,7 +181,7 @@ export const useTransactionContext = () => {
   const context = useContext(TransactionContext);
   if (!context) {
     throw new Error(
-      "Transaction context can only be used within TransactionContextProvider"
+      "Transaction context can only be used within TransactionContextProvider",
     );
   }
   return context;

@@ -1,4 +1,4 @@
-import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
 const TransactionItem: React.FC<{ item: any }> = ({ item }) => {
-  const isEarning = item.type === "payment";
+  const isEarning = item.type === "driver_payment";
   const date = new Date(item.createdAt);
 
   return (
@@ -78,7 +78,7 @@ const EarningsPage: React.FC = () => {
 
   useEffect(() => {
     getWalletBalance("Driver");
-    fetchTransactions();
+    fetchTransactions("driver_payment");
     fetchEarningsStats();
   }, []);
 
