@@ -7,6 +7,7 @@ const wallet_1 = require("../controllers/wallet");
 // WalletRouter.use(auth);
 WalletRouter.get("/redirect", wallet_1.paystack_redirect);
 WalletRouter.get("/balance", auth_1.auth, wallet_1.get_wallet_balance);
+WalletRouter.post("/webhook/paystack", wallet_1.paystack_webhook);
 WalletRouter.post("/fund", auth_1.auth, wallet_1.fund_wallet);
 WalletRouter.post("/verify", auth_1.auth, wallet_1.verify_payment);
 WalletRouter.post("/create", auth_1.auth, wallet_1.create_wallet);

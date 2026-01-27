@@ -1,6 +1,6 @@
 import Wallet from "../models/wallet";
 import Transaction from "../models/transaction";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 interface WalletInput {
   wallet_id: Types.ObjectId;
@@ -15,24 +15,38 @@ interface WalletInput {
 }
 
 export const credit_wallet = async (reference: string) => {
-  const transaction = await Transaction.findOne({ reference });
-  if (!transaction) throw new Error("Transaction was not found");
-  if (transaction.status !== "pending")
-    throw new Error("This transaction has already been processed");
+  const session = await mongoose.startSession();
 
-  const wallet_id = transaction?.wallet_id;
-  const wallet = await Wallet.findById(wallet_id);
-  if (!wallet) throw new Error("Wallet not found");
+  try {
+    const result = await session.withTransaction(async () => {
+      const transaction = await Transaction.findOne({ reference });
+      if (!transaction) throw new Error("Transaction was not found");
+      if (transaction.status !== "pending") {
+        return { balance: null, transaction, alreadyProcessed: true };
+      }
 
-  const amount = transaction?.amount!;
+      const wallet_id = transaction?.wallet_id;
+      const wallet = await Wallet.findById(wallet_id);
+      if (!wallet) throw new Error("Wallet not found");
 
-  wallet.balance += amount;
-  await wallet.save();
+      const amount = transaction?.amount!;
 
-  transaction.status = "success";
-  await transaction.save();
+      wallet.balance += amount;
+      await wallet.save();
 
-  return { balance: wallet.balance, transaction };
+      transaction.status = "success";
+      await transaction.save();
+
+      return { balance: wallet.balance, transaction };
+    });
+
+    return result;
+  } catch (err) {
+    console.log("Credit wallet tranaction failed: " + err);
+    throw err;
+  } finally {
+    session.endSession();
+  }
 };
 
 export const debit_wallet = async ({
@@ -45,25 +59,46 @@ export const debit_wallet = async ({
   status = "success",
   metadata,
 }: WalletInput) => {
-  const wallet = await Wallet.findById(wallet_id);
-  if (!wallet) throw new Error("no_wallet");
+  const session = await mongoose.startSession();
 
-  if (wallet.balance < amount) throw new Error("insufficient");
+  try {
+    const result = await session.withTransaction(async () => {
+      const idem_check = await Transaction.findOne({ reference });
+      if (idem_check && idem_check.status === "success") {
+        return {
+          balance: null,
+          transaction: idem_check,
+          already_processed: true,
+        };
+      }
 
-  wallet.balance -= amount;
-  await wallet.save();
+      const wallet = await Wallet.findById(wallet_id);
+      if (!wallet) throw new Error("no_wallet");
 
-  const transaction = await Transaction.create({
-    wallet_id,
-    type,
-    amount,
-    status,
-    channel: "wallet",
-    ride_id: ride_id && ride_id,
-    delivery_id: delivery_id && delivery_id,
-    reference,
-    metadata,
-  });
+      if (wallet.balance < amount) throw new Error("insufficient");
 
-  return { balance: wallet.balance, transaction };
+      wallet.balance -= amount;
+      await wallet.save();
+
+      const transaction = await Transaction.create({
+        wallet_id,
+        type,
+        amount,
+        status,
+        channel: "wallet",
+        ride_id: ride_id && ride_id,
+        delivery_id: delivery_id && delivery_id,
+        reference,
+        metadata,
+      });
+
+      return { balance: wallet.balance, transaction };
+    });
+    return result;
+  } catch (err) {
+    console.log("Debit wallet transaction failed: ", err);
+    throw err;
+  } finally {
+    session.endSession();
+  }
 };

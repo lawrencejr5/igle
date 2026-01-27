@@ -17,6 +17,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const connect_db = (url) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield mongoose_1.default.connect(url, { dbName: "igle" });
+        mongoose_1.default.set("transactionAsyncLocalStorage", true);
     }
     catch (err) {
         console.log(err);

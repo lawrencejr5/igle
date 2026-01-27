@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import { Request, Response } from "express";
 
 import Wallet from "../models/wallet";
@@ -63,6 +65,76 @@ export const fund_wallet = async (req: Request, res: Response) => {
   }
 };
 
+export const paystack_webhook = async (req: Request, res: Response) => {
+  try {
+    // 1. Verify Paystack Signature
+    const hash = crypto
+      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY!)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
+
+    if (hash !== req.headers["x-paystack-signature"]) {
+      return res.status(401).json({ msg: "If I slap u!!" });
+    }
+
+    const event = req.body;
+
+    if (event.event === "charge.success") {
+      const { reference } = event.data;
+
+      const result = await credit_wallet(reference);
+
+      // 3. ONLY send notification if this is the FIRST time we processed it
+      if (result && !result.alreadyProcessed) {
+        const transaction = result.transaction;
+
+        // Look up the user's push tokens using the wallet_id from the transaction
+        const walletId = transaction?.wallet_id;
+        if (walletId) {
+          const wallet = await Wallet.findById(walletId).select(
+            "owner_id owner_type",
+          );
+          if (wallet) {
+            const ownerId = wallet.owner_id;
+            const ownerType = wallet.owner_type;
+            let tokens: string[] = [];
+            if (ownerType === "User") {
+              tokens = await get_user_push_tokens(ownerId as any);
+            } else if (ownerType === "Driver") {
+              tokens = await get_driver_push_tokens(ownerId as any);
+            }
+
+            await Activity.create({
+              type: "wallet_funding",
+              user: req.user?.id,
+              title: "Wallet funded",
+              message: `Your wallet was creditted with NGN ${transaction.amount}`,
+              metadata: { owner_id: ownerId },
+            });
+
+            if (tokens.length) {
+              await sendNotification(
+                [req.user?.id!],
+                "Wallet funded",
+                `Your wallet was credited with ${transaction.amount}`,
+                {
+                  type: "wallet_funded",
+                  reference: transaction.reference,
+                },
+              );
+            }
+          }
+        }
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Webhook Error:", err);
+    res.sendStatus(500);
+  }
+};
+
 export const paystack_redirect = (req: Request, res: Response) => {
   const { reference, callback_url } = req.query;
 
@@ -96,52 +168,11 @@ export const verify_payment = async (req: any, res: any) => {
     }
 
     // Credit the wallet (returns { balance, transaction })
-    const txResult = await credit_wallet(reference);
+    const transaction_result = await credit_wallet(reference);
 
-    // Determine wallet owner from the credited transaction
-    try {
-      const transaction = txResult.transaction as any;
-      const walletId = transaction?.wallet_id;
-      if (walletId) {
-        const wallet = await Wallet.findById(walletId).select(
-          "owner_id owner_type"
-        );
-        if (wallet) {
-          const ownerId = wallet.owner_id;
-          const ownerType = wallet.owner_type;
-          let tokens: string[] = [];
-          if (ownerType === "User") {
-            tokens = await get_user_push_tokens(ownerId as any);
-          } else if (ownerType === "Driver") {
-            tokens = await get_driver_push_tokens(ownerId as any);
-          }
-
-          await Activity.create({
-            type: "wallet_funding",
-            user: req.user?.id,
-            title: "Wallet funded",
-            message: `Your wallet was creditted with NGN ${transaction.amount}`,
-            metadata: { owner_id: ownerId },
-          });
-
-          if (tokens.length) {
-            await sendNotification(
-              [req.user?.id],
-              "Wallet funded",
-              `Your wallet was credited with ${transaction.amount}`,
-              {
-                type: "wallet_funded",
-                reference: transaction.reference,
-              }
-            );
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Failed to send wallet funded push:", e);
-    }
-
-    res.status(200).json({ msg: "Wallet funded", transaction: txResult });
+    res
+      .status(200)
+      .json({ msg: "Wallet funded", transaction: transaction_result });
   } catch (err: any) {
     console.error(err);
     const msg = err.message || "Verification failed";
@@ -183,7 +214,7 @@ export const request_withdrawal = async (req: any, res: any) => {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         },
-      }
+      },
     );
 
     // Deduct from wallet
@@ -214,7 +245,7 @@ export const request_withdrawal = async (req: any, res: any) => {
           `You have withdrawn ${amount} from your wallet`,
           {
             type: "withdrawal_success",
-          }
+          },
         );
       }
     } catch (e) {
@@ -256,7 +287,7 @@ export const get_wallet_balance = async (req: any, res: any) => {
 
 export const create_wallet = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { owner_type } = req.query;
