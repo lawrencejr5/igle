@@ -96,15 +96,16 @@ export const verify_payment = async (req: any, res: any) => {
     }
 
     // Credit the wallet (returns { balance, transaction })
-    const txResult = await credit_wallet(reference);
+    const transaction_result = await credit_wallet(reference);
 
     // Determine wallet owner from the credited transaction
     try {
-      const transaction = txResult.transaction as any;
+      // if(!transaction_result) return
+      const transaction = transaction_result.transaction as any;
       const walletId = transaction?.wallet_id;
       if (walletId) {
         const wallet = await Wallet.findById(walletId).select(
-          "owner_id owner_type"
+          "owner_id owner_type",
         );
         if (wallet) {
           const ownerId = wallet.owner_id;
@@ -132,7 +133,7 @@ export const verify_payment = async (req: any, res: any) => {
               {
                 type: "wallet_funded",
                 reference: transaction.reference,
-              }
+              },
             );
           }
         }
@@ -141,7 +142,9 @@ export const verify_payment = async (req: any, res: any) => {
       console.error("Failed to send wallet funded push:", e);
     }
 
-    res.status(200).json({ msg: "Wallet funded", transaction: txResult });
+    res
+      .status(200)
+      .json({ msg: "Wallet funded", transaction: transaction_result });
   } catch (err: any) {
     console.error(err);
     const msg = err.message || "Verification failed";
@@ -183,7 +186,7 @@ export const request_withdrawal = async (req: any, res: any) => {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         },
-      }
+      },
     );
 
     // Deduct from wallet
@@ -214,7 +217,7 @@ export const request_withdrawal = async (req: any, res: any) => {
           `You have withdrawn ${amount} from your wallet`,
           {
             type: "withdrawal_success",
-          }
+          },
         );
       }
     } catch (e) {
@@ -256,7 +259,7 @@ export const get_wallet_balance = async (req: any, res: any) => {
 
 export const create_wallet = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { owner_type } = req.query;
