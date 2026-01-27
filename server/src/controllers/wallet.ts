@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import { Request, Response } from "express";
 
 import Wallet from "../models/wallet";
@@ -60,6 +62,36 @@ export const fund_wallet = async (req: Request, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Failed to initialize transaction" });
+  }
+};
+
+export const paystack_webhook = async (req: Request, res: Response) => {
+  try {
+    // 1. Verify Paystack Signature
+    const hash = crypto
+      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY!)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
+
+    if (hash !== req.headers["x-paystack-signature"]) {
+      return res.status(401).json({ msg: "If I slap u!!" });
+    }
+
+    const event = req.body;
+
+    // 2. Only handle successful charges
+    if (event.event === "charge.success") {
+      const { reference } = event.data;
+
+      // 3. Use the EXACT same service as the redirect
+      await credit_wallet(reference);
+    }
+
+    // 4. Always tell Paystack "Got it!" quickly
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Webhook Error:", err);
+    res.sendStatus(500);
   }
 };
 

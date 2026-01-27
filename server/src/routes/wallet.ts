@@ -7,6 +7,7 @@ import {
   fund_wallet,
   get_wallet_balance,
   paystack_redirect,
+  paystack_webhook,
   request_withdrawal,
   verify_payment,
 } from "../controllers/wallet";
@@ -14,6 +15,7 @@ import {
 // WalletRouter.use(auth);
 WalletRouter.get("/redirect", paystack_redirect);
 WalletRouter.get("/balance", auth, get_wallet_balance);
+WalletRouter.post("/webhook/paystack", paystack_webhook);
 WalletRouter.post("/fund", auth, fund_wallet);
 WalletRouter.post("/verify", auth, verify_payment);
 WalletRouter.post("/create", auth, create_wallet);

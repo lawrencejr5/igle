@@ -43,7 +43,7 @@ export const credit_wallet = async (reference: string) => {
     return result;
   } catch (err) {
     console.log("Credit wallet tranaction failed: " + err);
-    throw new Error("Credit wallet tranaction failed");
+    throw err;
   } finally {
     session.endSession();
   }
@@ -59,25 +59,46 @@ export const debit_wallet = async ({
   status = "success",
   metadata,
 }: WalletInput) => {
-  const wallet = await Wallet.findById(wallet_id);
-  if (!wallet) throw new Error("no_wallet");
+  const session = await mongoose.startSession();
 
-  if (wallet.balance < amount) throw new Error("insufficient");
+  try {
+    const result = await session.withTransaction(async () => {
+      const idem_check = await Transaction.findOne({ reference });
+      if (idem_check && idem_check.status === "success") {
+        return {
+          balance: null,
+          transaction: idem_check,
+          already_processed: true,
+        };
+      }
 
-  wallet.balance -= amount;
-  await wallet.save();
+      const wallet = await Wallet.findById(wallet_id);
+      if (!wallet) throw new Error("no_wallet");
 
-  const transaction = await Transaction.create({
-    wallet_id,
-    type,
-    amount,
-    status,
-    channel: "wallet",
-    ride_id: ride_id && ride_id,
-    delivery_id: delivery_id && delivery_id,
-    reference,
-    metadata,
-  });
+      if (wallet.balance < amount) throw new Error("insufficient");
 
-  return { balance: wallet.balance, transaction };
+      wallet.balance -= amount;
+      await wallet.save();
+
+      const transaction = await Transaction.create({
+        wallet_id,
+        type,
+        amount,
+        status,
+        channel: "wallet",
+        ride_id: ride_id && ride_id,
+        delivery_id: delivery_id && delivery_id,
+        reference,
+        metadata,
+      });
+
+      return { balance: wallet.balance, transaction };
+    });
+    return result;
+  } catch (err) {
+    console.log("Debit wallet transaction failed: ", err);
+    throw err;
+  } finally {
+    session.endSession();
+  }
 };
