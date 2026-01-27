@@ -230,7 +230,7 @@ const get_driver_earnings_stats = (req, res) => __awaiter(void 0, void 0, void 0
             {
                 $match: {
                     wallet_id: wallet._id,
-                    type: "payment",
+                    type: "driver_payment",
                     status: "success",
                     createdAt: { $gte: startOfToday },
                 },
@@ -247,7 +247,7 @@ const get_driver_earnings_stats = (req, res) => __awaiter(void 0, void 0, void 0
             {
                 $match: {
                     wallet_id: wallet._id,
-                    type: "payment",
+                    type: "driver_payment",
                     status: "success",
                     createdAt: { $gte: startOfWeek },
                 },

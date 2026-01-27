@@ -15,43 +15,79 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.debit_wallet = exports.credit_wallet = void 0;
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const credit_wallet = (reference) => __awaiter(void 0, void 0, void 0, function* () {
-    const transaction = yield transaction_1.default.findOne({ reference });
-    if (!transaction)
-        throw new Error("Transaction was not found");
-    if (transaction.status !== "pending")
-        throw new Error("This transaction has already been processed");
-    const wallet_id = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
-    const wallet = yield wallet_1.default.findById(wallet_id);
-    if (!wallet)
-        throw new Error("Wallet not found");
-    const amount = transaction === null || transaction === void 0 ? void 0 : transaction.amount;
-    wallet.balance += amount;
-    yield wallet.save();
-    transaction.status = "success";
-    yield transaction.save();
-    return { balance: wallet.balance, transaction };
+    const session = yield mongoose_1.default.startSession();
+    try {
+        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            const transaction = yield transaction_1.default.findOne({ reference });
+            if (!transaction)
+                throw new Error("Transaction was not found");
+            if (transaction.status !== "pending") {
+                return { balance: null, transaction, alreadyProcessed: true };
+            }
+            const wallet_id = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
+            const wallet = yield wallet_1.default.findById(wallet_id);
+            if (!wallet)
+                throw new Error("Wallet not found");
+            const amount = transaction === null || transaction === void 0 ? void 0 : transaction.amount;
+            wallet.balance += amount;
+            yield wallet.save();
+            transaction.status = "success";
+            yield transaction.save();
+            return { balance: wallet.balance, transaction };
+        }));
+        return result;
+    }
+    catch (err) {
+        console.log("Credit wallet tranaction failed: " + err);
+        throw err;
+    }
+    finally {
+        session.endSession();
+    }
 });
 exports.credit_wallet = credit_wallet;
 const debit_wallet = (_a) => __awaiter(void 0, [_a], void 0, function* ({ wallet_id, ride_id, delivery_id, type, amount, reference, status = "success", metadata, }) {
-    const wallet = yield wallet_1.default.findById(wallet_id);
-    if (!wallet)
-        throw new Error("no_wallet");
-    if (wallet.balance < amount)
-        throw new Error("insufficient");
-    wallet.balance -= amount;
-    yield wallet.save();
-    const transaction = yield transaction_1.default.create({
-        wallet_id,
-        type,
-        amount,
-        status,
-        channel: "wallet",
-        ride_id: ride_id && ride_id,
-        delivery_id: delivery_id && delivery_id,
-        reference,
-        metadata,
-    });
-    return { balance: wallet.balance, transaction };
+    const session = yield mongoose_1.default.startSession();
+    try {
+        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            const idem_check = yield transaction_1.default.findOne({ reference });
+            if (idem_check && idem_check.status === "success") {
+                return {
+                    balance: null,
+                    transaction: idem_check,
+                    already_processed: true,
+                };
+            }
+            const wallet = yield wallet_1.default.findById(wallet_id);
+            if (!wallet)
+                throw new Error("no_wallet");
+            if (wallet.balance < amount)
+                throw new Error("insufficient");
+            wallet.balance -= amount;
+            yield wallet.save();
+            const transaction = yield transaction_1.default.create({
+                wallet_id,
+                type,
+                amount,
+                status,
+                channel: "wallet",
+                ride_id: ride_id && ride_id,
+                delivery_id: delivery_id && delivery_id,
+                reference,
+                metadata,
+            });
+            return { balance: wallet.balance, transaction };
+        }));
+        return result;
+    }
+    catch (err) {
+        console.log("Debit wallet transaction failed: ", err);
+        throw err;
+    }
+    finally {
+        session.endSession();
+    }
 });
 exports.debit_wallet = debit_wallet;
