@@ -20,8 +20,6 @@ const WalletPage: FC = () => {
   const { userWalletBal, fundWallet } = useWalletContext();
   const { showNotification } = useNotificationContext();
 
-  const window_height = Dimensions.get("window").height;
-
   const [amount, setAmount] = useState<string>("");
   const [btnLoading, setBtnLoading] = useState<boolean>(false);
 

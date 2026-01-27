@@ -33,7 +33,7 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [walletLoading, setWalletLoading] = useState<boolean>(false);
 
   const getWalletBalance = async (
-    owner_type: "Driver" | "User"
+    owner_type: "Driver" | "User",
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     try {
@@ -41,7 +41,7 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
         `${API_URL}/balance?owner_type=${owner_type}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (data.wallet) {
         owner_type === "User"
@@ -58,7 +58,7 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const fundWallet = async (
     channel: ChannelType,
-    amount: number
+    amount: number,
   ): Promise<void> => {
     showNotification("Redirecting...", "success");
     const token = await AsyncStorage.getItem("token");
@@ -73,14 +73,14 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const url = data.authorization_url;
 
       const redirectUrl = Linking.createURL("(tabs)/account");
       const result = await WebBrowser.openAuthSessionAsync(
         `${url}`,
-        redirectUrl
+        redirectUrl,
       );
 
       if (result.type === "success" && result.url) {
@@ -123,11 +123,17 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.post(
         `${API_URL}/verify?reference=${reference}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (!data) throw new Error("An error occurred");
-      showNotification(data.msg, "success");
 
+      if (data.transaction?.alreadyProcessed) {
+        console.log("Wallet already updated!", "success");
+      } else {
+        showNotification("Wallet funded successfully!", "success");
+      }
+
+      showNotification(data.msg, "success");
       console.log("funded");
     } catch (error: any) {
       const errMsg = error.response?.data?.msg || "Verification failed";
@@ -172,7 +178,7 @@ export const useWalletContext = () => {
   const context = useContext(WalletContext);
   if (!context)
     throw new Error(
-      "Wallet context can only be used within the Wallet Provider"
+      "Wallet context can only be used within the Wallet Provider",
     );
   return context;
 };

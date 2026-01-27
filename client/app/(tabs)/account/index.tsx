@@ -28,7 +28,6 @@ import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import { router } from "expo-router";
 import * as Linking from "expo-linking";
-import { Alert } from "react-native";
 
 const Account = () => {
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
