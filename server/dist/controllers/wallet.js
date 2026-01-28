@@ -25,7 +25,6 @@ const axios_1 = __importDefault(require("axios"));
 const paystack_1 = require("../utils/paystack");
 const expo_push_1 = require("../utils/expo_push");
 const get_id_2 = require("../utils/get_id");
-const activity_1 = __importDefault(require("../models/activity"));
 const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -69,7 +68,6 @@ const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.fund_wallet = fund_wallet;
 const paystack_webhook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     try {
         // 1. Verify Paystack Signature
         const hash = crypto_1.default
@@ -82,40 +80,7 @@ const paystack_webhook = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const event = req.body;
         if (event.event === "charge.success") {
             const { reference } = event.data;
-            const result = yield (0, wallet_2.credit_wallet)(reference);
-            // 3. ONLY send notification if this is the FIRST time we processed it
-            if (result && !result.alreadyProcessed) {
-                const transaction = result.transaction;
-                // Look up the user's push tokens using the wallet_id from the transaction
-                const walletId = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
-                if (walletId) {
-                    const wallet = yield wallet_1.default.findById(walletId).select("owner_id owner_type");
-                    if (wallet) {
-                        const ownerId = wallet.owner_id;
-                        const ownerType = wallet.owner_type;
-                        let tokens = [];
-                        if (ownerType === "User") {
-                            tokens = yield (0, get_id_2.get_user_push_tokens)(ownerId);
-                        }
-                        else if (ownerType === "Driver") {
-                            tokens = yield (0, get_id_2.get_driver_push_tokens)(ownerId);
-                        }
-                        yield activity_1.default.create({
-                            type: "wallet_funding",
-                            user: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
-                            title: "Wallet funded",
-                            message: `Your wallet was creditted with NGN ${transaction.amount}`,
-                            metadata: { owner_id: ownerId },
-                        });
-                        if (tokens.length) {
-                            yield (0, expo_push_1.sendNotification)([(_b = req.user) === null || _b === void 0 ? void 0 : _b.id], "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
-                                type: "wallet_funded",
-                                reference: transaction.reference,
-                            });
-                        }
-                    }
-                }
-            }
+            yield (0, wallet_2.credit_wallet)(reference);
         }
         res.sendStatus(200);
     }

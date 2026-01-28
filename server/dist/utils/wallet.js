@@ -16,6 +16,9 @@ exports.debit_wallet = exports.credit_wallet = void 0;
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const get_id_1 = require("./get_id");
+const activity_1 = __importDefault(require("../models/activity"));
+const expo_push_1 = require("./expo_push");
 const credit_wallet = (reference) => __awaiter(void 0, void 0, void 0, function* () {
     const session = yield mongoose_1.default.startSession();
     try {
@@ -37,6 +40,32 @@ const credit_wallet = (reference) => __awaiter(void 0, void 0, void 0, function*
             yield transaction.save();
             return { balance: wallet.balance, transaction };
         }));
+        if (result && !result.alreadyProcessed) {
+            const transaction = result.transaction;
+            // Look up the user's push tokens using the wallet_id from the transaction
+            const walletId = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
+            if (walletId) {
+                const wallet = yield wallet_1.default.findById(walletId).select("owner_id owner_type");
+                if (wallet) {
+                    const ownerId = wallet.owner_id;
+                    let tokens = [];
+                    tokens = yield (0, get_id_1.get_user_push_tokens)(ownerId);
+                    yield activity_1.default.create({
+                        type: "wallet_funding",
+                        user: wallet.owner_id,
+                        title: "Wallet funded",
+                        message: `Your wallet was creditted with NGN ${transaction.amount}`,
+                        metadata: { owner_id: ownerId },
+                    });
+                    if (tokens.length) {
+                        yield (0, expo_push_1.sendNotification)([wallet.owner_id.toString()], "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
+                            type: "wallet_funded",
+                            reference: transaction.reference,
+                        });
+                    }
+                }
+            }
+        }
         return result;
     }
     catch (err) {
