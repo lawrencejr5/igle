@@ -19,7 +19,7 @@ import {
 } from "../utils/paystack";
 import { sendNotification } from "../utils/expo_push";
 import { get_user_push_tokens, get_driver_push_tokens } from "../utils/get_id";
-import Activity from "../models/activity";
+import mongoose from "mongoose";
 
 export const fund_wallet = async (req: Request, res: Response) => {
   try {
@@ -138,81 +138,76 @@ export const verify_payment = async (req: any, res: any) => {
 };
 
 export const request_withdrawal = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
   try {
     const amount = Number(req.body.amount);
-
     const driver_id = await get_driver_id(req.user?.id);
-    const driver = await Driver.findById(driver_id);
-    const wallet = await Wallet.findOne({
-      owner_id: driver_id,
-      owner_type: "Driver",
-    });
 
-    if (!driver || !wallet) throw new Error("Driver or wallet not found");
+    // 1. DATABASE WORK FIRST
+    const result = await session.withTransaction(async () => {
+      const driver = await Driver.findById(driver_id);
+      const wallet = await Wallet.findOne({ owner_id: driver_id });
 
-    if (!driver.bank?.recipient_code) {
-      return res.status(400).json({ msg: "Bank info not set" });
-    }
+      if (!driver || !wallet) throw new Error("not_found");
+      if (!driver.bank?.recipient_code) throw new Error("no_bank_info");
+      if (wallet.balance < amount) throw new Error("insufficient");
 
-    if (wallet.balance < amount) {
-      return res.status(400).json({ msg: "Insufficient wallet balance" });
-    }
+      // DEDUCT IMMEDIATELY (Safety first)
+      wallet.balance -= amount;
+      await wallet.save();
 
-    // Send money to bank using Paystack Transfer
-    const transfer = await axios.post(
-      "https://api.paystack.co/transfer",
-      {
-        source: "balance",
-        amount: amount * 100, // in kobo
-        recipient: driver.bank.recipient_code,
-        reason: "Driver withdrawal",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      const transaction = await Transaction.create([
+        {
+          wallet_id: wallet._id,
+          type: "payout",
+          status: "pending", // ALWAYS start as pending
+          amount,
+          channel: "bank",
+          reference: `WD-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // Generate your own ref first
+          metadata: { driver_id: req.user.id },
         },
-      },
-    );
+      ]);
 
-    // Deduct from wallet
-    wallet.balance -= amount;
-    await wallet.save();
-
-    // Save transaction
-    await Transaction.create({
-      wallet_id: wallet._id,
-      reference: transfer.data.data.reference,
-      type: "payout",
-      status: "success",
-      amount,
-      channel: "bank",
-      metadata: {
-        for: "driver_withdrawal",
-        driver_id: req.user.id,
-      },
+      return {
+        transaction: transaction[0],
+        recipient: driver.bank.recipient_code,
+      };
     });
 
-    // Notify driver about successful withdrawal
+    // 2. NOW CALL PAYSTACK (Outside the DB transaction)
     try {
-      const tokens = await get_user_push_tokens(req.user?.id);
-      if (tokens.length) {
-        await sendNotification(
-          [req.user?.id],
-          "Withdrawal successful",
-          `You have withdrawn ${amount} from your wallet`,
-          {
-            type: "withdrawal_success",
+      const transfer = await axios.post(
+        "https://api.paystack.co/transfer",
+        {
+          source: "balance",
+          amount: amount * 100,
+          recipient: result.recipient,
+          reason: "Igle Driver Withdrawal",
+          reference: result.transaction.reference, // Pass the same ref to Paystack
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
           },
-        );
-      }
-    } catch (e) {
-      console.error("Failed to send withdrawal push:", e);
-    }
+        },
+      );
 
-    res.json({ msg: "Withdrawal successful", transfer: transfer.data.data });
+      // If we got here, Paystack accepted the request
+      return res.json({
+        msg: "Withdrawal initiated",
+        transfer: transfer.data.data,
+      });
+    } catch (paystackErr: any) {
+      console.error("Paystack API Error:", paystackErr.response?.data);
+
+      return res
+        .status(502)
+        .json({ msg: "Bank transfer failed. Balance restored." });
+    }
   } catch (err: any) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ msg: "Withdrawal failed", error: err.message });
+    res.status(400).json({ msg: err.message });
+  } finally {
+    session.endSession();
   }
 };
 

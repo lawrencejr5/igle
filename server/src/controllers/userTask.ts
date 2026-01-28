@@ -42,7 +42,7 @@ import Wallet from "../models/wallet";
 import Transaction from "../models/transaction";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 import { credit_wallet } from "../utils/wallet";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 // get current user's tasks
 export const get_user_tasks = async (req: Request, res: Response) => {
@@ -138,50 +138,64 @@ export const update_progress = async (req: Request, res: Response) => {
 
 // claim a completed task (credit wallet)
 export const claim_task = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
   try {
-    const userId = req.user?.id;
-    const { taskId } = req.params;
+    const result = await session.withTransaction(async () => {
+      const userId = req.user?.id;
+      const { taskId } = req.params;
 
-    const userTask = await UserTask.findOne({ user: userId, task: taskId });
-    if (!userTask) return res.status(404).json({ msg: "UserTask not found" });
+      const userTask = await UserTask.findOne({ user: userId, task: taskId });
+      if (!userTask) throw new Error("User task not found");
 
-    if (userTask.status === "claimed") {
-      return res.status(200).json({ msg: "Task already claimed" });
-    }
+      if (userTask.status === "claimed") {
+        return { already_claimed: true };
+      }
 
-    if (userTask.status !== "completed") {
-      return res.status(400).json({ msg: "Task not yet eligible for claim" });
-    }
+      if (userTask.status !== "completed")
+        throw new Error("Ineligible, task not yet complete");
 
-    const task = await Task.findById(taskId);
-    if (!task) return res.status(404).json({ msg: "Task not found" });
+      const task = await Task.findById(taskId);
+      if (!task) throw new Error("Task not found");
 
-    const wallet = await Wallet.findOne({ owner_id: userId });
-    if (!wallet) return res.status(404).json({ msg: "Wallet not found" });
+      const wallet = await Wallet.findOne({ owner_id: userId });
+      if (!wallet) throw new Error("Wallet not found");
 
-    // create pending transaction and then credit via existing util
-    const reference = generate_unique_reference();
-    await Transaction.create({
-      wallet_id: wallet._id as any,
-      type: "funding",
-      amount: Number((task as any).rewardAmount || 0),
-      status: "pending",
-      channel: "wallet",
-      reference,
-      metadata: { for: "task_reward", task_id: task._id, user_id: userId },
+      const reward_amount = Number((task as any).rewardAmount || 0);
+
+      // Credit wallet
+      wallet.balance += reward_amount;
+      wallet.save();
+
+      // create pending transaction and then credit via existing util
+      const reference = generate_unique_reference();
+      await Transaction.create({
+        wallet_id: wallet._id as any,
+        type: "funding",
+        amount: reward_amount,
+        status: "success",
+        channel: "wallet",
+        reference,
+        metadata: { for: "task_reward", task_id: task._id, user_id: userId },
+      });
+
+      userTask.status = "claimed";
+      userTask.claimedAt = new Date();
+      await userTask.save();
+
+      return { already_claimed: false, balance: wallet.balance };
     });
 
-    // credit wallet (reuses existing logic and marks transaction success)
-    const creditResult = await credit_wallet(reference);
+    if (result.already_claimed)
+      return res.status(200).json({ msg: "Reward already claimed" });
 
-    userTask.status = "claimed";
-    userTask.claimedAt = new Date();
-    await userTask.save();
-
-    res.status(200).json({ msg: "Task claimed", creditResult });
+    res
+      .status(200)
+      .json({ msg: "Task claimed successfully", balance: result.balance });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ msg: err.message || "Server error." });
+  } finally {
+    session.endSession();
   }
 };
 
