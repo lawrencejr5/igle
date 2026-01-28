@@ -1,6 +1,9 @@
 import Wallet from "../models/wallet";
 import Transaction from "../models/transaction";
 import mongoose, { Types } from "mongoose";
+import { get_user_push_tokens } from "./get_id";
+import ActivityModel from "../models/activity";
+import { sendNotification } from "./expo_push";
 
 interface WalletInput {
   wallet_id: Types.ObjectId;
@@ -39,6 +42,43 @@ export const credit_wallet = async (reference: string) => {
 
       return { balance: wallet.balance, transaction };
     });
+
+    if (result && !result.alreadyProcessed) {
+      const transaction = result.transaction;
+
+      // Look up the user's push tokens using the wallet_id from the transaction
+      const walletId = transaction?.wallet_id;
+      if (walletId) {
+        const wallet = await Wallet.findById(walletId).select(
+          "owner_id owner_type",
+        );
+        if (wallet) {
+          const ownerId = wallet.owner_id;
+          let tokens: string[] = [];
+          tokens = await get_user_push_tokens(ownerId as any);
+
+          await ActivityModel.create({
+            type: "wallet_funding",
+            user: wallet.owner_id,
+            title: "Wallet funded",
+            message: `Your wallet was creditted with NGN ${transaction.amount}`,
+            metadata: { owner_id: ownerId },
+          });
+
+          if (tokens.length) {
+            await sendNotification(
+              [wallet.owner_id.toString()],
+              "Wallet funded",
+              `Your wallet was credited with ${transaction.amount}`,
+              {
+                type: "wallet_funded",
+                reference: transaction.reference,
+              },
+            );
+          }
+        }
+      }
+    }
 
     return result;
   } catch (err) {

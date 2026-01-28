@@ -82,50 +82,7 @@ export const paystack_webhook = async (req: Request, res: Response) => {
     if (event.event === "charge.success") {
       const { reference } = event.data;
 
-      const result = await credit_wallet(reference);
-
-      // 3. ONLY send notification if this is the FIRST time we processed it
-      if (result && !result.alreadyProcessed) {
-        const transaction = result.transaction;
-
-        // Look up the user's push tokens using the wallet_id from the transaction
-        const walletId = transaction?.wallet_id;
-        if (walletId) {
-          const wallet = await Wallet.findById(walletId).select(
-            "owner_id owner_type",
-          );
-          if (wallet) {
-            const ownerId = wallet.owner_id;
-            const ownerType = wallet.owner_type;
-            let tokens: string[] = [];
-            if (ownerType === "User") {
-              tokens = await get_user_push_tokens(ownerId as any);
-            } else if (ownerType === "Driver") {
-              tokens = await get_driver_push_tokens(ownerId as any);
-            }
-
-            await Activity.create({
-              type: "wallet_funding",
-              user: req.user?.id,
-              title: "Wallet funded",
-              message: `Your wallet was creditted with NGN ${transaction.amount}`,
-              metadata: { owner_id: ownerId },
-            });
-
-            if (tokens.length) {
-              await sendNotification(
-                [req.user?.id!],
-                "Wallet funded",
-                `Your wallet was credited with ${transaction.amount}`,
-                {
-                  type: "wallet_funded",
-                  reference: transaction.reference,
-                },
-              );
-            }
-          }
-        }
-      }
+      await credit_wallet(reference);
     }
 
     res.sendStatus(200);
