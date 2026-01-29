@@ -55,7 +55,7 @@ const task_1 = __importDefault(require("../models/task"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
-const wallet_2 = require("../utils/wallet");
+const mongoose_1 = __importDefault(require("mongoose"));
 // get current user's tasks
 const get_user_tasks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -156,46 +156,58 @@ const update_progress = (req, res) => __awaiter(void 0, void 0, void 0, function
 exports.update_progress = update_progress;
 // claim a completed task (credit wallet)
 const claim_task = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    const session = yield mongoose_1.default.startSession();
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const { taskId } = req.params;
-        const userTask = yield userTask_1.default.findOne({ user: userId, task: taskId });
-        if (!userTask)
-            return res.status(404).json({ msg: "UserTask not found" });
-        if (userTask.status === "claimed") {
-            return res.status(200).json({ msg: "Task already claimed" });
-        }
-        if (userTask.status !== "completed") {
-            return res.status(400).json({ msg: "Task not yet eligible for claim" });
-        }
-        const task = yield task_1.default.findById(taskId);
-        if (!task)
-            return res.status(404).json({ msg: "Task not found" });
-        const wallet = yield wallet_1.default.findOne({ owner_id: userId });
-        if (!wallet)
-            return res.status(404).json({ msg: "Wallet not found" });
-        // create pending transaction and then credit via existing util
-        const reference = (0, gen_unique_ref_1.generate_unique_reference)();
-        yield transaction_1.default.create({
-            wallet_id: wallet._id,
-            type: "funding",
-            amount: Number(task.rewardAmount || 0),
-            status: "pending",
-            channel: "wallet",
-            reference,
-            metadata: { for: "task_reward", task_id: task._id, user_id: userId },
-        });
-        // credit wallet (reuses existing logic and marks transaction success)
-        const creditResult = yield (0, wallet_2.credit_wallet)(reference);
-        userTask.status = "claimed";
-        userTask.claimedAt = new Date();
-        yield userTask.save();
-        res.status(200).json({ msg: "Task claimed", creditResult });
+        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            var _a;
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+            const { taskId } = req.params;
+            const userTask = yield userTask_1.default.findOne({ user: userId, task: taskId });
+            if (!userTask)
+                throw new Error("User task not found");
+            if (userTask.status === "claimed") {
+                return { already_claimed: true };
+            }
+            if (userTask.status !== "completed")
+                throw new Error("Ineligible, task not yet complete");
+            const task = yield task_1.default.findById(taskId);
+            if (!task)
+                throw new Error("Task not found");
+            const wallet = yield wallet_1.default.findOne({ owner_id: userId });
+            if (!wallet)
+                throw new Error("Wallet not found");
+            const reward_amount = Number(task.rewardAmount || 0);
+            // Credit wallet
+            wallet.balance += reward_amount;
+            wallet.save();
+            // create pending transaction and then credit via existing util
+            const reference = (0, gen_unique_ref_1.generate_unique_reference)();
+            yield transaction_1.default.create({
+                wallet_id: wallet._id,
+                type: "funding",
+                amount: reward_amount,
+                status: "success",
+                channel: "wallet",
+                reference,
+                metadata: { for: "task_reward", task_id: task._id, user_id: userId },
+            });
+            userTask.status = "claimed";
+            userTask.claimedAt = new Date();
+            yield userTask.save();
+            return { already_claimed: false, balance: wallet.balance };
+        }));
+        if (result.already_claimed)
+            return res.status(200).json({ msg: "Reward already claimed" });
+        res
+            .status(200)
+            .json({ msg: "Task claimed successfully", balance: result.balance });
     }
     catch (err) {
         console.error(err);
         res.status(500).json({ msg: err.message || "Server error." });
+    }
+    finally {
+        session.endSession();
     }
 });
 exports.claim_task = claim_task;

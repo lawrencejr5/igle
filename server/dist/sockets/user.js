@@ -23,7 +23,9 @@ const user_socket_events = (io, socket) => {
         });
     }));
     socket.on("register_driver", (data) => __awaiter(void 0, void 0, void 0, function* () {
-        const { driver_id } = data;
+        const { driver_id, vehicle } = data;
+        const vehicleRoom = `drivers_${vehicle}`;
+        socket.join(vehicleRoom);
         yield driver_1.default.findByIdAndUpdate(driver_id, {
             socket_id: socket.id,
             is_online: true,

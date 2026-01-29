@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.create_wallet = exports.get_wallet_balance = exports.request_withdrawal = exports.verify_payment = exports.paystack_redirect = exports.paystack_webhook = exports.fund_wallet = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
 const crypto_1 = __importDefault(require("crypto"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const user_1 = __importDefault(require("../models/user"));
@@ -23,8 +24,6 @@ const get_id_1 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const axios_1 = __importDefault(require("axios"));
 const paystack_1 = require("../utils/paystack");
-const expo_push_1 = require("../utils/expo_push");
-const get_id_2 = require("../utils/get_id");
 const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -132,67 +131,72 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.verify_payment = verify_payment;
 const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b;
+    const session = yield mongoose_1.default.startSession();
     try {
         const amount = Number(req.body.amount);
         const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-        const driver = yield driver_1.default.findById(driver_id);
-        const wallet = yield wallet_1.default.findOne({
-            owner_id: driver_id,
-            owner_type: "Driver",
-        });
-        if (!driver || !wallet)
-            throw new Error("Driver or wallet not found");
-        if (!((_b = driver.bank) === null || _b === void 0 ? void 0 : _b.recipient_code)) {
-            return res.status(400).json({ msg: "Bank info not set" });
-        }
-        if (wallet.balance < amount) {
-            return res.status(400).json({ msg: "Insufficient wallet balance" });
-        }
-        // Send money to bank using Paystack Transfer
-        const transfer = yield axios_1.default.post("https://api.paystack.co/transfer", {
-            source: "balance",
-            amount: amount * 100, // in kobo
-            recipient: driver.bank.recipient_code,
-            reason: "Driver withdrawal",
-        }, {
-            headers: {
-                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            },
-        });
-        // Deduct from wallet
-        wallet.balance -= amount;
-        yield wallet.save();
-        // Save transaction
-        yield transaction_1.default.create({
-            wallet_id: wallet._id,
-            reference: transfer.data.data.reference,
-            type: "payout",
-            status: "success",
-            amount,
-            channel: "bank",
-            metadata: {
-                for: "driver_withdrawal",
-                driver_id: req.user.id,
-            },
-        });
-        // Notify driver about successful withdrawal
+        // 1. DATABASE WORK FIRST
+        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            var _a;
+            const driver = yield driver_1.default.findById(driver_id);
+            const wallet = yield wallet_1.default.findOne({ owner_id: driver_id });
+            if (!driver || !wallet)
+                throw new Error("not_found");
+            if (!((_a = driver.bank) === null || _a === void 0 ? void 0 : _a.recipient_code))
+                throw new Error("no_bank_info");
+            if (wallet.balance < amount)
+                throw new Error("insufficient");
+            // DEDUCT IMMEDIATELY (Safety first)
+            wallet.balance -= amount;
+            yield wallet.save();
+            const transaction = yield transaction_1.default.create([
+                {
+                    wallet_id: wallet._id,
+                    type: "payout",
+                    status: "pending", // ALWAYS start as pending
+                    amount,
+                    channel: "bank",
+                    reference: `WD-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // Generate your own ref first
+                    metadata: { driver_id: req.user.id },
+                },
+            ]);
+            return {
+                transaction: transaction[0],
+                recipient: driver.bank.recipient_code,
+            };
+        }));
+        // 2. NOW CALL PAYSTACK (Outside the DB transaction)
         try {
-            const tokens = yield (0, get_id_2.get_user_push_tokens)((_c = req.user) === null || _c === void 0 ? void 0 : _c.id);
-            if (tokens.length) {
-                yield (0, expo_push_1.sendNotification)([(_d = req.user) === null || _d === void 0 ? void 0 : _d.id], "Withdrawal successful", `You have withdrawn ${amount} from your wallet`, {
-                    type: "withdrawal_success",
-                });
-            }
+            const transfer = yield axios_1.default.post("https://api.paystack.co/transfer", {
+                source: "balance",
+                amount: amount * 100,
+                recipient: result.recipient,
+                reason: "Igle Driver Withdrawal",
+                reference: result.transaction.reference, // Pass the same ref to Paystack
+            }, {
+                headers: {
+                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                },
+            });
+            // If we got here, Paystack accepted the request
+            return res.json({
+                msg: "Withdrawal initiated",
+                transfer: transfer.data.data,
+            });
         }
-        catch (e) {
-            console.error("Failed to send withdrawal push:", e);
+        catch (paystackErr) {
+            console.error("Paystack API Error:", (_b = paystackErr.response) === null || _b === void 0 ? void 0 : _b.data);
+            return res
+                .status(502)
+                .json({ msg: "Bank transfer failed. Balance restored." });
         }
-        res.json({ msg: "Withdrawal successful", transfer: transfer.data.data });
     }
     catch (err) {
-        console.error(((_e = err.response) === null || _e === void 0 ? void 0 : _e.data) || err.message);
-        res.status(500).json({ msg: "Withdrawal failed", error: err.message });
+        res.status(400).json({ msg: err.message });
+    }
+    finally {
+        session.endSession();
     }
 });
 exports.request_withdrawal = request_withdrawal;

@@ -46,7 +46,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.admin_delete_ride = exports.admin_cancel_ride = exports.admin_get_ride = exports.admin_get_rides = exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_ongoing_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = exports.expire_ride = void 0;
-const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const activity_1 = __importDefault(require("../models/activity"));
@@ -54,13 +53,14 @@ const driver_1 = __importDefault(require("../models/driver"));
 const get_id_1 = require("../utils/get_id");
 const get_id_2 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
-const wallet_2 = require("../utils/wallet");
 const calc_fare_1 = require("../utils/calc_fare");
 const calc_commision_1 = require("../utils/calc_commision");
 const complete_ride_1 = require("../utils/complete_ride");
 const server_1 = require("../server");
 const agenda_1 = require("../jobs/agenda");
 const expo_push_1 = require("../utils/expo_push");
+const mongoose_1 = __importDefault(require("mongoose"));
+const transaction_1 = __importDefault(require("../models/transaction"));
 // 🔄 Helper: Expire a ride
 const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
     const ride = yield ride_1.default.findById(ride_id);
@@ -87,6 +87,7 @@ const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, func
 exports.expire_ride = expire_ride;
 const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    const session = yield mongoose_1.default.startSession();
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { km, min, scheduled_time } = req.query;
@@ -108,58 +109,61 @@ const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const duration_mins = Number(min);
         const commission = (0, calc_commision_1.calculate_commission)(fare);
         const driver_earnings = fare - commission;
-        const new_ride = yield ride_1.default.create({
-            rider: user_id,
-            pickup,
-            destination,
-            fare,
-            vehicle,
-            distance_km: Math.round(distance_km),
-            duration_mins: Math.round(duration_mins),
-            driver_earnings,
-            commission,
-            status: scheduled_time ? "scheduled" : "pending",
-            scheduled: scheduled_time ? true : false,
-            scheduled_time: scheduled_time
-                ? new Date(scheduled_time)
-                : null,
-        });
-        // Notify only drivers of the requested vehicle type
+        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            const activeRide = yield ride_1.default.findOne({
+                rider: user_id,
+                status: { $in: ["pending", "accepted", "arrived", "ongoing"] },
+            });
+            if (activeRide) {
+                return { already_booked: true, ride: activeRide };
+            }
+            const ride = yield ride_1.default.create({
+                rider: user_id,
+                pickup,
+                destination,
+                fare,
+                vehicle,
+                distance_km: Math.round(distance_km),
+                duration_mins: Math.round(duration_mins),
+                driver_earnings,
+                commission,
+                status: scheduled_time ? "scheduled" : "pending",
+                scheduled: scheduled_time ? true : false,
+                scheduled_time: scheduled_time
+                    ? new Date(scheduled_time)
+                    : null,
+            });
+            return { already_booked: false, ride };
+        }));
+        if (result.already_booked) {
+            res
+                .status(200)
+                .json({ msg: "You have an active request", ride: result.ride });
+            return;
+        }
         try {
+            // notify connected drivers via sockets and offline via push
             if (vehicle) {
-                // find drivers with the requested vehicle type
-                const drivers = yield driver_1.default.find({ vehicle_type: vehicle });
-                // notify connected drivers via sockets and offline via push
-                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
-                    try {
-                        const driverId = String(d._id);
-                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
-                        if (driverSocket) {
-                            server_1.io.to(driverSocket).emit("new_ride_request", {
-                                ride_id: new_ride._id,
-                            });
-                        }
-                    }
-                    catch (e) {
-                        console.error("Failed to notify driver", d._id, e);
-                    }
-                })));
+                server_1.io.to(`drivers_${vehicle}`).emit("new_ride_request", {
+                    ride_id: result.ride._id,
+                });
             }
             else {
-                // fallback: notify all drivers
-                server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+                server_1.io.emit("new_ride_request", { ride_id: result.ride._id });
             }
         }
         catch (notifyErr) {
             console.error("Error notifying drivers for ride request:", notifyErr);
             // fallback to global emit
-            server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+            server_1.io.emit("new_ride_request", { ride_id: result.ride._id });
         }
         // Start expiration timeout
-        setTimeout(() => (0, exports.expire_ride)(new_ride._id, new_ride.rider.toString()), 30000);
+        setTimeout(() => (0, exports.expire_ride)(result.ride._id, result.ride.rider.toString()), 30000);
         res.status(201).json({
-            msg: scheduled_time ? "Scheduled ride created" : "Ride request created",
-            ride: new_ride,
+            msg: result.ride.scheduled_time
+                ? "Scheduled ride created"
+                : "Ride request created",
+            ride: result.ride,
         });
     }
     catch (err) {
@@ -193,21 +197,9 @@ const retry_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         // Notify only drivers of the ride's vehicle type when retrying
         try {
             if (ride.vehicle) {
-                const drivers = yield driver_1.default.find({ vehicle_type: ride.vehicle });
-                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
-                    try {
-                        const driverId = String(d._id);
-                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
-                        if (driverSocket) {
-                            server_1.io.to(driverSocket).emit("new_ride_request", {
-                                ride_id: ride._id,
-                            });
-                        }
-                    }
-                    catch (e) {
-                        console.error("Failed to notify driver", d._id, e);
-                    }
-                })));
+                server_1.io.to(`drivers_${ride.vehicle}`).emit("new_ride_request", {
+                    ride_id: ride._id,
+                });
             }
             else {
                 server_1.io.emit("new_ride_request", { ride_id: ride._id });
@@ -261,32 +253,20 @@ const rebook_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             commission,
             status: "pending",
         });
-        // Notify only drivers matching original ride vehicle type
+        // Notify only drivers of the ride's vehicle type when retrying
         try {
             if (new_ride.vehicle) {
-                const drivers = yield driver_1.default.find({ vehicle_type: new_ride.vehicle });
-                yield Promise.all(drivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
-                    try {
-                        const driverId = String(d._id);
-                        const driverSocket = yield (0, get_id_1.get_driver_socket_id)(driverId);
-                        if (driverSocket) {
-                            server_1.io.to(driverSocket).emit("new_ride_request", {
-                                ride_id: new_ride._id,
-                            });
-                        }
-                    }
-                    catch (e) {
-                        console.error("Failed to notify driver", d._id, e);
-                    }
-                })));
+                server_1.io.to(`drivers_${new_ride.vehicle}`).emit("new_ride_request", {
+                    ride_id: new_ride._id,
+                });
             }
             else {
                 server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
             }
         }
         catch (e) {
-            console.error("Notify rebook error:", e);
-            server_1.io.emit("new_ride_request", { ride_id: new_ride._id });
+            console.error("Notify retry error:", e);
+            server_1.io.emit("new_ride_request", { ride_id: ride._id });
         }
         res.status(201).json({
             msg: "Ride has been rebooked",
@@ -735,71 +715,72 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
 exports.update_ride_status = update_ride_status;
 const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    const session = yield mongoose_1.default.startSession();
     try {
         const { ride_id } = req.query;
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const ride = yield ride_1.default.findById(ride_id);
-        if (!ride) {
-            return res.status(400).json({ msg: "Invalid ride or status" });
+        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            const ride = yield ride_1.default.findById(ride_id);
+            const wallet = yield wallet_1.default.findOne({ owner_id: user_id });
+            if (!ride || !wallet)
+                throw new Error("not_found");
+            // 1. Graceful Idempotency Check (No throwing here!)
+            if (ride.payment_status === "paid") {
+                return { already_paid: true, ride };
+            }
+            // 2. Hard Error Check (User actually doesn't have money)
+            if (wallet.balance < ride.fare)
+                throw new Error("insufficient");
+            // 3. The Money Move
+            wallet.balance -= ride.fare;
+            yield wallet.save();
+            yield transaction_1.default.create([
+                {
+                    wallet_id: wallet._id,
+                    amount: ride.fare,
+                    type: "ride_payment",
+                    status: "success",
+                    reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                    metadata: { ride_id: ride._id },
+                },
+            ]);
+            ride.payment_status = "paid";
+            ride.payment_method = "wallet";
+            yield ride.save();
+            return { already_paid: false, ride };
+        }));
+        // --- We are now outside the Transaction ---
+        // 4. Handle the "Already Paid" case quietly
+        if (result.already_paid) {
+            return res.status(200).json({
+                msg: "Ride already paid for. Safe travels!",
+                ride: result.ride,
+            });
         }
-        const wallet = yield wallet_1.default.findOne({ owner_id: user_id });
-        if (!wallet)
-            return res.status(404).json({ msg: "Wallet not found" });
-        const transaction = yield (0, wallet_2.debit_wallet)({
-            wallet_id: new mongoose_1.Types.ObjectId(wallet._id),
-            amount: ride.fare,
-            type: "ride_payment",
-            channel: "wallet",
-            ride_id: new mongoose_1.Types.ObjectId(ride._id),
-            reference: (0, gen_unique_ref_1.generate_unique_reference)(),
-            metadata: { for: "ride_payment" },
-        });
-        ride.payment_status = "paid";
-        ride.payment_method = "wallet";
-        yield ride.save();
-        // Emit socket event to assigned driver (if connected)
-        try {
-            const driver_socket = (ride === null || ride === void 0 ? void 0 : ride.driver)
-                ? yield (0, get_id_1.get_driver_socket_id)(ride.driver)
-                : null;
+        // 5. Side Effects: Trigger these ONLY for the first successful payment
+        const { ride } = result;
+        // Socket Notification to Driver
+        if (ride.driver) {
+            const driver_socket = yield (0, get_id_1.get_driver_socket_id)(ride.driver.toString());
             if (driver_socket) {
-                server_1.io.to(driver_socket).emit("paid_for_ride", {
-                    ride_id: ride._id,
-                    msg: "Rider has paid for ride",
-                });
+                server_1.io.to(driver_socket).emit("paid_for_ride", { ride_id: ride._id });
+            }
+            // Push Notification logic
+            const driver_user_id = yield (0, get_id_1.get_driver_user_id)(ride.driver);
+            const driver_tokens = yield (0, get_id_2.get_driver_push_tokens)(ride.driver.toString());
+            if (driver_tokens.length > 0) {
+                yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Payment received", "Rider has paid!", { ride_id: ride._id });
             }
         }
-        catch (e) {
-            console.error("Failed to emit paid_for_ride socket to driver:", e);
-        }
-        // Send push notification to driver when payment is made
-        if (ride === null || ride === void 0 ? void 0 : ride.driver) {
-            try {
-                const driver_user_id = yield (0, get_id_1.get_driver_user_id)(ride.driver);
-                const driver_tokens = yield (0, get_id_2.get_driver_push_tokens)(ride.driver.toString());
-                if (driver_tokens.length > 0) {
-                    yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Payment received", "Rider has paid for the ride", {
-                        type: "ride_payment",
-                        ride_id: ride._id,
-                        role: "driver",
-                    });
-                }
-            }
-            catch (e) {
-                console.error("Failed to send payment notification to driver:", e);
-            }
-        }
-        res.status(200).json({ msg: "Payment successful", transaction });
+        res.status(200).json({ msg: "Payment successful", ride });
     }
     catch (err) {
-        console.error(err);
-        if (err.message === "insufficient") {
-            return res.status(400).json({ msg: "Insufficient wallet balance" });
-        }
-        if (err.message === "no_wallet") {
-            return res.status(404).json({ msg: "Wallet not found" });
-        }
-        res.status(500).json({ msg: "Server error", err });
+        // Handle actual failures (Not found, Insufficient, etc.)
+        const status = err.message === "not_found" ? 404 : 400;
+        res.status(status).json({ msg: err.message });
+    }
+    finally {
+        session.endSession();
     }
 });
 exports.pay_for_ride = pay_for_ride;

@@ -23,6 +23,7 @@ import { io } from "../server";
 import { agenda } from "../jobs/agenda";
 import { sendNotification } from "../utils/expo_push";
 import mongoose from "mongoose";
+import Transaction from "../models/transaction";
 
 // 🔄 Helper: Expire a ride
 export const expire_ride = async (ride_id: string, user_id?: string) => {
@@ -814,84 +815,89 @@ export const update_ride_status = async (
 };
 
 export const pay_for_ride = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
   try {
     const { ride_id } = req.query;
     const user_id = req.user?.id;
 
-    const ride = await Ride.findById(ride_id);
-    if (!ride) {
-      return res.status(400).json({ msg: "Invalid ride or status" });
-    }
+    const result = await session.withTransaction(async () => {
+      const ride = await Ride.findById(ride_id);
+      const wallet = await Wallet.findOne({ owner_id: user_id });
 
-    const wallet = await Wallet.findOne({ owner_id: user_id });
-    if (!wallet) return res.status(404).json({ msg: "Wallet not found" });
+      if (!ride || !wallet) throw new Error("not_found");
 
-    const transaction = await debit_wallet({
-      wallet_id: new Types.ObjectId(wallet._id as string),
-      amount: ride.fare,
-      type: "ride_payment",
-      channel: "wallet",
-      ride_id: new Types.ObjectId(ride._id as string),
-      reference: generate_unique_reference(),
-      metadata: { for: "ride_payment" },
+      // 1. Graceful Idempotency Check (No throwing here!)
+      if (ride.payment_status === "paid") {
+        return { already_paid: true, ride };
+      }
+
+      // 2. Hard Error Check (User actually doesn't have money)
+      if (wallet.balance < ride.fare) throw new Error("insufficient");
+
+      // 3. The Money Move
+      wallet.balance -= ride.fare;
+      await wallet.save();
+
+      await Transaction.create([
+        {
+          wallet_id: wallet._id,
+          amount: ride.fare,
+          type: "ride_payment",
+          status: "success",
+          reference: generate_unique_reference(),
+          metadata: { ride_id: ride._id },
+        },
+      ]);
+
+      ride.payment_status = "paid";
+      ride.payment_method = "wallet";
+      await ride.save();
+
+      return { already_paid: false, ride };
     });
 
-    ride.payment_status = "paid";
-    ride.payment_method = "wallet";
-    await ride.save();
+    // --- We are now outside the Transaction ---
 
-    // Emit socket event to assigned driver (if connected)
-    try {
-      const driver_socket = ride?.driver
-        ? await get_driver_socket_id(ride.driver)
-        : null;
+    // 4. Handle the "Already Paid" case quietly
+    if (result.already_paid) {
+      return res.status(200).json({
+        msg: "Ride already paid for. Safe travels!",
+        ride: result.ride,
+      });
+    }
+
+    // 5. Side Effects: Trigger these ONLY for the first successful payment
+    const { ride } = result;
+
+    // Socket Notification to Driver
+    if (ride.driver) {
+      const driver_socket = await get_driver_socket_id(ride.driver.toString());
       if (driver_socket) {
-        io.to(driver_socket).emit("paid_for_ride", {
-          ride_id: ride._id,
-          msg: "Rider has paid for ride",
-        });
+        io.to(driver_socket).emit("paid_for_ride", { ride_id: ride._id });
       }
-    } catch (e) {
-      console.error("Failed to emit paid_for_ride socket to driver:", e);
-    }
 
-    // Send push notification to driver when payment is made
-    if (ride?.driver) {
-      try {
-        const driver_user_id = await get_driver_user_id(ride.driver);
-        const driver_tokens = await get_driver_push_tokens(
-          ride.driver.toString(),
+      // Push Notification logic
+      const driver_user_id = await get_driver_user_id(ride.driver);
+      const driver_tokens = await get_driver_push_tokens(
+        ride.driver.toString(),
+      );
+      if (driver_tokens.length > 0) {
+        await sendNotification(
+          [String(driver_user_id)],
+          "Payment received",
+          "Rider has paid!",
+          { ride_id: ride._id },
         );
-
-        if (driver_tokens.length > 0) {
-          await sendNotification(
-            [String(driver_user_id)],
-            "Payment received",
-            "Rider has paid for the ride",
-            {
-              type: "ride_payment",
-              ride_id: ride._id,
-              role: "driver",
-            },
-          );
-        }
-      } catch (e) {
-        console.error("Failed to send payment notification to driver:", e);
       }
     }
 
-    res.status(200).json({ msg: "Payment successful", transaction });
+    res.status(200).json({ msg: "Payment successful", ride });
   } catch (err: any) {
-    console.error(err);
-
-    if (err.message === "insufficient") {
-      return res.status(400).json({ msg: "Insufficient wallet balance" });
-    }
-    if (err.message === "no_wallet") {
-      return res.status(404).json({ msg: "Wallet not found" });
-    }
-
-    res.status(500).json({ msg: "Server error", err });
+    // Handle actual failures (Not found, Insufficient, etc.)
+    const status = err.message === "not_found" ? 404 : 400;
+    res.status(status).json({ msg: err.message });
+  } finally {
+    session.endSession();
   }
 };
 
