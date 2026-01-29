@@ -893,9 +893,11 @@ export const pay_for_ride = async (req: Request, res: Response) => {
 
     res.status(200).json({ msg: "Payment successful", ride });
   } catch (err: any) {
-    // Handle actual failures (Not found, Insufficient, etc.)
-    const status = err.message === "not_found" ? 404 : 400;
-    res.status(status).json({ msg: err.message });
+    if (err.message === "insufficient")
+      return res.status(400).json({ msg: "Insufficient balance" });
+    if (err.message === "not_found")
+      return res.status(200).json({ msg: "Ride or wallet not found" });
+    res.status(500).json({ msg: "Payment failed", error: err.message });
   } finally {
     session.endSession();
   }
