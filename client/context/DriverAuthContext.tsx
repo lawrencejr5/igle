@@ -117,7 +117,7 @@ interface DriverAuthContextType {
 }
 
 export const DriverAuthContext = createContext<DriverAuthContextType | null>(
-  null
+  null,
 );
 
 const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
@@ -141,7 +141,10 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (driver?.driver_id) {
-      const socket = initDriverSocket(driver.driver_id);
+      const socket = initDriverSocket(
+        driver.driver_id,
+        driver.vehicle_type ?? "cab",
+      );
       setDriverSocket(socket);
 
       return () => {
@@ -294,7 +297,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (data) {
         setDriver((prev: any) => ({ ...prev, profile_img: null }));
@@ -345,7 +348,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (data.driver) {
@@ -361,7 +364,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const updateDriverInfo = async (
-    updateData: Partial<DriverType>
+    updateData: Partial<DriverType>,
   ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -373,7 +376,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (data.driver) {
         setDriver((prev) =>
-          prev ? { ...prev, date_of_birth: data.driver.date_of_birth } : null
+          prev ? { ...prev, date_of_birth: data.driver.date_of_birth } : null,
         );
         showNotification("Updated successfully", "success");
       }
@@ -397,7 +400,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
         });
         if (data.vehicle) {
           setDriver((prev) =>
-            prev ? { ...prev, vehicle: data.vehicle } : null
+            prev ? { ...prev, vehicle: data.vehicle } : null,
           );
           showNotification(data.msg || "Updated successfully", "success");
         }
@@ -425,7 +428,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (data.driver_licence) {
         setDriver((prev) =>
-          prev ? { ...prev, driver_licence: data.driver_licence } : null
+          prev ? { ...prev, driver_licence: data.driver_licence } : null,
         );
         showNotification(data.msg || "Updated successfully", "success");
       }
@@ -438,7 +441,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const saveBankInfo = async (
-    bankInfo: Omit<BankInfo, "recipient_code">
+    bankInfo: Omit<BankInfo, "recipient_code">,
   ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -454,7 +457,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       showNotification(data.msg, "success");
     } catch (error: any) {
@@ -499,7 +502,7 @@ export const useDriverAuthContext = () => {
   const context = useContext(DriverAuthContext);
   if (!context) {
     throw new Error(
-      "useDriverAuthContext must be used within a DriverAuthProvider"
+      "useDriverAuthContext must be used within a DriverAuthProvider",
     );
   }
   return context;

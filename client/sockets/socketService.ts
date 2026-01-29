@@ -5,7 +5,7 @@ import { SOCKET_URL } from "../data/constants";
 let userSocket: any;
 let driverSocket: any;
 
-export const initDriverSocket = (driver_id: string) => {
+export const initDriverSocket = (driver_id: string, vehicle: string) => {
   if (!driverSocket) {
     driverSocket = io(SOCKET_URL, {
       transports: ["websocket"],
@@ -16,7 +16,8 @@ export const initDriverSocket = (driver_id: string) => {
       console.log("Connected as Driver:", driverSocket.id);
       driverSocket.emit("register_driver", {
         socket_id: driverSocket.id,
-        driver_id: driver_id,
+        driver_id,
+        vehicle,
       });
     });
     driverSocket.on("disconnect", () => {

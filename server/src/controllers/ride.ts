@@ -22,6 +22,7 @@ import { complete_ride } from "../utils/complete_ride";
 import { io } from "../server";
 import { agenda } from "../jobs/agenda";
 import { sendNotification } from "../utils/expo_push";
+import mongoose from "mongoose";
 
 // 🔄 Helper: Expire a ride
 export const expire_ride = async (ride_id: string, user_id?: string) => {
@@ -50,8 +51,10 @@ export const expire_ride = async (ride_id: string, user_id?: string) => {
 
 export const request_ride = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
+  const session = await mongoose.startSession();
+
   try {
     const user_id = req.user?.id;
     const { km, min, scheduled_time } = req.query;
@@ -79,64 +82,67 @@ export const request_ride = async (
     const commission = calculate_commission(fare);
     const driver_earnings = fare - commission;
 
-    const new_ride = await Ride.create({
-      rider: user_id,
-      pickup,
-      destination,
-      fare,
-      vehicle,
-      distance_km: Math.round(distance_km),
-      duration_mins: Math.round(duration_mins),
-      driver_earnings,
-      commission,
-      status: scheduled_time ? "scheduled" : "pending",
-      scheduled: scheduled_time ? true : false,
-      scheduled_time: scheduled_time
-        ? new Date(scheduled_time as string)
-        : null,
+    const result = await session.withTransaction(async () => {
+      const activeRide = await Ride.findOne({
+        rider: user_id,
+        status: { $in: ["pending", "accepted", "arrived", "ongoing"] },
+      });
+      if (activeRide) {
+        return { already_booked: true, ride: activeRide };
+      }
+      const ride = await Ride.create({
+        rider: user_id,
+        pickup,
+        destination,
+        fare,
+        vehicle,
+        distance_km: Math.round(distance_km),
+        duration_mins: Math.round(duration_mins),
+        driver_earnings,
+        commission,
+        status: scheduled_time ? "scheduled" : "pending",
+        scheduled: scheduled_time ? true : false,
+        scheduled_time: scheduled_time
+          ? new Date(scheduled_time as string)
+          : null,
+      });
+      return { already_booked: false, ride };
     });
 
-    // Notify only drivers of the requested vehicle type
-    try {
-      if (vehicle) {
-        // find drivers with the requested vehicle type
-        const drivers = await Driver.find({ vehicle_type: vehicle });
+    if (result.already_booked) {
+      res
+        .status(200)
+        .json({ msg: "You have an active request", ride: result.ride });
+      return;
+    }
 
-        // notify connected drivers via sockets and offline via push
-        await Promise.all(
-          drivers.map(async (d) => {
-            try {
-              const driverId = String((d as any)._id);
-              const driverSocket = await get_driver_socket_id(driverId);
-              if (driverSocket) {
-                io.to(driverSocket).emit("new_ride_request", {
-                  ride_id: new_ride._id,
-                });
-              }
-            } catch (e) {
-              console.error("Failed to notify driver", d._id, e);
-            }
-          })
-        );
+    try {
+      // notify connected drivers via sockets and offline via push
+      if (vehicle) {
+        io.to(`drivers_${vehicle}`).emit("new_ride_request", {
+          ride_id: result.ride._id,
+        });
       } else {
-        // fallback: notify all drivers
-        io.emit("new_ride_request", { ride_id: new_ride._id });
+        io.emit("new_ride_request", { ride_id: result.ride._id });
       }
     } catch (notifyErr) {
       console.error("Error notifying drivers for ride request:", notifyErr);
       // fallback to global emit
-      io.emit("new_ride_request", { ride_id: new_ride._id });
+      io.emit("new_ride_request", { ride_id: result.ride._id });
     }
 
     // Start expiration timeout
     setTimeout(
-      () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
-      30000
+      () =>
+        expire_ride(result.ride._id as string, result.ride.rider.toString()),
+      30000,
     );
 
     res.status(201).json({
-      msg: scheduled_time ? "Scheduled ride created" : "Ride request created",
-      ride: new_ride,
+      msg: result.ride.scheduled_time
+        ? "Scheduled ride created"
+        : "Ride request created",
+      ride: result.ride,
     });
   } catch (err: any) {
     res
@@ -147,7 +153,7 @@ export const request_ride = async (
 
 export const retry_ride = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { ride_id } = req.query;
@@ -175,22 +181,9 @@ export const retry_ride = async (
     // Notify only drivers of the ride's vehicle type when retrying
     try {
       if (ride.vehicle) {
-        const drivers = await Driver.find({ vehicle_type: ride.vehicle });
-        await Promise.all(
-          drivers.map(async (d) => {
-            try {
-              const driverId = String((d as any)._id);
-              const driverSocket = await get_driver_socket_id(driverId);
-              if (driverSocket) {
-                io.to(driverSocket).emit("new_ride_request", {
-                  ride_id: ride._id,
-                });
-              }
-            } catch (e) {
-              console.error("Failed to notify driver", d._id, e);
-            }
-          })
-        );
+        io.to(`drivers_${ride.vehicle}`).emit("new_ride_request", {
+          ride_id: ride._id,
+        });
       } else {
         io.emit("new_ride_request", { ride_id: ride._id });
       }
@@ -207,7 +200,7 @@ export const retry_ride = async (
     // Start expiration timeout
     setTimeout(
       () => expire_ride(ride._id as string, ride.rider.toString()),
-      30000
+      30000,
     );
   } catch (err: any) {
     res.status(500).json({ msg: "Failed to retry ride", err: err.message });
@@ -216,7 +209,7 @@ export const retry_ride = async (
 
 export const rebook_ride = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { ride_id } = req.query;
@@ -255,31 +248,18 @@ export const rebook_ride = async (
       status: "pending",
     });
 
-    // Notify only drivers matching original ride vehicle type
+    // Notify only drivers of the ride's vehicle type when retrying
     try {
       if (new_ride.vehicle) {
-        const drivers = await Driver.find({ vehicle_type: new_ride.vehicle });
-        await Promise.all(
-          drivers.map(async (d) => {
-            try {
-              const driverId = String((d as any)._id);
-              const driverSocket = await get_driver_socket_id(driverId);
-              if (driverSocket) {
-                io.to(driverSocket).emit("new_ride_request", {
-                  ride_id: new_ride._id,
-                });
-              }
-            } catch (e) {
-              console.error("Failed to notify driver", d._id, e);
-            }
-          })
-        );
+        io.to(`drivers_${new_ride.vehicle}`).emit("new_ride_request", {
+          ride_id: new_ride._id,
+        });
       } else {
         io.emit("new_ride_request", { ride_id: new_ride._id });
       }
     } catch (e) {
-      console.error("Notify rebook error:", e);
-      io.emit("new_ride_request", { ride_id: new_ride._id });
+      console.error("Notify retry error:", e);
+      io.emit("new_ride_request", { ride_id: ride._id });
     }
 
     res.status(201).json({
@@ -290,7 +270,7 @@ export const rebook_ride = async (
     // Start expiration timeout
     setTimeout(
       () => expire_ride(new_ride._id as string, new_ride.rider.toString()),
-      30000
+      30000,
     );
   } catch (err: any) {
     res.status(500).json({ msg: "Failed to rebook ride", err: err.message });
@@ -300,7 +280,7 @@ export const rebook_ride = async (
 // Get available rides (status: pending, no driver assigned)
 export const get_available_rides = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const rides = await Ride.find({
@@ -316,7 +296,7 @@ export const get_available_rides = async (
 // Get available rides (status: pending, no driver assigned)
 export const get_ride_data = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { ride_id } = req.query;
@@ -340,7 +320,7 @@ export const get_ride_data = async (
 
 export const get_user_rides = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
@@ -369,7 +349,7 @@ export const get_user_rides = async (
 
 export const get_user_active_ride = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
@@ -404,7 +384,7 @@ export const get_user_active_ride = async (
 };
 export const get_user_ongoing_ride = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
@@ -432,7 +412,7 @@ export const get_user_ongoing_ride = async (
 
 export const get_user_scheduled_rides = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const user_id = req.user?.id;
@@ -461,7 +441,7 @@ export const get_user_scheduled_rides = async (
 // Accept a ride (assign driver and update status)
 export const accept_ride = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { ride_id } = req.query;
@@ -478,7 +458,7 @@ export const accept_ride = async (
         status: "accepted",
         "timestamps.accepted_at": new Date(), // <--- Add this here
       },
-      { new: true }
+      { new: true },
     );
 
     if (!ride) {
@@ -511,10 +491,10 @@ export const accept_ride = async (
       // Calculate trigger time: e.g., 20 minutes BEFORE the scheduled time
       // so the system starts looking for drivers ahead of time.
       const reminder_time = new Date(
-        new Date(ride?.scheduled_time).getTime() - 15 * 60000
+        new Date(ride?.scheduled_time).getTime() - 15 * 60000,
       );
       const dispatch_time = new Date(
-        new Date(ride?.scheduled_time).getTime() - 10 * 60000
+        new Date(ride?.scheduled_time).getTime() - 10 * 60000,
       );
 
       // Pass the ride_id to the worker
@@ -539,7 +519,7 @@ export const accept_ride = async (
         {
           type: "ride_booking",
           ride_id: ride._id,
-        }
+        },
       );
     }
 
@@ -552,7 +532,7 @@ export const accept_ride = async (
 // Ride cancellation by rider or driver
 export const cancel_ride = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { ride_id } = req.query;
@@ -615,7 +595,7 @@ export const cancel_ride = async (
           {
             type: "ride_cancelled",
             ride_id: ride._id,
-          }
+          },
         );
       }
 
@@ -631,7 +611,7 @@ export const cancel_ride = async (
             type: "ride_cancelled",
             ride_id: ride._id,
             role: "driver",
-          }
+          },
         );
       }
     } catch (e) {
@@ -648,7 +628,7 @@ export const cancel_ride = async (
 // Updating status
 export const update_ride_status = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { ride_id } = req.query;
@@ -705,7 +685,7 @@ export const update_ride_status = async (
               {
                 type: "ride_booking",
                 ride_id: ride._id,
-              }
+              },
             );
           }
         } catch (e) {
@@ -750,7 +730,7 @@ export const update_ride_status = async (
             {
               type: "ride_booking",
               ride_id: ride._id,
-            }
+            },
           );
         }
         if (driver_socket)
@@ -794,7 +774,7 @@ export const update_ride_status = async (
               {
                 type: "ride_completed",
                 ride_id: ride._id,
-              }
+              },
             );
           }
         } catch (e) {
@@ -880,7 +860,7 @@ export const pay_for_ride = async (req: Request, res: Response) => {
       try {
         const driver_user_id = await get_driver_user_id(ride.driver);
         const driver_tokens = await get_driver_push_tokens(
-          ride.driver.toString()
+          ride.driver.toString(),
         );
 
         if (driver_tokens.length > 0) {
@@ -892,7 +872,7 @@ export const pay_for_ride = async (req: Request, res: Response) => {
               type: "ride_payment",
               ride_id: ride._id,
               role: "driver",
-            }
+            },
           );
         }
       } catch (e) {
@@ -1006,7 +986,7 @@ export const admin_get_ride = async (req: Request, res: Response) => {
         req.query.ride_id ||
         req.query.rideId ||
         req.body?.id ||
-        ""
+        "",
     );
     if (!id) return res.status(400).json({ msg: "id is required" });
 
@@ -1121,7 +1101,7 @@ export const admin_cancel_ride = async (req: Request, res: Response) => {
             type: "ride_cancelled",
             ride_id: ride._id,
             by: "admin",
-          }
+          },
         );
       }
       if (driverTokens.length) {
@@ -1134,7 +1114,7 @@ export const admin_cancel_ride = async (req: Request, res: Response) => {
             ride_id: ride._id,
             by: "admin",
             role: "driver",
-          }
+          },
         );
       }
     } catch (e) {

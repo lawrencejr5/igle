@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import crypto from "crypto";
 
 import { Request, Response } from "express";
@@ -17,9 +18,6 @@ import {
   initialize_paystack_transaction,
   verify_paystack_transaction,
 } from "../utils/paystack";
-import { sendNotification } from "../utils/expo_push";
-import { get_user_push_tokens, get_driver_push_tokens } from "../utils/get_id";
-import mongoose from "mongoose";
 
 export const fund_wallet = async (req: Request, res: Response) => {
   try {
