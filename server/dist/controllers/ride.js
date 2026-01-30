@@ -46,6 +46,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.admin_delete_ride = exports.admin_cancel_ride = exports.admin_get_ride = exports.admin_get_rides = exports.pay_for_ride = exports.update_ride_status = exports.cancel_ride = exports.accept_ride = exports.get_user_scheduled_rides = exports.get_user_ongoing_ride = exports.get_user_active_ride = exports.get_user_rides = exports.get_ride_data = exports.get_available_rides = exports.rebook_ride = exports.retry_ride = exports.request_ride = exports.expire_ride = void 0;
+const mongoose_1 = require("mongoose");
 const ride_1 = __importDefault(require("../models/ride"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const activity_1 = __importDefault(require("../models/activity"));
@@ -53,14 +54,14 @@ const driver_1 = __importDefault(require("../models/driver"));
 const get_id_1 = require("../utils/get_id");
 const get_id_2 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
+const wallet_2 = require("../utils/wallet");
 const calc_fare_1 = require("../utils/calc_fare");
 const calc_commision_1 = require("../utils/calc_commision");
 const complete_ride_1 = require("../utils/complete_ride");
 const server_1 = require("../server");
 const agenda_1 = require("../jobs/agenda");
 const expo_push_1 = require("../utils/expo_push");
-const mongoose_1 = __importDefault(require("mongoose"));
-const transaction_1 = __importDefault(require("../models/transaction"));
+const mongoose_2 = __importDefault(require("mongoose"));
 // 🔄 Helper: Expire a ride
 const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, function* () {
     const ride = yield ride_1.default.findById(ride_id);
@@ -87,7 +88,7 @@ const expire_ride = (ride_id, user_id) => __awaiter(void 0, void 0, void 0, func
 exports.expire_ride = expire_ride;
 const request_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const session = yield mongoose_1.default.startSession();
+    const session = yield mongoose_2.default.startSession();
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { km, min, scheduled_time } = req.query;
@@ -640,61 +641,29 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
                         msg: "Your ride has arrived",
                     });
                 }
-                // Send notification regardless of socket connection
-                if (tokens.length) {
-                    yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has started", "Your driver has started the ride.", {
-                        type: "ride_booking",
-                        ride_id: ride._id,
-                    });
-                }
                 if (driver_socket)
                     server_1.io.to(driver_socket).emit("ride_in_progress", {
                         msg: "You have arrived",
                     });
+                yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Your ride has started", "Your driver has started the ride.", {
+                    type: "ride_booking",
+                    ride_id: ride._id,
+                });
                 ride.timestamps.started_at = new Date();
                 ride.status = "ongoing";
                 break;
             // end ride
             case "completed":
-                if (ride.status !== "ongoing") {
-                    res.status(400).json({ msg: "Failed to complete this ride" });
-                    return;
-                }
-                const driver = yield driver_1.default.findById(ride.driver);
-                if (driver) {
-                    driver.total_trips += 1;
-                    yield driver.save();
-                }
                 const result = yield (0, complete_ride_1.complete_ride)(ride);
                 // Emitting ride status
                 if (user_socket)
                     server_1.io.to(user_socket).emit("ride_completed", {
                         msg: "Your ride has been completed",
                     });
-                // Send notification regardless of socket connection
-                try {
-                    if (tokens.length) {
-                        console.log("Sending 'Ride completed' push to tokens:", tokens);
-                        const res = yield (0, expo_push_1.sendNotification)([String(ride.rider)], "Ride completed", `Your ride to ${ride.destination.address} has been completed`, {
-                            type: "ride_completed",
-                            ride_id: ride._id,
-                        });
-                    }
-                }
-                catch (e) {
-                    console.error("Failed to send completed push to rider:", e);
-                }
                 if (driver_socket)
                     server_1.io.to(driver_socket).emit("ride_completed", {
                         msg: "You have finished the ride",
                     });
-                yield activity_1.default.create({
-                    type: "ride",
-                    user: ride.rider,
-                    title: "Ride completed",
-                    message: `Your ride to ${ride.destination.address} has been completed`,
-                    metadata: { ride_id: ride._id, driver_id: ride.driver },
-                });
                 if (!result.success) {
                     res.status(result.statusCode).json({ msg: result.message });
                     return;
@@ -715,7 +684,7 @@ const update_ride_status = (req, res) => __awaiter(void 0, void 0, void 0, funct
 exports.update_ride_status = update_ride_status;
 const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const session = yield mongoose_1.default.startSession();
+    const session = yield mongoose_2.default.startSession();
     try {
         const { ride_id } = req.query;
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
@@ -728,26 +697,19 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             if (ride.payment_status === "paid") {
                 return { already_paid: true, ride };
             }
-            // 2. Hard Error Check (User actually doesn't have money)
-            if (wallet.balance < ride.fare)
-                throw new Error("insufficient");
-            // 3. The Money Move
-            wallet.balance -= ride.fare;
-            yield wallet.save();
-            yield transaction_1.default.create([
-                {
-                    wallet_id: wallet._id,
-                    amount: ride.fare,
-                    type: "ride_payment",
-                    status: "success",
-                    reference: (0, gen_unique_ref_1.generate_unique_reference)(),
-                    metadata: { ride_id: ride._id },
-                },
-            ]);
+            const transaction = yield (0, wallet_2.debit_wallet)({
+                wallet_id: new mongoose_1.Types.ObjectId(wallet._id),
+                amount: ride.fare,
+                type: "ride_payment",
+                channel: "wallet",
+                ride_id: new mongoose_1.Types.ObjectId(ride._id),
+                reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                metadata: { for: "ride_payment" },
+            }, session);
             ride.payment_status = "paid";
             ride.payment_method = "wallet";
             yield ride.save();
-            return { already_paid: false, ride };
+            return { already_paid: false, ride, transaction };
         }));
         // --- We are now outside the Transaction ---
         // 4. Handle the "Already Paid" case quietly
@@ -758,7 +720,7 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         // 5. Side Effects: Trigger these ONLY for the first successful payment
-        const { ride } = result;
+        const { ride, transaction } = result;
         // Socket Notification to Driver
         if (ride.driver) {
             const driver_socket = yield (0, get_id_1.get_driver_socket_id)(ride.driver.toString());
@@ -767,18 +729,12 @@ const pay_for_ride = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             }
             // Push Notification logic
             const driver_user_id = yield (0, get_id_1.get_driver_user_id)(ride.driver);
-            const driver_tokens = yield (0, get_id_2.get_driver_push_tokens)(ride.driver.toString());
-            if (driver_tokens.length > 0) {
-                yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Payment received", "Rider has paid!", { ride_id: ride._id });
-            }
+            yield (0, expo_push_1.sendNotification)([String(driver_user_id)], "Payment received", "Rider has paid!", { ride_id: ride._id });
         }
-        res.status(200).json({ msg: "Payment successful", ride });
+        res.status(200).json({ msg: "Payment successful", ride, transaction });
     }
     catch (err) {
-        if (err.message === "insufficient")
-            return res.status(400).json({ msg: "Insufficient balance" });
-        if (err.message === "not_found")
-            return res.status(200).json({ msg: "Ride or wallet not found" });
+        console.log(err);
         res.status(500).json({ msg: "Payment failed", error: err.message });
     }
     finally {

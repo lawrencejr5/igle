@@ -722,22 +722,20 @@ export const update_ride_status = async (
           });
         }
 
-        // Send notification regardless of socket connection
-        if (tokens.length) {
-          await sendNotification(
-            [String(ride.rider)],
-            "Your ride has started",
-            "Your driver has started the ride.",
-            {
-              type: "ride_booking",
-              ride_id: ride._id,
-            },
-          );
-        }
         if (driver_socket)
           io.to(driver_socket).emit("ride_in_progress", {
             msg: "You have arrived",
           });
+
+        await sendNotification(
+          [String(ride.rider)],
+          "Your ride has started",
+          "Your driver has started the ride.",
+          {
+            type: "ride_booking",
+            ride_id: ride._id,
+          },
+        );
 
         ride.timestamps.started_at = new Date();
         ride.status = "ongoing";
@@ -745,17 +743,6 @@ export const update_ride_status = async (
 
       // end ride
       case "completed":
-        if (ride.status !== "ongoing") {
-          res.status(400).json({ msg: "Failed to complete this ride" });
-          return;
-        }
-
-        const driver = await Driver.findById(ride.driver);
-        if (driver) {
-          driver.total_trips += 1;
-          await driver.save();
-        }
-
         const result = await complete_ride(ride);
 
         // Emitting ride status
@@ -764,35 +751,10 @@ export const update_ride_status = async (
             msg: "Your ride has been completed",
           });
 
-        // Send notification regardless of socket connection
-        try {
-          if (tokens.length) {
-            console.log("Sending 'Ride completed' push to tokens:", tokens);
-            const res = await sendNotification(
-              [String(ride.rider)],
-              "Ride completed",
-              `Your ride to ${ride.destination.address} has been completed`,
-              {
-                type: "ride_completed",
-                ride_id: ride._id,
-              },
-            );
-          }
-        } catch (e) {
-          console.error("Failed to send completed push to rider:", e);
-        }
         if (driver_socket)
           io.to(driver_socket).emit("ride_completed", {
             msg: "You have finished the ride",
           });
-
-        await Activity.create({
-          type: "ride",
-          user: ride.rider,
-          title: "Ride completed",
-          message: `Your ride to ${ride.destination.address} has been completed`,
-          metadata: { ride_id: ride._id, driver_id: ride.driver },
-        });
 
         if (!result.success) {
           res.status(result.statusCode!).json({ msg: result.message });
@@ -831,29 +793,24 @@ export const pay_for_ride = async (req: Request, res: Response) => {
         return { already_paid: true, ride };
       }
 
-      // 2. Hard Error Check (User actually doesn't have money)
-      if (wallet.balance < ride.fare) throw new Error("insufficient");
-
-      // 3. The Money Move
-      wallet.balance -= ride.fare;
-      await wallet.save();
-
-      await Transaction.create([
+      const transaction = await debit_wallet(
         {
-          wallet_id: wallet._id,
+          wallet_id: new Types.ObjectId(wallet._id as string),
           amount: ride.fare,
           type: "ride_payment",
-          status: "success",
+          channel: "wallet",
+          ride_id: new Types.ObjectId(ride._id as string),
           reference: generate_unique_reference(),
-          metadata: { ride_id: ride._id },
+          metadata: { for: "ride_payment" },
         },
-      ]);
+        session,
+      );
 
       ride.payment_status = "paid";
       ride.payment_method = "wallet";
       await ride.save();
 
-      return { already_paid: false, ride };
+      return { already_paid: false, ride, transaction };
     });
 
     // --- We are now outside the Transaction ---
@@ -867,7 +824,7 @@ export const pay_for_ride = async (req: Request, res: Response) => {
     }
 
     // 5. Side Effects: Trigger these ONLY for the first successful payment
-    const { ride } = result;
+    const { ride, transaction } = result;
 
     // Socket Notification to Driver
     if (ride.driver) {
@@ -878,25 +835,17 @@ export const pay_for_ride = async (req: Request, res: Response) => {
 
       // Push Notification logic
       const driver_user_id = await get_driver_user_id(ride.driver);
-      const driver_tokens = await get_driver_push_tokens(
-        ride.driver.toString(),
+      await sendNotification(
+        [String(driver_user_id)],
+        "Payment received",
+        "Rider has paid!",
+        { ride_id: ride._id },
       );
-      if (driver_tokens.length > 0) {
-        await sendNotification(
-          [String(driver_user_id)],
-          "Payment received",
-          "Rider has paid!",
-          { ride_id: ride._id },
-        );
-      }
     }
 
-    res.status(200).json({ msg: "Payment successful", ride });
+    res.status(200).json({ msg: "Payment successful", ride, transaction });
   } catch (err: any) {
-    if (err.message === "insufficient")
-      return res.status(400).json({ msg: "Insufficient balance" });
-    if (err.message === "not_found")
-      return res.status(200).json({ msg: "Ride or wallet not found" });
+    console.log(err);
     res.status(500).json({ msg: "Payment failed", error: err.message });
   } finally {
     session.endSession();

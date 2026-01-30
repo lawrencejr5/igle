@@ -16,72 +16,88 @@ exports.debit_wallet = exports.credit_wallet = void 0;
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const get_id_1 = require("./get_id");
 const activity_1 = __importDefault(require("../models/activity"));
 const expo_push_1 = require("./expo_push");
-const credit_wallet = (reference) => __awaiter(void 0, void 0, void 0, function* () {
-    const session = yield mongoose_1.default.startSession();
+const credit_wallet = (reference, ext_session) => __awaiter(void 0, void 0, void 0, function* () {
+    // Determine if we are managing the session or borrowing it
+    const isLocalSession = !ext_session;
+    const session = ext_session || (yield mongoose_1.default.startSession());
     try {
-        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
-            const transaction = yield transaction_1.default.findOne({ reference });
+        // Define the core DB work (so we don't duplicate code)
+        const executeLogic = () => __awaiter(void 0, void 0, void 0, function* () {
+            const transaction = yield transaction_1.default.findOne({ reference }).session(session);
             if (!transaction)
                 throw new Error("Transaction was not found");
+            // Idempotency check
             if (transaction.status !== "pending") {
                 return { balance: null, transaction, alreadyProcessed: true };
             }
-            const wallet_id = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
-            const wallet = yield wallet_1.default.findById(wallet_id);
+            const wallet = yield wallet_1.default.findById(transaction.wallet_id).session(session);
             if (!wallet)
                 throw new Error("Wallet not found");
-            const amount = transaction === null || transaction === void 0 ? void 0 : transaction.amount;
+            const amount = transaction.amount;
+            // Update Balance
             wallet.balance += amount;
-            yield wallet.save();
+            yield wallet.save({ session });
+            // Update Transaction
             transaction.status = "success";
-            yield transaction.save();
-            return { balance: wallet.balance, transaction };
-        }));
-        if (result && !result.alreadyProcessed) {
-            const transaction = result.transaction;
-            // Look up the user's push tokens using the wallet_id from the transaction
-            const walletId = transaction === null || transaction === void 0 ? void 0 : transaction.wallet_id;
-            if (walletId) {
-                const wallet = yield wallet_1.default.findById(walletId).select("owner_id owner_type");
-                if (wallet) {
-                    const ownerId = wallet.owner_id;
-                    let tokens = [];
-                    tokens = yield (0, get_id_1.get_user_push_tokens)(ownerId);
-                    yield activity_1.default.create({
-                        type: "wallet_funding",
-                        user: wallet.owner_id,
-                        title: "Wallet funded",
-                        message: `Your wallet was creditted with NGN ${transaction.amount}`,
-                        metadata: { owner_id: ownerId },
-                    });
-                    if (tokens.length) {
-                        yield (0, expo_push_1.sendNotification)([wallet.owner_id.toString()], "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
-                            type: "wallet_funded",
-                            reference: transaction.reference,
-                        });
-                    }
-                }
-            }
+            yield transaction.save({ session });
+            return { balance: wallet.balance, transaction, alreadyProcessed: false };
+        });
+        let result;
+        if (isLocalSession) {
+            result = yield session.withTransaction(executeLogic);
+        }
+        else {
+            result = yield executeLogic();
+        }
+        if (isLocalSession && result && !result.alreadyProcessed) {
+            yield notifyUserOfCredit(result.transaction);
         }
         return result;
     }
     catch (err) {
-        console.log("Credit wallet tranaction failed: " + err);
+        console.log("Credit wallet transaction failed: " + err);
         throw err;
     }
     finally {
-        session.endSession();
+        if (isLocalSession) {
+            session.endSession();
+        }
     }
 });
 exports.credit_wallet = credit_wallet;
-const debit_wallet = (_a) => __awaiter(void 0, [_a], void 0, function* ({ wallet_id, ride_id, delivery_id, type, amount, reference, status = "success", metadata, }) {
-    const session = yield mongoose_1.default.startSession();
+// Extracted helper to keep the main function clean
+const notifyUserOfCredit = (transaction) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
-            const idem_check = yield transaction_1.default.findOne({ reference });
+        const wallet = yield wallet_1.default.findById(transaction.wallet_id).select("owner_id owner_type");
+        if (!wallet)
+            return;
+        yield activity_1.default.create({
+            type: "wallet_funding",
+            user: wallet.owner_id,
+            title: "Wallet funded",
+            message: `Your wallet was credited with NGN ${transaction.amount}`,
+            metadata: { owner_id: wallet.owner_id },
+        });
+        yield (0, expo_push_1.sendNotification)([wallet.owner_id.toString()], "Wallet funded", `Your wallet was credited with ${transaction.amount}`, {
+            type: "wallet_funded",
+            reference: transaction.reference,
+        });
+    }
+    catch (e) {
+        console.error("Failed to send wallet credit notification:", e);
+    }
+});
+const debit_wallet = (_a, ext_session_1) => __awaiter(void 0, [_a, ext_session_1], void 0, function* ({ wallet_id, ride_id, delivery_id, type, amount, reference, status = "success", metadata, }, ext_session) {
+    //  Determine ownership
+    const isLocalSession = !ext_session;
+    const session = ext_session || (yield mongoose_1.default.startSession());
+    try {
+        // Define the logic
+        const executeLogic = () => __awaiter(void 0, void 0, void 0, function* () {
+            // Pass session to the query
+            const idem_check = yield transaction_1.default.findOne({ reference }).session(session);
             if (idem_check && idem_check.status === "success") {
                 return {
                     balance: null,
@@ -89,26 +105,41 @@ const debit_wallet = (_a) => __awaiter(void 0, [_a], void 0, function* ({ wallet
                     already_processed: true,
                 };
             }
-            const wallet = yield wallet_1.default.findById(wallet_id);
+            // Pass session to the query
+            const wallet = yield wallet_1.default.findById(wallet_id).session(session);
             if (!wallet)
                 throw new Error("no_wallet");
             if (wallet.balance < amount)
                 throw new Error("insufficient");
+            // Update wallet balance
             wallet.balance -= amount;
-            yield wallet.save();
-            const transaction = yield transaction_1.default.create({
-                wallet_id,
-                type,
-                amount,
-                status,
-                channel: "wallet",
-                ride_id: ride_id && ride_id,
-                delivery_id: delivery_id && delivery_id,
-                reference,
-                metadata,
-            });
-            return { balance: wallet.balance, transaction };
-        }));
+            yield wallet.save({ session });
+            // Create Transaction Record
+            const [transaction] = yield transaction_1.default.create([
+                {
+                    wallet_id,
+                    type,
+                    amount,
+                    status,
+                    channel: "wallet",
+                    ride_id: ride_id && ride_id,
+                    delivery_id: delivery_id && delivery_id,
+                    reference,
+                    metadata,
+                },
+            ], { session });
+            return { balance: wallet.balance, transaction, already_processed: false };
+        });
+        // 4. Run based on ownership
+        let result;
+        if (isLocalSession) {
+            // Standalone: We wrap it in a transaction
+            result = yield session.withTransaction(executeLogic);
+        }
+        else {
+            // Nested: We just run the logic (Parent handles commit/abort)
+            result = yield executeLogic();
+        }
         return result;
     }
     catch (err) {
@@ -116,7 +147,10 @@ const debit_wallet = (_a) => __awaiter(void 0, [_a], void 0, function* ({ wallet
         throw err;
     }
     finally {
-        session.endSession();
+        // 5. Only end session if WE started it
+        if (isLocalSession) {
+            session.endSession();
+        }
     }
 });
 exports.debit_wallet = debit_wallet;
