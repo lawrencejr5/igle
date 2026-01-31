@@ -6,6 +6,9 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  StyleSheet,
+  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -40,44 +43,37 @@ const VehicleInformation = () => {
   const [plateNumber, setPlateNumber] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showImageModal, setShowImageModal] = useState<boolean>(false);
+  const [currentImageType, setCurrentImageType] = useState<
+    "exterior" | "interior" | null
+  >(null);
 
   const pickImage = async (imageType: "exterior" | "interior") => {
-    try {
-      const camPerm = await ImagePicker.requestCameraPermissionsAsync();
-      const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    setCurrentImageType(imageType);
+    setShowImageModal(true);
+  };
 
-      if (camPerm.status !== "granted" && libPerm.status !== "granted") {
-        showNotification(
-          "Camera or media library permission is required",
-          "error"
-        );
+  const handleImageModalClose = () => {
+    setShowImageModal(false);
+    setCurrentImageType(null);
+  };
+
+  const openCamera = async () => {
+    handleImageModalClose();
+    if (!currentImageType) return;
+
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        showNotification("Camera permission is required", "error");
         return;
       }
 
-      let result: any = { canceled: true };
-      try {
-        result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.8,
-        });
-      } catch (camErr) {
-        console.warn("Camera launch failed, falling back to library:", camErr);
-      }
-
-      if (!result || result.canceled) {
-        try {
-          result = await ImagePicker.launchImageLibraryAsync({
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.8,
-          });
-        } catch (libErr) {
-          console.error("launchImageLibraryAsync failed:", libErr);
-          showNotification("Image picker failed", "error");
-          return;
-        }
-      }
+      let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
 
       if (
         !result ||
@@ -88,7 +84,7 @@ const VehicleInformation = () => {
         return;
 
       const asset = result.assets[0];
-      if (imageType === "exterior") {
+      if (currentImageType === "exterior") {
         setExteriorImage(asset.uri);
         setExteriorAsset(asset);
       } else {
@@ -96,7 +92,47 @@ const VehicleInformation = () => {
         setInteriorAsset(asset);
       }
     } catch (err) {
-      console.error("pickImage error:", err);
+      console.error("openCamera error:", err);
+      showNotification("Failed to open camera", "error");
+    }
+  };
+
+  const openGallery = async () => {
+    handleImageModalClose();
+    if (!currentImageType) return;
+
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        showNotification("Media library permission is required", "error");
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (
+        !result ||
+        result.canceled ||
+        !result.assets ||
+        result.assets.length === 0
+      )
+        return;
+
+      const asset = result.assets[0];
+      if (currentImageType === "exterior") {
+        setExteriorImage(asset.uri);
+        setExteriorAsset(asset);
+      } else {
+        setInteriorImage(asset.uri);
+        setInteriorAsset(asset);
+      }
+    } catch (err) {
+      console.error("openGallery error:", err);
       showNotification("Failed to pick image", "error");
     }
   };
@@ -123,7 +159,7 @@ const VehicleInformation = () => {
       const formData = new FormData();
       formData.append(
         "brand",
-        brand ? brand.trim() : driver?.vehicle_type ?? ""
+        brand ? brand.trim() : (driver?.vehicle_type ?? ""),
       );
       formData.append("model", model.trim());
       formData.append("color", color.trim());
@@ -153,7 +189,7 @@ const VehicleInformation = () => {
     } catch (err: any) {
       showNotification(
         err.message || "Failed to update vehicle information",
-        "error"
+        "error",
       );
     } finally {
       setLoading(false);
@@ -163,6 +199,42 @@ const VehicleInformation = () => {
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
       {notification.visible && <Notification notification={notification} />}
+
+      {/* Image Selection Modal */}
+      <Modal
+        visible={showImageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={handleImageModalClose}
+      >
+        <View style={styles_modal.modalOverlay}>
+          <TouchableWithoutFeedback onPress={handleImageModalClose}>
+            <View style={styles_modal.modalOverlay} />
+          </TouchableWithoutFeedback>
+          <View style={styles_modal.modalContent}>
+            <View style={styles_modal.modalHeader}>
+              <Text style={styles_modal.modalTitle}>Select Image</Text>
+            </View>
+
+            <View style={styles_modal.optionsContainer}>
+              <Pressable style={styles_modal.option} onPress={openCamera}>
+                <View style={styles_modal.iconContainer}>
+                  <Feather name="camera" color="#fff" size={40} />
+                </View>
+                <Text style={styles_modal.optionText}>Take Photo</Text>
+              </Pressable>
+
+              <Pressable style={styles_modal.option} onPress={openGallery}>
+                <View style={styles_modal.iconContainer}>
+                  <Feather name="image" color="#fff" size={40} />
+                </View>
+                <Text style={styles_modal.optionText}>Choose from Files</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
         behavior="padding"
@@ -337,5 +409,58 @@ const VehicleInformation = () => {
     </View>
   );
 };
+
+const styles_modal = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#1E1E1E",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 15,
+    paddingTop: 15,
+  },
+  modalHeader: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  option: {
+    alignItems: "center",
+    flex: 1,
+    paddingVertical: 12,
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#2A2A2A",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  optionText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+});
 
 export default VehicleInformation;

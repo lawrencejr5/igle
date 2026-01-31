@@ -8,6 +8,8 @@ import {
   Platform,
   ActivityIndicator,
   Pressable,
+  Modal,
+  StyleSheet,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -35,7 +37,7 @@ const DriverIdentification = () => {
   const [licenseNumber, setLicenseNumber] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<string>("");
   const [expiryDateObj, setExpiryDateObj] = useState<Date | undefined>(
-    undefined
+    undefined,
   );
   const [showExpiryPicker, setShowExpiryPicker] = useState<boolean>(false);
   const [frontImage, setFrontImage] = useState<string>("");
@@ -46,59 +48,51 @@ const DriverIdentification = () => {
   const [selfieAsset, setSelfieAsset] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showImageModal, setShowImageModal] = useState<boolean>(false);
+  const [currentImageType, setCurrentImageType] = useState<
+    "front" | "back" | "selfie" | null
+  >(null);
 
   const pickImage = async (imageType: "front" | "back" | "selfie") => {
-    try {
-      const camPerm = await ImagePicker.requestCameraPermissionsAsync();
-      const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    setCurrentImageType(imageType);
+    setShowImageModal(true);
+  };
 
-      if (camPerm.status !== "granted" && libPerm.status !== "granted") {
-        showNotification(
-          "Camera or media library permission is required",
-          "error"
-        );
+  const handleImageModalClose = () => {
+    setShowImageModal(false);
+    setCurrentImageType(null);
+  };
+
+  const openCamera = async () => {
+    handleImageModalClose();
+    if (!currentImageType) return;
+
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        showNotification("Camera permission is required", "error");
         return;
       }
 
-      let result: any = { canceled: true };
-      try {
-        result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.8,
-        });
-      } catch (camErr) {
-        console.warn("Camera launch failed, falling back to library:", camErr);
-      }
-
-      if (!result || result.canceled) {
-        try {
-          result = await ImagePicker.launchImageLibraryAsync({
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.8,
-          });
-        } catch (libErr) {
-          console.error("launchImageLibraryAsync failed:", libErr);
-          showNotification("Image picker failed", "error");
-          return;
-        }
-      }
+      let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
 
       if (
         !result ||
         result.canceled ||
         !result.assets ||
         result.assets.length === 0
-      ) {
+      )
         return;
-      }
 
       const asset = result.assets[0];
-      if (imageType === "front") {
+      if (currentImageType === "front") {
         setFrontImage(asset.uri);
         setFrontAsset(asset);
-      } else if (imageType === "back") {
+      } else if (currentImageType === "back") {
         setBackImage(asset.uri);
         setBackAsset(asset);
       } else {
@@ -106,7 +100,50 @@ const DriverIdentification = () => {
         setSelfieAsset(asset);
       }
     } catch (err) {
-      console.error("pickImage error:", err);
+      console.error("openCamera error:", err);
+      showNotification("Failed to open camera", "error");
+    }
+  };
+
+  const openGallery = async () => {
+    handleImageModalClose();
+    if (!currentImageType) return;
+
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        showNotification("Media library permission is required", "error");
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (
+        !result ||
+        result.canceled ||
+        !result.assets ||
+        result.assets.length === 0
+      )
+        return;
+
+      const asset = result.assets[0];
+      if (currentImageType === "front") {
+        setFrontImage(asset.uri);
+        setFrontAsset(asset);
+      } else if (currentImageType === "back") {
+        setBackImage(asset.uri);
+        setBackAsset(asset);
+      } else {
+        setSelfieImage(asset.uri);
+        setSelfieAsset(asset);
+      }
+    } catch (err) {
+      console.error("openGallery error:", err);
       showNotification("Failed to pick image", "error");
     }
   };
@@ -156,7 +193,7 @@ const DriverIdentification = () => {
       console.error("handleNext error:", err);
       showNotification(
         err?.message || "Failed to update driver license",
-        "error"
+        "error",
       );
     } finally {
       setLoading(false);
@@ -175,12 +212,48 @@ const DriverIdentification = () => {
         setExpiryDate(`${y}-${m}-${d}`);
       }
     },
-    [expiryDateObj]
+    [expiryDateObj],
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212", paddingBottom: 20 }}>
       {notification.visible && <Notification notification={notification} />}
+
+      {/* Image Selection Modal */}
+      <Modal
+        visible={showImageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={handleImageModalClose}
+      >
+        <View style={styles_modal.modalOverlay}>
+          <TouchableWithoutFeedback onPress={handleImageModalClose}>
+            <View style={styles_modal.modalOverlay} />
+          </TouchableWithoutFeedback>
+          <View style={styles_modal.modalContent}>
+            <View style={styles_modal.modalHeader}>
+              <Text style={styles_modal.modalTitle}>Select Image</Text>
+            </View>
+
+            <View style={styles_modal.optionsContainer}>
+              <Pressable style={styles_modal.option} onPress={openCamera}>
+                <View style={styles_modal.iconContainer}>
+                  <Feather name="camera" color="#fff" size={40} />
+                </View>
+                <Text style={styles_modal.optionText}>Take Photo</Text>
+              </Pressable>
+
+              <Pressable style={styles_modal.option} onPress={openGallery}>
+                <View style={styles_modal.iconContainer}>
+                  <Feather name="image" color="#fff" size={40} />
+                </View>
+                <Text style={styles_modal.optionText}>Choose from Files</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
         behavior="padding"
@@ -327,5 +400,58 @@ const DriverIdentification = () => {
     </View>
   );
 };
+
+const styles_modal = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#1E1E1E",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 15,
+    paddingTop: 15,
+  },
+  modalHeader: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  option: {
+    alignItems: "center",
+    flex: 1,
+    paddingVertical: 12,
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#2A2A2A",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  optionText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+});
 
 export default DriverIdentification;

@@ -6,6 +6,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  StyleSheet,
 } from "react-native";
 import React, { useCallback, useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -28,14 +30,8 @@ import { useAuthContext } from "../../context/AuthContext";
 const PersonalInformation = () => {
   const styles = driver_reg_styles();
   const { showNotification, notification } = useNotificationContext()!;
-  const {
-    updateDriverInfo,
-    uploadProfilePic,
-    uploadingPic,
-    removeProfilePic,
-    removingPic,
-    driver,
-  } = useDriverAuthContext();
+  const { updateDriverInfo, uploadProfilePic, uploadingPic, removeProfilePic } =
+    useDriverAuthContext();
   const { signedIn } = useAuthContext();
 
   const [imageUri, setImageUri] = useState<string>("");
@@ -45,19 +41,70 @@ const PersonalInformation = () => {
   const [dateObj, setDateObj] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [showImageModal, setShowImageModal] = useState<boolean>(false);
 
   const pickImage = async () => {
-    // Separate pick and upload steps with clearer fallbacks and messages
+    setShowImageModal(true);
+  };
+
+  const openCamera = async () => {
     try {
       // Request camera permissions first
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        alert("Sorry, we need camera roll permissions to make this work!");
+        alert("Sorry, we need camera permissions to make this work!");
         return;
       }
 
       let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true, // This is the key to enabling cropping
+        aspect: [1, 1], // The aspect ratio for the crop
+        quality: 1,
+      });
+
+      // Check if the user cancelled the action
+      if (!result.canceled) {
+        if (result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+
+          // show preview immediately
+          try {
+            setImageUri(asset.uri);
+          } catch (e) {
+            console.warn("Failed to set image preview uri", e);
+          }
+
+          const formData = new FormData();
+          formData.append("profile_img", {
+            uri: asset.uri,
+            type: asset.mimeType,
+            name: asset.fileName,
+          } as any);
+
+          try {
+            await uploadProfilePic(formData);
+          } catch (uploadErr) {
+            console.error("uploadProfilePic error:", uploadErr);
+            // keep preview so user can retry or remove
+          }
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      // Request media library permissions
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need media library permissions to make this work!");
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true, // This is the key to enabling cropping
         aspect: [1, 1], // The aspect ratio for the crop
         quality: 1,
@@ -120,14 +167,13 @@ const PersonalInformation = () => {
       await updateDriverInfo({
         date_of_birth: dateOfBirth,
       });
-      setSuccess(true);
       setTimeout(() => {
         router.push("/driver_identification");
       }, 1500);
     } catch (err: any) {
       showNotification(
         err.message || "Something went wrong. Please try again.",
-        "error"
+        "error",
       );
     } finally {
       setLoading(false);
@@ -147,12 +193,66 @@ const PersonalInformation = () => {
         setDateOfBirth(`${y}-${m}-${d}`);
       }
     },
-    [dateObj]
+    [dateObj],
   );
+
+  const handleImageModalClose = () => {
+    setShowImageModal(false);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
       {notification.visible && <Notification notification={notification} />}
+
+      {/* Image Selection Modal */}
+      <Modal
+        visible={showImageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={handleImageModalClose}
+      >
+        <View style={styles_modal.modalOverlay}>
+          <TouchableWithoutFeedback onPress={handleImageModalClose}>
+            <View style={styles_modal.modalOverlay} />
+          </TouchableWithoutFeedback>
+          <View style={styles_modal.modalContent}>
+            <View style={styles_modal.modalHeader}>
+              <Text style={styles_modal.modalTitle}>
+                Select Profile Picture
+              </Text>
+            </View>
+
+            <View style={styles_modal.optionsContainer}>
+              <Pressable
+                style={styles_modal.option}
+                onPress={() => {
+                  handleImageModalClose();
+                  openCamera();
+                }}
+              >
+                <View style={styles_modal.iconContainer}>
+                  <Feather name="camera" color="#fff" size={30} />
+                </View>
+                <Text style={styles_modal.optionText}>Take Photo</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles_modal.option}
+                onPress={() => {
+                  handleImageModalClose();
+                  openGallery();
+                }}
+              >
+                <View style={styles_modal.iconContainer}>
+                  <Feather name="image" color="#fff" size={30} />
+                </View>
+                <Text style={styles_modal.optionText}>Choose from Files</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
         behavior="padding"
@@ -312,5 +412,58 @@ const PersonalInformation = () => {
     </View>
   );
 };
+
+const styles_modal = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#1E1E1E",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 15,
+    paddingTop: 15,
+  },
+  modalHeader: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  optionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  option: {
+    alignItems: "center",
+    flex: 1,
+    paddingVertical: 12,
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#2A2A2A",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  optionText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+});
 
 export default PersonalInformation;
