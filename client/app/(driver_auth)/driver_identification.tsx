@@ -270,8 +270,8 @@ const DriverIdentification = () => {
           style={{ flex: 1, backgroundColor: "#121212" }}
           contentContainerStyle={{
             backgroundColor: "#121212",
-            flexGrow: 1,
             paddingHorizontal: 20,
+            paddingBottom: 20,
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -384,15 +384,18 @@ const DriverIdentification = () => {
                 </View>
               </TouchableWithoutFeedback>
             </View>
-            <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
-              <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
-                <Text style={styles.sign_btn_text}>
-                  {loading ? "Updating..." : "Next"}
-                </Text>
-              </View>
-            </TouchableWithoutFeedback>
           </View>
         </ScrollView>
+
+        <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
+          <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
+            <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
+              <Text style={styles.sign_btn_text}>
+                {loading ? "Updating..." : "Next"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );

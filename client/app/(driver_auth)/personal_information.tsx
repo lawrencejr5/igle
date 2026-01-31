@@ -266,145 +266,145 @@ const PersonalInformation = () => {
           style={{ flex: 1, backgroundColor: "#121212" }}
           contentContainerStyle={{
             backgroundColor: "#121212",
-            flexGrow: 1,
+            paddingHorizontal: 20,
+            paddingBottom: 20,
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ paddingHorizontal: 20, backgroundColor: "#121212" }}>
-            <View style={{ marginTop: 25 }}>
-              <Text style={styles.form_header_text}>Personal Information</Text>
-              <Text style={styles.form_subheader_text}>
-                Complete your personal details
-              </Text>
-            </View>
+          <View style={{ marginTop: 25 }}>
+            <Text style={styles.form_header_text}>Personal Information</Text>
+            <Text style={styles.form_subheader_text}>
+              Complete your personal details
+            </Text>
+          </View>
 
-            <View style={{ marginTop: 20 }}>
-              <View style={styles.inp_container}>
-                <Text style={styles.inp_label}>Profile Picture</Text>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Pressable onPress={pickImage}>
-                    {imageUri ? (
-                      <Image
-                        source={{ uri: imageUri }}
-                        style={{
-                          height: 100,
-                          width: 150,
-                          marginTop: 10,
-                          borderRadius: 10,
-                        }}
-                      />
-                    ) : (
-                      <View
-                        style={[
-                          styles.img_input,
-                          imageUri && {
-                            borderColor: "#4CAF50",
-                            borderWidth: 2,
-                          },
-                        ]}
-                      >
-                        <Feather name="camera" color={"#fff"} size={30} />
-                      </View>
-                    )}
-                  </Pressable>
-
-                  <View style={{ marginLeft: 16 }}>
-                    {uploadingPic ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : imageUri ? (
-                      <Pressable onPress={remove_profile_pic}>
-                        <Text style={{ color: "#ff6666" }}>Remove</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.inp_container}>
-                <Text style={styles.inp_label}>Fullname</Text>
-                <View style={styles.inp_holder}>
-                  <FontAwesome name="user-o" size={20} color="white" />
-                  <TextInput
-                    style={styles.text_input}
-                    autoCapitalize="words"
-                    value={fullName}
-                    onChangeText={setFullName}
-                    placeholder="Enter your full name"
-                    placeholderTextColor="#c5c5c5"
-                    editable={false}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inp_container}>
-                <Text style={styles.inp_label}>Email</Text>
-                <View style={styles.inp_holder}>
-                  <FontAwesome name="envelope-o" size={20} color="white" />
-                  <TextInput
-                    style={styles.text_input}
-                    autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="Enter your email"
-                    placeholderTextColor="#c5c5c5"
-                    keyboardType="email-address"
-                    editable={false}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inp_container}>
-                <Text style={styles.inp_label}>Date of birth</Text>
-                <View style={styles.inp_holder}>
-                  <FontAwesome name="calendar-o" size={20} color="white" />
-                  <Pressable
-                    onPress={() => setShowDatePicker(true)}
-                    style={{ flex: 1 }}
-                  >
-                    <Text
+          <View style={{ marginTop: 20 }}>
+            <View style={styles.inp_container}>
+              <Text style={styles.inp_label}>Profile Picture</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Pressable onPress={pickImage}>
+                  {imageUri ? (
+                    <Image
+                      source={{ uri: imageUri }}
+                      style={{
+                        height: 100,
+                        width: 150,
+                        marginTop: 10,
+                        borderRadius: 10,
+                      }}
+                    />
+                  ) : (
+                    <View
                       style={[
-                        styles.text_input,
-                        {
-                          paddingVertical: 10,
-                          color: dateOfBirth ? "#fff" : "#c5c5c5",
-                        },
+                        styles.img_input,
+                        imageUri && { borderColor: "#4CAF50", borderWidth: 2 },
                       ]}
                     >
-                      {dateOfBirth || "Date of birth (YYYY-MM-DD)"}
-                    </Text>
-                  </Pressable>
-                </View>
+                      <Feather name="camera" color={"#fff"} size={30} />
+                    </View>
+                  )}
+                </Pressable>
 
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={dateObj || new Date(1990, 0, 1)}
-                    mode="date"
-                    display={Platform.OS === "ios" ? "spinner" : "calendar"}
-                    maximumDate={new Date()}
-                    onChange={onDateChange}
-                  />
-                )}
+                <View style={{ marginLeft: 16 }}>
+                  {uploadingPic ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : imageUri ? (
+                    <Pressable onPress={remove_profile_pic}>
+                      <Text style={{ color: "#ff6666" }}>Remove</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.inp_container}>
+              <Text style={styles.inp_label}>Fullname</Text>
+              <View style={styles.inp_holder}>
+                <FontAwesome name="user-o" size={20} color="white" />
+                <TextInput
+                  style={styles.text_input}
+                  autoCapitalize="words"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  placeholder="Enter your full name"
+                  placeholderTextColor="#c5c5c5"
+                  editable={false}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inp_container}>
+              <Text style={styles.inp_label}>Email</Text>
+              <View style={styles.inp_holder}>
+                <FontAwesome name="envelope-o" size={20} color="white" />
+                <TextInput
+                  style={styles.text_input}
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#c5c5c5"
+                  keyboardType="email-address"
+                  editable={false}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inp_container}>
+              <Text style={styles.inp_label}>Date of birth</Text>
+              <View style={styles.inp_holder}>
+                <FontAwesome name="calendar-o" size={20} color="white" />
+                <Pressable
+                  onPress={() => setShowDatePicker(true)}
+                  style={{ flex: 1 }}
+                >
+                  <Text
+                    style={[
+                      styles.text_input,
+                      {
+                        paddingVertical: 10,
+                        color: dateOfBirth ? "#fff" : "#c5c5c5",
+                      },
+                    ]}
+                  >
+                    {dateOfBirth || "Date of birth (YYYY-MM-DD)"}
+                  </Text>
+                </Pressable>
               </View>
 
-              <TouchableWithoutFeedback
-                onPress={handleNext}
-                disabled={loading || uploadingPic}
-              >
-                <View
-                  style={[
-                    styles.sign_btn,
-                    (loading || uploadingPic) && { opacity: 0.6 },
-                  ]}
-                >
-                  <Text style={styles.sign_btn_text}>
-                    {loading ? "Processing..." : "Next"}
-                  </Text>
-                </View>
-              </TouchableWithoutFeedback>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dateObj || new Date(1990, 0, 1)}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                  maximumDate={new Date()}
+                  onChange={onDateChange}
+                />
+              )}
             </View>
           </View>
         </ScrollView>
+
+        <View
+          style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 10 }}
+        >
+          <TouchableWithoutFeedback
+            onPress={handleNext}
+            disabled={loading || uploadingPic}
+          >
+            <View
+              style={[
+                styles.sign_btn,
+                (loading || uploadingPic) && { opacity: 0.6 },
+              ]}
+            >
+              <Text style={styles.sign_btn_text}>
+                {loading ? "Processing..." : "Next"}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );

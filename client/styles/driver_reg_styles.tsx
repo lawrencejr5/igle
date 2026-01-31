@@ -81,9 +81,9 @@ export const driver_reg_styles = () =>
       width: "100%",
       padding: 12,
       borderRadius: 30,
-      marginTop: 40,
+      marginTop: 10,
       alignItems: "center",
-      marginBottom: 50,
+      marginBottom: 20,
     },
     img_input: {
       backgroundColor: "grey",

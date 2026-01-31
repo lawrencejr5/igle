@@ -49,7 +49,15 @@ const ChooseCarType = () => {
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         <Header />
 
-        <ScrollView style={{ paddingHorizontal: 20 }}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: "#121212" }}
+          contentContainerStyle={{
+            backgroundColor: "#121212",
+            paddingHorizontal: 20,
+            paddingBottom: 20,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={{ marginTop: 25 }}>
             <Text style={styles.question_header}>
               What type of driver are you?
@@ -181,7 +189,11 @@ const ChooseCarType = () => {
               </View>
             </TouchableWithoutFeedback>
           </View>
+        </ScrollView>
 
+        <View
+          style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 10 }}
+        >
           <TouchableWithoutFeedback onPress={handleContinue} disabled={loading}>
             <View style={[styles.continue_btn, loading && { opacity: 0.6 }]}>
               <Text style={styles.continue_btn_text}>
@@ -189,7 +201,7 @@ const ChooseCarType = () => {
               </Text>
             </View>
           </TouchableWithoutFeedback>
-        </ScrollView>
+        </View>
       </View>
     </>
   );
@@ -236,7 +248,7 @@ const styles = StyleSheet.create({
     width: 200,
   },
   continue_btn: {
-    marginVertical: 30,
+    marginVertical: 10,
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 30,
