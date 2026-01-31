@@ -22,7 +22,6 @@ import Header from "../../components/driver_reg/Header";
 
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import { useNotificationContext } from "../../context/NotificationContext";
-import Notification from "../../components/Notification";
 import * as ImagePicker from "expo-image-picker";
 import { ActivityIndicator, Image, Pressable } from "react-native";
 import { useAuthContext } from "../../context/AuthContext";
@@ -202,8 +201,6 @@ const PersonalInformation = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
-      {notification.visible && <Notification notification={notification} />}
-
       {/* Image Selection Modal */}
       <Modal
         visible={showImageModal}

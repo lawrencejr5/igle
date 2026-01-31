@@ -11,7 +11,6 @@ import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
 import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";
-import Notification from "../../../components/Notification";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import {
   useDeliverContext,
@@ -78,8 +77,6 @@ const DeliveryRoot = () => {
         <AppLoading />
       ) : (
         <>
-          {notification.visible && <Notification notification={notification} />}
-
           <View style={styles.container}>
             <Text style={styles.header_text}>Deliveries</Text>
 
@@ -345,7 +342,7 @@ const InTransitDeliveries = ({
             </View>
             <Text style={styles.time_text}>
               {formatRelativeTime(
-                delivery.timestamps?.picked_up_at || delivery.createdAt
+                delivery.timestamps?.picked_up_at || delivery.createdAt,
               )}
             </Text>
           </View>
@@ -476,7 +473,7 @@ const DeliveredDeliveries = ({
             </View>
             <Text style={styles.time_text}>
               {formatRelativeTime(
-                delivery.timestamps?.delivered_at || delivery.createdAt
+                delivery.timestamps?.delivered_at || delivery.createdAt,
               )}
             </Text>
           </View>
@@ -603,7 +600,7 @@ const CancelledDeliveries = ({
             </View>
             <Text style={styles.time_text}>
               {formatRelativeTime(
-                delivery.timestamps?.cancelled_at || delivery.createdAt
+                delivery.timestamps?.cancelled_at || delivery.createdAt,
               )}
             </Text>
           </View>

@@ -36,7 +36,6 @@ import { router } from "expo-router";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 import { useNotificationContext } from "../../../context/NotificationContext";
-import Notification from "../../../components/Notification";
 
 import { useSavedPlaceContext } from "../../../context/SavedPlaceContext";
 import { useMapContext } from "../../../context/MapContext";
@@ -61,7 +60,7 @@ const SavedPlaces = () => {
   const addPlace = (
     place_header: string,
     edit: boolean,
-    place_name?: string
+    place_name?: string,
   ) => {
     setPlaceOpenModal(true);
     setPlaceHeader(place_header);
@@ -77,7 +76,7 @@ const SavedPlaces = () => {
   const open_action = (
     place_header: string,
     place_name: string,
-    place_sub_name: string
+    place_sub_name: string,
   ) => {
     setActionModalOpen(true);
     setActionPlaceHeader(place_header);
@@ -87,7 +86,6 @@ const SavedPlaces = () => {
 
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
       >
@@ -115,7 +113,7 @@ const SavedPlaces = () => {
                 ? open_action(
                     homePlace.place_header,
                     homePlace.place_name,
-                    homePlace.place_sub_name
+                    homePlace.place_sub_name,
                   )
                 : addPlace("home", false);
             }}
@@ -139,7 +137,7 @@ const SavedPlaces = () => {
                 ? open_action(
                     officePlace.place_header,
                     officePlace.place_name,
-                    officePlace.place_sub_name
+                    officePlace.place_sub_name,
                   )
                 : addPlace("office", false);
             }}
@@ -169,7 +167,7 @@ const SavedPlaces = () => {
                       open_action(
                         item.place_header,
                         item.place_name,
-                        item.place_sub_name
+                        item.place_sub_name,
                       )
                     }
                     style={styles.place_box}
@@ -261,7 +259,7 @@ const PlaceModal: FC<{
   const save_place = async (
     place_id: string,
     place_name: string,
-    place_sub_name: string
+    place_sub_name: string,
   ) => {
     try {
       setPlace(place_name);
@@ -273,7 +271,7 @@ const PlaceModal: FC<{
         place_id,
         place_name,
         place_sub_name,
-        coords
+        coords,
       );
       setOpen(false);
     } catch (error) {
@@ -348,7 +346,7 @@ const PlaceModal: FC<{
                   save_place(
                     item.place_id,
                     item.structured_formatting.main_text,
-                    item.structured_formatting.secondary_text
+                    item.structured_formatting.secondary_text,
                   )
                 }
               >
@@ -376,7 +374,7 @@ const ActionModal: FC<{
   setEditModal: (
     place_header: string,
     edit: boolean,
-    place_name?: string
+    place_name?: string,
   ) => void;
   place_header: string;
   place_name: string;

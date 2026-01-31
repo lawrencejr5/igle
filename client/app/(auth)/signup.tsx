@@ -19,7 +19,7 @@ import { Link, router } from "expo-router";
 
 import { auth_styles } from "../../styles/auth.styles";
 import { useAuthContext } from "../../context/AuthContext";
-import Notification from "../../components/Notification";
+
 import { useNotificationContext } from "../../context/NotificationContext";
 
 const Signup = () => {
@@ -57,7 +57,7 @@ const Signup = () => {
       if (idToken) {
         setGoogleLoading(false);
         googleLogin(idToken).catch((e: unknown) =>
-          showNotification("Signin failed, try again", "error")
+          showNotification("Signin failed, try again", "error"),
         );
       }
     }
@@ -84,7 +84,6 @@ const Signup = () => {
 
   return (
     <View style={styles.container}>
-      {notification.visible && <Notification notification={notification} />}
       <ScrollView>
         {/* Back button */}
         <TouchableOpacity

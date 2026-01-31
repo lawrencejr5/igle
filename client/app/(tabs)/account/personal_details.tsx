@@ -19,7 +19,6 @@ import * as ImagePicker from "expo-image-picker";
 
 import { useAuthContext } from "../../../context/AuthContext";
 
-import Notification from "../../../components/Notification";
 import { useNotificationContext } from "../../../context/NotificationContext";
 
 const PersonalDetails = () => {
@@ -33,7 +32,6 @@ const PersonalDetails = () => {
   const { signedIn, uploadingPic, removingPic } = useAuthContext();
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
       >
@@ -179,7 +177,7 @@ const EditNameModal: FC<{
   const { updateName, signedIn } = useAuthContext();
 
   const [fullname, setFullname] = useState<string | null>(
-    signedIn && signedIn.name
+    signedIn && signedIn.name,
   );
 
   const [updating, setUpdating] = useState<boolean>(false);
@@ -231,7 +229,7 @@ const EditEmailModal: FC<{
 }> = ({ open, setOpen }) => {
   const { signedIn, updateEmail } = useAuthContext();
   const [email, setEmail] = useState<string | null>(
-    signedIn && signedIn?.email
+    signedIn && signedIn?.email,
   );
 
   const [updating, setUpdating] = useState<boolean>(false);

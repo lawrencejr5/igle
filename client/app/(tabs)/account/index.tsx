@@ -19,8 +19,6 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import WalletScreen from "../../../components/screens/Wallet";
 
-import Notification from "../../../components/Notification";
-
 import { useAuthContext } from "../../../context/AuthContext";
 import { useWalletContext } from "../../../context/WalletContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
@@ -65,7 +63,6 @@ const Account = () => {
         <AppLoading />
       ) : (
         <>
-          {notification.visible && <Notification notification={notification} />}
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={{

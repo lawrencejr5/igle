@@ -7,8 +7,6 @@ import * as Haptics from "expo-haptics";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
-import Notification from "../../components/Notification";
-
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
@@ -62,7 +60,6 @@ const BookDelivery = () => {
   }, [region, mapRef.current]);
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         {region && (
           <MapView

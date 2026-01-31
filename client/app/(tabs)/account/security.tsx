@@ -12,8 +12,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { AntDesign, Feather } from "@expo/vector-icons";
 
-import Notification from "../../../components/Notification";
-
 import { useAuthContext } from "../../../context/AuthContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 
@@ -22,7 +20,6 @@ const SecuritySettings = () => {
   const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <SafeAreaView
         style={{ flex: 1, backgroundColor: "#121212", paddingHorizontal: 20 }}
       >

@@ -27,7 +27,6 @@ import Header from "../../components/driver_reg/Header";
 
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import { useNotificationContext } from "../../context/NotificationContext";
-import Notification from "../../components/Notification";
 
 const DriverIdentification = () => {
   const styles = driver_reg_styles();
@@ -217,8 +216,6 @@ const DriverIdentification = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212", paddingBottom: 20 }}>
-      {notification.visible && <Notification notification={notification} />}
-
       {/* Image Selection Modal */}
       <Modal
         visible={showImageModal}

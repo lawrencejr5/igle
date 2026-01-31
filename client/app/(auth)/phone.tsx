@@ -15,8 +15,6 @@ import { Link, router } from "expo-router";
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useAuthContext } from "../../context/AuthContext";
 
-import Notification from "../../components/Notification";
-
 import { auth_styles } from "../../styles/auth.styles";
 
 const AddPhone = () => {
@@ -50,7 +48,6 @@ const AddPhone = () => {
 
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <ScrollView style={styles.container}>
         {/* Back button */}
         <TouchableWithoutFeedback

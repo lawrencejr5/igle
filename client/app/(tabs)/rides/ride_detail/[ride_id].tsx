@@ -25,7 +25,7 @@ import { useMapContext } from "../../../../context/MapContext";
 import { useRideContext } from "../../../../context/RideContext";
 import { formatRelativeTime } from "../../../../context/DeliveryContext";
 import { useLoading } from "../../../../context/LoadingContext";
-import Notification from "../../../../components/Notification";
+
 import { useNotificationContext } from "../../../../context/NotificationContext";
 
 const RideDetails = () => {
@@ -51,7 +51,7 @@ const RideDetails = () => {
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         },
-        1000
+        1000,
       );
   }, [rideData]);
 
@@ -61,7 +61,6 @@ const RideDetails = () => {
         <AppLoading />
       ) : (
         <>
-          {notification.visible && <Notification notification={notification} />}
           <View
             style={{
               flex: 1,
