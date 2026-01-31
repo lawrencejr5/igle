@@ -10,8 +10,6 @@ import { Image } from "expo-image";
 import React, { useState } from "react";
 import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";
-import { useNotificationContext } from "../../../context/NotificationContext";
-import Notification from "../../../components/Notification";
 import RewardCard from "../../../components/RewardCard";
 import { useTaskContext } from "../../../context/TaskContext";
 
@@ -19,7 +17,6 @@ import { useTaskContext } from "../../../context/TaskContext";
 
 const RewardRoot = () => {
   const { appLoading } = useLoading();
-  const { notification } = useNotificationContext();
   const [refreshing, setRefreshing] = useState(false);
   const { tasks, refresh, claimTask } = useTaskContext();
 
@@ -42,7 +39,6 @@ const RewardRoot = () => {
         <AppLoading />
       ) : (
         <>
-          {notification.visible && <Notification notification={notification} />}
           <View style={styles.container}>
             <View style={styles.header}>
               <Text style={styles.headerText}>Tasks</Text>

@@ -20,7 +20,6 @@ import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import { useAuthContext } from "../../context/AuthContext";
 import { useNotificationContext } from "../../context/NotificationContext";
 import CustomDropdown from "../../components/CustomDropdown";
-import Notification from "../../components/Notification";
 
 const BankDetails = () => {
   const styles = driver_reg_styles();
@@ -47,7 +46,7 @@ const BankDetails = () => {
 
   // initialize bankName from selected code
   const [bankName, setBankName] = useState<string>(
-    BANK.find((b) => b.key === bankCode)?.label || ""
+    BANK.find((b) => b.key === bankCode)?.label || "",
   );
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [accountName, setAccountName] = useState<string>("");
@@ -83,7 +82,7 @@ const BankDetails = () => {
     } catch (err: any) {
       showNotification(
         err.message || "Failed to save bank information",
-        "error"
+        "error",
       );
     } finally {
       setLoading(false);
@@ -92,7 +91,6 @@ const BankDetails = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
-      {notification.visible && <Notification notification={notification} />}
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
         behavior="padding"

@@ -25,7 +25,6 @@ import { useRideContext } from "../../../context/RideContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import { useMapContext } from "../../../context/MapContext";
 
-import Notification from "../../../components/Notification";
 import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import RideLoading from "../../../loadings/RideLoading";
@@ -38,7 +37,6 @@ const vehicleIcons: Record<string, any> = {
 };
 
 const Rides = () => {
-  const { notification, showNotification } = useNotificationContext();
   const { appLoading, loadingState } = useLoading();
 
   const [category, setCategory] = useState<
@@ -58,8 +56,6 @@ const Rides = () => {
         <AppLoading />
       ) : (
         <>
-          {notification.visible && <Notification notification={notification} />}
-
           <View style={styles.container}>
             <Text style={styles.header_text}>Rides</Text>
 
@@ -132,7 +128,7 @@ const CategoryTabs = ({
 }: {
   category: "ongoing" | "scheduled" | "completed" | "cancelled";
   setCategory: (
-    cat: "ongoing" | "scheduled" | "completed" | "cancelled"
+    cat: "ongoing" | "scheduled" | "completed" | "cancelled",
   ) => void;
   scheduledRides: any;
   userCancelledRides: any;
@@ -368,7 +364,7 @@ const OngoingRide = ({ data }: { data: any }) => {
             latitude: ongoingRideData.pickup.coordinates[0],
             longitude: ongoingRideData.pickup.coordinates[1],
           },
-          1000
+          1000,
         );
     }, 1000);
   };

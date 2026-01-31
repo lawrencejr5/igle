@@ -17,7 +17,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFeedbackContext } from "../../../context/FeedbackContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import CustomDropdown from "../../../components/CustomDropdown";
-import Notification from "../../../components/Notification";
 
 const FEEDBACK_TYPES = [
   { key: "bug", label: "Bug report" },
@@ -84,7 +83,6 @@ const Feedback = () => {
 
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <SafeAreaView style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.content}

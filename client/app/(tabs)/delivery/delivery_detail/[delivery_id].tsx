@@ -14,8 +14,7 @@ import Feather from "@expo/vector-icons/Feather";
 import { router, useLocalSearchParams } from "expo-router";
 
 import AppLoading from "../../../../loadings/AppLoading";
-import Notification from "../../../../components/Notification";
-import { useNotificationContext } from "../../../../context/NotificationContext";
+
 import { useLoading } from "../../../../context/LoadingContext";
 import { useMapContext } from "../../../../context/MapContext";
 import {
@@ -30,7 +29,6 @@ import ReportDriverModal from "../../../../components/ReportDriverModal";
 
 const DeliveryDetails = () => {
   const { mapRef } = useMapContext() as any;
-  const { notification } = useNotificationContext() as any;
   const { deliveryDetailsLoading } = useLoading() as any; // optional loading flag if available
   const { fetchDeliveryData, ongoingDeliveryData } = useDeliverContext();
 
@@ -52,7 +50,7 @@ const DeliveryDetails = () => {
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         },
-        1000
+        1000,
       );
     }
   }, [ongoingDeliveryData]);
@@ -117,10 +115,6 @@ const DeliveryDetails = () => {
         <AppLoading />
       ) : (
         <>
-          {notification?.visible && (
-            <Notification notification={notification} />
-          )}
-
           <View style={{ flex: 1, backgroundColor: "#121212" }}>
             {/* Back btn */}
             <TouchableWithoutFeedback

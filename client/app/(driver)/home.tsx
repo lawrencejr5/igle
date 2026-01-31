@@ -13,7 +13,6 @@ import SideNav from "../../components/SideNav";
 import NotificationScreen from "../../components/screens/NotificationScreen";
 import LocationUpdateModal from "../../components/LocationUpdateModal";
 
-import Notification from "../../components/Notification";
 import { useNotificationContext } from "../../context/NotificationContext";
 
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
@@ -72,11 +71,11 @@ const HomePage = () => {
 
   const memoizedPickupRouteCoords = useMemo(
     () => toPickupRouteCoords,
-    [toPickupRouteCoords]
+    [toPickupRouteCoords],
   );
   const memoizedDestinationRouteCoords = useMemo(
     () => toDestinationRouteCoords,
-    [toDestinationRouteCoords]
+    [toDestinationRouteCoords],
   );
 
   // Derive pickup and destination coordinates based on current job type
@@ -152,7 +151,6 @@ const HomePage = () => {
   return (
     <>
       <>
-        {notification.visible && <Notification notification={notification} />}
         <View style={styles.container}>
           {/* Map */}
           {region && (

@@ -12,6 +12,7 @@ import React, {
 import { Animated } from "react-native";
 
 import * as Haptics from "expo-haptics";
+import Notification from "../components/Notification";
 
 // Status type
 type StatusType = "error" | "success" | "";
@@ -115,6 +116,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
+      {notification.visible && <Notification notification={notification} />}
     </NotificationContext.Provider>
   );
 };
@@ -123,7 +125,7 @@ export const useNotificationContext = () => {
   const context = useContext(NotificationContext);
   if (!context)
     throw new Error(
-      "Notification context must be used within the notification provider"
+      "Notification context must be used within the notification provider",
     );
   return context;
 };

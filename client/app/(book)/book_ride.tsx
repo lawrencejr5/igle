@@ -12,7 +12,6 @@ import Feather from "@expo/vector-icons/Feather";
 import { darkMapStyle } from "../../data/map.dark";
 
 import RideRouteModal from "../../components/RideRouteModal";
-import Notification from "../../components/Notification";
 
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
@@ -86,7 +85,6 @@ const BookRide = () => {
         <AppLoading />
       ) : (
         <>
-          {notification.visible && <Notification notification={notification} />}
           <View style={{ backgroundColor: "#121212", flex: 1 }}>
             {/* Map */}
             {region && (

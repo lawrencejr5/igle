@@ -32,7 +32,6 @@ import { useAuthContext } from "../../../context/AuthContext";
 import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import { useMapContext } from "../../../context/MapContext";
-import Notification from "../../../components/Notification";
 import { useNotificationContext } from "../../../context/NotificationContext";
 
 const Home = () => {
@@ -56,7 +55,6 @@ const Home = () => {
   const {
     rideStatus,
     setPickupTime,
-    setRideStatus,
     ongoingRideData,
     ongoingRide,
     getActiveRide,
@@ -125,7 +123,7 @@ const Home = () => {
       const latestDelivery = [...ongoingDeliveries].sort(
         (a, b) =>
           new Date(b.createdAt || b.updatedAt || 0).getTime() -
-          new Date(a.createdAt || a.updatedAt || 0).getTime()
+          new Date(a.createdAt || a.updatedAt || 0).getTime(),
       )[0];
 
       return {
@@ -187,7 +185,6 @@ const Home = () => {
         <AppLoading />
       ) : (
         <>
-          {notification.visible && <Notification notification={notification} />}
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={[styles.container, { paddingTop: insets.top + 10 }]}
@@ -299,7 +296,7 @@ const Home = () => {
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             Haptics.impactAsync(
-                              Haptics.ImpactFeedbackStyle.Light
+                              Haptics.ImpactFeedbackStyle.Light,
                             );
                             router.push("../(book)/book_ride");
                           }}
@@ -324,7 +321,7 @@ const Home = () => {
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             Haptics.impactAsync(
-                              Haptics.ImpactFeedbackStyle.Light
+                              Haptics.ImpactFeedbackStyle.Light,
                             );
                             router.push("../(book)/book_delivery");
                           }}
@@ -349,7 +346,7 @@ const Home = () => {
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             Haptics.impactAsync(
-                              Haptics.ImpactFeedbackStyle.Light
+                              Haptics.ImpactFeedbackStyle.Light,
                             );
                             setPickupTime("later");
                             router.push("../(book)/book_ride");
@@ -507,8 +504,8 @@ const OngoingCard = ({
           rideData.status === "expired"
             ? "timed out"
             : rideData.scheduled
-            ? "scheduled"
-            : rideData.status || "pending",
+              ? "scheduled"
+              : rideData.status || "pending",
         driver: rideData.driver?.user?.name || "Driver",
       };
     } else {

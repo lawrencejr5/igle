@@ -23,7 +23,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useAuthContext } from "../../context/AuthContext";
-import Notification from "../../components/Notification";
 
 const Signin = () => {
   const styles = auth_styles();
@@ -57,7 +56,7 @@ const Signin = () => {
       if (idToken) {
         googleLoading && setGoogleLoading(false);
         googleLogin(idToken).catch((e: unknown) =>
-          showNotification("Signin failed, try again", "error")
+          showNotification("Signin failed, try again", "error"),
         );
       }
     }
@@ -81,7 +80,6 @@ const Signin = () => {
 
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <ScrollView style={styles.container}>
         {/* Back button */}
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 10 }}>

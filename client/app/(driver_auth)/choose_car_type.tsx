@@ -12,7 +12,6 @@ import Header from "../../components/driver_reg/Header";
 import { router } from "expo-router";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import { useNotificationContext } from "../../context/NotificationContext";
-import Notification from "../../components/Notification";
 
 const ChooseCarType = () => {
   const { createDriver } = useDriverAuthContext();
@@ -38,7 +37,7 @@ const ChooseCarType = () => {
     } catch (err: any) {
       showNotification(
         err.message || "Failed to create driver profile",
-        "error"
+        "error",
       );
     } finally {
       setLoading(false);
@@ -47,7 +46,6 @@ const ChooseCarType = () => {
 
   return (
     <>
-      {notification.visible && <Notification notification={notification} />}
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         <Header />
 
