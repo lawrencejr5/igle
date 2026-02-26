@@ -223,7 +223,7 @@ header {
         display: flex;
         align-items: center;
         justify-content: center;
-        background-image: url("/images/banner1.jpg"); // Path starts from 'public'
+        background-image: url("/images/banner1.png"); // Path starts from 'public'
         background-size: cover; // Ensures image covers the whole box
         background-position: center; // Centers the image so faces aren't cropped out
         background-repeat: no-repeat;
@@ -362,7 +362,7 @@ header {
         transition: all 0.2s ease;
 
         &:hover {
-            border-color: darken(#eee, 10%);
+            border-color: color.adjust(#eee, $lightness: -10%);
         }
 
         // When open, change border/style
