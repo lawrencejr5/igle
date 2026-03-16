@@ -35,7 +35,6 @@ module.exports = {
       "backgroundColor": "#121212"
     },
     ios: {
-      "buildNumber": "1",
       "supportsTablet": false,
       "bundleIdentifier": "com.lawrencejr.igle",
       "usesAppleSignIn": true, // Adds the required entitlement for Apple review
@@ -53,7 +52,6 @@ module.exports = {
       }
     },
     android: {
-      "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
