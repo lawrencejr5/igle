@@ -20,6 +20,7 @@ import {
   admin_edit_user,
   admin_delete_user,
   admin_block_user,
+  delete_account,
 } from "../controllers/user";
 
 import { auth } from "../middleware/auth";
@@ -49,6 +50,7 @@ UserRouter.patch("/password", auth, update_password);
 UserRouter.patch("/driver_application", auth, update_driver_application);
 
 UserRouter.get("/data", auth, get_user_data);
+UserRouter.delete("/delete", auth, delete_account);
 
 // Admin user management
 UserRouter.get("/admin/users", auth, admin_get_users);

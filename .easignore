@@ -1,0 +1,12 @@
+# .easignore (placed in the igle/ root)
+
+# Folders to ignore
+server/
+admin/
+landing/
+
+# Standard ignores (crucial for size)
+**/node_modules/
+**/.expo/
+client/android/
+client/ios/

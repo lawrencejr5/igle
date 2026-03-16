@@ -17,6 +17,11 @@ import Driver from "../models/driver";
 import SavedPlace from "../models/saved_place";
 import Activity from "../models/activity";
 import Report from "../models/report";
+import Feedback from "../models/feedback";
+import History from "../models/history";
+import Rating from "../models/rating";
+import UserTask from "../models/userTask";
+import mongoose from "mongoose";
 
 import { cloudinary } from "../middleware/upload";
 import axios from "axios";
@@ -796,5 +801,69 @@ export const admin_block_user = async (req: Request, res: Response) => {
   } catch (err) {
     console.error("admin_block_user error:", err);
     return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+// Permanently delete user account and all associated data
+export const delete_account = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  try {
+    const user_id = req.user?.id;
+    if (!user_id) return res.status(401).json({ msg: "Unauthorized" });
+
+    const user = await User.findById(user_id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    await session.withTransaction(async () => {
+      // delete user's wallets and transactions
+      const wallets = await Wallet.find({ owner_id: user._id }, null, { session });
+      const walletIds = wallets.map((w) => w._id);
+      if (walletIds.length) {
+        await Transaction.deleteMany({ wallet_id: { $in: walletIds } }, { session });
+        await Wallet.deleteMany({ _id: { $in: walletIds } }, { session });
+      }
+
+      // delete rides where user is rider
+      await Ride.deleteMany({ rider: user._id }, { session });
+      // delete deliveries where user is sender
+      await Delivery.deleteMany({ sender: user._id }, { session });
+
+      // delete saved places, activities, reports, feedbacks, history, ratings, and userTasks by user
+      await SavedPlace.deleteMany({ user: user._id }, { session });
+      await Activity.deleteMany({ user: user._id }, { session });
+      await Report.deleteMany({ reporter: user._id }, { session });
+      await Feedback.deleteMany({ user: user._id }, { session });
+      await History.deleteMany({ user: user._id }, { session });
+      await Rating.deleteMany({ user: user._id }, { session });
+      await UserTask.deleteMany({ user: user._id }, { session });
+
+      // if user has a Driver record, remove driver and related driver data
+      const driver = await Driver.findOne({ user: user._id }, null, { session });
+      if (driver) {
+        // driver wallet and transactions
+        const dWallets = await Wallet.find({ owner_id: driver._id }, null, { session });
+        const dWalletIds = dWallets.map((w) => w._id);
+        if (dWalletIds.length) {
+          await Transaction.deleteMany({ wallet_id: { $in: dWalletIds } }, { session });
+          await Wallet.deleteMany({ _id: { $in: dWalletIds } }, { session });
+        }
+
+        await Ride.deleteMany({ driver: driver._id }, { session });
+        await Delivery.deleteMany({ driver: driver._id }, { session });
+        await Report.deleteMany({ driver: driver._id }, { session });
+        await Rating.deleteMany({ driver: driver._id }, { session });
+        await Driver.deleteOne({ _id: driver._id }, { session });
+      }
+
+      // finally delete user
+      await User.deleteOne({ _id: user._id }, { session });
+    });
+
+    return res.status(200).json({ msg: "Account permanently deleted" });
+  } catch (err) {
+    console.error("delete_account error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  } finally {
+    await session.endSession();
   }
 };
