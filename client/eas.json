@@ -6,27 +6,18 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_GOOGLE_MAPS_API": "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss"
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "EXPO_PUBLIC_GOOGLE_MAPS_API": "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
-      },
-      "env": {
-        "EXPO_PUBLIC_GOOGLE_MAPS_API": "AIzaSyDdZZ0ji5pbx3ddhhlvYugGNvSxOOC3Zss"
       }
     }
   },
