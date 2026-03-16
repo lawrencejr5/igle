@@ -525,6 +525,39 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }, 500);
   };
 
+  const deleteAccount = async (): Promise<void> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      await axios.delete(`${API_URL}/delete`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Clear local data and logout after deleting account
+      await unregisterPushToken();
+
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+      await AsyncStorage.removeItem("is_driver");
+      await AsyncStorage.removeItem("ongoingRideId");
+
+      setIsAuthenticated(false);
+
+      showNotification("Account permanently deleted", "success");
+
+      setTimeout(() => {
+        router.replace("/");
+        setSignedIn(null);
+        setDriver(null);
+      }, 500);
+    } catch (err: any) {
+      showNotification(
+        err.response?.data?.msg || "Account deletion failed.",
+        "error"
+      );
+      throw new Error(err.response?.data?.msg);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -545,6 +578,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         logout,
         userSocket,
         updateDriverApplication,
+        deleteAccount,
       }}
     >
       {children}
@@ -607,4 +641,5 @@ export interface AuthContextType {
   googleLogin: (tokenId: string) => Promise<void>;
 
   userSocket: any;
+  deleteAccount: () => Promise<void>;
 }

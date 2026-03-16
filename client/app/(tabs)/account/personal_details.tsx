@@ -27,6 +27,8 @@ const PersonalDetails = () => {
   const [openPhoneModal, setOpenPhoneModal] = useState<boolean>(false);
   const [openProfilePicModal, setOpenProfilePicModal] =
     useState<boolean>(false);
+  const [openDeleteAccountModal, setOpenDeleteAccountModal] =
+    useState<boolean>(false);
 
   const { notification } = useNotificationContext();
   const { signedIn, uploadingPic, removingPic } = useAuthContext();
@@ -37,10 +39,10 @@ const PersonalDetails = () => {
       >
         <View>
           <Pressable
-            style={{ paddingVertical: 15, paddingRight: 15 }}
+            style={{ paddingVertical: 15 }}
             onPress={() => router.replace("/(tabs)/account")}
           >
-            <AntDesign name="arrowleft" size={26} color={"#fff"} />
+            <Feather name="chevron-left" size={30} color={"#fff"} />
           </Pressable>
           <Text
             style={{
@@ -155,6 +157,26 @@ const PersonalDetails = () => {
               <Feather name="chevron-right" color={"#fff"} size={24} />
             </Pressable>
           </View>
+
+          <Pressable
+            onPress={() => setOpenDeleteAccountModal(true)}
+            style={{
+              marginTop: 40,
+              alignSelf: "center",
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+            }}
+          >
+            <Text
+              style={{
+                color: "#ff4444",
+                fontFamily: "raleway-bold",
+                fontSize: 16,
+              }}
+            >
+              Delete account
+            </Text>
+          </Pressable>
         </View>
       </SafeAreaView>
       <EditNameModal open={openNameModal} setOpen={setOpenNameModal} />
@@ -163,6 +185,10 @@ const PersonalDetails = () => {
       <EditProfilePicModal
         open={openProfilePicModal}
         setOpen={setOpenProfilePicModal}
+      />
+      <DeleteAccountModal
+        open={openDeleteAccountModal}
+        setOpen={setOpenDeleteAccountModal}
       />
     </>
   );
@@ -435,6 +461,108 @@ const EditProfilePicModal: FC<{
   );
 };
 
+const DeleteAccountModal: FC<{
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+}> = ({ open, setOpen }) => {
+  const { deleteAccount } = useAuthContext();
+  const [deleting, setDeleting] = useState<boolean>(false);
+
+  const confirm_delete = async () => {
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      setOpen(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={open}
+      onRequestClose={() => setOpen(false)}
+    >
+      <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
+        <Pressable onPress={() => {}} style={styles.modal}>
+          <Text style={[styles.modal_header, { color: "#ff4444" }]}>
+            Delete Account
+          </Text>
+
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "raleway-semibold",
+              marginTop: 15,
+              fontSize: 16,
+            }}
+          >
+            Are you sure you want to permanently delete your account? This
+            action is irreversible and will delete all your data, including
+            rides, deliveries, activity, and wallet balance.
+          </Text>
+
+          <View
+            style={{
+              marginTop: 30,
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Pressable
+              onPress={() => setOpen(false)}
+              style={{
+                flex: 1,
+                backgroundColor: "#383838",
+                paddingVertical: 15,
+                borderRadius: 7,
+                marginRight: 10,
+              }}
+              disabled={deleting}
+            >
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontFamily: "raleway-bold",
+                  color: "#fff",
+                }}
+              >
+                Cancel
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={confirm_delete}
+              style={{
+                flex: 1,
+                backgroundColor: "#ff4444",
+                paddingVertical: 15,
+                borderRadius: 7,
+                marginLeft: 10,
+                opacity: deleting ? 0.5 : 1,
+              }}
+              disabled={deleting}
+            >
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontFamily: "raleway-bold",
+                  color: "#fff",
+                }}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
+
 const styles = StyleSheet.create({
   item_container: {
     flexDirection: "row",
@@ -471,8 +599,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   modal_header: {
-    fontFamily: "raleway-semibold",
-    fontSize: 18,
+    fontFamily: "raleway-bold",
+    fontSize: 20,
     color: "#fff",
   },
   modal_text_input: {
