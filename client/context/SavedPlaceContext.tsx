@@ -13,6 +13,7 @@ import { API_URLS } from "../data/constants";
 import { useNotificationContext } from "./NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMapContext } from "./MapContext";
+import { jwtDecode } from "jwt-decode";
 
 interface SavedPlace {
   _id: string;
@@ -99,6 +100,7 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [otherPlaces, setOtherPlaces] = useState<SavedPlace[] | null>(null);
   const getSavedPlaces = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    if (!token) return;
     setLoading(true);
     try {
       const { data } = await axios.get(`${API_URL}/`, {
@@ -144,7 +146,21 @@ const SavedPlaceProvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   useEffect(() => {
-    getSavedPlaces();
+    const init = async () => {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token);
+          const now = Date.now() / 1000;
+          if (decoded.exp && decoded.exp > now) {
+            getSavedPlaces();
+          }
+        } catch (err) {
+          // invalid token
+        }
+      }
+    };
+    init();
   }, []);
 
   return (

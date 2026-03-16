@@ -10,6 +10,7 @@ import React, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useNotificationContext } from "./NotificationContext";
+import { jwtDecode } from "jwt-decode";
 
 import {
   initDriverSocket,
@@ -135,8 +136,24 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
 
   // Check if user is a driver on mount
   useEffect(() => {
-    getDriverProfile();
-    getWalletBalance("Driver");
+    const init = async () => {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token);
+          const now = Date.now() / 1000;
+          if (decoded.exp && decoded.exp > now) {
+            await getDriverProfile();
+            getWalletBalance("Driver");
+          } else {
+            await AsyncStorage.removeItem("token");
+          }
+        } catch (err) {
+          await AsyncStorage.removeItem("token");
+        }
+      }
+    };
+    init();
   }, []);
 
   useEffect(() => {
@@ -157,6 +174,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
   const getDriverInfo = async (driver_id?: string) => {
     try {
       const authToken = await AsyncStorage.getItem("token");
+      if (!authToken) return;
 
       const url = driver_id
         ? `${API_URL}/data?driver_id=${driver_id}`
@@ -247,6 +265,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
         throw new Error("An error occured");
       }
     } catch (error: any) {
+      if (error.response?.status === 401) return;
       const errMsg = error.response?.data?.msg;
       throw new Error(errMsg || "Error getting driver profile");
     } finally {

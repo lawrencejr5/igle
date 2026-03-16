@@ -13,6 +13,7 @@ import axios from "axios";
 
 import { API_URLS } from "../data/constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { jwtDecode } from "jwt-decode";
 
 const HistoryContext = createContext<HistoryContextType | null>(null);
 
@@ -20,13 +21,28 @@ const HistoryProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [rideHistory, setRideHistory] = useState<HistoryType[] | null>(null);
 
   useEffect(() => {
-    getRideHistory();
+    const init = async () => {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        try {
+          const decoded: any = jwtDecode(token);
+          const now = Date.now() / 1000;
+          if (decoded.exp && decoded.exp > now) {
+            getRideHistory();
+          }
+        } catch (err) {
+          // invalid token format
+        }
+      }
+    };
+    init();
   }, []);
 
   const api_url = API_URLS.history;
 
   const getRideHistory = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    if (!token) return;
     try {
       const { data } = await axios.get(api_url, {
         headers: { Authorization: `Bearer ${token}` },

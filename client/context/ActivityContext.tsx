@@ -51,6 +51,7 @@ const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setActivityLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
+      if (!token) return;
       const { data } = await axios.get(API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });

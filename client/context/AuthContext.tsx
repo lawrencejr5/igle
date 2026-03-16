@@ -50,9 +50,14 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    getUserData();
-    checkTokenValidity();
-    getWalletBalance("User");
+    const init = async () => {
+      const isValid = await checkTokenValidity();
+      if (isValid) {
+        await getUserData();
+        getWalletBalance("User");
+      }
+    };
+    init();
   }, []);
 
   useEffect(() => {
@@ -459,7 +464,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   // Check for user token
-  const checkTokenValidity = async () => {
+  const checkTokenValidity = async (): Promise<boolean> => {
     const storedToken = await AsyncStorage.getItem("token");
     if (storedToken) {
       try {
@@ -467,6 +472,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         const now = Date.now() / 1000;
         if (decoded.exp && decoded.exp > now) {
           setIsAuthenticated(true);
+          return true;
         } else {
           await AsyncStorage.removeItem("token"); // Expired
         }
@@ -475,6 +481,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         await AsyncStorage.removeItem("token");
       }
     }
+    return false;
   };
 
   const updateDriverApplication = async (

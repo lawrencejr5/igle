@@ -633,6 +633,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const getActiveRide = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    if (!token) return;
     try {
       const { data } = await axios.get(`${API_URL}/active`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -646,6 +647,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
   const getOngoingRide = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    if (!token) return;
     try {
       const { data } = await axios.get(`${API_URL}/ongoing`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -660,6 +662,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const [scheduledRides, setScheduledRides] = useState<Ride[] | null>(null);
   const getScheduledRides = async (): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
+    if (!token) return;
     try {
       const { data } = await axios.get(`${API_URL}/scheduled`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -703,6 +706,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     status: "completed" | "cancelled"
   ): Promise<Ride[]> => {
     const token = await AsyncStorage.getItem("token");
+    if (!token) return [];
     try {
       const { data } = await axios.get(`${API_URL}/user?status=${status}`, {
         headers: { Authorization: `Bearer ${token}` },

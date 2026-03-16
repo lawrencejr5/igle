@@ -62,6 +62,7 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setRatingLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
+      if (!token) return;
       const { data } = await axios.get(`${API_URL}/ride`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { ride_id },
@@ -80,6 +81,7 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setRatingLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
+      if (!token) return;
       const { data } = await axios.get(
         `${API_URL}/driver?driver_id=${driver_id}`,
         {
@@ -100,6 +102,7 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setRatingLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
+      if (!token) return;
       const { data } = await axios.get(`${API_URL}/user`, {
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -17,14 +17,14 @@ interface NotificationContextType {
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const usePushNotification = () => {
   const context = useContext(NotificationContext);
   if (!context) {
     throw new Error(
-      "useNotification must be used within a PushNotificationProvider"
+      "useNotification must be used within a PushNotificationProvider",
     );
   }
   return context;
@@ -43,7 +43,7 @@ export const PushNotificationProvider: React.FC<
   const [error, setError] = useState<Error | null>(null);
 
   const notificationListener = useRef<Notifications.EventSubscription | null>(
-    null
+    null,
   );
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
@@ -104,10 +104,10 @@ export const PushNotificationProvider: React.FC<
             // Delivery cancelled or completed
             if (
               ["delivery_cancelled", "delivery_completed"].includes(
-                data?.type as any
+                data?.type as any,
               )
             ) {
-              if (data.delivery_id) {
+              if (data?.delivery_id) {
                 router.push({
                   pathname: "/(tabs)/delivery/delivery_detail/[delivery_id]", // Note: Use the bracket name here
                   params: { delivery_id: data.delivery_id as any },
@@ -121,7 +121,7 @@ export const PushNotificationProvider: React.FC<
             if (
               ["ride_cancelled", "ride_completed"].includes(data?.type as any)
             ) {
-              if (data.ride_id) {
+              if (data?.ride_id) {
                 router.push({
                   pathname: "/(tabs)/rides/ride_detail/[ride_id]",
                   params: { ride_id: data.ride_id as any },

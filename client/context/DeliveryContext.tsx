@@ -550,7 +550,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Fetch delivery data function
   const fetchDeliveryData = async (delivery_id: string): Promise<void> => {
     try {
-      const headers = { headers: await authHeaders() };
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(
         `${API_URL}/data?delivery_id=${delivery_id}`,
         headers
@@ -713,7 +715,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const fetchUserDeliveries = async (status?: string) => {
     try {
-      const headers = { headers: await authHeaders() };
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return [];
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
       const qs = status ? `?status=${status}` : "";
       const { data } = await axios.get(`${API_URL}/user${qs}`, headers);
       setUserDeliveries(data.deliveries || []);
@@ -726,7 +730,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const fetchUserOngoingDeliveries = async () => {
     try {
-      const headers = { headers: await authHeaders() };
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return [];
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(`${API_URL}/in_transit`, headers);
       setOngoingDeliveries(data.deliveries || []);
       return data.deliveries || [];
@@ -738,7 +744,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const fetchUserActiveDelivery = async () => {
     try {
-      const headers = { headers: await authHeaders() };
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return [];
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(`${API_URL}/active`, headers);
       setOngoingDeliveryData(data.delivery || null);
       return data.deliveries || [];
@@ -750,7 +758,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const fetchCancelledDeliveries = async () => {
     try {
-      const headers = { headers: await authHeaders() };
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return [];
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(`${API_URL}/cancelled`, headers);
       setCancelledDeliveries(data.deliveries || []);
       return data.deliveries || [];
@@ -762,7 +772,9 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const fetchDeliveredDeliveries = async () => {
     try {
-      const headers = { headers: await authHeaders() };
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return [];
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(
         `${API_URL}/user?status=delivered`,
         headers
