@@ -25,10 +25,10 @@ const SecuritySettings = () => {
       >
         <View>
           <Pressable
-            style={{ paddingVertical: 15, paddingRight: 15 }}
+            style={{ paddingVertical: 15 }}
             onPress={() => router.replace("/(tabs)/account")}
           >
-            <AntDesign name="arrowleft" size={26} color={"#fff"} />
+            <Feather name="chevron-left" size={30} color={"#fff"} />
           </Pressable>
           <Text
             style={{

@@ -12,7 +12,7 @@ import React, { useEffect } from "react";
 import { useActivityContext } from "../../../context/ActivityContext";
 
 import { FlatList } from "react-native-gesture-handler";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
@@ -32,10 +32,10 @@ const AccountNotification = () => {
     >
       <View>
         <Pressable
-          style={{ paddingVertical: 15, paddingRight: 15 }}
+          style={{ paddingVertical: 15 }}
           onPress={() => router.replace("/(tabs)/account")}
         >
-          <AntDesign name="arrowleft" size={26} color={"#fff"} />
+          <Feather name="chevron-left" size={30} color={"#fff"} />
         </Pressable>
         <Text
           style={{

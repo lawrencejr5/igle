@@ -36,7 +36,7 @@ const Notification = ({ notification }: { notification: NotificationType }) => {
           {notification?.message}
         </Text>
         <AntDesign
-          name="exclamationcircle"
+          name="exclamation-circle"
           size={16}
           color={notification?.status == "error" ? "#ff0000" : "#4dc900"}
         />

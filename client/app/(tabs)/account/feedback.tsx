@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -90,10 +90,10 @@ const Feedback = () => {
         >
           <View style={styles.headerRow}>
             <Pressable
-              style={styles.backButton}
+              style={{ paddingVertical: 15 }}
               onPress={() => router.replace("/(tabs)/account")}
             >
-              <AntDesign name="arrowleft" size={22} color="#fff" />
+              <Feather name="chevron-left" size={30} color={"#fff"} />
             </Pressable>
             <Text style={styles.title}>Help & Feedback</Text>
           </View>
