@@ -68,6 +68,7 @@ UserRouter.patch("/email", auth_1.auth, user_1.update_email);
 UserRouter.patch("/password", auth_1.auth, user_1.update_password);
 UserRouter.patch("/driver_application", auth_1.auth, user_1.update_driver_application);
 UserRouter.get("/data", auth_1.auth, user_1.get_user_data);
+UserRouter.delete("/delete", auth_1.auth, user_1.delete_account);
 // Admin user management
 UserRouter.get("/admin/users", auth_1.auth, user_1.admin_get_users);
 // single-user admin operations now use query `?id=...` instead of path params

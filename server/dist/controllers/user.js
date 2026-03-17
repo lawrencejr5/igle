@@ -45,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.admin_block_user = exports.admin_delete_user = exports.admin_edit_user = exports.admin_get_user = exports.admin_get_users = exports.send_test_push = exports.set_push_token = exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.remove_profile_pic = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
+exports.delete_account = exports.admin_block_user = exports.admin_delete_user = exports.admin_edit_user = exports.admin_get_user = exports.admin_get_users = exports.send_test_push = exports.set_push_token = exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.remove_profile_pic = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -60,6 +60,11 @@ const driver_1 = __importDefault(require("../models/driver"));
 const saved_place_1 = __importDefault(require("../models/saved_place"));
 const activity_1 = __importDefault(require("../models/activity"));
 const report_1 = __importDefault(require("../models/report"));
+const feedback_1 = __importDefault(require("../models/feedback"));
+const history_1 = __importDefault(require("../models/history"));
+const rating_1 = __importDefault(require("../models/rating"));
+const userTask_1 = __importDefault(require("../models/userTask"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const upload_1 = require("../middleware/upload");
 const axios_1 = __importDefault(require("axios"));
 const expo_push_1 = require("../utils/expo_push");
@@ -756,3 +761,64 @@ const admin_block_user = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.admin_block_user = admin_block_user;
+// Permanently delete user account and all associated data
+const delete_account = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const session = yield mongoose_1.default.startSession();
+    try {
+        const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!user_id)
+            return res.status(401).json({ msg: "Unauthorized" });
+        const user = yield user_1.default.findById(user_id);
+        if (!user)
+            return res.status(404).json({ msg: "User not found" });
+        yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            // delete user's wallets and transactions
+            const wallets = yield wallet_1.default.find({ owner_id: user._id }, null, { session });
+            const walletIds = wallets.map((w) => w._id);
+            if (walletIds.length) {
+                yield transaction_1.default.deleteMany({ wallet_id: { $in: walletIds } }, { session });
+                yield wallet_1.default.deleteMany({ _id: { $in: walletIds } }, { session });
+            }
+            // delete rides where user is rider
+            yield ride_1.default.deleteMany({ rider: user._id }, { session });
+            // delete deliveries where user is sender
+            yield delivery_1.default.deleteMany({ sender: user._id }, { session });
+            // delete saved places, activities, reports, feedbacks, history, ratings, and userTasks by user
+            yield saved_place_1.default.deleteMany({ user: user._id }, { session });
+            yield activity_1.default.deleteMany({ user: user._id }, { session });
+            yield report_1.default.deleteMany({ reporter: user._id }, { session });
+            yield feedback_1.default.deleteMany({ user: user._id }, { session });
+            yield history_1.default.deleteMany({ user: user._id }, { session });
+            yield rating_1.default.deleteMany({ user: user._id }, { session });
+            yield userTask_1.default.deleteMany({ user: user._id }, { session });
+            // if user has a Driver record, remove driver and related driver data
+            const driver = yield driver_1.default.findOne({ user: user._id }, null, { session });
+            if (driver) {
+                // driver wallet and transactions
+                const dWallets = yield wallet_1.default.find({ owner_id: driver._id }, null, { session });
+                const dWalletIds = dWallets.map((w) => w._id);
+                if (dWalletIds.length) {
+                    yield transaction_1.default.deleteMany({ wallet_id: { $in: dWalletIds } }, { session });
+                    yield wallet_1.default.deleteMany({ _id: { $in: dWalletIds } }, { session });
+                }
+                yield ride_1.default.deleteMany({ driver: driver._id }, { session });
+                yield delivery_1.default.deleteMany({ driver: driver._id }, { session });
+                yield report_1.default.deleteMany({ driver: driver._id }, { session });
+                yield rating_1.default.deleteMany({ driver: driver._id }, { session });
+                yield driver_1.default.deleteOne({ _id: driver._id }, { session });
+            }
+            // finally delete user
+            yield user_1.default.deleteOne({ _id: user._id }, { session });
+        }));
+        return res.status(200).json({ msg: "Account permanently deleted" });
+    }
+    catch (err) {
+        console.error("delete_account error:", err);
+        return res.status(500).json({ msg: "Server error." });
+    }
+    finally {
+        yield session.endSession();
+    }
+});
+exports.delete_account = delete_account;
