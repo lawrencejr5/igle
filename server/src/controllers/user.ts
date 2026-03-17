@@ -46,7 +46,7 @@ export const register = async (req: Request, res: Response) => {
 
     const hashed_password = await bcrypt.hash(
       password,
-      await bcrypt.genSalt(10)
+      await bcrypt.genSalt(10),
     );
     const new_user = await User.create({
       name,
@@ -114,7 +114,7 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client();
 
 // Heuristic: fetch the image and check if it looks like a real photo.
 // Returns true if content-type starts with image/ and size is > 2KB.
@@ -145,7 +145,10 @@ export const google_auth = async (req: Request, res: Response) => {
     }
     const ticket = await client.verifyIdToken({
       idToken: tokenId,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: [
+        process.env.GOOGLE_CLIENT_ID as string,
+        process.env.GOOGLE_IOS_CLIENT_ID as string,
+      ].filter(Boolean),
     });
 
     const payload = ticket.getPayload();
@@ -222,7 +225,7 @@ export const update_location = async (req: Request, res: Response) => {
     const user = await User.findByIdAndUpdate(
       id,
       { location: { type: "Point", coordinates } },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -342,7 +345,7 @@ export const update_password = async (req: Request, res: Response) => {
 
     const hashed_password = await bcrypt.hash(
       new_password,
-      await bcrypt.genSalt(10)
+      await bcrypt.genSalt(10),
     );
     user.password = hashed_password;
     await user.save();
@@ -370,7 +373,7 @@ export const update_phone = async (req: Request, res: Response) => {
     const user = await User.findByIdAndUpdate(
       user_id,
       { phone },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -399,7 +402,7 @@ export const update_name = async (req: Request, res: Response) => {
     const user = await User.findByIdAndUpdate(
       user_id,
       { name: fullname },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -428,7 +431,7 @@ export const update_email = async (req: Request, res: Response) => {
     const user = await User.findByIdAndUpdate(
       user_id,
       { email },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -445,7 +448,7 @@ export const update_email = async (req: Request, res: Response) => {
 // Update user driver application status
 export const update_driver_application = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   try {
     const user_id = req.user?.id;
@@ -462,7 +465,7 @@ export const update_driver_application = async (
     const user = await User.findByIdAndUpdate(
       user_id,
       { driver_application },
-      { new: true }
+      { new: true },
     ).select("-password");
 
     if (!user) {
@@ -536,7 +539,7 @@ export const send_test_push = async (req: Request, res: Response) => {
       [user_id],
       "Test Notification",
       "This is a test push from server",
-      { type: "test_push" }
+      { type: "test_push" },
     );
 
     console.log("[test_push] sendExpoPush result:", result);
@@ -623,7 +626,7 @@ export const admin_get_users = async (req: Request, res: Response) => {
           numRides,
           numDeliveries,
         };
-      })
+      }),
     );
 
     const pages = Math.ceil(total / limit);
@@ -694,7 +697,7 @@ export const admin_edit_user = async (req: Request, res: Response) => {
       return res.status(400).json({ msg: "Nothing to update" });
 
     const user = await User.findByIdAndUpdate(id, update, { new: true }).select(
-      "-password"
+      "-password",
     );
     if (!user) return res.status(404).json({ msg: "User not found" });
 
@@ -816,10 +819,15 @@ export const delete_account = async (req: Request, res: Response) => {
 
     await session.withTransaction(async () => {
       // delete user's wallets and transactions
-      const wallets = await Wallet.find({ owner_id: user._id }, null, { session });
+      const wallets = await Wallet.find({ owner_id: user._id }, null, {
+        session,
+      });
       const walletIds = wallets.map((w) => w._id);
       if (walletIds.length) {
-        await Transaction.deleteMany({ wallet_id: { $in: walletIds } }, { session });
+        await Transaction.deleteMany(
+          { wallet_id: { $in: walletIds } },
+          { session },
+        );
         await Wallet.deleteMany({ _id: { $in: walletIds } }, { session });
       }
 
@@ -838,13 +846,20 @@ export const delete_account = async (req: Request, res: Response) => {
       await UserTask.deleteMany({ user: user._id }, { session });
 
       // if user has a Driver record, remove driver and related driver data
-      const driver = await Driver.findOne({ user: user._id }, null, { session });
+      const driver = await Driver.findOne({ user: user._id }, null, {
+        session,
+      });
       if (driver) {
         // driver wallet and transactions
-        const dWallets = await Wallet.find({ owner_id: driver._id }, null, { session });
+        const dWallets = await Wallet.find({ owner_id: driver._id }, null, {
+          session,
+        });
         const dWalletIds = dWallets.map((w) => w._id);
         if (dWalletIds.length) {
-          await Transaction.deleteMany({ wallet_id: { $in: dWalletIds } }, { session });
+          await Transaction.deleteMany(
+            { wallet_id: { $in: dWalletIds } },
+            { session },
+          );
           await Wallet.deleteMany({ _id: { $in: dWalletIds } }, { session });
         }
 
