@@ -19,16 +19,14 @@ import { Link, router } from "expo-router";
 
 import { auth_styles } from "../../styles/auth.styles";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useAuthContext } from "../../context/AuthContext";
 
 const Signin = () => {
   const styles = auth_styles();
 
-  const { showNotification, notification } = useNotificationContext()!;
-  const { login, signedIn, googleLogin } = useAuthContext();
+  const { showNotification } = useNotificationContext()!;
+  const { login, googleLogin } = useAuthContext();
 
   const [checked, setChecked] = useState<boolean>(true);
   const [passwordShow, setPasswordShow] = useState<boolean>(true);
@@ -40,14 +38,13 @@ const Signin = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId:
-      "560986315925-9qjotrnukbgrjgr38tov6qlnnnb22e9l.apps.googleusercontent.com",
-    androidClientId:
-      "560986315925-jp1mifmadqaali679m5kjvca78i4k4im.apps.googleusercontent.com",
-    iosClientId:
-      "560986315925-l1fa67ik629n47t903oaaiogta3us7nt.apps.googleusercontent.com",
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     scopes: ["profile", "email"],
-    redirectUri: makeRedirectUri({ path: "", scheme: "com.lawrencejr.igle" }),
+    redirectUri: makeRedirectUri({
+      path: "/(auth)/signin",
+      scheme: "com.lawrencejr.igle",
+    }),
   });
 
   React.useEffect(() => {

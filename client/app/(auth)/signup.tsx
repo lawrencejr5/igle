@@ -2,7 +2,6 @@ import {
   ScrollView,
   Text,
   TextInput,
-  TouchableWithoutFeedback,
   View,
   TouchableOpacity,
 } from "react-native";
@@ -27,9 +26,8 @@ const Signup = () => {
 
   const { register } = useAuthContext()!;
   const { googleLogin } = useAuthContext()!;
-  const { showNotification, notification } = useNotificationContext();
+  const { showNotification } = useNotificationContext();
 
-  const [checked, setChecked] = useState(false);
   const [passwordShow, setPasswordShow] = useState<boolean>(true);
 
   // Add state for form fields
@@ -41,14 +39,13 @@ const Signup = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId:
-      "560986315925-9qjotrnukbgrjgr38tov6qlnnnb22e9l.apps.googleusercontent.com",
-    androidClientId:
-      "560986315925-jp1mifmadqaali679m5kjvca78i4k4im.apps.googleusercontent.com",
-    iosClientId:
-      "560986315925-l1fa67ik629n47t903oaaiogta3us7nt.apps.googleusercontent.com",
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     scopes: ["profile", "email"],
-    redirectUri: makeRedirectUri({ path: "", scheme: "com.lawrencejr.igle" }),
+    redirectUri: makeRedirectUri({
+      path: "/(auth)/signup",
+      scheme: "com.lawrencejr.igle",
+    }),
   });
 
   React.useEffect(() => {
@@ -228,7 +225,7 @@ const Signup = () => {
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "space-between",
+              justifyContent: "center",
               marginTop: 20,
             }}
           >
@@ -254,15 +251,6 @@ const Signup = () => {
               <Text style={styles.oauth_text}>
                 {googleLoading ? "Signing in..." : "Google"}
               </Text>
-            </TouchableOpacity>
-
-            {/* Sign with apple */}
-            <TouchableOpacity activeOpacity={0.7} style={styles.oauth_btn}>
-              <Image
-                source={require("../../assets/images/icons/apple-logo-white.png")}
-                style={styles.oauth_img}
-              />
-              <Text style={styles.oauth_text}>Apple</Text>
             </TouchableOpacity>
           </View>
 
