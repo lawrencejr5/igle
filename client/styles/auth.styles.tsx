@@ -49,6 +49,7 @@ export const auth_styles = () =>
       fontFamily: "raleway-semibold",
       color: "#fff",
       fontSize: 14,
+      paddingVertical: 10,
     },
     password_input: {
       flexDirection: "row",

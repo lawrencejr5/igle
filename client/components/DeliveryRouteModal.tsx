@@ -18,7 +18,6 @@ import { Image } from "expo-image";
 
 import { ScrollView } from "react-native-gesture-handler";
 
-import { Picker } from "@react-native-picker/picker";
 import BottomSheet, {
   BottomSheetView,
   TouchableWithoutFeedback,
@@ -89,7 +88,7 @@ const DeliveryRouteModal: FC = () => {
     ) {
       fetchDeliveryRoute(
         ongoingDeliveryData.pickup.coordinates,
-        ongoingDeliveryData.dropoff.coordinates
+        ongoingDeliveryData.dropoff.coordinates,
       );
     }
   }, [
@@ -121,7 +120,7 @@ const DeliveryRouteModal: FC = () => {
     if (status === "accepted") setDeliveryStatus("accepted");
     if (status === "arrived")
       setDeliveryStatus(
-        ongoingDeliveryData.payment_status === "paid" ? "paid" : "arrived"
+        ongoingDeliveryData.payment_status === "paid" ? "paid" : "arrived",
       );
     if (status === "picked_up") setDeliveryStatus("picked_up");
     if (status === "in_transit") setDeliveryStatus("in_transit");
@@ -304,20 +303,6 @@ const DetailsModal = () => {
   const fragile = deliveryData?.package?.fragile || false;
   const amount = deliveryData?.package?.amount?.toString() || "";
 
-  <Picker
-    selectedValue={pkgType}
-    onValueChange={(v) => setPkgType(v)}
-    style={{ color: "#fff" }}
-    itemStyle={{ color: "#fff" }}
-  >
-    <Picker.Item label="Document" value="document" />
-    <Picker.Item label="Electronics" value="electronics" />
-    <Picker.Item label="Clothing" value="clothing" />
-    <Picker.Item label="Food" value="food" />
-    <Picker.Item label="Furniture" value="furniture" />
-    <Picker.Item label="Other" value="other" />
-  </Picker>;
-
   const PACKAGE_TYPES = [
     { key: "document", label: "Document" },
     { key: "electronics", label: "Electronics" },
@@ -336,7 +321,7 @@ const DetailsModal = () => {
             ...prev?.to,
             name: value,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -349,7 +334,7 @@ const DetailsModal = () => {
             ...prev?.to,
             phone: value,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -362,7 +347,7 @@ const DetailsModal = () => {
             ...prev?.package,
             description: value,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -375,7 +360,7 @@ const DetailsModal = () => {
             ...prev?.package,
             type: value as any,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -388,7 +373,7 @@ const DetailsModal = () => {
             ...prev?.package,
             fragile: value,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -401,7 +386,7 @@ const DetailsModal = () => {
             ...prev?.package,
             amount: value ? parseFloat(value) : undefined,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -698,7 +683,7 @@ const RouteModal = () => {
             ...prev?.pickup,
             address: value,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -712,7 +697,7 @@ const RouteModal = () => {
             ...prev?.dropoff,
             address: value,
           },
-        } as any)
+        }) as any,
     );
   };
 
@@ -770,7 +755,7 @@ const RouteModal = () => {
                 address,
                 coordinates: coords,
               },
-            } as any)
+            }) as any,
         );
         setActiveSuggestion("");
         setPickupSuggestions([]);
@@ -783,7 +768,7 @@ const RouteModal = () => {
   // Handle dropoff suggestion selection
   const setDropoffFromSuggestion = async (
     place_id: string,
-    address: string
+    address: string,
   ) => {
     try {
       const coords = await getPlaceCoords(place_id);
@@ -796,7 +781,7 @@ const RouteModal = () => {
                 address,
                 coordinates: coords,
               },
-            } as any)
+            }) as any,
         );
         setActiveSuggestion("");
         setDropoffSuggestions([]);
@@ -828,7 +813,7 @@ const RouteModal = () => {
       // Calculate delivery fares for all vehicle types
       const deliveryDetails = await calculateDelivery(
         deliveryData.pickup.coordinates,
-        deliveryData.dropoff.coordinates
+        deliveryData.dropoff.coordinates,
       );
 
       if (deliveryDetails) {
@@ -845,7 +830,7 @@ const RouteModal = () => {
                 vanAmount: deliveryDetails.van.amount,
                 truckAmount: deliveryDetails.truck.amount,
               },
-            } as any)
+            }) as any,
         );
 
         showNotification("Route details saved", "success");
@@ -932,7 +917,7 @@ const RouteModal = () => {
                 onPress={() =>
                   setPickupFromSuggestion(
                     item.place_id,
-                    item.structured_formatting.main_text
+                    item.structured_formatting.main_text,
                   )
                 }
               >
@@ -958,7 +943,7 @@ const RouteModal = () => {
                 onPress={() =>
                   setDropoffFromSuggestion(
                     item.place_id,
-                    item.structured_formatting.main_text
+                    item.structured_formatting.main_text,
                   )
                 }
               >
@@ -1111,10 +1096,10 @@ const ChooseVehicleModal = () => {
                 selectedRideType === "bike"
                   ? deliveryData?.deliveryDetails?.bikeAmount || 2500
                   : selectedRideType === "cab"
-                  ? deliveryData?.deliveryDetails?.cabAmount || 3500
-                  : selectedRideType === "van"
-                  ? deliveryData?.deliveryDetails?.vanAmount || 5000
-                  : deliveryData?.deliveryDetails?.truckAmount || 8000,
+                    ? deliveryData?.deliveryDetails?.cabAmount || 3500
+                    : selectedRideType === "van"
+                      ? deliveryData?.deliveryDetails?.vanAmount || 5000
+                      : deliveryData?.deliveryDetails?.truckAmount || 8000,
             };
 
             // Store selected vehicle details in deliveryData for future reference
@@ -1123,7 +1108,7 @@ const ChooseVehicleModal = () => {
                 ({
                   ...prev,
                   selectedVehicle: vehicleDetails,
-                } as any)
+                }) as any,
             );
 
             // Request the delivery with the vehicle details directly
@@ -1170,7 +1155,7 @@ const SearchingModal = () => {
   const { showNotification } = useNotificationContext() as any;
 
   const [searchText, setSearchText] = useState<string>(
-    "Searching for dispatch riders..."
+    "Searching for dispatch riders...",
   );
 
   React.useEffect(() => {
@@ -1430,7 +1415,7 @@ const AcceptedModal = () => {
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           },
-          1000
+          1000,
         );
       }
     }, 1000);
@@ -2592,7 +2577,7 @@ const InTransitModal = () => {
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           },
-          1000
+          1000,
         );
       }
     }, 1000);
@@ -2861,7 +2846,7 @@ const RateModal = () => {
       ongoingDeliveryData &&
         (await createRating(
           ongoingDeliveryData._id,
-          ongoingDeliveryData.driver._id
+          ongoingDeliveryData.driver._id,
         ));
       resetDeliveryFlow();
     } catch (error) {
@@ -3193,6 +3178,7 @@ const styles = StyleSheet.create({
     width: "100%",
     color: "#ffffff",
     paddingHorizontal: 15,
+    paddingVertical: 10,
     fontFamily: "raleway-semibold",
   },
 

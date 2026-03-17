@@ -75,6 +75,7 @@ export const driver_reg_styles = () =>
       fontFamily: "raleway-semibold",
       color: "#fff",
       fontSize: 14,
+      paddingVertical: 10,
     },
     sign_btn: {
       backgroundColor: "#fff",

@@ -1666,6 +1666,7 @@ const RateModal = () => {
                 padding: 20,
                 marginTop: 20,
                 fontFamily: "raleway-regular",
+                paddingVertical: 10,
               }}
               placeholder="Write a review"
             />
@@ -1898,6 +1899,7 @@ const PickupTimeModal: FC<{
                 color: "#fff",
                 fontFamily: "raleway-semibold",
                 paddingHorizontal: 10,
+                paddingVertical: 10,
                 textAlign: "center",
               }}
               editable={false}
@@ -2155,6 +2157,7 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-bold",
     fontSize: 18,
     color: "#fff",
+    paddingVertical: 10,
   },
   route_inp_container: {
     flexDirection: "row",
@@ -2168,6 +2171,7 @@ const styles = StyleSheet.create({
     width: "95%",
     color: "#ffffff",
     paddingHorizontal: 20,
+    paddingVertical: 10,
     fontFamily: "raleway-semibold",
   },
   from_circle: {

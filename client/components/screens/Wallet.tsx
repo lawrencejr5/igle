@@ -177,6 +177,7 @@ const WalletScreen: FC<{
                 maxWidth: 230,
                 width: "100%",
                 height: "100%",
+                paddingVertical: 10,
               }}
               placeholder="0.00"
               value={amount}

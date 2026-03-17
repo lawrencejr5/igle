@@ -1,4 +1,3 @@
-
 module.exports = {
   expo: {
     name: "Igle",
@@ -12,7 +11,13 @@ module.exports = {
       "expo-dev-client",
       "expo-web-browser",
       "expo-router",
-      "expo-apple-authentication", // Mandatory for Apple Sign-in
+      "expo-apple-authentication",
+      [
+        "react-native-maps",
+        {
+          "iosGoogleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
+        }
+      ],
       [
         "expo-location",
         {
@@ -37,7 +42,7 @@ module.exports = {
     ios: {
       "supportsTablet": false,
       "bundleIdentifier": "com.lawrencejr.igle",
-      "usesAppleSignIn": true, // Adds the required entitlement for Apple review
+      "usesAppleSignIn": true,
       "config": {
         "googleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
       },
@@ -47,6 +52,7 @@ module.exports = {
           "fetch",
           "remote-notification"
         ],
+        "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Igle needs your location to accurately match you with drivers and provide route navigation.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Igle needs your location to accurately match you with drivers and provide route navigation."
       }

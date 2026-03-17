@@ -547,6 +547,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontFamily: "raleway-bold",
     textTransform: "capitalize",
+    paddingVertical: 10,
   },
 
   suggestions_container: {

@@ -184,6 +184,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: "#fff",
     paddingHorizontal: 15,
+    paddingVertical: 10,
     fontFamily: "raleway-bold",
   },
   modal_submit_btn: {
