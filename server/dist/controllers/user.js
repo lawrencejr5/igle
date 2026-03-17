@@ -145,7 +145,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
-const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new google_auth_library_1.OAuth2Client();
 // Heuristic: fetch the image and check if it looks like a real photo.
 // Returns true if content-type starts with image/ and size is > 2KB.
 const imageLooksLikePhoto = (url) => __awaiter(void 0, void 0, void 0, function* () {
@@ -175,7 +175,10 @@ const google_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         const ticket = yield client.verifyIdToken({
             idToken: tokenId,
-            audience: process.env.GOOGLE_CLIENT_ID,
+            audience: [
+                process.env.GOOGLE_CLIENT_ID,
+                process.env.GOOGLE_IOS_CLIENT_ID,
+            ].filter(Boolean),
         });
         const payload = ticket.getPayload();
         if (!payload) {
@@ -774,7 +777,9 @@ const delete_account = (req, res) => __awaiter(void 0, void 0, void 0, function*
             return res.status(404).json({ msg: "User not found" });
         yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
             // delete user's wallets and transactions
-            const wallets = yield wallet_1.default.find({ owner_id: user._id }, null, { session });
+            const wallets = yield wallet_1.default.find({ owner_id: user._id }, null, {
+                session,
+            });
             const walletIds = wallets.map((w) => w._id);
             if (walletIds.length) {
                 yield transaction_1.default.deleteMany({ wallet_id: { $in: walletIds } }, { session });
@@ -793,10 +798,14 @@ const delete_account = (req, res) => __awaiter(void 0, void 0, void 0, function*
             yield rating_1.default.deleteMany({ user: user._id }, { session });
             yield userTask_1.default.deleteMany({ user: user._id }, { session });
             // if user has a Driver record, remove driver and related driver data
-            const driver = yield driver_1.default.findOne({ user: user._id }, null, { session });
+            const driver = yield driver_1.default.findOne({ user: user._id }, null, {
+                session,
+            });
             if (driver) {
                 // driver wallet and transactions
-                const dWallets = yield wallet_1.default.find({ owner_id: driver._id }, null, { session });
+                const dWallets = yield wallet_1.default.find({ owner_id: driver._id }, null, {
+                    session,
+                });
                 const dWalletIds = dWallets.map((w) => w._id);
                 if (dWalletIds.length) {
                     yield transaction_1.default.deleteMany({ wallet_id: { $in: dWalletIds } }, { session });
