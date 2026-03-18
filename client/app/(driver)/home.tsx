@@ -1,5 +1,4 @@
-import { StyleSheet, View, TouchableWithoutFeedback } from "react-native";
-import { Image } from "expo-image";
+import { StyleSheet, View, TouchableWithoutFeedback, Image } from "react-native";
 
 import React, { useState, useEffect, useMemo } from "react";
 
@@ -105,6 +104,7 @@ const HomePage = () => {
     Array.isArray(destinationCoordsArr) && destinationCoordsArr.length === 2;
 
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Stop tracking changes after the marker has loaded
   const loadMap = () => {
@@ -161,7 +161,8 @@ const HomePage = () => {
               initialRegion={region}
               customMapStyle={darkMapStyle}
               paddingAdjustmentBehavior="always"
-              mapPadding={mapPadding}
+              mapPadding={isMapReady ? mapPadding : undefined}
+              onMapReady={() => setIsMapReady(true)}
               onMapLoaded={loadMap}
             >
               {/* Driver's current position */}

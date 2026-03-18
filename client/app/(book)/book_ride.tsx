@@ -1,5 +1,4 @@
-import { StyleSheet, View, Pressable } from "react-native";
-import { Image } from "expo-image";
+import { StyleSheet, View, Pressable, Image } from "react-native";
 
 import React, { useState, useEffect } from "react";
 
@@ -72,6 +71,7 @@ const BookRide = () => {
   }, [region, mapRef.current]);
 
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Stop tracking changes after the marker has loaded
   const loadMap = () => {
@@ -95,7 +95,8 @@ const BookRide = () => {
                 provider={PROVIDER_GOOGLE}
                 initialRegion={region}
                 customMapStyle={darkMapStyle}
-                mapPadding={mapPadding}
+                mapPadding={isMapReady ? mapPadding : undefined}
+                onMapReady={() => setIsMapReady(true)}
               >
                 {/* Default user location marker - show when no route is set */}
                 {rideRouteCoords.length === 0 &&
