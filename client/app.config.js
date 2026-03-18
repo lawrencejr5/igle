@@ -15,7 +15,8 @@ module.exports = {
       [
         "react-native-maps",
         {
-          "iosGoogleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
+          "iosGoogleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API,
+          "androidGoogleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
         }
       ],
       [
@@ -43,9 +44,6 @@ module.exports = {
       "supportsTablet": false,
       "bundleIdentifier": "com.lawrencejr.igle",
       "usesAppleSignIn": true,
-      "config": {
-        "googleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
-      },
       "infoPlist": {
         "UIBackgroundModes": [
           "location",
@@ -59,11 +57,6 @@ module.exports = {
     },
     android: {
       "googleServicesFile": "./google-services.json",
-      "config": {
-        "googleMaps": {
-          "apiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
-        }
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
