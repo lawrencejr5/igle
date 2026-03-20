@@ -7,6 +7,7 @@ import {
   Pressable,
   TouchableOpacity,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -26,8 +27,11 @@ import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import { router } from "expo-router";
 import * as Linking from "expo-linking";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Account = () => {
+  const insets = useSafeAreaInsets();
+
   const [walletOpen, setWalletOpen] = useState<boolean>(false);
 
   const { logout, signedIn, getUserData } = useAuthContext();
@@ -46,14 +50,23 @@ const Account = () => {
   };
 
   const handleRateUs = async () => {
-    const url =
-      "https://play.google.com/store/apps/details?id=com.lawrencejr.igle";
-    const supported = await Linking.canOpenURL(url);
+    const url = Platform.select({
+      ios: "https://apps.apple.com/app/com.lawrencejr.igle", // Replace with actual App Store ID if available (e.g. id123456789)
+      android:
+        "https://play.google.com/store/apps/details?id=com.lawrencejr.igle",
+    });
 
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      showNotification("Couldn't open playstore", "error");
+    if (url) {
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        showNotification(
+          `Couldn't open ${Platform.OS === "ios" ? "App Store" : "Play Store"}`,
+          "error",
+        );
+      }
     }
   };
 
@@ -68,7 +81,7 @@ const Account = () => {
             style={{
               backgroundColor: "#121212",
               flex: 1,
-              paddingTop: 50,
+              paddingTop: insets.top,
               paddingBottom: 30,
               paddingHorizontal: 20,
             }}
@@ -92,7 +105,7 @@ const Account = () => {
                 justifyContent: "flex-start",
                 alignItems: "center",
                 gap: 25,
-                marginTop: 20,
+                marginTop: 10,
                 padding: 10,
                 borderRadius: 10,
                 backgroundColor: "#2c2c2c",
@@ -181,6 +194,7 @@ const Account = () => {
               >
                 Account settings
               </Text>
+              {/*  */}
               <TouchableOpacity
                 style={styles.setting_box}
                 onPress={() => {
@@ -189,9 +203,10 @@ const Account = () => {
                   router.push("./account/personal_details");
                 }}
               >
-                <FontAwesome name="user" size={20} color="#c6c6c6" />
+                <Feather name="user" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Personal details</Text>
               </TouchableOpacity>
+              {/*  */}
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -237,7 +252,7 @@ const Account = () => {
                 onPress={handleRateUs}
                 style={styles.setting_box}
               >
-                <FontAwesome name="star" size={20} color="#c6c6c6" />
+                <Feather name="star" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Rate us</Text>
               </TouchableOpacity>
               <TouchableWithoutFeedback onPress={logout}>
@@ -263,13 +278,13 @@ export default Account;
 
 const styles = StyleSheet.create({
   setting_box: {
-    marginTop: 25,
+    marginTop: 27,
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 10,
     borderStyle: "solid",
-    borderColor: "#5f5f5fff",
+    borderColor: "#444444ff",
     borderBottomWidth: 0.5,
     paddingBottom: 10,
   },

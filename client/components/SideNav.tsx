@@ -6,11 +6,13 @@ import {
   Animated,
   Pressable,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 
 import React, { useEffect, useRef, useState } from "react";
 import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -72,15 +74,29 @@ const SideNav: React.FC<{
 
   const handleRateUs = async () => {
     closeSideNav();
-    const url =
-      "https://play.google.com/store/apps/details?id=com.lawrencejr.igle";
-    const supported = await Linking.canOpenURL(url);
+    const url = Platform.select({
+      ios: "https://apps.apple.com/app/com.lawrencejr.igle",
+      android:
+        "https://play.google.com/store/apps/details?id=com.lawrencejr.igle",
+    });
 
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      showNotification("Couldn't open playstore", "error");
+    if (url) {
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        showNotification(
+          `Couldn't open ${Platform.OS === "ios" ? "App Store" : "Play Store"}`,
+          "error"
+        );
+      }
     }
+  };
+
+  const handleAbout = async () => {
+    closeSideNav();
+    await WebBrowser.openBrowserAsync("https://igleride.com");
   };
 
   if (!visible) return null;
@@ -145,7 +161,7 @@ const SideNav: React.FC<{
                     router.replace("/(tabs)/delivery");
                   }}
                 >
-                  <FontAwesome name="car" size={20} color="#c6c6c6" />
+                  <FontAwesome name="truck" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Deliveries</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -179,9 +195,7 @@ const SideNav: React.FC<{
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.sidenav_content_box}
-                  onPress={() => {
-                    closeSideNav();
-                  }}
+                  onPress={handleAbout}
                 >
                   <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>About</Text>

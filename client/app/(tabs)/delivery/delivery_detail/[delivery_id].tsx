@@ -132,7 +132,7 @@ const DeliveryDetails = () => {
                   marginHorizontal: 20,
                 }}
               >
-                <AntDesign name="arrowleft" size={24} color="#fff" />
+                <Feather name="arrow-left" size={24} color="#fff" />
               </View>
             </TouchableWithoutFeedback>
 
