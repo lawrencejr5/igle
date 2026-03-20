@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import { OAuth2Client } from "google-auth-library";
+import appleSignin from "apple-signin-auth";
 
 import User, { UserType } from "../models/user";
 import Wallet from "../models/wallet";
@@ -201,6 +202,81 @@ export const google_auth = async (req: Request, res: Response) => {
     console.error("Google Auth Error:", error);
     res.status(500).json({
       message: "Google sign-in failed",
+      error: error.message || error,
+    });
+  }
+};
+
+export const apple_auth = async (req: Request, res: Response) => {
+  const { identityToken, fullName } = req.body;
+
+  try {
+    if (!identityToken) {
+      res.status(401).json({ msg: "Identity token not provided" });
+      return;
+    }
+
+    // Verify the Apple identity token using Apple's public keys
+    const applePayload = await appleSignin.verifyIdToken(identityToken, {
+      audience: process.env.APPLE_BUNDLE_ID || "com.lawrencejr.igle",
+      ignoreExpiration: false,
+    });
+
+    const { email, sub } = applePayload;
+
+    if (!email) {
+      res.status(400).json({ msg: "Email not available from Apple token" });
+      return;
+    }
+
+    // Build the display name from fullName (Apple only sends this on first sign-in)
+    let displayName: string | undefined;
+    if (fullName) {
+      const parts = [
+        fullName.givenName,
+        fullName.familyName,
+      ].filter(Boolean);
+      if (parts.length) displayName = parts.join(" ");
+    }
+
+    let user: any = await User.findOne({
+      $or: [{ email }, { apple_id: sub }],
+    });
+    let isNew = false;
+
+    if (!user) {
+      isNew = true;
+      user = await User.create({
+        name: displayName || email.split("@")[0],
+        email,
+        provider: "apple",
+        apple_id: sub,
+      });
+
+      // Create a wallet for the new user
+      try {
+        await Wallet.create({
+          owner_id: user._id,
+          owner_type: "User",
+          balance: 0,
+        });
+      } catch (walletErr) {
+        console.error("Failed to create wallet for apple user:", walletErr);
+      }
+    } else {
+      // Link apple_id if not already set
+      user.apple_id = sub || user.apple_id;
+      await user.save();
+    }
+
+    const token = jwt.sign({ id: user._id }, jwt_secret as string, {
+      expiresIn: "7d",
+    });
+    res.status(200).json({ user, token, isNew });
+  } catch (error: any) {
+    console.error("Apple Auth Error:", error);
+    res.status(500).json({
+      message: "Apple sign-in failed",
       error: error.message || error,
     });
   }

@@ -53,6 +53,7 @@ const upload_1 = require("../middleware/upload");
 UserRouter.post("/register", user_1.register);
 UserRouter.post("/login", user_1.login);
 UserRouter.post("/google_auth", user_1.google_auth);
+UserRouter.post("/apple_auth", user_1.apple_auth);
 UserRouter.patch("/location", auth_1.auth, user_1.update_location);
 UserRouter.patch("/profile_pic", [auth_1.auth, upload_1.upload.single("profile_pic")], user_1.upload_profile_pic);
 UserRouter.patch("/remove_pic", auth_1.auth, user_1.remove_profile_pic);

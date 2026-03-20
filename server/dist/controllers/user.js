@@ -45,12 +45,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.delete_account = exports.admin_block_user = exports.admin_delete_user = exports.admin_edit_user = exports.admin_get_user = exports.admin_get_users = exports.send_test_push = exports.set_push_token = exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.remove_profile_pic = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.google_auth = exports.login = exports.register = void 0;
+exports.delete_account = exports.admin_block_user = exports.admin_delete_user = exports.admin_edit_user = exports.admin_get_user = exports.admin_get_users = exports.send_test_push = exports.set_push_token = exports.update_driver_application = exports.update_email = exports.update_name = exports.update_phone = exports.update_password = exports.remove_profile_pic = exports.upload_profile_pic = exports.get_user_data = exports.update_location = exports.apple_auth = exports.google_auth = exports.login = exports.register = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const google_auth_library_1 = require("google-auth-library");
+const apple_signin_auth_1 = __importDefault(require("apple-signin-auth"));
 const user_1 = __importDefault(require("../models/user"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const ride_1 = __importDefault(require("../models/ride"));
@@ -236,6 +237,76 @@ const google_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.google_auth = google_auth;
+const apple_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { identityToken, fullName } = req.body;
+    try {
+        if (!identityToken) {
+            res.status(401).json({ msg: "Identity token not provided" });
+            return;
+        }
+        // Verify the Apple identity token using Apple's public keys
+        const applePayload = yield apple_signin_auth_1.default.verifyIdToken(identityToken, {
+            audience: process.env.APPLE_BUNDLE_ID || "com.lawrencejr.igle",
+            ignoreExpiration: false,
+        });
+        const { email, sub } = applePayload;
+        if (!email) {
+            res.status(400).json({ msg: "Email not available from Apple token" });
+            return;
+        }
+        // Build the display name from fullName (Apple only sends this on first sign-in)
+        let displayName;
+        if (fullName) {
+            const parts = [
+                fullName.givenName,
+                fullName.familyName,
+            ].filter(Boolean);
+            if (parts.length)
+                displayName = parts.join(" ");
+        }
+        let user = yield user_1.default.findOne({
+            $or: [{ email }, { apple_id: sub }],
+        });
+        let isNew = false;
+        if (!user) {
+            isNew = true;
+            user = yield user_1.default.create({
+                name: displayName || email.split("@")[0],
+                email,
+                provider: "apple",
+                apple_id: sub,
+            });
+            // Create a wallet for the new user
+            try {
+                yield wallet_1.default.create({
+                    owner_id: user._id,
+                    owner_type: "User",
+                    balance: 0,
+                });
+            }
+            catch (walletErr) {
+                console.error("Failed to create wallet for apple user:", walletErr);
+            }
+        }
+        else {
+            // Link apple_id if not already set
+            user.apple_id = sub || user.apple_id;
+            yield user.save();
+        }
+        const token = jsonwebtoken_1.default.sign({ id: user._id }, jwt_secret, {
+            expiresIn: "7d",
+        });
+        res.status(200).json({ user, token, isNew });
+    }
+    catch (error) {
+        console.error("Apple Auth Error:", error);
+        res.status(500).json({
+            message: "Apple sign-in failed",
+            error: error.message || error,
+        });
+    }
+});
+exports.apple_auth = apple_auth;
 // Update user location
 const update_location = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;

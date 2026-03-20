@@ -4,12 +4,14 @@ import {
   TextInput,
   View,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 
 import React, { useState } from "react";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -26,7 +28,7 @@ const Signin = () => {
   const styles = auth_styles();
 
   const { showNotification } = useNotificationContext()!;
-  const { login, googleLogin } = useAuthContext();
+  const { login, googleLogin, appleLogin } = useAuthContext();
 
   const [checked, setChecked] = useState<boolean>(true);
   const [passwordShow, setPasswordShow] = useState<boolean>(true);
@@ -36,6 +38,7 @@ const Signin = () => {
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
@@ -183,34 +186,77 @@ const Signin = () => {
           {/* 0auth buttons */}
           <View
             style={{
-              flexDirection: "row",
-              justifyContent: "center",
+              alignItems: "center",
               marginTop: 30,
             }}
           >
-            {/* Sign with google */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={[styles.oauth_btn, { opacity: googleLoading ? 0.7 : 1 }]}
-              disabled={!request}
-              onPress={() => {
-                try {
-                  setGoogleLoading(true);
-                  promptAsync();
-                } catch (err) {
-                  console.log("promptAsync error", err);
-                  setGoogleLoading(false);
+            {Platform.OS === "ios" ? (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={
+                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
                 }
-              }}
-            >
-              <Image
-                source={require("../../assets/images/icons/google-logo.png")}
-                style={styles.oauth_img}
+                buttonStyle={
+                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                }
+                cornerRadius={30}
+                style={{
+                  width: "80%",
+                  height: 44,
+                  opacity: appleLoading ? 0.8 : 1,
+                }}
+                onPress={async () => {
+                  try {
+                    setAppleLoading(true);
+                    const credential = await AppleAuthentication.signInAsync({
+                      requestedScopes: [
+                        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                      ],
+                    });
+                    if (!credential.identityToken) {
+                      showNotification(
+                        "Apple sign-in failed: missing token",
+                        "error",
+                      );
+                      return;
+                    }
+                    await appleLogin(
+                      credential.identityToken,
+                      credential.fullName,
+                    );
+                  } catch (err: any) {
+                    if (err.code !== "ERR_REQUEST_CANCELED") {
+                      showNotification("Apple sign-in failed", "error");
+                    }
+                  } finally {
+                    setAppleLoading(false);
+                  }
+                }}
               />
-              <Text style={styles.oauth_text}>
-                {googleLoading ? "Signing in..." : "Continue with Google"}
-              </Text>
-            </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={[styles.oauth_btn, { opacity: googleLoading ? 0.7 : 1 }]}
+                disabled={!request}
+                onPress={() => {
+                  try {
+                    setGoogleLoading(true);
+                    promptAsync();
+                  } catch (err) {
+                    console.log("promptAsync error", err);
+                    setGoogleLoading(false);
+                  }
+                }}
+              >
+                <Image
+                  source={require("../../assets/images/icons/google-logo.png")}
+                  style={styles.oauth_img}
+                />
+                <Text style={styles.oauth_text}>
+                  {googleLoading ? "Signing in..." : "Continue with Google"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Don't or already have an account */}

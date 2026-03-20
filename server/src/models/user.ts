@@ -8,11 +8,12 @@ export interface UserType extends Document {
   profile_pic?: string | null;
   profile_pic_public_id?: string | null;
   google_id?: string;
+  apple_id?: string;
   socket_id?: string;
   is_online?: boolean;
   avatar?: string;
   phone?: string;
-  provider: "email" | "google";
+  provider: "email" | "google" | "apple";
   current_location: {
     type: string;
     coordinates: [number, number];
@@ -39,13 +40,14 @@ const UserSchema = new Schema<UserType>(
     profile_pic: { type: String },
     profile_pic_public_id: { type: String },
     google_id: { type: String, unique: true, sparse: true }, // only Google users
+    apple_id: { type: String, unique: true, sparse: true }, // only Apple users
     socket_id: { type: String, default: null },
     is_online: { type: Boolean, default: true },
     avatar: { type: String },
     phone: { type: String },
     provider: {
       type: String,
-      enum: ["email", "google"],
+      enum: ["email", "google", "apple"],
       default: "email",
     },
     current_location: {

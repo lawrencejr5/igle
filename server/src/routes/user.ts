@@ -5,6 +5,7 @@ import {
   register,
   login,
   google_auth,
+  apple_auth,
   update_location,
   get_user_data,
   update_phone,
@@ -29,6 +30,7 @@ import { upload } from "../middleware/upload";
 UserRouter.post("/register", register);
 UserRouter.post("/login", login);
 UserRouter.post("/google_auth", google_auth);
+UserRouter.post("/apple_auth", apple_auth);
 
 UserRouter.patch("/location", auth, update_location);
 UserRouter.patch(
