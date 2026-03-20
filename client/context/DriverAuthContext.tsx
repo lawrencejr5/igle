@@ -139,17 +139,26 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
     const init = async () => {
       const token = await AsyncStorage.getItem("token");
       if (token) {
+        let isTokenValid = false;
         try {
           const decoded: any = jwtDecode(token);
           const now = Date.now() / 1000;
           if (decoded.exp && decoded.exp > now) {
-            await getDriverProfile();
-            getWalletBalance("Driver");
+            isTokenValid = true;
           } else {
             await AsyncStorage.removeItem("token");
           }
         } catch (err) {
           await AsyncStorage.removeItem("token");
+        }
+
+        if (isTokenValid) {
+          try {
+            await getDriverProfile();
+            getWalletBalance("Driver");
+          } catch (error) {
+            console.log("Failed fetching driver profile on mount");
+          }
         }
       }
     };

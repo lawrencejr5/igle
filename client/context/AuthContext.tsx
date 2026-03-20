@@ -105,7 +105,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     name: string,
     email: string,
     password: string,
-    confirmPassword: string
+    confirmPassword: string,
   ): Promise<void> => {
     if (password !== confirmPassword) {
       showNotification("Passwords do not match.", "error");
@@ -134,6 +134,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const uploadProfilePic = async (formaData: any): Promise<void> => {
     if (!formaData) showNotification("No image was selected", "error");
     const token = await AsyncStorage.getItem("token");
+    console.log(token);
 
     setUploadingPic(true);
     try {
@@ -169,7 +170,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (data) {
         await getUserData();
@@ -190,7 +191,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.patch(
         `${API_URL}/phone`,
         { phone },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       await getUserData();
@@ -199,14 +200,14 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "phone_update",
         "Phone number updated",
         `Your phone number has been updated`,
-        { phone: data.user.phone }
+        { phone: data.user.phone },
       );
 
       showNotification("Phone updated successfully.", "success");
     } catch (err: any) {
       showNotification(
         err.response?.data?.msg || "Phone update failed.",
-        "error"
+        "error",
       );
       throw new Error(err.response?.data?.msg);
     }
@@ -221,7 +222,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       await getUserData();
@@ -230,7 +231,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     } catch (err: any) {
       showNotification(
         err.response?.data?.msg || "Name update failed.",
-        "error"
+        "error",
       );
       throw new Error(err.response?.data?.msg);
     }
@@ -245,7 +246,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       await getUserData();
@@ -254,14 +255,14 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "email_update",
         "Email updated",
         `Your email has been updated`,
-        { email: data.user.email }
+        { email: data.user.email },
       );
 
       showNotification("Email updated successfully.", "success");
     } catch (err: any) {
       showNotification(
         err.response?.data?.msg || "Email update failed.",
-        "error"
+        "error",
       );
       throw new Error(err.response?.data?.msg);
     }
@@ -270,7 +271,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const updatePassword = async (
     old_password: string,
     new_password: string,
-    confirm_password: string
+    confirm_password: string,
   ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -282,13 +283,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await axios.patch(
         `${API_URL}/password`,
         { ...password },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       await createActivity(
         "security",
         "Password updated",
-        `Your password has been changed`
+        `Your password has been changed`,
       );
 
       showNotification("Password updated successfully.", "success");
@@ -298,7 +299,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     } catch (err: any) {
       showNotification(
         err.response?.data?.msg || "Email update failed.",
-        "error"
+        "error",
       );
       throw new Error(err.response?.data?.msg);
     }
@@ -315,7 +316,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem(
         "is_driver",
-        JSON.stringify(data.user.is_driver)
+        JSON.stringify(data.user.is_driver),
       );
 
       await getUserData();
@@ -354,7 +355,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       showNotification(
         data.isNew ? "Account created" : "Login successful.",
-        "success"
+        "success",
       );
 
       await getUserData();
@@ -370,11 +371,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     } catch (err: any) {
       showNotification(
         err?.response?.data?.msg || "Google login failed.",
-        "error"
+        "error",
       );
       console.log(
         "Google login error:",
-        err?.response?.data || err?.message || err
+        err?.response?.data || err?.message || err,
       );
       throw err;
     }
@@ -437,7 +438,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await axios.patch(
         `${API_URL}/push_token`,
         { token: pushToken },
-        { headers: { Authorization: `Bearer ${authToken}` } }
+        { headers: { Authorization: `Bearer ${authToken}` } },
       );
     } catch (err) {
       console.log("Failed to register push token:", err);
@@ -455,7 +456,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await axios.patch(
         `${API_URL}/push_token`,
         { token: pushToken, action: "remove" },
-        { headers: { Authorization: `Bearer ${authToken}` } }
+        { headers: { Authorization: `Bearer ${authToken}` } },
       );
       await AsyncStorage.removeItem("expoPushToken");
     } catch (err) {
@@ -485,7 +486,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const updateDriverApplication = async (
-    status: "none" | "submitted" | "rejected" | "approved"
+    status: "none" | "submitted" | "rejected" | "approved",
   ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -496,12 +497,12 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (data.status !== undefined) {
         setDriver((prev) =>
-          prev ? { ...prev, driver_application: data.status } : null
+          prev ? { ...prev, driver_application: data.status } : null,
         );
       }
     } catch (error: any) {
@@ -559,7 +560,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     } catch (err: any) {
       showNotification(
         err.response?.data?.msg || "Account deletion failed.",
-        "error"
+        "error",
       );
       throw new Error(err.response?.data?.msg);
     }
@@ -617,11 +618,11 @@ export interface AuthContextType {
     name: string,
     email: string,
     password: string,
-    confirmPassword: string
+    confirmPassword: string,
   ) => Promise<void>;
   login: (
     email: string, // email or phone
-    password: string
+    password: string,
   ) => Promise<void>;
   uploadingPic: boolean;
   uploadProfilePic: (formaData: any) => Promise<void>;
@@ -633,7 +634,7 @@ export interface AuthContextType {
   updatePassword: (
     old_password: string,
     new_password: string,
-    confirm_password: string
+    confirm_password: string,
   ) => Promise<void>;
   getUserData: () => Promise<void>;
   signedIn: UserType | null;
@@ -641,7 +642,7 @@ export interface AuthContextType {
   logout: () => void;
 
   updateDriverApplication: (
-    status: "none" | "approved" | "submitted" | "rejected"
+    status: "none" | "approved" | "submitted" | "rejected",
   ) => Promise<void>;
 
   // Google login helper - accepts id token from client and exchanges with backend

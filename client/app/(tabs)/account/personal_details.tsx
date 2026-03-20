@@ -19,8 +19,6 @@ import * as ImagePicker from "expo-image-picker";
 
 import { useAuthContext } from "../../../context/AuthContext";
 
-import { useNotificationContext } from "../../../context/NotificationContext";
-
 const PersonalDetails = () => {
   const [openNameModal, setOpenNameModal] = useState<boolean>(false);
   const [openEmailModal, setOpenEmailModal] = useState<boolean>(false);
@@ -30,7 +28,6 @@ const PersonalDetails = () => {
   const [openDeleteAccountModal, setOpenDeleteAccountModal] =
     useState<boolean>(false);
 
-  const { notification } = useNotificationContext();
   const { signedIn, uploadingPic, removingPic } = useAuthContext();
   return (
     <>
