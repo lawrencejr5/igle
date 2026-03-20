@@ -381,6 +381,49 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  // Apple login (backend verifies identityToken and returns jwt + user)
+  const appleLogin = async (
+    identityToken: string,
+    fullName?: { givenName?: string | null; familyName?: string | null } | null,
+  ): Promise<void> => {
+    try {
+      const { data } = await axios.post(`${API_URL}/apple_auth`, {
+        identityToken,
+        fullName,
+      });
+
+      await AsyncStorage.setItem("token", data.token);
+
+      const is_driver = data.user.is_driver;
+      const hasPhone = !!data.user?.phone;
+
+      showNotification(
+        data.isNew ? "Account created" : "Login successful.",
+        "success",
+      );
+
+      await getUserData();
+
+      if (data.isNew || !hasPhone) {
+        router.replace("/(auth)/phone");
+      } else if (is_driver) {
+        router.replace("/(driver)/home");
+      } else {
+        router.replace("/(tabs)/home");
+      }
+    } catch (err: any) {
+      showNotification(
+        err?.response?.data?.msg || "Apple login failed.",
+        "error",
+      );
+      console.log(
+        "Apple login error:",
+        err?.response?.data || err?.message || err,
+      );
+      throw err;
+    }
+  };
+
   const [userSocket, setUserSocket] = useState<any>(null);
   const getUserData = async (): Promise<void> => {
     setAppLoading(true);
@@ -580,6 +623,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         updateName,
         updatePassword,
         googleLogin,
+        appleLogin,
         getUserData,
         signedIn,
         isAuthenticated,
@@ -647,6 +691,12 @@ export interface AuthContextType {
 
   // Google login helper - accepts id token from client and exchanges with backend
   googleLogin: (tokenId: string) => Promise<void>;
+
+  // Apple login helper - accepts identity token from client and exchanges with backend
+  appleLogin: (
+    identityToken: string,
+    fullName?: { givenName?: string | null; familyName?: string | null } | null,
+  ) => Promise<void>;
 
   userSocket: any;
   deleteAccount: () => Promise<void>;

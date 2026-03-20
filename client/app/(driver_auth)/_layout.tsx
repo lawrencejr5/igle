@@ -15,7 +15,7 @@ const DriverAuthLayout = () => {
       }}
     >
       <Stack
-        screenOptions={{ headerShown: false, animation: "slide_from_right" }}
+        screenOptions={{ headerShown: false, animation: "ios_from_right" }}
       />
     </View>
   );

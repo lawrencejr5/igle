@@ -1,6 +1,13 @@
 // moved global auth session completion to root layout
 
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import React, { useState } from "react";
 
 import { router } from "expo-router";
@@ -10,6 +17,7 @@ import { useOnboardingContext } from "../context/OnboardingContext";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 import { useNotificationContext } from "../context/NotificationContext";
 
@@ -17,7 +25,7 @@ import { useNotificationContext } from "../context/NotificationContext";
 WebBrowser.maybeCompleteAuthSession();
 
 const StartScreen = () => {
-  const { googleLogin } = useAuthContext()!;
+  const { googleLogin, appleLogin } = useAuthContext()!;
   const {} = useOnboardingContext();
   const { showNotification } = useNotificationContext();
 
@@ -32,6 +40,7 @@ const StartScreen = () => {
   });
 
   const [googleAuthLoading, setGoogleAuthLoading] = useState<boolean>(false);
+  const [appleAuthLoading, setAppleAuthLoading] = useState<boolean>(false);
 
   React.useEffect(() => {
     if (!response) return;
@@ -55,6 +64,37 @@ const StartScreen = () => {
       setGoogleAuthLoading(false);
     }
   }, [response]);
+
+  const handleAppleSignIn = async () => {
+    try {
+      setAppleAuthLoading(true);
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        showNotification(
+          "Apple sign-in failed: missing identity token",
+          "error",
+        );
+        return;
+      }
+
+      await appleLogin(credential.identityToken, credential.fullName);
+    } catch (err: any) {
+      if (err.code === "ERR_REQUEST_CANCELED") {
+        // User cancelled — do nothing
+      } else {
+        console.log("Apple sign-in error:", err);
+        showNotification("Apple sign-in failed", "error");
+      }
+    } finally {
+      setAppleAuthLoading(false);
+    }
+  };
 
   return (
     <View
@@ -109,31 +149,52 @@ const StartScreen = () => {
           />
           <Text style={styles.sign_text}>Continue with Email</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          activeOpacity={0.7}
-          disabled={!request || googleAuthLoading}
-          style={[styles.sign_btn, { opacity: googleAuthLoading ? 0.8 : 1 }]}
-          onPress={async () => {
-            try {
-              setGoogleAuthLoading(true);
-              promptAsync();
-            } catch (err) {
-              console.log("promptAsync error", err);
-              setGoogleAuthLoading(false);
-              showNotification("Google sign-in failed to start", "error");
+
+        {/* Apple Sign In — only available on iOS */}
+        {Platform.OS === "ios" ? (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={
+              AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
             }
-          }}
-        >
-          <Image
-            source={require("../assets/images/icons/google-logo.png")}
-            style={styles.sign_image}
+            buttonStyle={
+              AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+            }
+            cornerRadius={30}
+            style={{
+              width: "95%",
+              height: 54,
+              marginVertical: 10,
+              opacity: appleAuthLoading ? 0.8 : 1,
+            }}
+            onPress={handleAppleSignIn}
           />
-          <Text style={styles.sign_text}>
-            {googleAuthLoading
-              ? "Signing with google..."
-              : "Continue with Google"}
-          </Text>
-        </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={!request || googleAuthLoading}
+            style={[styles.sign_btn, { opacity: googleAuthLoading ? 0.8 : 1 }]}
+            onPress={async () => {
+              try {
+                setGoogleAuthLoading(true);
+                promptAsync();
+              } catch (err) {
+                console.log("promptAsync error", err);
+                setGoogleAuthLoading(false);
+                showNotification("Google sign-in failed to start", "error");
+              }
+            }}
+          >
+            <Image
+              source={require("../assets/images/icons/google-logo.png")}
+              style={styles.sign_image}
+            />
+            <Text style={styles.sign_text}>
+              {googleAuthLoading
+                ? "Signing with google..."
+                : "Continue with Google"}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

@@ -8,7 +8,7 @@ const RideLayout = () => {
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: "slide_from_right",
+          animation: "ios_from_right",
         }}
       />
     </View>
