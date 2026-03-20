@@ -6,14 +6,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
 
-import { FontAwesome, MaterialIcons, Ionicons } from "@expo/vector-icons";
+import { FontAwesome, MaterialIcons, Ionicons, Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import EditProfileModal from "./EditProfileModal";
 import VehicleInformationModal from "./VehicleInformationModal";
 import DocumentsModal from "./DocumentsModal";
+import ImagePickerModal from "../ImagePickerModal";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type UserAccountModalProps = {
   visible: boolean;
@@ -24,15 +30,96 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
   visible,
   onClose,
 }) => {
-  const { driver } = useDriverAuthContext();
+  const insets = useSafeAreaInsets();
+
+  const { driver, uploadProfilePic, uploadingPic } = useDriverAuthContext();
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [vehicleInfoVisible, setVehicleInfoVisible] = useState(false);
   const [documentsVisible, setDocumentsVisible] = useState(false);
+  const [showImageModal, setShowImageModal] = useState<boolean>(false);
+
+  const pickImage = async () => {
+    setShowImageModal(true);
+  };
+
+  const openCamera = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need camera permissions to make this work!");
+        return;
+      }
+      let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const formData = new FormData();
+        formData.append("profile_img", {
+          uri: asset.uri,
+          type: asset.mimeType,
+          name: asset.fileName,
+        } as any);
+        try {
+          await uploadProfilePic(formData);
+        } catch (uploadErr) {
+          console.error("uploadProfilePic error:", uploadErr);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const openGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need media library permissions to make this work!");
+        return;
+      }
+      let result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const formData = new FormData();
+        formData.append("profile_img", {
+          uri: asset.uri,
+          type: asset.mimeType,
+          name: asset.fileName,
+        } as any);
+        try {
+          await uploadProfilePic(formData);
+        } catch (uploadErr) {
+          console.error("uploadProfilePic error:", uploadErr);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleImageModalClose = () => {
+    setShowImageModal(false);
+  };
 
   return (
+    <>
+      <ImagePickerModal
+        visible={showImageModal}
+        onClose={handleImageModalClose}
+        onCameraPress={openCamera}
+        onGalleryPress={openGallery}
+      />
+
     <Modal transparent visible={visible} animationType="slide">
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingTop: insets.top }]}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Account</Text>
             <TouchableOpacity
@@ -47,14 +134,24 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Profile Section */}
             <View style={styles.profileSection}>
-              <Image
-                source={
-                  driver?.profile_img
-                    ? { uri: driver.profile_img }
-                    : require("../../assets/images/user.png")
-                }
-                style={styles.profileImage}
-              />
+              <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
+                <Image
+                  source={
+                    driver?.profile_img
+                      ? { uri: driver.profile_img }
+                      : require("../../assets/images/user.png")
+                  }
+                  style={styles.profileImage}
+                />
+                {uploadingPic && (
+                  <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="small" color="#fff" />
+                  </View>
+                )}
+                <View style={styles.editIconContainer}>
+                  <Feather name="edit-2" size={14} color="#fff" />
+                </View>
+              </TouchableOpacity>
               <Text style={styles.name}>{driver?.name}</Text>
               <Text style={styles.joinDate}>
                 Member since{" "}
@@ -63,7 +160,7 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
                   {
                     month: "long",
                     year: "numeric",
-                  }
+                  },
                 )}
               </Text>
             </View>
@@ -87,7 +184,7 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
                   {Math.floor(
                     (Date.now() -
                       new Date(driver?.createdAt || Date.now()).getTime()) /
-                      (365.25 * 24 * 60 * 60 * 1000)
+                      (365.25 * 24 * 60 * 60 * 1000),
                   )}{" "}
                   yrs
                 </Text>
@@ -186,6 +283,7 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
         />
       </View>
     </Modal>
+    </>
   );
 };
 
@@ -199,7 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    paddingHorizontal: 20,
     flex: 1,
   },
   header: {
@@ -209,7 +307,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 25,
     color: "#fff",
     fontFamily: "raleway-bold",
   },
@@ -217,13 +315,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
+  profileImageContainer: {
+    position: 'relative',
+    marginBottom: 12,
+  },
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 12,
     borderWidth: 2,
     borderColor: "#fff",
+  },
+  editIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 5,
+    backgroundColor: '#333',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#121212',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   name: {
     color: "#fff",

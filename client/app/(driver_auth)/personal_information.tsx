@@ -25,6 +25,7 @@ import { useNotificationContext } from "../../context/NotificationContext";
 import * as ImagePicker from "expo-image-picker";
 import { ActivityIndicator, Image, Pressable } from "react-native";
 import { useAuthContext } from "../../context/AuthContext";
+import ImagePickerModal from "../../components/ImagePickerModal";
 
 const PersonalInformation = () => {
   const styles = driver_reg_styles();
@@ -201,54 +202,12 @@ const PersonalInformation = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#121212" }}>
-      {/* Image Selection Modal */}
-      <Modal
+      <ImagePickerModal
         visible={showImageModal}
-        transparent
-        animationType="slide"
-        onRequestClose={handleImageModalClose}
-      >
-        <View style={styles_modal.modalOverlay}>
-          <TouchableWithoutFeedback onPress={handleImageModalClose}>
-            <View style={styles_modal.modalOverlay} />
-          </TouchableWithoutFeedback>
-          <View style={styles_modal.modalContent}>
-            <View style={styles_modal.modalHeader}>
-              <Text style={styles_modal.modalTitle}>
-                Select Profile Picture
-              </Text>
-            </View>
-
-            <View style={styles_modal.optionsContainer}>
-              <Pressable
-                style={styles_modal.option}
-                onPress={() => {
-                  handleImageModalClose();
-                  openCamera();
-                }}
-              >
-                <View style={styles_modal.iconContainer}>
-                  <Feather name="camera" color="#fff" size={30} />
-                </View>
-                <Text style={styles_modal.optionText}>Take Photo</Text>
-              </Pressable>
-
-              <Pressable
-                style={styles_modal.option}
-                onPress={() => {
-                  handleImageModalClose();
-                  openGallery();
-                }}
-              >
-                <View style={styles_modal.iconContainer}>
-                  <Feather name="image" color="#fff" size={30} />
-                </View>
-                <Text style={styles_modal.optionText}>Choose from Files</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={handleImageModalClose}
+        onCameraPress={openCamera}
+        onGalleryPress={openGallery}
+      />
 
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
@@ -409,58 +368,5 @@ const PersonalInformation = () => {
     </View>
   );
 };
-
-const styles_modal = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#1E1E1E",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 15,
-    paddingTop: 15,
-  },
-  modalHeader: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-  optionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 20,
-    paddingTop: 15,
-  },
-  option: {
-    alignItems: "center",
-    flex: 1,
-    paddingVertical: 12,
-  },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#2A2A2A",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  optionText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "500",
-    textAlign: "center",
-  },
-});
 
 export default PersonalInformation;

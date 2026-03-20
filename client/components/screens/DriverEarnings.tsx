@@ -14,6 +14,7 @@ import {
 import { useWalletContext } from "../../context/WalletContext";
 import { useTransactionContext } from "../../context/TransactionContext";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type EarningsModalProps = {
   visible: boolean;
@@ -136,6 +137,8 @@ const WithdrawModal: React.FC<{
 };
 
 const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
+  const insets = useSafeAreaInsets();
+
   const { driverWalletBal, getWalletBalance } = useWalletContext();
   const {
     transactions,
@@ -170,7 +173,7 @@ const EarningsModal: React.FC<EarningsModalProps> = ({ visible, onClose }) => {
   return (
     <Modal transparent visible={visible} animationType="slide">
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingTop: insets.top }]}>
           {/* Withdraw Modal - Moved outside FlatList */}
           <WithdrawModal
             visible={withdrawModalVisible}
@@ -369,7 +372,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 25,
     color: "#fff",
     fontFamily: "raleway-bold",
   },
