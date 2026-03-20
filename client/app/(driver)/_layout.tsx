@@ -13,7 +13,9 @@ const DriverTabsLayout = () => {
         paddingBottom: insets.bottom,
       }}
     >
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack
+        screenOptions={{ headerShown: false, animation: "ios_from_right" }}
+      />
     </View>
   );
 };

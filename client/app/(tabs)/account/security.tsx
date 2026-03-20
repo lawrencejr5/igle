@@ -10,13 +10,11 @@ import React, { FC, Dispatch, SetStateAction, useState } from "react";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { AntDesign, Feather } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 
 import { useAuthContext } from "../../../context/AuthContext";
-import { useNotificationContext } from "../../../context/NotificationContext";
 
 const SecuritySettings = () => {
-  const { notification } = useNotificationContext();
   const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);
   return (
     <>
@@ -26,7 +24,7 @@ const SecuritySettings = () => {
         <View>
           <Pressable
             style={{ paddingVertical: 15 }}
-            onPress={() => router.replace("/(tabs)/account")}
+            onPress={() => router.back()}
           >
             <Feather name="chevron-left" size={30} color={"#fff"} />
           </Pressable>

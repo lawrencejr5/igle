@@ -31,7 +31,7 @@ const Feedback = () => {
   const [submitting, setSubmitting] = useState<boolean>(false);
 
   const { sendFeedback, sending } = useFeedbackContext();
-  const { showNotification, notification } = useNotificationContext();
+  const { showNotification } = useNotificationContext();
 
   const pickImage = async () => {
     try {
@@ -91,7 +91,7 @@ const Feedback = () => {
           <View style={styles.headerRow}>
             <Pressable
               style={{ paddingVertical: 15 }}
-              onPress={() => router.replace("/(tabs)/account")}
+              onPress={() => router.back()}
             >
               <Feather name="chevron-left" size={30} color={"#fff"} />
             </Pressable>
