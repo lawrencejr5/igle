@@ -11,7 +11,6 @@ import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
 import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";
-import { useNotificationContext } from "../../../context/NotificationContext";
 import {
   useDeliverContext,
   formatRelativeTime,
@@ -20,10 +19,11 @@ import {
 } from "../../../context/DeliveryContext";
 import RideRoute from "../../../components/RideRoute";
 import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DeliveryRoot = () => {
+  const insets = useSafeAreaInsets();
   const { appLoading } = useLoading();
-  const { notification } = useNotificationContext();
   const {
     ongoingDeliveries,
     cancelledDeliveries,
@@ -77,7 +77,7 @@ const DeliveryRoot = () => {
         <AppLoading />
       ) : (
         <>
-          <View style={styles.container}>
+          <View style={[styles.container, { paddingTop: insets.top }]}>
             <Text style={styles.header_text}>Deliveries</Text>
 
             <CategoryTabs
@@ -650,7 +650,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    paddingTop: 40,
     paddingHorizontal: 20,
   },
   header_text: {

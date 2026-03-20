@@ -29,6 +29,7 @@ import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import RideLoading from "../../../loadings/RideLoading";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const vehicleIcons: Record<string, any> = {
   cab: require("../../../assets/images/icons/sedan-icon.png"),
@@ -37,6 +38,7 @@ const vehicleIcons: Record<string, any> = {
 };
 
 const Rides = () => {
+  const insets = useSafeAreaInsets();
   const { appLoading, loadingState } = useLoading();
 
   const [category, setCategory] = useState<
@@ -56,7 +58,7 @@ const Rides = () => {
         <AppLoading />
       ) : (
         <>
-          <View style={styles.container}>
+          <View style={[styles.container, { paddingTop: insets.top }]}>
             <Text style={styles.header_text}>Rides</Text>
 
             {/* Categories nav... */}
@@ -1262,7 +1264,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    paddingTop: 40,
     paddingHorizontal: 20,
   },
   header_text: {

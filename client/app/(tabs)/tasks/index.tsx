@@ -12,10 +12,12 @@ import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";
 import RewardCard from "../../../components/RewardCard";
 import { useTaskContext } from "../../../context/TaskContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Removed mock data; using TaskContext instead
 
 const RewardRoot = () => {
+  const insets = useSafeAreaInsets();
   const { appLoading } = useLoading();
   const [refreshing, setRefreshing] = useState(false);
   const { tasks, refresh, claimTask } = useTaskContext();
@@ -39,7 +41,7 @@ const RewardRoot = () => {
         <AppLoading />
       ) : (
         <>
-          <View style={styles.container}>
+          <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.header}>
               <Text style={styles.headerText}>Tasks</Text>
               <Text style={styles.headerSubtext}>
@@ -116,7 +118,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#121212",
   },
   header: {
-    paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
