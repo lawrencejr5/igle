@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  TouchableWithoutFeedback,
-  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
 
-import { FontAwesome, MaterialIcons, Ionicons, Feather } from "@expo/vector-icons";
+import {
+  FontAwesome,
+  MaterialIcons,
+  Ionicons,
+  Feather,
+} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import EditProfileModal from "./EditProfileModal";
@@ -75,7 +78,8 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
 
   const openGallery = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         alert("Sorry, we need media library permissions to make this work!");
         return;
@@ -117,144 +121,157 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
         onGalleryPress={openGallery}
       />
 
-    <Modal transparent visible={visible} animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={[styles.sheet, { paddingTop: insets.top }]}>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Account</Text>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={{ padding: 10, paddingTop: 0 }}
-              onPress={onClose}
-            >
-              <FontAwesome name="chevron-down" size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Profile Section */}
-            <View style={styles.profileSection}>
-              <TouchableOpacity onPress={pickImage} style={styles.profileImageContainer}>
-                <Image
-                  source={
-                    driver?.profile_img
-                      ? { uri: driver.profile_img }
-                      : require("../../assets/images/user.png")
-                  }
-                  style={styles.profileImage}
-                />
-                {uploadingPic && (
-                  <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="small" color="#fff" />
-                  </View>
-                )}
-                <View style={styles.editIconContainer}>
-                  <Feather name="edit-2" size={14} color="#fff" />
-                </View>
+      <Modal transparent visible={visible} animationType="slide">
+        <View style={styles.backdrop}>
+          <View style={[styles.sheet, { paddingTop: insets.top }]}>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Account</Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={{ padding: 10, paddingTop: 0 }}
+                onPress={onClose}
+              >
+                <FontAwesome name="chevron-down" size={24} color="#fff" />
               </TouchableOpacity>
-              <Text style={styles.name}>{driver?.name}</Text>
-              <Text style={styles.joinDate}>
-                Member since{" "}
-                {new Date(driver?.createdAt || Date.now()).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "long",
-                    year: "numeric",
-                  },
-                )}
-              </Text>
             </View>
 
-            {/* Stats Section */}
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {driver?.rating?.toFixed(1) || "0.0"}
-                </Text>
-                <Text style={styles.statLabel}>Rating</Text>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{driver?.total_trips || 0}</Text>
-                <Text style={styles.statLabel}>Rides</Text>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {Math.floor(
-                    (Date.now() -
-                      new Date(driver?.createdAt || Date.now()).getTime()) /
-                      (365.25 * 24 * 60 * 60 * 1000),
-                  )}{" "}
-                  yrs
-                </Text>
-                <Text style={styles.statLabel}>Experience</Text>
-              </View>
-            </View>
-
-            {/* Vehicle Details */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Vehicle Details</Text>
-              <View style={styles.vehicleDetails}>
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="directions-car" size={20} color="#fff" />
-                  <Text style={styles.detailText}>
-                    {`${driver?.vehicle_color} ${driver?.vehicle_brand} ${driver?.vehicle_model}`.toLowerCase()}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <FontAwesome name="id-card" size={18} color="#fff" />
-                  <Text style={styles.detailText}>
-                    Plate: {driver?.plate_number}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <FontAwesome name="drivers-license" size={18} color="#fff" />
-                  <Text style={styles.detailText}>
-                    License: {driver?.driver_licence_number}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Account Settings */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Account Settings</Text>
-              <TouchableOpacity
-                style={styles.settingItem}
-                onPress={() => setEditProfileVisible(true)}
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="person-outline" size={20} color="#fff" />
-                  <Text style={styles.settingText}>Edit Profile</Text>
-                </View>
-                <FontAwesome name="chevron-right" size={16} color="#666" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.settingItem}
-                onPress={() => setVehicleInfoVisible(true)}
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="car-outline" size={20} color="#fff" />
-                  <Text style={styles.settingText}>Vehicle Information</Text>
-                </View>
-                <FontAwesome name="chevron-right" size={16} color="#666" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.settingItem}
-                onPress={() => setDocumentsVisible(true)}
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons
-                    name="document-text-outline"
-                    size={20}
-                    color="#fff"
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Profile Section */}
+              <View style={styles.profileSection}>
+                <TouchableOpacity
+                  onPress={pickImage}
+                  style={styles.profileImageContainer}
+                >
+                  <Image
+                    source={
+                      driver?.profile_img
+                        ? { uri: driver.profile_img }
+                        : require("../../assets/images/user.png")
+                    }
+                    style={styles.profileImage}
                   />
-                  <Text style={styles.settingText}>Documents</Text>
+                  {uploadingPic && (
+                    <View style={styles.loadingOverlay}>
+                      <ActivityIndicator size="small" color="#fff" />
+                    </View>
+                  )}
+                  <View style={styles.editIconContainer}>
+                    <Feather name="edit-2" size={14} color="#fff" />
+                  </View>
+                </TouchableOpacity>
+                <Text style={styles.name}>{driver?.name}</Text>
+                <Text style={styles.joinDate}>
+                  Member since{" "}
+                  {new Date(driver?.createdAt || Date.now()).toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "long",
+                      year: "numeric",
+                    },
+                  )}
+                </Text>
+              </View>
+
+              {/* Stats Section */}
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>
+                    {driver?.rating?.toFixed(1) || "0.0"}
+                  </Text>
+                  <Text style={styles.statLabel}>Rating</Text>
                 </View>
-                <FontAwesome name="chevron-right" size={16} color="#666" />
-              </TouchableOpacity>
-              {/* <TouchableOpacity
+                <View style={styles.divider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>
+                    {driver?.total_trips || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Rides</Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>
+                    {Math.floor(
+                      (Date.now() -
+                        new Date(driver?.createdAt || Date.now()).getTime()) /
+                        (365.25 * 24 * 60 * 60 * 1000),
+                    )}{" "}
+                    yrs
+                  </Text>
+                  <Text style={styles.statLabel}>Experience</Text>
+                </View>
+              </View>
+
+              {/* Vehicle Details */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Vehicle Details</Text>
+                <View style={styles.vehicleDetails}>
+                  <View style={styles.detailRow}>
+                    <MaterialIcons
+                      name="directions-car"
+                      size={20}
+                      color="#fff"
+                    />
+                    <Text style={styles.detailText}>
+                      {`${driver?.vehicle_color} ${driver?.vehicle_brand} ${driver?.vehicle_model}`.toLowerCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <FontAwesome name="id-card" size={18} color="#fff" />
+                    <Text style={styles.detailText}>
+                      Plate: {driver?.plate_number}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <FontAwesome
+                      name="drivers-license"
+                      size={18}
+                      color="#fff"
+                    />
+                    <Text style={styles.detailText}>
+                      License: {driver?.driver_licence_number}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Account Settings */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Account Settings</Text>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => setEditProfileVisible(true)}
+                >
+                  <View style={styles.settingLeft}>
+                    <Ionicons name="person-outline" size={20} color="#fff" />
+                    <Text style={styles.settingText}>Edit Profile</Text>
+                  </View>
+                  <FontAwesome name="chevron-right" size={16} color="#666" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => setVehicleInfoVisible(true)}
+                >
+                  <View style={styles.settingLeft}>
+                    <Ionicons name="car-outline" size={20} color="#fff" />
+                    <Text style={styles.settingText}>Vehicle Information</Text>
+                  </View>
+                  <FontAwesome name="chevron-right" size={16} color="#666" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => setDocumentsVisible(true)}
+                >
+                  <View style={styles.settingLeft}>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={20}
+                      color="#fff"
+                    />
+                    <Text style={styles.settingText}>Documents</Text>
+                  </View>
+                  <FontAwesome name="chevron-right" size={16} color="#666" />
+                </TouchableOpacity>
+                {/* <TouchableOpacity
                 style={[styles.settingItem, styles.logoutButton]}
               >
                 <View style={styles.settingLeft}>
@@ -264,25 +281,25 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
                   </Text>
                 </View>
               </TouchableOpacity> */}
-            </View>
-          </ScrollView>
-        </View>
+              </View>
+            </ScrollView>
+          </View>
 
-        {/* Edit Modals */}
-        <EditProfileModal
-          visible={editProfileVisible}
-          onClose={() => setEditProfileVisible(false)}
-        />
-        <VehicleInformationModal
-          visible={vehicleInfoVisible}
-          onClose={() => setVehicleInfoVisible(false)}
-        />
-        <DocumentsModal
-          visible={documentsVisible}
-          onClose={() => setDocumentsVisible(false)}
-        />
-      </View>
-    </Modal>
+          {/* Edit Modals */}
+          <EditProfileModal
+            visible={editProfileVisible}
+            onClose={() => setEditProfileVisible(false)}
+          />
+          <VehicleInformationModal
+            visible={vehicleInfoVisible}
+            onClose={() => setVehicleInfoVisible(false)}
+          />
+          <DocumentsModal
+            visible={documentsVisible}
+            onClose={() => setDocumentsVisible(false)}
+          />
+        </View>
+      </Modal>
     </>
   );
 };
@@ -316,7 +333,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   profileImageContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: 12,
   },
   profileImage: {
@@ -327,28 +344,28 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
   editIconContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 5,
-    backgroundColor: '#333',
+    backgroundColor: "#333",
     width: 28,
     height: 28,
     borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2,
-    borderColor: '#121212',
+    borderColor: "#121212",
   },
   loadingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
     borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   name: {
     color: "#fff",

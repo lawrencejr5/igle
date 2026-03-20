@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { API_URLS } from "../data/constants";
 import { useNotificationContext } from "./NotificationContext";
+import { useAuthContext } from "./AuthContext";
 import type {
   RewardInstance,
   RewardStatus,
@@ -103,6 +104,7 @@ const mapToReward = (
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const { showNotification } = useNotificationContext();
+  const { signedIn } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState<RewardInstance[]>([]);
 
@@ -148,8 +150,12 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (signedIn?.user_id) {
+      fetchData();
+    } else {
+      setTasks([]);
+    }
+  }, [signedIn?.user_id]);
 
   const claimTask = async (taskId: string): Promise<boolean> => {
     try {
