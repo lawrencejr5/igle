@@ -79,7 +79,10 @@ const Signin = () => {
     <>
       <ScrollView style={styles.container}>
         {/* Back button */}
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 10 }}>
+        <TouchableOpacity
+          onPress={() => router.replace("/get_started")}
+          style={{ padding: 10 }}
+        >
           <Feather name="chevron-left" size={40} color="#d3d0d0" />
         </TouchableOpacity>
 

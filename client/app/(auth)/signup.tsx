@@ -85,7 +85,7 @@ const Signup = () => {
         {/* Back button */}
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.back()}
+          onPress={() => router.replace("/(auth)/signin")}
           style={{ padding: 10 }}
         >
           <Feather name="chevron-left" size={40} color="#d3d0d0ff" />
