@@ -278,11 +278,12 @@ const Suggestion: FC<{ value: number; close: () => void }> = ({
       style={{
         backgroundColor: "#666666ff",
         paddingHorizontal: 10,
-        paddingTop: 10,
-        paddingBottom: 7,
-        borderRadius: 30,
+        borderRadius: 10,
+        paddingTop: 15,
+        paddingBottom: 10,
         flexGrow: 1,
         marginTop: 10,
+        width: "31%",
       }}
     >
       <Text
