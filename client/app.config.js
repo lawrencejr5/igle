@@ -44,6 +44,9 @@ module.exports = {
       "supportsTablet": false,
       "bundleIdentifier": "com.lawrencejr.igle",
       "usesAppleSignIn": true,
+      "config": {
+        "googleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
+      },
       "infoPlist": {
         "UIBackgroundModes": [
           "location",
