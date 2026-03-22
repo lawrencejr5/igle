@@ -239,18 +239,30 @@ const google_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 exports.google_auth = google_auth;
 const apple_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { identityToken, fullName } = req.body;
+    console.log("[AppleAuth] apple_auth endpoint hit");
+    console.log("[AppleAuth] identityToken received:", !!identityToken, "length:", identityToken === null || identityToken === void 0 ? void 0 : identityToken.length);
+    console.log("[AppleAuth] fullName received:", fullName);
     try {
         if (!identityToken) {
+            console.log("[AppleAuth] No identity token provided");
             res.status(401).json({ msg: "Identity token not provided" });
             return;
         }
+        console.log("[AppleAuth] Verifying token with audience:", process.env.APPLE_BUNDLE_ID || "com.lawrencejr.igle");
         // Verify the Apple identity token using Apple's public keys
         const applePayload = yield apple_signin_auth_1.default.verifyIdToken(identityToken, {
             audience: process.env.APPLE_BUNDLE_ID || "com.lawrencejr.igle",
             ignoreExpiration: false,
         });
+        console.log("[AppleAuth] Token verified successfully, payload:", {
+            email: applePayload.email,
+            sub: applePayload.sub,
+            aud: applePayload.aud,
+            iss: applePayload.iss,
+        });
         const { email, sub } = applePayload;
         if (!email) {
+            console.log("[AppleAuth] No email in payload");
             res.status(400).json({ msg: "Email not available from Apple token" });
             return;
         }
@@ -264,12 +276,14 @@ const apple_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             if (parts.length)
                 displayName = parts.join(" ");
         }
+        console.log("[AppleAuth] Display name:", displayName);
         let user = yield user_1.default.findOne({
             $or: [{ email }, { apple_id: sub }],
         });
         let isNew = false;
         if (!user) {
             isNew = true;
+            console.log("[AppleAuth] Creating new user with email:", email);
             user = yield user_1.default.create({
                 name: displayName || email.split("@")[0],
                 email,
@@ -283,12 +297,14 @@ const apple_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     owner_type: "User",
                     balance: 0,
                 });
+                console.log("[AppleAuth] Wallet created for new user");
             }
             catch (walletErr) {
                 console.error("Failed to create wallet for apple user:", walletErr);
             }
         }
         else {
+            console.log("[AppleAuth] Existing user found:", user._id);
             // Link apple_id if not already set
             user.apple_id = sub || user.apple_id;
             yield user.save();
@@ -296,12 +312,14 @@ const apple_auth = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const token = jsonwebtoken_1.default.sign({ id: user._id }, jwt_secret, {
             expiresIn: "7d",
         });
+        console.log("[AppleAuth] JWT created, sending response. isNew:", isNew);
         res.status(200).json({ user, token, isNew });
     }
     catch (error) {
-        console.error("Apple Auth Error:", error);
+        console.error("[AppleAuth] Error:", error.message || error);
+        console.error("[AppleAuth] Full error:", error);
         res.status(500).json({
-            message: "Apple sign-in failed",
+            msg: "Apple sign-in failed",
             error: error.message || error,
         });
     }

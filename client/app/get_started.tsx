@@ -66,8 +66,10 @@ const StartScreen = () => {
   }, [response]);
 
   const handleAppleSignIn = async () => {
+    console.log("[AppleAuth] handleAppleSignIn started");
     try {
       setAppleAuthLoading(true);
+      console.log("[AppleAuth] Calling AppleAuthentication.signInAsync...");
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -75,7 +77,17 @@ const StartScreen = () => {
         ],
       });
 
+      console.log("[AppleAuth] signInAsync returned credential:", {
+        hasIdentityToken: !!credential.identityToken,
+        hasFullName: !!credential.fullName,
+        email: credential.email,
+        user: credential.user,
+        fullName: credential.fullName,
+        identityTokenLength: credential.identityToken?.length,
+      });
+
       if (!credential.identityToken) {
+        console.log("[AppleAuth] No identity token in credential!");
         showNotification(
           "Apple sign-in failed: missing identity token",
           "error",
@@ -83,15 +95,24 @@ const StartScreen = () => {
         return;
       }
 
+      console.log("[AppleAuth] Calling appleLogin with token...");
       await appleLogin(credential.identityToken, credential.fullName);
+      console.log("[AppleAuth] appleLogin completed successfully");
     } catch (err: any) {
-      if (err.code === "ERR_REQUEST_CANCELED") {
+      console.log("[AppleAuth] Error caught:", {
+        code: err.code,
+        message: err.message,
+        response: err?.response?.data,
+        fullError: err,
+      });
+      if (err.code === "ERR_CANCELED") {
+        console.log("[AppleAuth] User cancelled sign-in");
         // User cancelled — do nothing
       } else {
-        console.log("Apple sign-in error:", err);
         showNotification("Apple sign-in failed", "error");
       }
     } finally {
+      console.log("[AppleAuth] finally block, resetting loading");
       setAppleAuthLoading(false);
     }
   };

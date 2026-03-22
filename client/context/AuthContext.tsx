@@ -386,13 +386,28 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     identityToken: string,
     fullName?: { givenName?: string | null; familyName?: string | null } | null,
   ): Promise<void> => {
+    console.log("[AppleAuth] appleLogin called, sending to server...");
+    console.log("[AppleAuth] API_URL:", API_URL);
+    console.log("[AppleAuth] identityToken length:", identityToken?.length);
+    console.log("[AppleAuth] fullName:", fullName);
     try {
       const { data } = await axios.post(`${API_URL}/apple_auth`, {
         identityToken,
         fullName,
       });
 
+      console.log("[AppleAuth] Server response received:", {
+        hasToken: !!data.token,
+        isNew: data.isNew,
+        userId: data.user?._id,
+        userEmail: data.user?.email,
+        userName: data.user?.name,
+        hasPhone: !!data.user?.phone,
+        isDriver: data.user?.is_driver,
+      });
+
       await AsyncStorage.setItem("token", data.token);
+      console.log("[AppleAuth] Token stored in AsyncStorage");
 
       const is_driver = data.user.is_driver;
       const hasPhone = !!data.user?.phone;
@@ -402,18 +417,29 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "success",
       );
 
+      console.log("[AppleAuth] Calling getUserData...");
       await getUserData();
+      console.log("[AppleAuth] getUserData completed");
 
+      console.log("[AppleAuth] Navigation decision:", { isNew: data.isNew, hasPhone, is_driver });
       if (data.isNew || !hasPhone) {
+        console.log("[AppleAuth] Navigating to phone screen");
         router.replace("/(auth)/phone");
       } else if (is_driver) {
+        console.log("[AppleAuth] Navigating to driver home");
         router.replace("/(driver)/home");
       } else {
+        console.log("[AppleAuth] Navigating to tabs home");
         router.replace("/(tabs)/home");
       }
     } catch (err: any) {
+      console.log("[AppleAuth] appleLogin error:", {
+        status: err?.response?.status,
+        data: err?.response?.data,
+        message: err?.message,
+      });
       showNotification(
-        err?.response?.data?.msg || "Apple login failed.",
+        err?.response?.data?.msg || err?.response?.data?.message || "Apple login failed.",
         "error",
       );
       console.log(
