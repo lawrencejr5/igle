@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -116,6 +117,24 @@ const StartScreen = () => {
       setAppleAuthLoading(false);
     }
   };
+  if (appleAuthLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#121212",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator
+          size="large"
+          color="#fff"
+          style={{ transform: [{ scale: 1.5 }] }}
+        />
+      </View>
+    );
+  }
 
   return (
     <View
@@ -175,7 +194,7 @@ const StartScreen = () => {
         {Platform.OS === "ios" ? (
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={
-              AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+              AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
             }
             buttonStyle={
               AppleAuthentication.AppleAuthenticationButtonStyle.WHITE

@@ -72,9 +72,23 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [signedIn]);
 
+  // Detect Apple relay emails (user chose "Hide My Email")
+  const isAppleHiddenEmail = (email: string) =>
+    email?.endsWith("@privaterelay.appleid.com");
+
+  // Check if name looks auto-generated (no spaces = likely email prefix fallback)
+  const needsFullname = (name: string, email: string) =>
+    isAppleHiddenEmail(email) && !name.includes(" ");
+
   useEffect(() => {
     if (!signedIn) {
       router.replace("/");
+      return;
+    }
+
+    // Authenticated but name looks auto-generated from Apple relay: force name capture
+    if (needsFullname(signedIn.name, signedIn.email)) {
+      router.replace("(auth)/fullname");
       return;
     }
 
@@ -421,8 +435,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       await getUserData();
       console.log("[AppleAuth] getUserData completed");
 
-      console.log("[AppleAuth] Navigation decision:", { isNew: data.isNew, hasPhone, is_driver });
-      if (data.isNew || !hasPhone) {
+      console.log("[AppleAuth] Navigation decision:", { isNew: data.isNew, hasPhone, is_driver, userName: data.user?.name, userEmail: data.user?.email });
+
+      // Check if name needs to be captured (Apple hidden email with auto-generated name)
+      if (needsFullname(data.user?.name || "", data.user?.email || "")) {
+        console.log("[AppleAuth] Hidden Apple account detected, navigating to fullname");
+        router.replace("/(auth)/fullname");
+      } else if (data.isNew || !hasPhone) {
         console.log("[AppleAuth] Navigating to phone screen");
         router.replace("/(auth)/phone");
       } else if (is_driver) {
