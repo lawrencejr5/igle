@@ -369,7 +369,13 @@ const OngoingRide = ({ data }: { data: any }) => {
         let latitude = ongoingRideData.pickup.coordinates[0];
         let longitude = ongoingRideData.pickup.coordinates[1];
         
-        if (ongoingRideData.driver && ongoingRideData.driver.current_location && ongoingRideData.driver.current_location.coordinates) {
+        if (
+          ongoingRideData.driver && 
+          ongoingRideData.driver.current_location && 
+          ongoingRideData.driver.current_location.coordinates &&
+          ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
+          ongoingRideData.driver.current_location.coordinates[1] !== 0
+        ) {
           latitude = ongoingRideData.driver.current_location.coordinates[0];
           longitude = ongoingRideData.driver.current_location.coordinates[1];
         }

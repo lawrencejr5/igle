@@ -63,6 +63,8 @@ const BookDelivery = () => {
       (deliveryStatus === "track_driver" || deliveryStatus === "track_delivery") &&
       ongoingDeliveryData &&
       ongoingDeliveryData.driver?.current_location?.coordinates &&
+      ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
+      ongoingDeliveryData.driver.current_location.coordinates[1] !== 0 &&
       mapRef.current
     ) {
       mapRef.current.animateToRegion(
@@ -200,7 +202,9 @@ const BookDelivery = () => {
             {/* Driver marker - show when tracking driver */}
             {deliveryStatus === "track_driver" &&
               ongoingDeliveryData &&
-              ongoingDeliveryData.driver?.current_location?.coordinates && (
+              ongoingDeliveryData.driver?.current_location?.coordinates &&
+              ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
+              ongoingDeliveryData.driver.current_location.coordinates[1] !== 0 && (
                 <Marker
                   coordinate={{
                     latitude:
@@ -236,7 +240,9 @@ const BookDelivery = () => {
             {/* Driver marker - show when tracking delivery progress */}
             {deliveryStatus === "track_delivery" &&
               ongoingDeliveryData &&
-              ongoingDeliveryData.driver?.current_location?.coordinates && (
+              ongoingDeliveryData.driver?.current_location?.coordinates &&
+              ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
+              ongoingDeliveryData.driver.current_location.coordinates[1] !== 0 && (
                 <Marker
                   coordinate={{
                     latitude:

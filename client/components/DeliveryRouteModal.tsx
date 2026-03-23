@@ -1402,15 +1402,25 @@ const AcceptedModal = () => {
   const track_rider = () => {
     setDeliveryStatus("track_driver");
     setTimeout(() => {
-      if (
-        mapRef?.current &&
-        ongoingDeliveryData?.driver?.current_location?.coordinates
-      ) {
-        const coords = ongoingDeliveryData.driver.current_location.coordinates;
+      if (mapRef?.current && ongoingDeliveryData) {
+        let latitude = ongoingDeliveryData.pickup?.coordinates[0] || 0;
+        let longitude = ongoingDeliveryData.pickup?.coordinates[1] || 0;
+
+        if (
+          ongoingDeliveryData.driver &&
+          ongoingDeliveryData.driver.current_location &&
+          ongoingDeliveryData.driver.current_location.coordinates &&
+          ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
+          ongoingDeliveryData.driver.current_location.coordinates[1] !== 0
+        ) {
+          latitude = ongoingDeliveryData.driver.current_location.coordinates[0];
+          longitude = ongoingDeliveryData.driver.current_location.coordinates[1];
+        }
+
         mapRef.current.animateToRegion(
           {
-            latitude: coords[0],
-            longitude: coords[1],
+            latitude,
+            longitude,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           },

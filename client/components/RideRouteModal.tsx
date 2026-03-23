@@ -1030,18 +1030,32 @@ const AcceptedModal = () => {
 
   const track_driver = () => {
     setRideStatus("track_driver");
-    // console.log(ongoingRideData);
     setTimeout(() => {
-      if (mapRef.current && ongoingRideData)
+      if (mapRef.current && ongoingRideData) {
+        let latitude = ongoingRideData.pickup.coordinates[0];
+        let longitude = ongoingRideData.pickup.coordinates[1];
+        
+        if (
+          ongoingRideData.driver && 
+          ongoingRideData.driver.current_location && 
+          ongoingRideData.driver.current_location.coordinates &&
+          ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
+          ongoingRideData.driver.current_location.coordinates[1] !== 0
+        ) {
+          latitude = ongoingRideData.driver.current_location.coordinates[0];
+          longitude = ongoingRideData.driver.current_location.coordinates[1];
+        }
+
         mapRef.current.animateToRegion(
           {
             longitudeDelta: 0.02,
             latitudeDelta: 0.02,
-            latitude: ongoingRideData.driver.current_location.coordinates[0],
-            longitude: ongoingRideData.driver.current_location.coordinates[1],
+            latitude,
+            longitude,
           },
           1000,
         );
+      }
     }, 1000);
   };
 
@@ -1398,7 +1412,13 @@ const PaidModal = () => {
         if (mapRef.current && ongoingRideData) {
           let latitude = ongoingRideData.pickup.coordinates[0];
           let longitude = ongoingRideData.pickup.coordinates[1];
-          if (ongoingRideData.driver && ongoingRideData.driver.current_location && ongoingRideData.driver.current_location.coordinates) {
+          if (
+            ongoingRideData.driver && 
+            ongoingRideData.driver.current_location && 
+            ongoingRideData.driver.current_location.coordinates &&
+            ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
+            ongoingRideData.driver.current_location.coordinates[1] !== 0
+          ) {
             latitude = ongoingRideData.driver.current_location.coordinates[0];
             longitude = ongoingRideData.driver.current_location.coordinates[1];
           }

@@ -72,6 +72,8 @@ const BookRide = () => {
       (rideStatus === "track_driver" || rideStatus === "track_ride") &&
       ongoingRideData &&
       ongoingRideData.driver?.current_location?.coordinates &&
+      ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
+      ongoingRideData.driver.current_location.coordinates[1] !== 0 &&
       mapRef.current
     ) {
       mapRef.current.animateToRegion(
@@ -199,7 +201,9 @@ const BookRide = () => {
                 {/* Driver marker - show when tracking driver */}
                 {rideStatus === "track_driver" &&
                   ongoingRideData &&
-                  ongoingRideData.driver?.current_location?.coordinates && (
+                  ongoingRideData.driver?.current_location?.coordinates &&
+                  ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
+                  ongoingRideData.driver.current_location.coordinates[1] !== 0 && (
                     <Marker
                       coordinate={{
                         latitude:
@@ -222,7 +226,9 @@ const BookRide = () => {
                 {/* User marker - show when tracking ride */}
                 {rideStatus === "track_ride" &&
                   ongoingRideData &&
-                  ongoingRideData.driver?.current_location?.coordinates && (
+                  ongoingRideData.driver?.current_location?.coordinates &&
+                  ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
+                  ongoingRideData.driver.current_location.coordinates[1] !== 0 && (
                     <Marker
                       coordinate={{
                         latitude:
