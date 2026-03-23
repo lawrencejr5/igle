@@ -911,8 +911,9 @@ const styles = StyleSheet.create({
   },
   bannerCard: {
     width: 300,
-    height: 120,
-    paddingLeft: 12,
+    height: 125,
+    paddingLeft: 15,
+    paddingVertical: 8,
     marginRight: 12,
     borderRadius: 10,
     backgroundColor: "#fff",
