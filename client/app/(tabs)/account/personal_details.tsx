@@ -6,6 +6,7 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -222,26 +223,28 @@ const EditNameModal: FC<{
       visible={open}
       onRequestClose={() => setOpen(false)}
     >
-      <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-        <Pressable onPress={() => {}} style={styles.modal}>
-          <Text style={styles.modal_header}>Update fullname</Text>
+      <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
+        <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
+          <Pressable onPress={() => {}} style={styles.modal}>
+            <Text style={styles.modal_header}>Update fullname</Text>
 
-          <TextInput
-            value={fullname!}
-            onChangeText={setFullname}
-            style={styles.modal_text_input}
-          />
-          <Pressable
-            style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
-            disabled={updating}
-            onPress={update_name}
-          >
-            <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-              {updating ? "Updating..." : "Update"}
-            </Text>
+            <TextInput
+              value={fullname!}
+              onChangeText={setFullname}
+              style={styles.modal_text_input}
+            />
+            <Pressable
+              style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
+              disabled={updating}
+              onPress={update_name}
+            >
+              <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
+                {updating ? "Updating..." : "Update"}
+              </Text>
+            </Pressable>
           </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -275,26 +278,28 @@ const EditEmailModal: FC<{
       visible={open}
       onRequestClose={() => setOpen(false)}
     >
-      <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-        <Pressable onPress={() => {}} style={styles.modal}>
-          <Text style={styles.modal_header}>Update email</Text>
+      <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
+        <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
+          <Pressable onPress={() => {}} style={styles.modal}>
+            <Text style={styles.modal_header}>Update email</Text>
 
-          <TextInput
-            value={email!}
-            onChangeText={setEmail}
-            style={styles.modal_text_input}
-          />
-          <Pressable
-            style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
-            onPress={update_email}
-            disabled={updating}
-          >
-            <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-              {updating ? "Updating..." : "Update"}
-            </Text>
+            <TextInput
+              value={email!}
+              onChangeText={setEmail}
+              style={styles.modal_text_input}
+            />
+            <Pressable
+              style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
+              onPress={update_email}
+              disabled={updating}
+            >
+              <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
+                {updating ? "Updating..." : "Update"}
+              </Text>
+            </Pressable>
           </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -326,26 +331,28 @@ const EditPhoneModal: FC<{
       visible={open}
       onRequestClose={() => setOpen(false)}
     >
-      <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-        <Pressable onPress={() => {}} style={styles.modal}>
-          <Text style={styles.modal_header}>Update phone</Text>
+      <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
+        <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
+          <Pressable onPress={() => {}} style={styles.modal}>
+            <Text style={styles.modal_header}>Update phone</Text>
 
-          <TextInput
-            value={phone!}
-            onChangeText={setPhone}
-            style={styles.modal_text_input}
-          />
-          <Pressable
-            style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
-            onPress={update_phone}
-            disabled={updating}
-          >
-            <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-              {updating ? "Updating..." : "Update"}
-            </Text>
+            <TextInput
+              value={phone!}
+              onChangeText={setPhone}
+              style={styles.modal_text_input}
+            />
+            <Pressable
+              style={[styles.modal_submit_btn, { opacity: updating ? 0.5 : 1 }]}
+              onPress={update_phone}
+              disabled={updating}
+            >
+              <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
+                {updating ? "Updating..." : "Update"}
+              </Text>
+            </Pressable>
           </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
