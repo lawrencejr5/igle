@@ -141,7 +141,7 @@ const StartScreen = () => {
       style={{
         backgroundColor: "#121212",
         flex: 1,
-        paddingHorizontal: 20,
+        paddingHorizontal: 30,
         paddingVertical: 10,
       }}
     >
@@ -201,7 +201,7 @@ const StartScreen = () => {
             }
             cornerRadius={30}
             style={{
-              width: "95%",
+              width: "100%",
               height: 54,
               marginVertical: 10,
               opacity: appleAuthLoading ? 0.8 : 1,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderRadius: 30,
-    width: "95%",
+    width: "100%",
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
