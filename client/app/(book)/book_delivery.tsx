@@ -49,13 +49,33 @@ const BookDelivery = () => {
     if (!region) return;
 
     const timer = setTimeout(() => {
-      if (mapRef.current) {
+      if (mapRef.current && deliveryStatus !== "track_driver" && deliveryStatus !== "track_delivery") {
         mapRef.current.animateToRegion(region, 1000);
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [region, mapRef.current]);
+  }, [region, mapRef.current, deliveryStatus]);
+
+  // Continuously track driver or delivery when in tracking state
+  useEffect(() => {
+    if (
+      (deliveryStatus === "track_driver" || deliveryStatus === "track_delivery") &&
+      ongoingDeliveryData &&
+      ongoingDeliveryData.driver?.current_location?.coordinates &&
+      mapRef.current
+    ) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: ongoingDeliveryData.driver.current_location.coordinates[0],
+          longitude: ongoingDeliveryData.driver.current_location.coordinates[1],
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        1000
+      );
+    }
+  }, [ongoingDeliveryData?.driver?.current_location?.coordinates, deliveryStatus]);
   return (
     <>
       <View style={{ flex: 1, backgroundColor: "#121212" }}>

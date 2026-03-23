@@ -356,18 +356,34 @@ const OngoingRide = ({ data }: { data: any }) => {
 
   const track_ride = () => {
     router.push("../(book)/book_ride");
-    setRideStatus("track_ride");
+    
+    // Determine the most appropriate tracking status based on ride status
+    const newRideStatus = ongoingRideData?.status === "ongoing" || ongoingRideData?.payment_status === "paid" 
+      ? "track_ride" 
+      : "track_driver";
+      
+    setRideStatus(newRideStatus);
+    
     setTimeout(() => {
-      if (mapRef.current && ongoingRideData)
+      if (mapRef.current && ongoingRideData) {
+        let latitude = ongoingRideData.pickup.coordinates[0];
+        let longitude = ongoingRideData.pickup.coordinates[1];
+        
+        if (ongoingRideData.driver && ongoingRideData.driver.current_location && ongoingRideData.driver.current_location.coordinates) {
+          latitude = ongoingRideData.driver.current_location.coordinates[0];
+          longitude = ongoingRideData.driver.current_location.coordinates[1];
+        }
+        
         mapRef.current.animateToRegion(
           {
             longitudeDelta: 0.02,
             latitudeDelta: 0.02,
-            latitude: ongoingRideData.pickup.coordinates[0],
-            longitude: ongoingRideData.pickup.coordinates[1],
+            latitude,
+            longitude,
           },
           1000,
         );
+      }
     }, 1000);
   };
 

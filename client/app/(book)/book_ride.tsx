@@ -58,13 +58,33 @@ const BookRide = () => {
     if (!region) return;
 
     const timer = setTimeout(() => {
-      if (mapRef.current) {
+      if (mapRef.current && rideStatus !== "track_driver" && rideStatus !== "track_ride") {
         mapRef.current.animateToRegion(region, 1000);
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [region, mapRef.current]);
+  }, [region, mapRef.current, rideStatus]);
+
+  // Continuously track driver or ride when in tracking state
+  useEffect(() => {
+    if (
+      (rideStatus === "track_driver" || rideStatus === "track_ride") &&
+      ongoingRideData &&
+      ongoingRideData.driver?.current_location?.coordinates &&
+      mapRef.current
+    ) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: ongoingRideData.driver.current_location.coordinates[0],
+          longitude: ongoingRideData.driver.current_location.coordinates[1],
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        1000
+      );
+    }
+  }, [ongoingRideData?.driver?.current_location?.coordinates, rideStatus]);
 
   const [tracksViewChanges, setTracksViewChanges] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
