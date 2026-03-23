@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -39,6 +40,18 @@ const Account = () => {
   const { notification, showNotification } = useNotificationContext();
   const { appLoading } = useLoading();
   const [refreshing, setRefreshing] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   const onRefresh = async () => {
     try {
@@ -255,11 +268,15 @@ const Account = () => {
                 <Feather name="star" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Rate us</Text>
               </TouchableOpacity>
-              <TouchableWithoutFeedback onPress={logout}>
-                <View style={styles.setting_box}>
-                  <Feather name="log-out" size={20} color="#ca1d1d" />
+              <TouchableWithoutFeedback disabled={loggingOut} onPress={handleLogout}>
+                <View style={[styles.setting_box, { opacity: loggingOut ? 0.5 : 1 }]}>
+                  {loggingOut ? (
+                    <ActivityIndicator size="small" color="#ca1d1d" />
+                  ) : (
+                    <Feather name="log-out" size={20} color="#ca1d1d" />
+                  )}
                   <Text style={[styles.setting_text, { color: "#ca1d1d" }]}>
-                    Logout
+                    {loggingOut ? "Logging out..." : "Logout"}
                   </Text>
                 </View>
               </TouchableWithoutFeedback>

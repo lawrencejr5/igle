@@ -544,7 +544,7 @@ const DeliveredDeliveries = ({
             <View style={styles.fare_container}>
               <Text style={styles.fare_label}>Total Paid</Text>
               <Text style={styles.fare_amount}>
-                ${delivery.fare?.toFixed(2) || "0.00"}
+                NGN {delivery.fare?.toLocaleString().toFixed(2) || "0.00"}
               </Text>
             </View>
             <View style={styles.delivered_status}>

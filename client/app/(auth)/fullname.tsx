@@ -4,6 +4,8 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -49,8 +51,11 @@ const AddFullname = () => {
   };
 
   return (
-    <>
-      <ScrollView style={styles.container}>
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={styles.container}
+      >
         {/* Header texts... */}
         <View style={{ marginTop: 60, paddingHorizontal: 10 }}>
           <Text style={styles.header_text}>What's your name?</Text>
@@ -78,20 +83,21 @@ const AddFullname = () => {
               />
             </View>
           </View>
-
-          {/* Save button */}
-          <TouchableWithoutFeedback onPress={save_name} disabled={loading}>
-            <View
-              style={[styles.sign_btn, { opacity: loading ? 0.5 : 1 }]}
-            >
-              <Text style={styles.sign_btn_text}>
-                {loading ? "Saving..." : "Continue"}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
         </View>
       </ScrollView>
-    </>
+      {/* Save button */}
+      <View
+        style={{ padding: 20, paddingBottom: Platform.OS === "ios" ? 40 : 20 }}
+      >
+        <TouchableWithoutFeedback onPress={save_name} disabled={loading}>
+          <View style={[styles.sign_btn, { opacity: loading ? 0.5 : 1 }]}>
+            <Text style={styles.sign_btn_text}>
+              {loading ? "Saving..." : "Continue"}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
   );
 };
 

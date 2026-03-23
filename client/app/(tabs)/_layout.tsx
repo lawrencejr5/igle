@@ -39,7 +39,7 @@ const TabsLayout = () => {
       style={{
         backgroundColor: "#121212",
         flex: 1,
-        paddingBottom: insets.bottom,
+        paddingBottom: insets.bottom - 10,
       }}
     >
       <Tabs
