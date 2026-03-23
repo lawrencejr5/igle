@@ -306,7 +306,7 @@ export const get_ride_data = async (
       .populate({
         path: "driver",
         select:
-          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+          "user profile_img vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
           select: "name email phone profile_pic",
@@ -335,7 +335,7 @@ export const get_user_rides = async (
       .populate({
         path: "driver",
         select:
-          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+          "user profile_img vehicle_type vehicle current_location total_trips rating num_of_reviews",
         populate: {
           path: "user",
           select: "name email phone profile_pic",
@@ -371,7 +371,7 @@ export const get_user_active_ride = async (
       .populate({
         path: "driver",
         select:
-          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews profile_img",
         populate: {
           path: "user",
           select: "name email phone profile_pic",
@@ -398,7 +398,7 @@ export const get_user_ongoing_ride = async (
       .populate({
         path: "driver",
         select:
-          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews profile_img",
         populate: {
           path: "user",
           select: "name email phone profile_pic",

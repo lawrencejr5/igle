@@ -302,7 +302,7 @@ const get_ride_data = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const ride = yield ride_1.default.findById(ride_id)
             .populate({
             path: "driver",
-            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            select: "user profile_img vehicle_type vehicle current_location total_trips rating num_of_reviews",
             populate: {
                 path: "user",
                 select: "name email phone profile_pic",
@@ -328,7 +328,7 @@ const get_user_rides = (req, res) => __awaiter(void 0, void 0, void 0, function*
             .sort({ createdAt: -1 })
             .populate({
             path: "driver",
-            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            select: "user profile_img vehicle_type vehicle current_location total_trips rating num_of_reviews",
             populate: {
                 path: "user",
                 select: "name email phone profile_pic",
@@ -362,7 +362,7 @@ const get_user_active_ride = (req, res) => __awaiter(void 0, void 0, void 0, fun
             .sort({ createdAt: -1 })
             .populate({
             path: "driver",
-            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews profile_img",
             populate: {
                 path: "user",
                 select: "name email phone profile_pic",
@@ -388,7 +388,7 @@ const get_user_ongoing_ride = (req, res) => __awaiter(void 0, void 0, void 0, fu
             .sort({ createdAt: -1 })
             .populate({
             path: "driver",
-            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews profile_img",
             populate: {
                 path: "user",
                 select: "name email phone profile_pic",

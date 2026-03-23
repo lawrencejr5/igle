@@ -52,6 +52,19 @@ import RideInfoModal from "./RideInfoModal";
 import { useRatingContext } from "../context/RatingContext";
 import DriverCard, { DriverDetailsModal } from "./DriverCard";
 
+/** Helper hook to compute the exact visible height inside the bottom sheet based on its snap percentage. */
+const useVisibleHeight = (basePercent: number) => {
+  const windowHeight = Dimensions.get("window").height;
+  const fontScale = PixelRatio.getFontScale();
+  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
+  const snapPercent = Math.min(
+    94,
+    Math.max(20, Math.round(basePercent * factor)),
+  );
+  // Subtract ~45px for handle bar, modal paddingTop and breathing room
+  return (windowHeight * snapPercent) / 100 - 45;
+};
+
 const RideRouteModal = () => {
   const {
     userAddress,
@@ -688,6 +701,10 @@ const ChooseRideModal = () => {
   const [selectedRideType, setSelectedRideType] = useState<
     "cab" | "keke" | "suv"
   >("cab");
+
+  // Calculate the visible height of the bottom sheet at the choosing_car snap point (index 2 = 40%)
+  const visibleHeight = useVisibleHeight(40);
+
   const book_ride = async () => {
     setBooking(true);
 
@@ -727,80 +744,85 @@ const ChooseRideModal = () => {
     }
   };
   return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center" }]}>
-        Select Igle ride...
-      </Text>
+    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+      {/* 1 */}
+      <View>
+        <Text style={[styles.header_text, { textAlign: "center" }]}>
+          Select Igle ride...
+        </Text>
 
-      {/* Ride type selection - horizontally scrollable with snapping */}
-      <View style={{ marginTop: 20 }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={240} // card width (220) + marginRight (20)
-          snapToAlignment="start"
-          contentContainerStyle={{ paddingHorizontal: 10 }}
-        >
-          <RideTypeCard
-            id="cab"
-            title="Cab"
-            icon={require("../assets/images/icons/sedan-icon.png")}
-            distanceKm={rideDetails?.distanceKm}
-            durationMins={rideDetails?.durationMins}
-            amount={rideDetails?.cab?.amount}
-            selected={selectedRideType === "cab"}
-            onPress={() => {
-              setSelectedRideType("cab");
-              setRideDetails((prev: any) => ({
-                ...prev,
-                amount: rideDetails?.cab?.amount,
-              }));
-            }}
-          />
+        {/* Ride type selection - horizontally scrollable with snapping */}
+        <View style={{ marginTop: 20 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            decelerationRate="fast"
+            snapToInterval={240} // card width (220) + marginRight (20)
+            snapToAlignment="start"
+            contentContainerStyle={{ paddingHorizontal: 10 }}
+          >
+            <RideTypeCard
+              id="cab"
+              title="Cab"
+              icon={require("../assets/images/icons/sedan-icon.png")}
+              distanceKm={rideDetails?.distanceKm}
+              durationMins={rideDetails?.durationMins}
+              amount={rideDetails?.cab?.amount}
+              selected={selectedRideType === "cab"}
+              onPress={() => {
+                setSelectedRideType("cab");
+                setRideDetails((prev: any) => ({
+                  ...prev,
+                  amount: rideDetails?.cab?.amount,
+                }));
+              }}
+            />
 
-          <RideTypeCard
-            id="keke"
-            title="Keke"
-            icon={require("../assets/images/icons/keke-icon.png")}
-            distanceKm={rideDetails?.distanceKm}
-            durationMins={rideDetails?.durationMins}
-            amount={rideDetails?.keke?.amount}
-            selected={selectedRideType === "keke"}
-            onPress={() => {
-              setSelectedRideType("keke");
-              setRideDetails((prev: any) => ({
-                ...prev,
-                amount: rideDetails?.keke?.amount,
-              }));
-            }}
-          />
+            <RideTypeCard
+              id="keke"
+              title="Keke"
+              icon={require("../assets/images/icons/keke-icon.png")}
+              distanceKm={rideDetails?.distanceKm}
+              durationMins={rideDetails?.durationMins}
+              amount={rideDetails?.keke?.amount}
+              selected={selectedRideType === "keke"}
+              onPress={() => {
+                setSelectedRideType("keke");
+                setRideDetails((prev: any) => ({
+                  ...prev,
+                  amount: rideDetails?.keke?.amount,
+                }));
+              }}
+            />
 
-          <RideTypeCard
-            id="suv"
-            title="SUV"
-            icon={require("../assets/images/icons/suv-icon.png")}
-            distanceKm={rideDetails?.distanceKm}
-            durationMins={rideDetails?.durationMins}
-            amount={rideDetails?.suv?.amount}
-            selected={selectedRideType === "suv"}
-            onPress={() => {
-              setSelectedRideType("suv");
-              setRideDetails((prev: any) => ({
-                ...prev,
-                amount: rideDetails?.suv?.amount,
-              }));
-            }}
-          />
-        </ScrollView>
+            <RideTypeCard
+              id="suv"
+              title="SUV"
+              icon={require("../assets/images/icons/suv-icon.png")}
+              distanceKm={rideDetails?.distanceKm}
+              durationMins={rideDetails?.durationMins}
+              amount={rideDetails?.suv?.amount}
+              selected={selectedRideType === "suv"}
+              onPress={() => {
+                setSelectedRideType("suv");
+                setRideDetails((prev: any) => ({
+                  ...prev,
+                  amount: rideDetails?.suv?.amount,
+                }));
+              }}
+            />
+          </ScrollView>
+        </View>
       </View>
+
+      {/* 2 */}
       <TouchableWithoutFeedback
         onPress={book_ride}
         disabled={booking || calculating || !rideDetails}
       >
         <View
           style={{
-            marginVertical: 40,
+            marginBottom: 30,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
@@ -818,7 +840,7 @@ const ChooseRideModal = () => {
           </Text>
         </View>
       </TouchableWithoutFeedback>
-    </>
+    </View>
   );
 };
 
@@ -988,13 +1010,8 @@ const SearchingModal = () => {
 const AcceptedModal = () => {
   const { region, mapRef } = useMapContext();
 
-  const {
-    cancelling,
-    cancelRideRequest,
-    ongoingRideData,
-    setRideStatus,
-    payForRide,
-  } = useRideContext();
+  const { cancelling, cancelRideRequest, ongoingRideData, setRideStatus } =
+    useRideContext();
 
   const { showNotification } = useNotificationContext();
 
@@ -1013,6 +1030,7 @@ const AcceptedModal = () => {
 
   const track_driver = () => {
     setRideStatus("track_driver");
+    // console.log(ongoingRideData);
     setTimeout(() => {
       if (mapRef.current && ongoingRideData)
         mapRef.current.animateToRegion(
@@ -1029,82 +1047,89 @@ const AcceptedModal = () => {
 
   const { rideDetails } = useMapContext();
 
+  // Calculate the visible height of the bottom sheet at the accepted snap point (index 4 = 75%)
+  const visibleHeight = useVisibleHeight(75);
+
   return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center" }]}>
-        Driver found
-      </Text>
-
-      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
-        {ongoingRideData?.scheduled
-          ? "Pay for the ride to schedule it"
-          : "This driver is on his way..."}
-      </Text>
-
-      {/* Ride request card */}
-      {ongoingRideData && <RideRequestCard />}
-
-      {ongoingRideData?.scheduled ? (
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 50,
-            backgroundColor: "#fff",
-            marginTop: 20,
-          }}
-          onPress={() => {
-            setRideStatus("paying");
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: "raleway-bold",
-              color: "#121212",
-              textAlign: "center",
-            }}
-          >
-            Pay for ride (NGN {rideDetails?.amount})
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 50,
-            backgroundColor: "#fff",
-            marginTop: 20,
-          }}
-          onPress={track_driver}
-        >
-          <Text
-            style={{
-              fontFamily: "raleway-bold",
-              color: "#121212",
-              textAlign: "center",
-            }}
-          >
-            Track driver
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
-        <Text
-          style={{
-            color: cancelling ? "#ff000080" : "#ff0000",
-            marginTop: 30,
-            fontFamily: "raleway-bold",
-            textAlign: "center",
-          }}
-        >
-          {cancelling ? "Cancelling..." : "Cancel this ride"}
+    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+      {/* 1 */}
+      <View>
+        <Text style={[styles.header_text, { textAlign: "center" }]}>
+          Driver found
         </Text>
-      </TouchableWithoutFeedback>
-    </>
+
+        <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+          {ongoingRideData?.scheduled
+            ? "Pay for the ride to schedule it"
+            : "This driver is on his way..."}
+        </Text>
+
+        {/* Ride request card */}
+        {ongoingRideData && <RideRequestCard />}
+      </View>
+
+      {/* 2 */}
+      <View style={{ marginBottom: 10 }}>
+        {ongoingRideData?.scheduled ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              width: "100%",
+              padding: 10,
+              borderRadius: 50,
+              backgroundColor: "#fff",
+            }}
+            onPress={() => {
+              setRideStatus("paying");
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "raleway-bold",
+                color: "#121212",
+                textAlign: "center",
+              }}
+            >
+              Pay for ride (NGN {rideDetails?.amount})
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              width: "100%",
+              padding: 10,
+              borderRadius: 50,
+              backgroundColor: "#fff",
+            }}
+            onPress={track_driver}
+          >
+            <Text
+              style={{
+                fontFamily: "raleway-bold",
+                color: "#121212",
+                textAlign: "center",
+              }}
+            >
+              Track driver
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
+          <Text
+            style={{
+              color: cancelling ? "#ff000080" : "#ff0000",
+              marginTop: 20,
+              fontFamily: "raleway-bold",
+              textAlign: "center",
+            }}
+          >
+            {cancelling ? "Cancelling..." : "Cancel this ride"}
+          </Text>
+        </TouchableWithoutFeedback>
+      </View>
+    </View>
   );
 };
 
@@ -1121,32 +1146,41 @@ const TrackDriver = () => {
     setRideStatus("accepted");
   };
 
+  // Calculate the visible height of the bottom sheet at the track_driver snap point (index 1 = 32%)
+  const visibleHeight = useVisibleHeight(32);
+
   return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
-        Tracking driver...
-      </Text>
+    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+      {/* 1 */}
+      <View>
+        <Text
+          style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}
+        >
+          Tracking driver...
+        </Text>
 
-      {ongoingRideData && (
-        <DriverCard
-          name={ongoingRideData?.driver.user.name}
-          profile_img={
-            (ongoingRideData?.driver as any)?.profile_img
-              ? { uri: (ongoingRideData?.driver as any).profile_img }
-              : require("../assets/images/user.png")
-          }
-          id={ongoingRideData?.driver._id}
-          total_trips={ongoingRideData?.driver.total_trips}
-          rating={ongoingRideData?.driver.rating}
-          num_of_reviews={ongoingRideData?.driver.num_of_reviews}
-        />
-      )}
+        {ongoingRideData && (
+          <DriverCard
+            name={ongoingRideData?.driver.user.name}
+            profile_img={
+              (ongoingRideData?.driver as any)?.profile_img
+                ? { uri: (ongoingRideData?.driver as any).profile_img }
+                : require("../assets/images/user.png")
+            }
+            id={ongoingRideData?.driver._id}
+            total_trips={ongoingRideData?.driver.total_trips}
+            rating={ongoingRideData?.driver.rating}
+            num_of_reviews={ongoingRideData?.driver.num_of_reviews}
+          />
+        )}
+      </View>
 
+      {/* 2 */}
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={see_ride_info}
         style={{
-          marginVertical: 30,
+          marginBottom: 20,
           padding: 10,
           borderRadius: 30,
           backgroundColor: "#fff",
@@ -1162,29 +1196,36 @@ const TrackDriver = () => {
           See ride info
         </Text>
       </TouchableOpacity>
-    </>
+    </View>
   );
 };
 
 const PayModal = () => {
   const { setRideStatus, ongoingRideData } = useRideContext();
 
+  // Calculate the visible height of the bottom sheet at the pay snap point (index 4 = 75%)
+  const visibleHeight = useVisibleHeight(75);
+
   return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center" }]}>
-        Driver arrived
-      </Text>
+    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+      {/* 1 */}
+      <View>
+        <Text style={[styles.header_text, { textAlign: "center" }]}>
+          Driver arrived
+        </Text>
 
-      <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
-        Your driver has arrived!
-      </Text>
+        <Text style={[styles.rideStatusText, { marginTop: 20 }]}>
+          Your driver has arrived!
+        </Text>
 
-      <RideRequestCard />
+        <RideRequestCard />
+      </View>
 
+      {/* 2 */}
       {ongoingRideData?.payment_status === "paid" ? (
         <Pressable
           style={{
-            marginVertical: 50,
+            marginBottom: 30,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
@@ -1206,7 +1247,7 @@ const PayModal = () => {
       ) : (
         <Pressable
           style={{
-            marginVertical: 50,
+            marginBottom: 30,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",
@@ -1226,7 +1267,7 @@ const PayModal = () => {
           </Text>
         </Pressable>
       )}
-    </>
+    </View>
   );
 };
 
@@ -1249,80 +1290,98 @@ const PayingModal = () => {
     }
   };
 
-  return (
-    <>
-      <Text
-        style={[
-          styles.header_text,
-          { textAlign: "center", fontFamily: "poppins-bold" },
-        ]}
-      >
-        Confirm payment ({rideDetails?.amount.toLocaleString()} NGN)
-      </Text>
+  // Calculate the visible height of the bottom sheet at the paying snap point (index 1 = 32%)
+  const visibleHeight = useVisibleHeight(32);
 
-      <View style={{ marginTop: 25 }}>
-        <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
-          Wallet balance: {userWalletBal.toLocaleString()} NGN
+  return (
+    <View
+      style={{
+        height: visibleHeight,
+        justifyContent: "space-between",
+      }}
+    >
+      {/* 1 */}
+      <View>
+        <Text
+          style={[
+            styles.header_text,
+            { textAlign: "center", fontFamily: "poppins-bold" },
+          ]}
+        >
+          Confirm payment ({rideDetails?.amount.toLocaleString()} NGN)
         </Text>
 
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 20,
-            marginTop: 25,
-          }}
-        >
-          <Pressable
-            onPress={pay_func}
-            disabled={paying}
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 20,
-              paddingHorizontal: 30,
-              paddingVertical: 10,
-              flex: 1,
-              opacity: paying ? 0.5 : 1,
-            }}
-          >
-            <Text
-              style={{
-                color: "#121212",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
-              }}
-            >
-              {paying ? "Confirming..." : "Confirm"}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              setRideStatus("pay");
-            }}
-            style={{
-              borderRadius: 20,
-              paddingHorizontal: 30,
-              paddingVertical: 10,
-              borderStyle: "solid",
-              borderWidth: 1,
-              borderColor: "#fff",
-              flex: 1,
-            }}
-          >
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
-              }}
-            >
-              Cancel
-            </Text>
-          </Pressable>
+        <View style={styles.walletCard}>
+          <View style={styles.walletCardLeft}>
+            <View style={styles.walletIconContainer}>
+              <Ionicons name="wallet" size={18} color="#fff" />
+            </View>
+            <Text style={styles.walletLabel}>Current wallet balance:</Text>
+          </View>
+          <Text style={styles.walletBalanceText}>
+            ₦{userWalletBal.toLocaleString()}
+          </Text>
         </View>
       </View>
-    </>
+
+      {/* 2 */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 20,
+          marginBottom: 20,
+        }}
+      >
+        <Pressable
+          onPress={pay_func}
+          disabled={paying}
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 20,
+            paddingHorizontal: 30,
+            paddingVertical: 10,
+            flex: 1,
+            opacity: paying ? 0.5 : 1,
+          }}
+        >
+          <Text
+            style={{
+              color: "#121212",
+              fontFamily: "raleway-bold",
+              textAlign: "center",
+            }}
+          >
+            {paying ? "Confirming..." : "Confirm"}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            setRideStatus("pay");
+          }}
+          style={{
+            borderRadius: 20,
+            paddingHorizontal: 30,
+            paddingVertical: 10,
+            borderStyle: "solid",
+            borderWidth: 1,
+            borderColor: "#fff",
+            flex: 1,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "raleway-bold",
+              textAlign: "center",
+            }}
+          >
+            Cancel
+          </Text>
+        </Pressable>
+      </View>
+    </View>
   );
 };
 
@@ -1349,63 +1408,89 @@ const PaidModal = () => {
       }, 1000);
   };
 
-  return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
-        {ongoingRideData?.scheduled
-          ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
-          : "Alright, hang tight, we'll take it from here..."}
-      </Text>
-      {ongoingRideData?.scheduled ? (
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={{
-            marginVertical: 20,
-            padding: 10,
-            borderRadius: 30,
-            backgroundColor: "#fff",
-          }}
-        >
-          <Text
-            style={{
-              textAlign: "center",
-              fontFamily: "raleway-bold",
-              color: "#121212",
-            }}
-          >
-            See ride details
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={{
-            marginVertical: 20,
-            padding: 10,
-            borderRadius: 30,
-            backgroundColor: "#fff",
-          }}
-          onPress={track_ride}
-        >
-          <Text
-            style={{
-              textAlign: "center",
-              fontFamily: "raleway-bold",
-              color: "#121212",
-            }}
-          >
-            Track ride
-          </Text>
-        </TouchableOpacity>
-      )}
+  // Calculate the visible height of the bottom sheet at the paid snap point (index 1 = 32%)
+  const visibleHeight = useVisibleHeight(32);
 
-      <TouchableOpacity
-        onPress={() => setReportModalOpen(true)}
-        style={{ marginTop: 10 }}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.reportDriverText}>Report driver</Text>
-      </TouchableOpacity>
+  return (
+    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+      {/* 1 */}
+      <View>
+        <Text
+          style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}
+        >
+          {ongoingRideData?.scheduled
+            ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
+            : "Alright, hang tight, we'll take it from here..."}
+        </Text>
+
+        {!ongoingRideData?.scheduled && (
+          <View style={{ alignItems: "center", marginTop: 20 }}>
+            <View
+              style={{
+                backgroundColor: "#1e1e1e",
+                padding: 10,
+                borderRadius: 50,
+                borderWidth: 1,
+                borderColor: "#2e2e2e",
+              }}
+            >
+              <Ionicons name="hourglass-outline" size={20} color="#fff" />
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* 2 */}
+      <View style={{ marginBottom: 20 }}>
+        {ongoingRideData?.scheduled ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              padding: 10,
+              borderRadius: 30,
+              backgroundColor: "#fff",
+            }}
+          >
+            <Text
+              style={{
+                textAlign: "center",
+                fontFamily: "raleway-bold",
+                color: "#121212",
+              }}
+            >
+              See ride details
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              padding: 10,
+              borderRadius: 30,
+              backgroundColor: "#fff",
+            }}
+            onPress={track_ride}
+          >
+            <Text
+              style={{
+                textAlign: "center",
+                fontFamily: "raleway-bold",
+                color: "#121212",
+              }}
+            >
+              Track ride
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          onPress={() => setReportModalOpen(true)}
+          style={{ marginTop: 15 }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.reportDriverText}>Report driver</Text>
+        </TouchableOpacity>
+      </View>
 
       <ReportDriverModal
         visible={reportModalOpen}
@@ -1413,7 +1498,7 @@ const PaidModal = () => {
         driverId={ongoingRideData?.driver._id}
         rideId={ongoingRideData?._id}
       />
-    </>
+    </View>
   );
 };
 
@@ -1422,39 +1507,49 @@ const TrackRide = () => {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [rideInfoOpen, setRideInfoOpen] = useState(false);
 
-  return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}>
-        Tracking ride...
-      </Text>
+  // Calculate the visible height of the bottom sheet at the track_ride snap point (index 0 = 25%)
+  const visibleHeight = useVisibleHeight(25);
 
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => setRideInfoOpen(true)}
-        style={{
-          marginVertical: 30,
-          padding: 10,
-          borderRadius: 30,
-          backgroundColor: "#fff",
-        }}
-      >
+  return (
+    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+      {/* 1 */}
+      <View>
         <Text
+          style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}
+        >
+          Tracking ride...
+        </Text>
+      </View>
+
+      {/* 2 */}
+      <View style={{ marginBottom: 30 }}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setRideInfoOpen(true)}
           style={{
-            textAlign: "center",
-            fontFamily: "raleway-bold",
-            color: "#121212",
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
           }}
         >
-          See ride info
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            See ride info
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <RideInfoModal
         visible={rideInfoOpen}
         onClose={() => setRideInfoOpen(false)}
         ride={ongoingRideData}
       />
-    </>
+    </View>
   );
 };
 
@@ -1960,23 +2055,26 @@ const RideRequestCard = () => {
 
   return (
     <View style={styles.rideRequestCard}>
-      {/* Header */}
+      {/* Driver info header */}
       <View style={styles.rideRequestHeader}>
-        {/* User */}
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => setOpenDriverDetails(true)}
           style={styles.userInfo}
         >
-          <Image
-            source={
-              (ongoingRideData?.driver as any)?.profile_img
-                ? { uri: (ongoingRideData?.driver as any).profile_img }
-                : require("../assets/images/user.png")
-            }
-            style={styles.userImage}
-          />
           <View>
+            <Image
+              source={
+                (ongoingRideData?.driver as any)?.profile_img
+                  ? { uri: (ongoingRideData?.driver as any).profile_img }
+                  : require("../assets/images/user.png")
+              }
+              style={styles.userImage}
+            />
+            {/* Online indicator */}
+            <View style={styles.onlineIndicator} />
+          </View>
+          <View style={{ flexShrink: 1 }}>
             <Text style={styles.userName}>
               {ongoingRideData?.driver.user.name}
             </Text>
@@ -1986,14 +2084,6 @@ const RideRequestCard = () => {
           </View>
         </TouchableOpacity>
 
-        {ongoingRideData && (
-          <DriverDetailsModal
-            id={ongoingRideData?.driver._id}
-            open={openDriverDetails}
-            setOpen={setOpenDriverDetails}
-          />
-        )}
-
         {/* Call btn */}
         <TouchableWithoutFeedback
           onPress={() =>
@@ -2001,32 +2091,33 @@ const RideRequestCard = () => {
           }
         >
           <View style={styles.callBtn}>
-            <FontAwesome name="phone" color={"#121212"} size={20} />
+            <FontAwesome name="phone" color={"#121212"} size={18} />
           </View>
         </TouchableWithoutFeedback>
       </View>
 
-      {/* Estimated time and duration */}
-      <View style={{ marginVertical: 20 }}>
-        <View style={styles.timeRow}>
-          <MaterialIcons name="access-time" color={"#d7d7d7"} size={16} />
-          <Text style={styles.timeText}>
-            {ongoingRideData?.duration_mins} mins (
-            {ongoingRideData?.distance_km} km)
-          </Text>
-        </View>
+      {ongoingRideData && (
+        <DriverDetailsModal
+          id={ongoingRideData?.driver._id}
+          open={openDriverDetails}
+          setOpen={setOpenDriverDetails}
+        />
+      )}
 
-        <View style={styles.timeRow}>
-          <Ionicons name="car" color={"#d7d7d7"} size={16} />
-          <Text style={styles.timeText}>
-            {ongoingRideData?.driver?.vehicle.color}{" "}
-            {ongoingRideData?.driver?.vehicle.brand}{" "}
-            {ongoingRideData?.driver?.vehicle.model}
-          </Text>
-        </View>
+      {/* Vehicle info badge */}
+      <View style={styles.vehicleBadge}>
+        <Ionicons name="car" color={"#a0a0a0"} size={14} />
+        <Text style={styles.vehicleText}>
+          {ongoingRideData?.driver?.vehicle.color}{" "}
+          {ongoingRideData?.driver?.vehicle.brand}{" "}
+          {ongoingRideData?.driver?.vehicle.model}
+        </Text>
       </View>
 
-      {/* Ride route card */}
+      {/* Divider */}
+      <View style={styles.cardDivider} />
+
+      {/* Route section */}
       {ongoingRideData && (
         <RideRoute
           from={ongoingRideData?.pickup.address}
@@ -2034,27 +2125,26 @@ const RideRequestCard = () => {
         />
       )}
 
-      {/* Price */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontFamily: "raleway-regular",
-            fontSize: 18,
-          }}
-        >
-          Total fare:
-        </Text>
-        <Text style={styles.priceText}>
-          {ongoingRideData?.fare.toLocaleString()} NGN
-          {ongoingRideData?.payment_status === "paid" ? " (Paid)" : undefined}
-        </Text>
+      {/* Divider */}
+      <View style={styles.cardDivider} />
+
+      {/* Trip details + fare row */}
+      <View style={styles.fareRow}>
+        <View style={styles.tripMeta}>
+          <MaterialIcons name="access-time" color={"#a0a0a0"} size={14} />
+          <Text style={styles.tripMetaText}>
+            {ongoingRideData?.duration_mins} mins •{" "}
+            {ongoingRideData?.distance_km} km
+          </Text>
+        </View>
+        <View style={styles.farePill}>
+          <Text style={styles.fareLabel}>
+            {ongoingRideData?.payment_status === "paid" ? "Paid" : "Fare"}
+          </Text>
+          <Text style={styles.fareAmount}>
+            ₦{ongoingRideData?.fare.toLocaleString()}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -2120,6 +2210,7 @@ const styles = StyleSheet.create({
   },
   rideCard: {
     width: 250,
+    height: 100,
     marginRight: 20,
     padding: 12,
     borderRadius: 12,
@@ -2217,38 +2308,52 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   rideRequestCard: {
-    borderStyle: "solid",
-    borderColor: "#a0a0a0ff",
-    borderWidth: 0.5,
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    backgroundColor: "#121212",
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: "#2e2e2e",
   },
   rideRequestHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
   },
   userInfo: {
     flexDirection: "row",
-    gap: 20,
+    alignItems: "center",
+    gap: 14,
+    flex: 1,
   },
   userImage: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 45,
+    height: 45,
+    borderRadius: 23,
+    borderWidth: 2,
+    borderColor: "#3a3a3a",
+  },
+  onlineIndicator: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#22c55e",
+    borderWidth: 2,
+    borderColor: "#1e1e1e",
   },
   userName: {
     color: "#fff",
-    fontFamily: "raleway-semibold",
+    fontFamily: "raleway-bold",
+    fontSize: 15,
   },
   userRides: {
-    color: "#d7d7d7",
-    fontSize: 10,
+    color: "#888",
+    fontSize: 11,
     fontFamily: "raleway-regular",
-  },
-  timeoutText: {
-    fontFamily: "poppins-regular",
-    color: "#fff",
+    marginTop: 2,
   },
   callBtn: {
     backgroundColor: "#fff",
@@ -2258,21 +2363,61 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  timeRow: {
+  vehicleBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
+    backgroundColor: "#2a2a2a",
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignSelf: "flex-start",
+    marginTop: 14,
   },
-  timeText: {
-    color: "#d7d7d7",
+  vehicleText: {
+    color: "#c0c0c0",
     fontFamily: "poppins-regular",
-    fontSize: 12,
-    marginTop: 3,
+    fontSize: 11,
   },
-  priceText: {
+  cardDivider: {
+    height: 1,
+    backgroundColor: "#2e2e2e",
+    marginVertical: 10,
+  },
+  fareRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  tripMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  tripMetaText: {
+    color: "#c6c5c5ff",
+    fontFamily: "poppins-regular",
+    marginTop: 3,
+    fontSize: 14,
+  },
+  farePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#1a2e1a",
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+  },
+  fareLabel: {
+    color: "#22c55e",
+    fontFamily: "raleway-semibold",
+    fontSize: 11,
+  },
+  fareAmount: {
     color: "#fff",
     fontFamily: "poppins-bold",
-    fontSize: 16,
+    fontSize: 15,
   },
   actionBtnsRow: {
     marginTop: 20,
@@ -2375,5 +2520,41 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-semibold",
     fontSize: 14,
     color: "#ff4444",
+  },
+  priceText: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 18,
+  },
+  walletCard: {
+    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#1e1e1e",
+    borderWidth: 1,
+    borderColor: "#2e2e2e",
+    borderRadius: 16,
+    padding: 12,
+  },
+  walletCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  walletIconContainer: {
+    backgroundColor: "#292929ff",
+    padding: 8,
+    borderRadius: 12,
+  },
+  walletLabel: {
+    color: "#a0a0a0",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+  },
+  walletBalanceText: {
+    color: "#fff",
+    fontFamily: "poppins-bold",
+    fontSize: 18,
   },
 });
