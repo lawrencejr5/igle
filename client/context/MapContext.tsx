@@ -286,9 +286,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     if (result) {
       const { distanceKm, durationMins } = result;
 
-      const BASE_FARE = Number(process.env.EXPO_PUBLIC_BASE_FARE);
-      const PRICE_PER_KM = Number(process.env.EXPO_PUBLIC_PRICE_PER_KM);
-      const PRICE_PER_MIN = Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN);
+      const BASE_FARE = Number(process.env.EXPO_PUBLIC_BASE_FARE) || 300;
+      const PRICE_PER_KM = Number(process.env.EXPO_PUBLIC_PRICE_PER_KM) || 100;
+      const PRICE_PER_MIN = Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN) || 20;
 
       // multipliers for vehicle types — tweak as needed or replace with env vars
       const MULT = {

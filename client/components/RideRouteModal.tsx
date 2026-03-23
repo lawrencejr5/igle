@@ -171,9 +171,6 @@ const RideRouteModal = () => {
     // base snap percents (same as before)
     const base = [25, 32, 40, 60, 75, 94];
 
-    // Determine adjustment factor from fontScale:
-    // - fontScale <= 1 => no change
-    // - larger fontScale increases sheet sizes up to a reasonable cap
     const factor =
       fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
 

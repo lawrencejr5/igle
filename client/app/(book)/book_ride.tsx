@@ -12,17 +12,14 @@ import { darkMapStyle } from "../../data/map.dark";
 
 import RideRouteModal from "../../components/RideRouteModal";
 
-import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
 import { useLoading } from "../../context/LoadingContext";
 import AppLoading from "../../loadings/AppLoading";
 import { useRideContext } from "../../context/RideContext";
-import { useAuthContext } from "../../context/AuthContext";
 import { router, useLocalSearchParams } from "expo-router";
 
 const BookRide = () => {
-  const { notification } = useNotificationContext();
   const {
     region,
     getPlaceName,
@@ -32,7 +29,6 @@ const BookRide = () => {
     mapPadding,
     locationLoading,
   } = useMapContext();
-  const { signedIn } = useAuthContext();
   const {
     rideStatus,
     setRideStatus,
