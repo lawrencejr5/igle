@@ -57,7 +57,10 @@ const useVisibleHeight = (basePercent: number) => {
   const windowHeight = Dimensions.get("window").height;
   const fontScale = PixelRatio.getFontScale();
   const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(basePercent * factor)));
+  const snapPercent = Math.min(
+    94,
+    Math.max(20, Math.round(basePercent * factor)),
+  );
   // Subtract ~45px for handle bar, modal paddingTop and breathing room
   return (windowHeight * snapPercent) / 100 - 45;
 };
@@ -1007,13 +1010,8 @@ const SearchingModal = () => {
 const AcceptedModal = () => {
   const { region, mapRef } = useMapContext();
 
-  const {
-    cancelling,
-    cancelRideRequest,
-    ongoingRideData,
-    setRideStatus,
-    payForRide,
-  } = useRideContext();
+  const { cancelling, cancelRideRequest, ongoingRideData, setRideStatus } =
+    useRideContext();
 
   const { showNotification } = useNotificationContext();
 
@@ -1032,6 +1030,7 @@ const AcceptedModal = () => {
 
   const track_driver = () => {
     setRideStatus("track_driver");
+    // console.log(ongoingRideData);
     setTimeout(() => {
       if (mapRef.current && ongoingRideData)
         mapRef.current.animateToRegion(
