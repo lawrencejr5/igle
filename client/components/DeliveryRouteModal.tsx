@@ -301,7 +301,7 @@ const DetailsModal = () => {
   const description = deliveryData?.package?.description || "";
   const pkgType = deliveryData?.package?.type || "document";
   const fragile = deliveryData?.package?.fragile || false;
-  const amount = deliveryData?.package?.amount?.toString() || "";
+  const quantity = deliveryData?.package?.quantity?.toString() || "";
 
   const PACKAGE_TYPES = [
     { key: "document", label: "Document" },
@@ -377,14 +377,14 @@ const DetailsModal = () => {
     );
   };
 
-  const setAmount = (value: string) => {
+  const setQuantity = (value: string) => {
     setDeliveryData(
       (prev) =>
         ({
           ...prev,
           package: {
             ...prev?.package,
-            amount: value ? parseFloat(value) : undefined,
+            quantity: value ? parseFloat(value) : undefined,
           },
         }) as any,
     );
@@ -403,8 +403,8 @@ const DetailsModal = () => {
       showNotification("Please enter package description", "error");
       return;
     }
-    if (!amount.trim()) {
-      showNotification("Please enter package amount", "error");
+    if (!quantity.trim()) {
+      showNotification("Please enter package quantity", "error");
       return;
     }
 
@@ -602,13 +602,13 @@ const DetailsModal = () => {
                   fontFamily: "raleway-semibold",
                 }}
               >
-                Amount
+                Quantity
               </Text>
               <TextInput
-                placeholder="Amount"
+                placeholder="1"
                 placeholderTextColor="#b0b0b0"
-                value={amount}
-                onChangeText={setAmount}
+                value={quantity}
+                onChangeText={setQuantity}
                 keyboardType="numeric"
                 style={[styles.text_input]}
                 selectionColor="#fff"
@@ -1145,7 +1145,6 @@ const ChooseVehicleModal = () => {
 const SearchingModal = () => {
   const {
     deliveryStatus,
-    setDeliveryStatus,
     resetDeliveryFlow,
     ongoingDeliveryData,
     cancelDelivery,
@@ -1436,7 +1435,7 @@ const AcceptedModal = () => {
   const packageData = ongoingDeliveryData?.package;
   const packageDescription = packageData?.description || "Package";
   const packageType = packageData?.type || "other";
-  const packageAmount = packageData?.amount || deliveryFare;
+  const packageQuantity = packageData?.quantity || deliveryFare;
   const isFragile = packageData?.fragile || false;
   const recipientName = ongoingDeliveryData?.to?.name || "Unknown Recipient";
   const recipientPhone = ongoingDeliveryData?.to?.phone || "N/A";
@@ -1594,7 +1593,7 @@ const AcceptedModal = () => {
                 marginTop: 2,
               }}
             >
-              {packageDescription} ({packageAmount})
+              {packageDescription} ({packageQuantity})
               {isFragile ? " • Fragile" : ""}
             </Text>
           </View>
@@ -2511,7 +2510,6 @@ const InTransitModal = () => {
     ? `${driverData.vehicle.color} ${driverData.vehicle.brand} ${driverData.vehicle.model}`
     : "Unknown Vehicle";
   const driverRating = driverData?.rating || 0;
-  const driverLocation = driverData?.current_location?.coordinates;
 
   // Extract delivery details
   const deliveryId = ongoingDeliveryData?._id || "N/A";
@@ -2519,7 +2517,7 @@ const InTransitModal = () => {
   const packageData = ongoingDeliveryData?.package;
   const packageDescription = packageData?.description || "Package";
   const packageType = packageData?.type || "other";
-  const packageAmount = packageData?.amount || deliveryFare;
+  const packageQuantity = packageData?.quantity || deliveryFare;
   const isFragile = packageData?.fragile || false;
   const recipientName = ongoingDeliveryData?.to?.name || "Unknown Recipient";
   const recipientPhone = ongoingDeliveryData?.to?.phone || "N/A";
@@ -2743,7 +2741,7 @@ const InTransitModal = () => {
                 marginTop: 2,
               }}
             >
-              {packageDescription} ({packageAmount})
+              {packageDescription} ({packageQuantity})
               {isFragile ? " • Fragile" : ""}
             </Text>
           </View>
@@ -3276,6 +3274,7 @@ const styles = StyleSheet.create({
     width: "95%",
     color: "#ffffff",
     paddingHorizontal: 20,
+    paddingVertical: 10,
     fontFamily: "raleway-semibold",
   },
   priceText: {

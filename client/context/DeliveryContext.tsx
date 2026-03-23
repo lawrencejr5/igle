@@ -80,8 +80,6 @@ export const getVehicleIcon = (vehicle?: string) => {
   }
 };
 
-type Contact = { name?: string; phone?: string } | undefined;
-
 export type DeliveryStatus =
   | "pending"
   | "scheduled"
@@ -148,7 +146,7 @@ export interface Delivery {
   package?: {
     description?: string;
     fragile?: boolean;
-    amount?: number;
+    quantity?: number;
     type?: DeliveryPackageType;
   };
   status: DeliveryStatus;
@@ -259,7 +257,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       if (delivery_id === latestDeliveryIdRef.current) {
         setOngoingDeliveryData(
-          (prev) => ({ ...prev, status: "expired" } as any)
+          (prev) => ({ ...prev, status: "expired" }) as any,
         );
         setDeliveryStatus("expired");
       }
@@ -455,7 +453,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const [userDeliveries, setUserDeliveries] = useState<Delivery[] | null>(null);
   const [ongoingDeliveries, setOngoingDeliveries] = useState<Delivery[] | null>(
-    null
+    null,
   );
   const [cancelledDeliveries, setCancelledDeliveries] = useState<
     Delivery[] | null
@@ -476,7 +474,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Delivery route functions
   const fetchDeliveryRoute = async (
     pickupCoords: [number, number],
-    dropoffCoords: [number, number]
+    dropoffCoords: [number, number],
   ) => {
     try {
       const result = await getRoute(pickupCoords, dropoffCoords);
@@ -520,7 +518,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     ) {
       fetchDeliveryRoute(
         ongoingDeliveryData.pickup.coordinates,
-        ongoingDeliveryData.dropoff.coordinates
+        ongoingDeliveryData.dropoff.coordinates,
       );
     }
     // For booking flow, use current pickup and destination coordinates
@@ -555,7 +553,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const headers = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(
         `${API_URL}/data?delivery_id=${delivery_id}`,
-        headers
+        headers,
       );
       if (data.delivery) {
         setOngoingDeliveryData(data.delivery);
@@ -583,7 +581,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const requestDelivery = async (
     vehicleDetails?: { type: string; amount: number },
-    scheduled_time?: Date
+    scheduled_time?: Date,
   ) => {
     try {
       if (!deliveryData) {
@@ -642,7 +640,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.post(
         `${API_URL}/request${qs}`,
         { pickup, dropoff, package_data, fare, vehicle, to },
-        headers
+        headers,
       );
       showNotification(data.msg || "Delivery requested", "success");
 
@@ -669,7 +667,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.patch(
         `${API_URL}/retry?delivery_id=${delivery_id}`,
         {},
-        headers
+        headers,
       );
       showNotification(data.msg || "Retrying delivery", "success");
       await fetchUserActiveDelivery();
@@ -689,7 +687,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.post(
         `${API_URL}/rebook?delivery_id=${delivery_id}`,
         {},
-        headers
+        headers,
       );
       showNotification(data.msg || "Rebooked delivery", "success");
       await fetchUserActiveDelivery();
@@ -777,7 +775,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const headers = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get(
         `${API_URL}/user?status=delivered`,
-        headers
+        headers,
       );
       setDeliveredDeliveries(data.deliveries || []);
       return data.deliveries || [];
@@ -793,7 +791,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.patch(
         `${API_URL}/status?delivery_id=${delivery_id}`,
         { status },
-        headers
+        headers,
       );
       showNotification(data.msg || "Status updated", "success");
       await fetchUserActiveDelivery();
@@ -801,7 +799,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     } catch (err: any) {
       showNotification(
         err?.response?.data?.msg || "Failed to update status",
-        "error"
+        "error",
       );
       throw err;
     }
@@ -814,13 +812,13 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.post(
         `${API_URL}/pay?delivery_id=${delivery_id}`,
         {},
-        headers
+        headers,
       );
       showNotification(data.msg || "Payment successful", "success");
       await createActivity(
         "delivery_payment",
         "Paid for delivery",
-        `${ongoingDeliveryData?.fare} was debitted from ur wallet`
+        `${ongoingDeliveryData?.fare} was debitted from ur wallet`,
       );
       await fetchUserActiveDelivery();
       return data.transaction;
@@ -835,7 +833,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const cancelDelivery = async (
     delivery_id: string,
     by: "sender" | "driver",
-    reason?: string
+    reason?: string,
   ) => {
     try {
       setCancelling(true);
@@ -843,7 +841,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.patch(
         `${API_URL}/cancel?delivery_id=${delivery_id}`,
         { by, reason },
-        headers
+        headers,
       );
       showNotification(data.msg || "Delivery cancelled", "success");
       resetDeliveryFlow();
@@ -852,7 +850,7 @@ const DeliverProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "cancelled_delivery",
         "Cancelled delivery",
         `You cancelled your delivery to ${data.delivery.dropoff.address}`,
-        { delivery_id: data.delivery._id }
+        { delivery_id: data.delivery._id },
       );
 
       await fetchUserActiveDelivery();
@@ -924,7 +922,7 @@ export interface DeliverContextType {
   resetDeliveryFlow: () => void;
   requestDelivery: (
     vehicleDetails?: { type: string; amount: number },
-    scheduled_time?: Date
+    scheduled_time?: Date,
   ) => Promise<any>;
   retryDelivery: (delivery_id: string) => Promise<any>;
   rebookDelivery: (delivery_id: string) => Promise<any>;
@@ -936,7 +934,7 @@ export interface DeliverContextType {
   cancelDelivery: (
     delivery_id: string,
     by: "sender" | "driver",
-    reason?: string
+    reason?: string,
   ) => Promise<any>;
 
   userDeliveries: Delivery[] | null;
@@ -956,7 +954,7 @@ export interface DeliverContextType {
   deliveryDropoffMarker: { latitude: number; longitude: number } | null;
   fetchDeliveryRoute: (
     pickupCoords: [number, number],
-    dropoffCoords: [number, number]
+    dropoffCoords: [number, number],
   ) => Promise<void>;
   fetchCancelledDeliveries: () => Promise<any>;
   fetchDeliveredDeliveries: () => Promise<any>;

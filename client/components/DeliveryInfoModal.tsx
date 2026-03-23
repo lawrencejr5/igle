@@ -65,10 +65,8 @@ const DeliveryInfoModal: FC<DeliveryInfoModalProps> = ({
   const pkgType = packageData?.type || delivery?.vehicle || "other";
   const pkgDesc = packageData?.description || "—";
   const fragile = packageData?.fragile ? "Yes" : "No";
-  const declaredAmt =
-    packageData?.amount != null
-      ? `NGN ${Number(packageData.amount).toLocaleString()}`
-      : "—";
+  const quantity =
+    packageData?.quantity != null ? String(packageData.quantity) : "0";
 
   const id = delivery?._id || "";
   const fare =
@@ -151,7 +149,7 @@ const DeliveryInfoModal: FC<DeliveryInfoModalProps> = ({
               <LabelRow label="Type" value={String(pkgType)} />
               <LabelRow label="Description" value={String(pkgDesc)} />
               <LabelRow label="Fragile" value={fragile} />
-              <LabelRow label="Declared value" value={declaredAmt} />
+              <LabelRow label="Quantity" value={quantity} />
             </Section>
 
             <Section title="Route">

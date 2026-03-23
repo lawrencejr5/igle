@@ -6,7 +6,6 @@ import * as Haptics from "expo-haptics";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
-import { useNotificationContext } from "../../context/NotificationContext";
 import { useMapContext } from "../../context/MapContext";
 
 import { router, useLocalSearchParams } from "expo-router";
@@ -18,7 +17,6 @@ import DeliveryRouteModal from "../../components/DeliveryRouteModal";
 import { useDeliverContext } from "../../context/DeliveryContext";
 
 const BookDelivery = () => {
-  const { notification } = useNotificationContext();
   const { region, userAddress, mapRef, mapPadding } = useMapContext();
   const {
     deliveryStatus,
