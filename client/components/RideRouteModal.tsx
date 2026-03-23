@@ -52,6 +52,16 @@ import RideInfoModal from "./RideInfoModal";
 import { useRatingContext } from "../context/RatingContext";
 import DriverCard, { DriverDetailsModal } from "./DriverCard";
 
+/** Helper hook to compute the exact visible height inside the bottom sheet based on its snap percentage. */
+const useVisibleHeight = (basePercent: number) => {
+  const windowHeight = Dimensions.get("window").height;
+  const fontScale = PixelRatio.getFontScale();
+  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
+  const snapPercent = Math.min(94, Math.max(20, Math.round(basePercent * factor)));
+  // Subtract ~45px for handle bar, modal paddingTop and breathing room
+  return (windowHeight * snapPercent) / 100 - 45;
+};
+
 const RideRouteModal = () => {
   const {
     userAddress,
@@ -690,12 +700,7 @@ const ChooseRideModal = () => {
   >("cab");
 
   // Calculate the visible height of the bottom sheet at the choosing_car snap point (index 2 = 40%)
-  const windowHeight = Dimensions.get("window").height;
-  const fontScale = PixelRatio.getFontScale();
-  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(40 * factor)));
-  // Subtract ~45px for the handle bar (15px) + modal paddingTop (10px) + extra breathing room (20px)
-  const visibleHeight = (windowHeight * snapPercent) / 100 - 45;
+  const visibleHeight = useVisibleHeight(40);
 
   const book_ride = async () => {
     setBooking(true);
@@ -1044,11 +1049,7 @@ const AcceptedModal = () => {
   const { rideDetails } = useMapContext();
 
   // Calculate the visible height of the bottom sheet at the accepted snap point (index 4 = 75%)
-  const windowHeight = Dimensions.get("window").height;
-  const fontScale = PixelRatio.getFontScale();
-  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(75 * factor)));
-  const visibleHeight = (windowHeight * snapPercent) / 100 - 45;
+  const visibleHeight = useVisibleHeight(75);
 
   return (
     <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
@@ -1147,11 +1148,7 @@ const TrackDriver = () => {
   };
 
   // Calculate the visible height of the bottom sheet at the track_driver snap point (index 1 = 32%)
-  const windowHeight = Dimensions.get("window").height;
-  const fontScale = PixelRatio.getFontScale();
-  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(32 * factor)));
-  const visibleHeight = (windowHeight * snapPercent) / 100 - 45;
+  const visibleHeight = useVisibleHeight(32);
 
   return (
     <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
@@ -1208,11 +1205,7 @@ const PayModal = () => {
   const { setRideStatus, ongoingRideData } = useRideContext();
 
   // Calculate the visible height of the bottom sheet at the pay snap point (index 4 = 75%)
-  const windowHeight = Dimensions.get("window").height;
-  const fontScale = PixelRatio.getFontScale();
-  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(75 * factor)));
-  const visibleHeight = (windowHeight * snapPercent) / 100 - 45;
+  const visibleHeight = useVisibleHeight(75);
 
   return (
     <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
@@ -1299,11 +1292,7 @@ const PayingModal = () => {
   };
 
   // Calculate the visible height of the bottom sheet at the paying snap point (index 1 = 32%)
-  const windowHeight = Dimensions.get("window").height;
-  const fontScale = PixelRatio.getFontScale();
-  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(32 * factor)));
-  const visibleHeight = (windowHeight * snapPercent) / 100 - 45;
+  const visibleHeight = useVisibleHeight(32);
 
   return (
     <View
@@ -1421,11 +1410,7 @@ const PaidModal = () => {
   };
 
   // Calculate the visible height of the bottom sheet at the paid snap point (index 1 = 32%)
-  const windowHeight = Dimensions.get("window").height;
-  const fontScale = PixelRatio.getFontScale();
-  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(32 * factor)));
-  const visibleHeight = (windowHeight * snapPercent) / 100 - 45;
+  const visibleHeight = useVisibleHeight(32);
 
   return (
     <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
@@ -1524,11 +1509,7 @@ const TrackRide = () => {
   const [rideInfoOpen, setRideInfoOpen] = useState(false);
 
   // Calculate the visible height of the bottom sheet at the track_ride snap point (index 0 = 25%)
-  const windowHeight = Dimensions.get("window").height;
-  const fontScale = PixelRatio.getFontScale();
-  const factor = fontScale <= 1 ? 1 : Math.min(1.3, 1 + (fontScale - 1) * 0.7);
-  const snapPercent = Math.min(94, Math.max(20, Math.round(25 * factor)));
-  const visibleHeight = (windowHeight * snapPercent) / 100 - 45;
+  const visibleHeight = useVisibleHeight(25);
 
   return (
     <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
