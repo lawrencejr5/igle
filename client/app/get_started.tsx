@@ -19,6 +19,7 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 import * as AppleAuthentication from "expo-apple-authentication";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 import { useNotificationContext } from "../context/NotificationContext";
 
@@ -159,6 +160,7 @@ const StartScreen = () => {
           style={{ height: 300, width: 300 }}
         />
         <Text
+          allowFontScaling={false}
           style={{
             color: "#fff",
             fontFamily: "raleway-black",
@@ -187,27 +189,29 @@ const StartScreen = () => {
             source={require("../assets/images/icons/mail.png")}
             style={styles.sign_image}
           />
-          <Text style={styles.sign_text}>Continue with Email</Text>
+          <Text style={styles.sign_text} allowFontScaling={false}>
+            Continue with Email
+          </Text>
         </TouchableOpacity>
 
         {/* Apple Sign In — only available on iOS */}
         {Platform.OS === "ios" ? (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={
-              AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
-            }
-            buttonStyle={
-              AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-            }
-            cornerRadius={30}
-            style={{
-              width: "100%",
-              height: 54,
-              marginVertical: 10,
-              opacity: appleAuthLoading ? 0.8 : 1,
-            }}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={appleAuthLoading}
+            style={[styles.sign_btn, { opacity: appleAuthLoading ? 0.8 : 1 }]}
             onPress={handleAppleSignIn}
-          />
+          >
+            <Image
+              source={require("../assets/images/icons/apple-logo.png")}
+              style={{ height: 25, width: 24 }}
+            />
+            <Text style={styles.sign_text} allowFontScaling={false}>
+              {appleAuthLoading
+                ? "Signing in with Apple..."
+                : "Continue with Apple"}
+            </Text>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity
             activeOpacity={0.7}
@@ -228,7 +232,7 @@ const StartScreen = () => {
               source={require("../assets/images/icons/google-logo.png")}
               style={styles.sign_image}
             />
-            <Text style={styles.sign_text}>
+            <Text style={styles.sign_text} allowFontScaling={false}>
               {googleAuthLoading
                 ? "Signing with google..."
                 : "Continue with Google"}
@@ -256,12 +260,12 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   sign_image: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
   },
   sign_text: {
     color: "#121212",
     fontFamily: "raleway-bold",
-    fontSize: 16,
+    fontSize: 17,
   },
 });

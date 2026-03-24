@@ -594,7 +594,7 @@ const OngoingCard = ({
             fontFamily: "raleway-bold",
             fontSize: 10,
             textTransform: "capitalize",
-            width: "100%",
+            textAlign: "center",
           }}
         >
           {ongoing.status}
