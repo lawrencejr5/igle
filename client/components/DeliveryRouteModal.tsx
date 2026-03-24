@@ -291,7 +291,7 @@ const StartModal = () => {
 };
 
 const DetailsModal = () => {
-  const { setDeliveryStatus, deliveryData, setDeliveryData } =
+  const { setDeliveryStatus, deliveryData, setDeliveryData, deliveryModalRef } =
     useDeliverContext();
   const { showNotification } = useNotificationContext() as any;
 
@@ -446,6 +446,7 @@ const DetailsModal = () => {
             placeholder="Recipient full name"
             placeholderTextColor="#b0b0b0"
             value={recipientName}
+            onFocus={() => deliveryModalRef?.current?.snapToIndex(5)}
             onChangeText={setRecipientName}
             style={styles.text_input}
             selectionColor="#fff"
@@ -466,6 +467,7 @@ const DetailsModal = () => {
             placeholder="Recipient phone number"
             placeholderTextColor="#b0b0b0"
             value={recipientPhone}
+            onFocus={() => deliveryModalRef?.current?.snapToIndex(5)}
             onChangeText={setRecipientPhone}
             keyboardType="phone-pad"
             style={styles.text_input}
@@ -520,6 +522,7 @@ const DetailsModal = () => {
             placeholder=" e.g. iPhone XR, Bag of oranges"
             placeholderTextColor="#b0b0b0"
             value={description}
+            onFocus={() => deliveryModalRef?.current?.snapToIndex(5)}
             onChangeText={setDescription}
             style={[styles.text_input]}
             multiline
@@ -608,6 +611,7 @@ const DetailsModal = () => {
                 placeholder="1"
                 placeholderTextColor="#b0b0b0"
                 value={quantity}
+                onFocus={() => deliveryModalRef?.current?.snapToIndex(5)}
                 onChangeText={setQuantity}
                 keyboardType="numeric"
                 style={[styles.text_input]}
@@ -656,7 +660,7 @@ const DetailsModal = () => {
 };
 
 const RouteModal = () => {
-  const { setDeliveryStatus, deliveryData, setDeliveryData } =
+  const { setDeliveryStatus, deliveryData, setDeliveryData, deliveryModalRef } =
     useDeliverContext();
   const { getSuggestions, getPlaceCoords, calculateDelivery } =
     useMapContext() as any;
@@ -705,11 +709,13 @@ const RouteModal = () => {
   const pickupFocus = () => {
     setActiveSuggestion("pickup");
     setDropoffSuggestions([]);
+    deliveryModalRef?.current?.snapToIndex(5);
   };
 
   const dropoffFocus = () => {
     setActiveSuggestion("dropoff");
     setPickupSuggestions([]);
+    deliveryModalRef?.current?.snapToIndex(5);
   };
 
   // Get suggestions when pickup text changes

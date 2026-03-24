@@ -95,11 +95,13 @@ const RideRouteModal = () => {
     setActiveSuggestion("pickup");
     setPickupSuggestions(null);
     setDestinationSuggestions(null);
+    routeModalRef.current?.snapToIndex(5);
   };
   const destinationFocus = () => {
     setActiveSuggestion("");
     setPickupSuggestions(null);
     setDestinationSuggestions(null);
+    routeModalRef.current?.snapToIndex(5);
   };
 
   useEffect(() => {
