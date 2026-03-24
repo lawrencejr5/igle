@@ -8,9 +8,8 @@ import {
 import React, { useState } from "react";
 
 import Feather from "@expo/vector-icons/Feather";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 
 import { useNotificationContext } from "../../context/NotificationContext";
 import { useAuthContext } from "../../context/AuthContext";
@@ -20,10 +19,10 @@ import { auth_styles } from "../../styles/auth.styles";
 const AddPhone = () => {
   const styles = auth_styles();
 
-  const { showNotification, notification } = useNotificationContext()!;
+  const { showNotification } = useNotificationContext()!;
   const { updatePhone } = useAuthContext()!;
 
-  const [verifyShow, setVerifyShow] = useState(false);
+  const [verifyShow] = useState(false);
 
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);

@@ -51,7 +51,7 @@ const AddFullname = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#121212" }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         style={styles.container}

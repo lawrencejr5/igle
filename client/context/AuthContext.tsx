@@ -76,9 +76,11 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const isAppleHiddenEmail = (email: string) =>
     email?.endsWith("@privaterelay.appleid.com");
 
-  // Check if name looks auto-generated (no spaces = likely email prefix fallback)
-  const needsFullname = (name: string, email: string) =>
-    isAppleHiddenEmail(email) && !name.includes(" ");
+  // Check if name looks auto-generated (matches the email prefix)
+  const needsFullname = (name: string, email: string) => {
+    if (!email || !name) return false;
+    return isAppleHiddenEmail(email) && name === email.split("@")[0];
+  };
 
   useEffect(() => {
     if (!signedIn) {
@@ -400,10 +402,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     identityToken: string,
     fullName?: { givenName?: string | null; familyName?: string | null } | null,
   ): Promise<void> => {
-    console.log("[AppleAuth] appleLogin called, sending to server...");
-    console.log("[AppleAuth] API_URL:", API_URL);
-    console.log("[AppleAuth] identityToken length:", identityToken?.length);
-    console.log("[AppleAuth] fullName:", fullName);
     try {
       const { data } = await axios.post(`${API_URL}/apple_auth`, {
         identityToken,
@@ -431,15 +429,10 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         "success",
       );
 
-      console.log("[AppleAuth] Calling getUserData...");
       await getUserData();
-      console.log("[AppleAuth] getUserData completed");
-
-      console.log("[AppleAuth] Navigation decision:", { isNew: data.isNew, hasPhone, is_driver, userName: data.user?.name, userEmail: data.user?.email });
 
       // Check if name needs to be captured (Apple hidden email with auto-generated name)
       if (needsFullname(data.user?.name || "", data.user?.email || "")) {
-        console.log("[AppleAuth] Hidden Apple account detected, navigating to fullname");
         router.replace("/(auth)/fullname");
       } else if (data.isNew || !hasPhone) {
         console.log("[AppleAuth] Navigating to phone screen");
@@ -458,7 +451,9 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         message: err?.message,
       });
       showNotification(
-        err?.response?.data?.msg || err?.response?.data?.message || "Apple login failed.",
+        err?.response?.data?.msg ||
+          err?.response?.data?.message ||
+          "Apple login failed.",
         "error",
       );
       console.log(

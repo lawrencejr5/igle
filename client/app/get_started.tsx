@@ -164,7 +164,7 @@ const StartScreen = () => {
           style={{
             color: "#fff",
             fontFamily: "raleway-black",
-            fontSize: 25,
+            fontSize: 30,
             textAlign: "center",
             lineHeight: 35,
           }}
