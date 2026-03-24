@@ -58,7 +58,11 @@ const BookRide = () => {
     if (!region) return;
 
     const timer = setTimeout(() => {
-      if (mapRef.current && rideStatus !== "track_driver" && rideStatus !== "track_ride") {
+      if (
+        mapRef.current &&
+        rideStatus !== "track_driver" &&
+        rideStatus !== "track_ride"
+      ) {
         mapRef.current.animateToRegion(region, 1000);
       }
     }, 500);
@@ -83,7 +87,7 @@ const BookRide = () => {
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         },
-        1000
+        1000,
       );
     }
   }, [ongoingRideData?.driver?.current_location?.coordinates, rideStatus]);
@@ -198,57 +202,44 @@ const BookRide = () => {
                       </View>
                     </Marker>
                   )}
-                {/* Driver marker - show when tracking driver */}
-                {rideStatus === "track_driver" &&
+                {/* Driver marker - show when tracking driver or tracking ride */}
+                {(rideStatus === "track_driver" ||
+                  rideStatus === "track_ride") &&
                   ongoingRideData &&
-                  ongoingRideData.driver?.current_location?.coordinates &&
-                  ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
-                  ongoingRideData.driver.current_location.coordinates[1] !== 0 && (
+                  (ongoingRideData.driver?.current_location?.coordinates ||
+                    ongoingRideData.pickup?.coordinates) && (
                     <Marker
-                      coordinate={{
-                        latitude:
-                          ongoingRideData.driver.current_location
-                            .coordinates[0],
-                        longitude:
-                          ongoingRideData.driver.current_location
-                            .coordinates[1],
-                      }}
-                      title={"Your driver is here!"}
-                      anchor={{ x: 0.2, y: 0.2 }}
-                      tracksViewChanges={false}
-                    >
-                      <Image
-                        source={require("../../assets/images/user.png")}
-                        style={{ height: 35, width: 35, borderRadius: 50 }}
-                      />
-                    </Marker>
-                  )}
-                {/* User marker - show when tracking ride */}
-                {rideStatus === "track_ride" &&
-                  ongoingRideData &&
-                  ongoingRideData.driver?.current_location?.coordinates &&
-                  ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
-                  ongoingRideData.driver.current_location.coordinates[1] !== 0 && (
-                    <Marker
-                      coordinate={{
-                        latitude:
-                          ongoingRideData.driver.current_location
-                            .coordinates[0],
-                        longitude:
-                          ongoingRideData.driver.current_location
-                            .coordinates[1],
-                      }}
-                      title={"You are here!"}
+                      coordinate={
+                        ongoingRideData.driver?.current_location?.coordinates &&
+                        ongoingRideData.driver.current_location
+                          .coordinates[0] !== 0 &&
+                        ongoingRideData.driver.current_location
+                          .coordinates[1] !== 0
+                          ? {
+                              latitude:
+                                ongoingRideData.driver.current_location
+                                  .coordinates[0],
+                              longitude:
+                                ongoingRideData.driver.current_location
+                                  .coordinates[1],
+                            }
+                          : {
+                              latitude: ongoingRideData.pickup.coordinates[0],
+                              longitude: ongoingRideData.pickup.coordinates[1],
+                            }
+                      }
+                      title={
+                        rideStatus === "track_driver"
+                          ? "Your driver is here!"
+                          : "You are here!"
+                      }
                       anchor={{ x: 0.2, y: 0.2 }}
                       tracksViewChanges={false}
                     >
                       <Image
                         source={
-                          (ongoingRideData.driver as any)?.profile_img
-                            ? {
-                                uri: (ongoingRideData.driver as any)
-                                  .profile_img,
-                              }
+                          ongoingRideData.driver?.profile_img
+                            ? { uri: ongoingRideData.driver?.profile_img }
                             : require("../../assets/images/user.png")
                         }
                         style={{

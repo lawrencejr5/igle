@@ -72,6 +72,7 @@ interface Ride {
   driver: {
     _id: string;
     vehicle_type: string;
+    profile_img: string;
     vehicle: {
       model: string;
       brand: string;
@@ -147,7 +148,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   // Ride route functions
   const fetchRideRoute = async (
     pickupCoords: [number, number],
-    destinationCoords: [number, number]
+    destinationCoords: [number, number],
   ) => {
     try {
       const result = await getRoute(pickupCoords, destinationCoords);
@@ -187,7 +188,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     ) {
       fetchRideRoute(
         ongoingRideData.pickup.coordinates,
-        ongoingRideData.destination.coordinates
+        ongoingRideData.destination.coordinates,
       );
     }
     // For booking flow, use current pickup and destination coordinates
@@ -490,14 +491,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
     destination: { address: string; coordinates: [number, number] },
     fare: number,
     vehicle: "cab" | "keke" | "suv",
-    scheduled_time?: Date
+    scheduled_time?: Date,
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
 
     try {
       const distance_and_duration = await calculateRide(
         pickup.coordinates,
-        destination.coordinates
+        destination.coordinates,
       );
       const distanceKm = distance_and_duration?.distanceKm;
       const durationMins = distance_and_duration?.durationMins;
@@ -508,14 +509,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       // only append scheduled_time if it exists
       if (scheduled_time) {
         url += `&scheduled_time=${encodeURIComponent(
-          scheduled_time.toISOString()
+          scheduled_time.toISOString(),
         )}`;
       }
 
       const { data } = await axios.post(
         url,
         { pickup, destination, fare, vehicle },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setOngoingRideData(data.ride);
       showNotification(data.msg, "success");
@@ -534,7 +535,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       const { data } = await axios.patch(
         `${API_URL}/retry?ride_id=${ride_id}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setOngoingRideData(data.ride);
       showNotification(data.msg, "success");
@@ -553,7 +554,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       const { data } = await axios.post(
         `${API_URL}/rebook?ride_id=${ride_id}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setOngoingRideData(data.ride);
       showNotification(data.msg, "success");
@@ -568,7 +569,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const cancelRideRequest = async (
     ride_id: string,
     by: "rider" | "driver",
-    reason: string
+    reason: string,
   ): Promise<void> => {
     setCancelling(true);
     const token = await AsyncStorage.getItem("token");
@@ -576,14 +577,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       const { data } = await axios.patch(
         `${API_URL}/cancel?ride_id=${ride_id}`,
         { reason, by },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       resetRide();
       await createActivity(
         "cancelled_ride",
         "Cancelled ride",
         `You cancelled your ride to ${data.ride.destination.address}`,
-        { ride_id: data.ride._id }
+        { ride_id: data.ride._id },
       );
       await getUserCancelledRides();
       showNotification("Ride request cancelled", "error");
@@ -682,14 +683,14 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       await getWalletBalance("User");
 
       await createActivity(
         "ride_payment",
         "Paid for ride",
-        `${ongoingRideData?.fare} was debitted from ur wallet`
+        `${ongoingRideData?.fare} was debitted from ur wallet`,
       );
 
       await fetchOngoingRideData(ongoingRideData?._id!);
@@ -703,7 +704,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   };
 
   const fetchUserRides = async (
-    status: "completed" | "cancelled"
+    status: "completed" | "cancelled",
   ): Promise<Ride[]> => {
     const token = await AsyncStorage.getItem("token");
     if (!token) return [];
@@ -720,7 +721,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   };
 
   const [userCompletedRides, setUserCompletedRides] = useState<Ride[] | null>(
-    null
+    null,
   );
   const getUserCompletedRides = async (): Promise<void> => {
     setLoadingState((prev: any) => ({ ...prev, completedRides: true }));
@@ -735,7 +736,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   };
 
   const [userCancelledRides, setUserCancelledRides] = useState<Ride[] | null>(
-    null
+    null,
   );
   const getUserCancelledRides = async (): Promise<void> => {
     setLoadingState((prev: any) => ({ ...prev, cancelledRides: true }));
@@ -759,7 +760,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
   const set_destination_func = async (
     place_id: string,
     place_name: string,
-    place_sub_name: string
+    place_sub_name: string,
   ) => {
     await addRideHistory(place_id, place_name, place_sub_name);
     if (pickupTime === "later") {
@@ -861,7 +862,7 @@ export interface RideContextType {
     destination: { address: string; coordinates: [number, number] },
     fare: number,
     vehicle: "cab" | "keke" | "suv",
-    scheduled_time?: Date
+    scheduled_time?: Date,
   ) => Promise<void>;
 
   retrying: boolean;
@@ -872,7 +873,7 @@ export interface RideContextType {
   cancelRideRequest: (
     ride_id: string,
     by: "rider" | "driver",
-    reason: string
+    reason: string,
   ) => Promise<void>;
   cancelling: boolean;
   setCancelling: Dispatch<SetStateAction<boolean>>;
@@ -904,7 +905,7 @@ export interface RideContextType {
   set_destination_func: (
     place_id: string,
     place_name: string,
-    place_sub_name: string
+    place_sub_name: string,
   ) => Promise<void>;
   set_pickup_func: (place_id: string, place_name: string) => Promise<void>;
 
@@ -935,7 +936,7 @@ export interface RideContextType {
   rideDestinationMarker: { latitude: number; longitude: number } | null;
   fetchRideRoute: (
     pickupCoords: [number, number],
-    destinationCoords: [number, number]
+    destinationCoords: [number, number],
   ) => Promise<void>;
 }
 

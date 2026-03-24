@@ -199,60 +199,31 @@ const BookDelivery = () => {
                 />
               )}
 
-            {/* Driver marker - show when tracking driver */}
-            {deliveryStatus === "track_driver" &&
+            {/* Driver marker - show when tracking driver or delivery progress */}
+            {(deliveryStatus === "track_driver" || deliveryStatus === "track_delivery") &&
               ongoingDeliveryData &&
-              ongoingDeliveryData.driver?.current_location?.coordinates &&
-              ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
-              ongoingDeliveryData.driver.current_location.coordinates[1] !== 0 && (
+              (ongoingDeliveryData.driver?.current_location?.coordinates || ongoingDeliveryData.pickup?.coordinates) && (
                 <Marker
-                  coordinate={{
-                    latitude:
-                      ongoingDeliveryData.driver.current_location
-                        .coordinates[0],
-                    longitude:
-                      ongoingDeliveryData.driver.current_location
-                        .coordinates[1],
-                  }}
-                  title={"Your dispatch rider is here!"}
-                  anchor={{ x: 0.2, y: 0.2 }}
-                >
-                  <Image
-                    source={
-                      (ongoingDeliveryData.driver as any)?.profile_img
-                        ? {
-                            uri: (ongoingDeliveryData.driver as any)
-                              .profile_img,
-                          }
-                        : require("../../assets/images/user.png")
-                    }
-                    style={{
-                      height: 35,
-                      width: 35,
-                      borderRadius: 50,
-                      borderWidth: 1,
-                      borderColor: "#fff",
-                    }}
-                  />
-                </Marker>
-              )}
-
-            {/* Driver marker - show when tracking delivery progress */}
-            {deliveryStatus === "track_delivery" &&
-              ongoingDeliveryData &&
-              ongoingDeliveryData.driver?.current_location?.coordinates &&
-              ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
-              ongoingDeliveryData.driver.current_location.coordinates[1] !== 0 && (
-                <Marker
-                  coordinate={{
-                    latitude:
-                      ongoingDeliveryData.driver.current_location
-                        .coordinates[0],
-                    longitude:
-                      ongoingDeliveryData.driver.current_location
-                        .coordinates[1],
-                  }}
-                  title={"Your package is on the move"}
+                  coordinate={
+                    ongoingDeliveryData.driver?.current_location?.coordinates &&
+                    ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
+                    ongoingDeliveryData.driver.current_location.coordinates[1] !== 0
+                      ? {
+                          latitude:
+                            ongoingDeliveryData.driver.current_location
+                              .coordinates[0],
+                          longitude:
+                            ongoingDeliveryData.driver.current_location
+                              .coordinates[1],
+                        }
+                      : {
+                          latitude:
+                            ongoingDeliveryData.pickup.coordinates[0],
+                          longitude:
+                            ongoingDeliveryData.pickup.coordinates[1],
+                        }
+                  }
+                  title={deliveryStatus === "track_driver" ? "Your dispatch rider is here!" : "Your package is on the move"}
                   anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <Image
