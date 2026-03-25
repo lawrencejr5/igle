@@ -33,8 +33,7 @@ export async function sendPushNotification(expoPushToken: string) {
 }
 
 function handleRegistrationError(errorMessage: string) {
-  alert(errorMessage);
-  throw new Error(errorMessage);
+  console.warn(errorMessage);
 }
 
 export async function registerForPushNotificationsAsync() {
@@ -57,7 +56,7 @@ export async function registerForPushNotificationsAsync() {
     }
     if (finalStatus !== "granted") {
       handleRegistrationError(
-        "Permission not granted to get push token for push notification!"
+        "Permission not granted to get push token for push notification!",
       );
       return;
     }

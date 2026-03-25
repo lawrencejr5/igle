@@ -278,11 +278,13 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
 
     // Listen for driver location updates for the active ride
     const onDriverLocation = (payload: any) => {
+      // console.log(payload.coordinates);
       try {
         const { driver_id, coordinates } = payload;
         setOngoingRideData((prev: any) => {
           if (!prev) return prev;
-          if (!prev.driver || prev.driver._id !== driver_id) return prev;
+          if (prev.driver._id !== driver_id) return prev;
+
           // throttle tiny/no-op movements to reduce renders
           const [lat, lng] = coordinates as [number, number];
           const last = lastCoordRef.current;
@@ -413,7 +415,7 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       try {
         await getActiveRide();
       } catch (error: any) {
-        const errMsg = error.response.data.msg;
+        const errMsg = error.response?.data?.msg || error.message;
         console.log("Error loading ongoing ride:", errMsg);
       }
     };
@@ -642,7 +644,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       setOngoingRideData(data.ride);
     } catch (error: any) {
       console.log(error);
-      showNotification(error.response.data.msg, "error");
+      const errMsg = error.response?.data?.msg || error.message;
+      showNotification(errMsg, "error");
     }
   };
 
@@ -656,7 +659,8 @@ export const RideContextProvider: FC<{ children: ReactNode }> = ({
       setOngoingRide(data.ride);
     } catch (error: any) {
       console.log(error);
-      showNotification(error.response.data.msg, "error");
+      const errMsg = error.response?.data?.msg || error.message;
+      showNotification(errMsg, "error");
     }
   };
 

@@ -160,10 +160,9 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   useEffect(() => {
     const fetchPickupRoute = async () => {
-      console.log("fetching...");
       const { coords } = await getRoute(
         [region.latitude, region.longitude],
-        ongoingRideData?.pickup.coordinates!
+        ongoingRideData?.pickup.coordinates!,
       );
       if (coords) {
         setToPickupRouteCoords(coords);
@@ -175,11 +174,9 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     };
 
     const fetchDestinationRoute = async () => {
-      console.log("fetching...");
-
       const { coords } = await getRoute(
         ongoingRideData?.pickup.coordinates!,
-        ongoingRideData?.destination.coordinates!
+        ongoingRideData?.destination.coordinates!,
       );
       if (coords) {
         setToDestinationRouteCoords(coords);
@@ -207,7 +204,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (!ongoingDeliveryData?.pickup?.coordinates) return;
       const { coords } = await getRoute(
         [region.latitude, region.longitude],
-        ongoingDeliveryData.pickup.coordinates
+        ongoingDeliveryData.pickup.coordinates,
       );
       if (coords) {
         setToPickupRouteCoords(coords);
@@ -226,7 +223,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         return;
       const { coords } = await getRoute(
         ongoingDeliveryData.pickup.coordinates,
-        ongoingDeliveryData.dropoff.coordinates
+        ongoingDeliveryData.dropoff.coordinates,
       );
       if (coords) {
         setToDestinationRouteCoords(coords);
@@ -380,16 +377,16 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     // compute active flags with minimal deps
     const isRideActive = Boolean(
       ongoingRideData &&
-        ["accepted", "arriving", "arrived", "ongoing"].includes(
-          ongoingRideData.status
-        )
+      ["accepted", "arriving", "arrived", "ongoing"].includes(
+        ongoingRideData.status,
+      ),
     );
 
     const isDeliveryActive = Boolean(
       ongoingDeliveryData &&
-        ["accepted", "arrived", "picked_up", "in_transit"].includes(
-          ongoingDeliveryData.status
-        )
+      ["accepted", "arrived", "picked_up", "in_transit"].includes(
+        ongoingDeliveryData.status,
+      ),
     );
 
     // clear any existing timer before creating a new one
@@ -459,7 +456,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (driver?.is_available && (ongoingRideData || ongoingDeliveryData)) {
         showNotification(
           "You have an active ride/delivery. Complete it before going offline.",
-          "error"
+          "error",
         );
         return;
       }
@@ -473,7 +470,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setDriver((prev: any) => {
@@ -481,7 +478,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       });
       showNotification(
         `Availability toggled ${!driver?.is_available ? "on" : "off"}`,
-        `${!driver?.is_available ? "success" : "error"}`
+        `${!driver?.is_available ? "success" : "error"}`,
       );
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
@@ -491,7 +488,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const updateLocation = async (
-    coordinates: [number, number]
+    coordinates: [number, number],
   ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -504,7 +501,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (data.new_coordinates) {
@@ -517,7 +514,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
                   coordinates: data.new_coordinates,
                 },
               }
-            : null
+            : null,
         );
         showNotification("Location updated successfully", "success");
       }
@@ -540,7 +537,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (data.rating !== undefined) {
@@ -587,7 +584,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.get(
         `${DELIVERY_API}/data?delivery_id=${delivery_id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       return data.delivery as Delivery;
     } catch (error: any) {
@@ -598,7 +595,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const fetchIncomingDeliveryData = async (
-    delivery_id: string
+    delivery_id: string,
   ): Promise<void> => {
     try {
       const delivery = await fetchDeliveryData(delivery_id);
@@ -619,7 +616,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.patch(
         `${DELIVERY_API}/accept?delivery_id=${delivery_id}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const refreshed = await fetchDeliveryData(delivery_id);
       setOngoingDeliveryData(refreshed);
@@ -632,7 +629,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const updateDeliveryStatus = async (
-    status: "arrived" | "picked_up" | "in_transit" | "delivered"
+    status: "arrived" | "picked_up" | "in_transit" | "delivered",
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     const delivery_id = ongoingDeliveryData?._id;
@@ -644,14 +641,14 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.patch(
         `${DELIVERY_API}/status?delivery_id=${delivery_id}`,
         { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setOngoingDeliveryData((prev) => (prev ? { ...prev, status } : prev));
       if (data?.delivery?.payment_status) {
         setOngoingDeliveryData((prev) =>
           prev
             ? { ...prev, payment_status: data.delivery.payment_status }
-            : prev
+            : prev,
         );
       }
       if (status === "delivered") setToDestinationRouteCoords([]);
@@ -676,7 +673,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { data } = await axios.patch(
         `${API_URLS.rides}/accept?ride_id=${ride_id}`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const ride = await fetchRideData(ride_id);
       setOngoingRideData(ride);
@@ -690,7 +687,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
   };
 
   const updateRideStatus = async (
-    status: "arrived" | "ongoing" | "completed"
+    status: "arrived" | "ongoing" | "completed",
   ): Promise<void> => {
     const token = await AsyncStorage.getItem("token");
     const ride_id = ongoingRideData?._id;
@@ -703,7 +700,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       await axios.patch(
         `${API_URLS.rides}/status?ride_id=${ride_id}`,
         { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (status === "completed") setToDestinationRouteCoords([]);
       setOngoingRideData((prev: any) => ({ ...prev, status }));
@@ -711,7 +708,7 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
       const errMsg = error.response.data.msg;
       showNotification(
         errMsg || "An error occurred while updating ride status",
-        "error"
+        "error",
       );
       throw new Error(errMsg || "An error occurred while updating ride status");
     }
@@ -777,14 +774,14 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         `${API_URL}/rides/completed?limit=${limit}&skip=${skip}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (data.rides) {
         if (reset) setDriverCompletedRides(data.rides);
         else
           setDriverCompletedRides((prev) =>
-            prev ? [...prev, ...data.rides] : data.rides
+            prev ? [...prev, ...data.rides] : data.rides,
           );
 
         const newSkip =
@@ -838,13 +835,13 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         `${API_URL}/rides/cancelled?limit=${limit}&skip=${skip}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (data.rides) {
         if (reset) setDriverCancelledRides(data.rides);
         else
           setDriverCancelledRides((prev) =>
-            prev ? [...prev, ...data.rides] : data.rides
+            prev ? [...prev, ...data.rides] : data.rides,
           );
 
         const newSkip =
@@ -899,14 +896,14 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         `${API_URL}/deliveries/delivered?limit=${limit}&skip=${skip}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (data.deliveries) {
         if (reset) setDriverDeliveredDeliveries(data.deliveries);
         else
           setDriverDeliveredDeliveries((prev) =>
-            prev ? [...prev, ...data.deliveries] : data.deliveries
+            prev ? [...prev, ...data.deliveries] : data.deliveries,
           );
 
         const newSkip =
@@ -962,13 +959,13 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         `${API_URL}/deliveries/cancelled?limit=${limit}&skip=${skip}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (data.deliveries) {
         if (reset) setDriverCancelledDeliveries(data.deliveries);
         else
           setDriverCancelledDeliveries((prev) =>
-            prev ? [...prev, ...data.deliveries] : data.deliveries
+            prev ? [...prev, ...data.deliveries] : data.deliveries,
           );
 
         const newSkip =
@@ -1109,7 +1106,7 @@ export const useDriverContext = () => {
   const context = useContext(DriverContext);
   if (!context)
     throw new Error(
-      "Driver context can only be used within the Driver provider"
+      "Driver context can only be used within the Driver provider",
     );
   return context;
 };
@@ -1134,7 +1131,7 @@ interface DriverConextType {
   ongoingRideData: Ride | null;
   setOngoingRideData: Dispatch<SetStateAction<Ride | null>>;
   updateRideStatus: (
-    status: "arrived" | "ongoing" | "completed"
+    status: "arrived" | "ongoing" | "completed",
   ) => Promise<void>;
 
   // Delivery props
@@ -1145,7 +1142,7 @@ interface DriverConextType {
   ongoingDeliveryData: Delivery | null;
   setOngoingDeliveryData: Dispatch<SetStateAction<Delivery | null>>;
   updateDeliveryStatus: (
-    status: "arrived" | "picked_up" | "in_transit" | "delivered"
+    status: "arrived" | "picked_up" | "in_transit" | "delivered",
   ) => Promise<void>;
   fetchActiveDelivery: () => Promise<void>;
 

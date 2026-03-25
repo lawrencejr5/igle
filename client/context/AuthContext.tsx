@@ -336,6 +336,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
 
       await getUserData();
+      await registerPushToken();
 
       // If user hasn't added a phone number, navigate to phone update
       const hasPhone = !!data.user?.phone;
@@ -375,6 +376,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
 
       await getUserData();
+      await registerPushToken();
 
       // New accounts or accounts without phone must update phone first
       if (data.isNew || !hasPhone) {
@@ -408,18 +410,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         fullName,
       });
 
-      console.log("[AppleAuth] Server response received:", {
-        hasToken: !!data.token,
-        isNew: data.isNew,
-        userId: data.user?._id,
-        userEmail: data.user?.email,
-        userName: data.user?.name,
-        hasPhone: !!data.user?.phone,
-        isDriver: data.user?.is_driver,
-      });
-
       await AsyncStorage.setItem("token", data.token);
-      console.log("[AppleAuth] Token stored in AsyncStorage");
 
       const is_driver = data.user.is_driver;
       const hasPhone = !!data.user?.phone;
@@ -430,18 +421,16 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       );
 
       await getUserData();
+      await registerPushToken();
 
       // Check if name needs to be captured (Apple hidden email with auto-generated name)
       if (needsFullname(data.user?.name || "", data.user?.email || "")) {
         router.replace("/(auth)/fullname");
       } else if (data.isNew || !hasPhone) {
-        console.log("[AppleAuth] Navigating to phone screen");
         router.replace("/(auth)/phone");
       } else if (is_driver) {
-        console.log("[AppleAuth] Navigating to driver home");
         router.replace("/(driver)/home");
       } else {
-        console.log("[AppleAuth] Navigating to tabs home");
         router.replace("/(tabs)/home");
       }
     } catch (err: any) {
@@ -495,7 +484,6 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         driver_application,
         is_driver,
       });
-      await registerPushToken();
       await getWalletBalance("User");
     } catch (err) {
       console.log("Failed to fetch user data:", err);

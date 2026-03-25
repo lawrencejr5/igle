@@ -90,15 +90,10 @@ const BookRide = () => {
         1000,
       );
     }
+    console.log(ongoingRideData?.driver?.current_location?.coordinates);
   }, [ongoingRideData?.driver?.current_location?.coordinates, rideStatus]);
 
-  const [tracksViewChanges, setTracksViewChanges] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
-
-  // Stop tracking changes after the marker has loaded
-  const loadMap = () => {
-    setTracksViewChanges(false);
-  };
 
   // Note: marker coordinates update directly from context on each socket update
   return (
@@ -112,7 +107,6 @@ const BookRide = () => {
             {region && (
               <MapView
                 ref={mapRef}
-                onMapLoaded={loadMap}
                 style={{ ...StyleSheet.absoluteFillObject }}
                 provider={PROVIDER_GOOGLE}
                 initialRegion={region}
