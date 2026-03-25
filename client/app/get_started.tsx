@@ -7,7 +7,6 @@ import {
   Image,
   TouchableOpacity,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -19,7 +18,6 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { FontAwesome5 } from "@expo/vector-icons";
 
 import { useNotificationContext } from "../context/NotificationContext";
 
@@ -118,24 +116,6 @@ const StartScreen = () => {
       setAppleAuthLoading(false);
     }
   };
-  if (appleAuthLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "#121212",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <ActivityIndicator
-          size="large"
-          color="#fff"
-          style={{ transform: [{ scale: 1.5 }] }}
-        />
-      </View>
-    );
-  }
 
   return (
     <View
