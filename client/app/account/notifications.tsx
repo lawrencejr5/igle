@@ -9,14 +9,14 @@ import { Image } from "expo-image";
 
 import React, { useEffect } from "react";
 
-import { useActivityContext } from "../../../context/ActivityContext";
+import { useActivityContext } from "../../context/ActivityContext";
 
 import { FlatList } from "react-native-gesture-handler";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
-import { NotificationItem } from "../../../components/screens/NotificationScreen";
+import { NotificationItem } from "../../components/screens/NotificationScreen";
 
 const AccountNotification = () => {
   const { activities, activityLoading, fetchActivities, formatTime } =
@@ -33,7 +33,7 @@ const AccountNotification = () => {
       <View>
         <Pressable
           style={{ paddingVertical: 15 }}
-          onPress={() => router.replace("/(tabs)/account")}
+          onPress={() => router.back()}
         >
           <Feather name="chevron-left" size={30} color={"#fff"} />
         </Pressable>
@@ -90,7 +90,7 @@ const AccountNotification = () => {
           }}
         >
           <Image
-            source={require("../../../assets/images/empty_inbox-nobg.png")}
+            source={require("../../assets/images/empty_inbox-nobg.png")}
             style={{ width: 200, height: 200, borderRadius: 20 }}
           />
           <Text

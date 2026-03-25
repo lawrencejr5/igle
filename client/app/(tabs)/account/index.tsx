@@ -111,7 +111,7 @@ const Account = () => {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push("./account/personal_details");
+                router.push("/account/personal_details");
               }}
               style={{
                 flexDirection: "row",
@@ -213,7 +213,7 @@ const Account = () => {
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-                  router.push("./account/personal_details");
+                  router.push("/account/personal_details");
                 }}
               >
                 <Feather name="user" size={20} color="#c6c6c6" />
@@ -223,7 +223,7 @@ const Account = () => {
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push("./account/notifications");
+                  router.push("/account/notifications");
                 }}
                 style={styles.setting_box}
               >
@@ -234,7 +234,7 @@ const Account = () => {
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push("./account/security");
+                  router.push("/account/security");
                 }}
                 style={styles.setting_box}
               >
@@ -244,7 +244,7 @@ const Account = () => {
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push("./account/saved_places");
+                  router.push("/account/saved_places");
                 }}
                 style={styles.setting_box}
               >
@@ -254,7 +254,7 @@ const Account = () => {
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.push("./account/feedback");
+                  router.push("/account/feedback");
                 }}
                 style={styles.setting_box}
               >
@@ -268,8 +268,16 @@ const Account = () => {
                 <Feather name="star" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Rate us</Text>
               </TouchableOpacity>
-              <TouchableWithoutFeedback disabled={loggingOut} onPress={handleLogout}>
-                <View style={[styles.setting_box, { opacity: loggingOut ? 0.5 : 1 }]}>
+              <TouchableWithoutFeedback
+                disabled={loggingOut}
+                onPress={handleLogout}
+              >
+                <View
+                  style={[
+                    styles.setting_box,
+                    { opacity: loggingOut ? 0.5 : 1 },
+                  ]}
+                >
                   {loggingOut ? (
                     <ActivityIndicator size="small" color="#ca1d1d" />
                   ) : (

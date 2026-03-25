@@ -13,19 +13,19 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { router, useLocalSearchParams } from "expo-router";
 
-import AppLoading from "../../../../loadings/AppLoading";
+import AppLoading from "../../loadings/AppLoading";
 
-import { useLoading } from "../../../../context/LoadingContext";
-import { useMapContext } from "../../../../context/MapContext";
+import { useLoading } from "../../context/LoadingContext";
+import { useMapContext } from "../../context/MapContext";
 import {
   useDeliverContext,
   formatRelativeTime,
   getPackageIcon,
   getVehicleIcon,
-} from "../../../../context/DeliveryContext";
-import { darkMapStyle } from "../../../../data/map.dark";
-import RideRoute from "../../../../components/RideRoute";
-import ReportDriverModal from "../../../../components/ReportDriverModal";
+} from "../../context/DeliveryContext";
+import { darkMapStyle } from "../../data/map.dark";
+import RideRoute from "../../components/RideRoute";
+import ReportDriverModal from "../../components/ReportDriverModal";
 
 const DeliveryDetails = () => {
   const { mapRef } = useMapContext() as any;
@@ -201,7 +201,7 @@ const DeliveryDetails = () => {
                   }}
                 >
                   <Image
-                    source={require("../../../../assets/images/icons/van-icon.png")}
+                    source={require("../../assets/images/icons/van-icon.png")}
                     style={{ width: 44, height: 44 }}
                   />
                   <View>
@@ -446,7 +446,7 @@ const DeliveryDetails = () => {
                             source={
                               (d.driver as any)?.user?.profile_img
                                 ? { uri: (d.driver as any).user.profile_img }
-                                : require("../../../../assets/images/user.png")
+                                : require("../../assets/images/user.png")
                             }
                             style={{ width: 40, height: 40 }}
                           />

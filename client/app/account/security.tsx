@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 
-import { useAuthContext } from "../../../context/AuthContext";
+import { useAuthContext } from "../../context/AuthContext";
 
 const SecuritySettings = () => {
   const [passwordModalOpen, setPasswordModalOpen] = useState<boolean>(false);

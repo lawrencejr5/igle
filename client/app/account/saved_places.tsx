@@ -35,10 +35,10 @@ import { router } from "expo-router";
 
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
-import { useNotificationContext } from "../../../context/NotificationContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 
-import { useSavedPlaceContext } from "../../../context/SavedPlaceContext";
-import { useMapContext } from "../../../context/MapContext";
+import { useSavedPlaceContext } from "../../context/SavedPlaceContext";
+import { useMapContext } from "../../context/MapContext";
 
 const SavedPlaces = () => {
   const { notification } = useNotificationContext();
@@ -92,7 +92,7 @@ const SavedPlaces = () => {
         <View>
           <Pressable
             style={{ paddingVertical: 15 }}
-            onPress={() => router.replace("/(tabs)/account")}
+            onPress={() => router.back()}
           >
             <Feather name="chevron-left" size={30} color={"#fff"} />
           </Pressable>

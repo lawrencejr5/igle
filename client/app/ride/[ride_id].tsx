@@ -11,22 +11,22 @@ import React, { useState, useEffect, FC } from "react";
 
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
-import AppLoading from "../../../../loadings/AppLoading";
+import AppLoading from "../../loadings/AppLoading";
 
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
-import { darkMapStyle } from "../../../../data/map.dark";
+import { darkMapStyle } from "../../data/map.dark";
 
 import { router, useLocalSearchParams } from "expo-router";
-import RideRoute from "../../../../components/RideRoute";
-import DriverCard from "../../../../components/DriverCard";
-import ReportDriverModal from "../../../../components/ReportDriverModal";
-import { useMapContext } from "../../../../context/MapContext";
-import { useRideContext } from "../../../../context/RideContext";
-import { formatRelativeTime } from "../../../../context/DeliveryContext";
-import { useLoading } from "../../../../context/LoadingContext";
+import RideRoute from "../../components/RideRoute";
+import DriverCard from "../../components/DriverCard";
+import ReportDriverModal from "../../components/ReportDriverModal";
+import { useMapContext } from "../../context/MapContext";
+import { useRideContext } from "../../context/RideContext";
+import { formatRelativeTime } from "../../context/DeliveryContext";
+import { useLoading } from "../../context/LoadingContext";
 
-import { useNotificationContext } from "../../../../context/NotificationContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const RideDetails = () => {
   const { mapRef } = useMapContext();
@@ -149,7 +149,7 @@ const RideDetails = () => {
                   }}
                 >
                   <Image
-                    source={require("../../../../assets/images/icons/sedan-icon.png")}
+                    source={require("../../assets/images/icons/sedan-icon.png")}
                     style={{ width: 50, height: 50 }}
                   />
                   <View>
@@ -321,7 +321,7 @@ const RideDetails = () => {
                       profile_img={
                         (rideData?.driver as any)?.profile_img
                           ? { uri: (rideData?.driver as any).profile_img }
-                          : require("../../../../assets/images/user.png")
+                          : require("../../assets/images/user.png")
                       }
                       id={rideData.driver._id}
                       rating={rideData.driver.rating}

@@ -14,9 +14,9 @@ import { AntDesign, Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFeedbackContext } from "../../../context/FeedbackContext";
-import { useNotificationContext } from "../../../context/NotificationContext";
-import CustomDropdown from "../../../components/CustomDropdown";
+import { useFeedbackContext } from "../../context/FeedbackContext";
+import { useNotificationContext } from "../../context/NotificationContext";
+import CustomDropdown from "../../components/CustomDropdown";
 
 const FEEDBACK_TYPES = [
   { key: "bug", label: "Bug report" },

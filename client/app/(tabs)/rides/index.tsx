@@ -356,22 +356,24 @@ const OngoingRide = ({ data }: { data: any }) => {
 
   const track_ride = () => {
     router.push("../(book)/book_ride");
-    
+
     // Determine the most appropriate tracking status based on ride status
-    const newRideStatus = ongoingRideData?.status === "ongoing" || ongoingRideData?.payment_status === "paid" 
-      ? "track_ride" 
-      : "track_driver";
-      
+    const newRideStatus =
+      ongoingRideData?.status === "ongoing" ||
+      ongoingRideData?.payment_status === "paid"
+        ? "track_ride"
+        : "track_driver";
+
     setRideStatus(newRideStatus);
-    
+
     setTimeout(() => {
       if (mapRef.current && ongoingRideData) {
         let latitude = ongoingRideData.pickup.coordinates[0];
         let longitude = ongoingRideData.pickup.coordinates[1];
-        
+
         if (
-          ongoingRideData.driver && 
-          ongoingRideData.driver.current_location && 
+          ongoingRideData.driver &&
+          ongoingRideData.driver.current_location &&
           ongoingRideData.driver.current_location.coordinates &&
           ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
           ongoingRideData.driver.current_location.coordinates[1] !== 0
@@ -379,7 +381,7 @@ const OngoingRide = ({ data }: { data: any }) => {
           latitude = ongoingRideData.driver.current_location.coordinates[0];
           longitude = ongoingRideData.driver.current_location.coordinates[1];
         }
-        
+
         mapRef.current.animateToRegion(
           {
             longitudeDelta: 0.02,
@@ -1126,7 +1128,7 @@ const CompletedRides = ({ data }: { data: any }) => {
               />
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
+                onPress={() => router.push(`/ride/${ride._id}`)}
                 style={styles.pay_btn}
               >
                 <Text style={styles.pay_btn_text}>View ride details</Text>
@@ -1219,7 +1221,7 @@ const CancelledRides = ({ data }: { data: any }) => {
               >
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => router.push(`./rides/ride_detail/${ride._id}`)}
+                  onPress={() => router.push(`/ride/${ride._id}`)}
                   style={{ width: "65%" }}
                 >
                   <Text

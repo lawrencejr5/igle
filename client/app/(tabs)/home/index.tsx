@@ -204,6 +204,7 @@ const Home = () => {
                   <Feather name="menu" size={25} color="white" />
                 </TouchableOpacity>
                 <TouchableOpacity
+                  onPress={() => router.push("../../account/personal_details")}
                   style={{
                     flexDirection: "row",
                     gap: 10,

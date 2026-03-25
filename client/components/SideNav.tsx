@@ -88,7 +88,7 @@ const SideNav: React.FC<{
       } else {
         showNotification(
           `Couldn't open ${Platform.OS === "ios" ? "App Store" : "Play Store"}`,
-          "error"
+          "error",
         );
       }
     }
@@ -168,7 +168,7 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
-                    router.push("/(tabs)/account/wallet");
+                    router.push("/account/wallet");
                   }}
                 >
                   <Entypo name="wallet" size={20} color="#c6c6c6" />
@@ -187,7 +187,7 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
-                    router.push("/(tabs)/account/feedback");
+                    router.push("/account/feedback");
                   }}
                 >
                   <Feather name="help-circle" size={20} color="#c6c6c6" />

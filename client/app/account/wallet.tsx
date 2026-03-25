@@ -6,14 +6,13 @@ import {
   TextInput,
   Pressable,
   ScrollView,
-  Dimensions,
   TouchableOpacity,
 } from "react-native";
 import React, { FC, useState } from "react";
 
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useWalletContext } from "../../../context/WalletContext";
-import { useNotificationContext } from "../../../context/NotificationContext";
+import { useWalletContext } from "../../context/WalletContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 import { router } from "expo-router";
 
 const WalletPage: FC = () => {

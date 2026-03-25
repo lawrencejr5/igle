@@ -12,28 +12,6 @@ import { Tabs } from "expo-router";
 const TabsLayout = () => {
   const insets = useSafeAreaInsets();
 
-  const segments = useSegments() as string[];
-
-  const hideTabs =
-    (segments[1] === "rides" && segments[2] === "ride_detail") ||
-    (segments[1] === "account" && segments[2] === "personal_details") ||
-    (segments[1] === "account" && segments[2] === "saved_places") ||
-    (segments[1] === "account" && segments[2] === "notifications") ||
-    (segments[1] === "account" && segments[2] === "security") ||
-    (segments[1] === "account" && segments[2] === "feedback");
-  segments[1] === "account" && segments[2] === "wallet";
-
-  // animated value for smooth transitions
-  const tabOpacity = useMemo(() => new Animated.Value(1), []);
-
-  React.useEffect(() => {
-    Animated.timing(tabOpacity, {
-      toValue: hideTabs ? 0 : 1,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  }, [hideTabs]);
-
   return (
     <View
       style={{
@@ -54,16 +32,6 @@ const TabsLayout = () => {
             height: 70,
             borderTopWidth: 0,
             elevation: 0,
-            display: hideTabs ? "none" : undefined,
-            opacity: tabOpacity as unknown as number, // RN style wants number, Animated works fine
-            transform: [
-              {
-                translateY: tabOpacity.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [80, 0], // slide down when hiding
-                }),
-              },
-            ],
           },
           tabBarActiveTintColor: "#fff",
           tabBarInactiveTintColor: "#606060",

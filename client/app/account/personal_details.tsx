@@ -18,7 +18,7 @@ import { router } from "expo-router";
 
 import * as ImagePicker from "expo-image-picker";
 
-import { useAuthContext } from "../../../context/AuthContext";
+import { useAuthContext } from "../../context/AuthContext";
 
 const PersonalDetails = () => {
   const [openNameModal, setOpenNameModal] = useState<boolean>(false);
@@ -62,7 +62,7 @@ const PersonalDetails = () => {
                 source={
                   signedIn?.profile_pic
                     ? { uri: signedIn?.profile_pic }
-                    : require("../../../assets/images/user.png")
+                    : require("../../assets/images/user.png")
                 }
                 style={{
                   height: 120,
@@ -369,7 +369,7 @@ const EditProfilePicModal: FC<{
       // Request camera permissions first
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        alert("Sorry, we need camera roll permissions to make this work!");
+        alert("Sorry, we need camera permissions to make this work!");
         return;
       }
 
@@ -387,7 +387,41 @@ const EditProfilePicModal: FC<{
           formData.append("profile_pic", {
             uri: asset.uri,
             type: asset.mimeType,
-            name: asset.fileName,
+            name: asset.fileName || "profile.jpg",
+          } as any);
+
+          await uploadProfilePic(formData);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const chooseFromGallery = async () => {
+    setOpen(false);
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need gallery permissions to make this work!");
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        if (result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          const formData = new FormData();
+          formData.append("profile_pic", {
+            uri: asset.uri,
+            type: asset.mimeType,
+            name: asset.fileName || "profile.jpg",
           } as any);
 
           await uploadProfilePic(formData);
@@ -416,46 +450,95 @@ const EditProfilePicModal: FC<{
       onRequestClose={() => setOpen(false)}
     >
       <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-        <Pressable onPress={() => {}} style={styles.modal}>
-          <Text style={styles.modal_header}>Update profile pic</Text>
+        <Pressable
+          onPress={() => {}}
+          style={[styles.modal, { paddingBottom: 50 }]}
+        >
+          <View style={{ alignItems: "center", marginBottom: 25 }}>
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                backgroundColor: "#383838",
+                borderRadius: 2,
+                marginBottom: 20,
+              }}
+            />
+            <Text style={styles.modal_header}>Update profile photo</Text>
+          </View>
 
-          <View style={{ marginTop: 20 }}>
+          <View style={{ gap: 12 }}>
+            <Pressable
+              onPress={takePhotoAndCrop}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#242424",
+                paddingVertical: 14,
+                paddingHorizontal: 20,
+                borderRadius: 14,
+              }}
+            >
+              <Feather name="camera" size={22} color="#fff" />
+              <Text
+                style={{
+                  marginLeft: 15,
+                  fontFamily: "raleway-semibold",
+                  color: "#fff",
+                  fontSize: 14,
+                }}
+              >
+                Take a photo
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={chooseFromGallery}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#242424",
+                paddingVertical: 14,
+                paddingHorizontal: 20,
+                borderRadius: 14,
+              }}
+            >
+              <Feather name="image" size={22} color="#fff" />
+              <Text
+                style={{
+                  marginLeft: 15,
+                  fontFamily: "raleway-semibold",
+                  color: "#fff",
+                  fontSize: 14,
+                }}
+              >
+                Choose from gallery
+              </Text>
+            </Pressable>
+
             <Pressable
               onPress={remove_profile_pic}
               disabled={removingPic}
               style={{
-                width: "80%",
-                backgroundColor: "#383838",
-                paddingVertical: 15,
-                borderRadius: 40,
-                alignSelf: "center",
-                marginVertical: 10,
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#242424",
+                paddingVertical: 14,
+                paddingHorizontal: 20,
+                borderRadius: 14,
                 opacity: removingPic ? 0.5 : 1,
               }}
             >
+              <Feather name="trash-2" size={22} color="#ff4444" />
               <Text
                 style={{
-                  textAlign: "center",
-                  fontFamily: "raleway-bold",
-                  color: "#fff",
+                  marginLeft: 15,
+                  fontFamily: "raleway-semibold",
+                  color: "#ff4444",
+                  fontSize: 14,
                 }}
               >
-                {removingPic ? "Removing..." : "Remove profile photo"}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={takePhotoAndCrop}
-              style={{
-                width: "80%",
-                backgroundColor: "#fff",
-                paddingVertical: 15,
-                borderRadius: 40,
-                alignSelf: "center",
-                marginVertical: 10,
-              }}
-            >
-              <Text style={{ textAlign: "center", fontFamily: "raleway-bold" }}>
-                Take new photo
+                {removingPic ? "Removing..." : "Remove current photo"}
               </Text>
             </Pressable>
           </View>

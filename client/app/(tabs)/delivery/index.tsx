@@ -330,9 +330,7 @@ const InTransitDeliveries = ({
         <Pressable
           key={delivery._id || index}
           style={styles.delivery_card}
-          onPress={() =>
-            router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
-          }
+          onPress={() => router.push(`/delivery/${delivery._id}`)}
         >
           {/* Header with status and time */}
           <View style={styles.delivery_header}>
@@ -418,9 +416,7 @@ const InTransitDeliveries = ({
             </View>
             <Pressable
               style={styles.track_button}
-              onPress={() =>
-                router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
-              }
+              onPress={() => router.push(`/delivery/${delivery._id}`)}
             >
               <Text style={styles.track_button_text}>Track</Text>
             </Pressable>
@@ -457,9 +453,7 @@ const DeliveredDeliveries = ({
         <Pressable
           key={delivery._id || index}
           style={styles.delivery_card}
-          onPress={() =>
-            router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
-          }
+          onPress={() => router.push(`/delivery/${delivery._id}`)}
         >
           {/* Header with status and time */}
           <View style={styles.delivery_header}>
@@ -584,9 +578,7 @@ const CancelledDeliveries = ({
         <Pressable
           key={delivery._id || index}
           style={styles.cancelled_card}
-          onPress={() =>
-            router.push(`/(tabs)/delivery/delivery_detail/${delivery._id}`)
-          }
+          onPress={() => router.push(`/delivery/${delivery._id}`)}
         >
           {/* Header with status and time */}
           <View style={styles.cancelled_header}>
