@@ -56,7 +56,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const [userAddress, setUserAddress] = useState<string>("");
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(
-    null
+    null,
   );
 
   const [destination, setDestination] = useState<string>("");
@@ -67,7 +67,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     if (destinationCoords) {
       calculateRide(
         pickupCoords || [region.latitude, region.longitude],
-        destinationCoords
+        destinationCoords,
       );
     }
   }, [destinationCoords]);
@@ -87,7 +87,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const getRoute = async (
     pickup: [number, number],
-    destination: [number, number]
+    destination: [number, number],
   ) => {
     const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickup[0]},${pickup[1]}&destination=${destination[0]},${destination[1]}&key=${API_KEY}`;
 
@@ -206,7 +206,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const getSuggestions = async (text: string) => {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-      text
+      text,
     )}&key=${API_KEY}&location=${region.latitude},${
       region.longitude
     }&radius=5000&components=country:ng`;
@@ -218,13 +218,13 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } catch (err: any) {
       throw new Error(
         err.response.data.message ||
-          "An error occured when fetching suggestions"
+          "An error occured when fetching suggestions",
       );
     }
   };
 
   const getPlaceCoords = async (
-    place_id: string
+    place_id: string,
   ): Promise<[number, number] | undefined> => {
     try {
       const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${API_KEY}`;
@@ -250,7 +250,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   // General function to get distance and duration from Google Maps API
   const getDistanceAndDuration = async (
     pickup: [number, number],
-    destination: [number, number]
+    destination: [number, number],
   ): Promise<{ distanceKm: number; durationMins: number } | undefined> => {
     try {
       setCalculating(true);
@@ -279,7 +279,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const calculateRide = async (
     pickup: [number, number],
-    destination: [number, number]
+    destination: [number, number],
   ): Promise<{ distanceKm: number; durationMins: number } | undefined> => {
     const result = await getDistanceAndDuration(pickup, destination);
 
@@ -325,7 +325,7 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const calculateDelivery = async (
     pickup: [number, number],
-    destination: [number, number]
+    destination: [number, number],
   ): Promise<
     | {
         distanceKm: number;
@@ -469,15 +469,15 @@ export interface MapContextType {
   getPlaceName: (lat: number, lng: number) => Promise<void>;
   getDistanceAndDuration: (
     pickup: [number, number],
-    destination: [number, number]
+    destination: [number, number],
   ) => Promise<{ distanceKm: number; durationMins: number } | undefined>;
   calculateRide: (
     pickup: [number, number],
-    destination: [number, number]
+    destination: [number, number],
   ) => Promise<{ distanceKm: number; durationMins: number } | undefined>;
   calculateDelivery: (
     pickup: [number, number],
-    destination: [number, number]
+    destination: [number, number],
   ) => Promise<
     | {
         distanceKm: number;

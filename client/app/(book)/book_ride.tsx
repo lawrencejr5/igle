@@ -72,6 +72,7 @@ const BookRide = () => {
 
   // Continuously track driver or ride when in tracking state
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (
       (rideStatus === "track_driver" || rideStatus === "track_ride") &&
       ongoingRideData &&
@@ -80,17 +81,23 @@ const BookRide = () => {
       ongoingRideData.driver.current_location.coordinates[1] !== 0 &&
       mapRef.current
     ) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: ongoingRideData.driver.current_location.coordinates[0],
-          longitude: ongoingRideData.driver.current_location.coordinates[1],
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        },
-        1000,
-      );
+      // Delay allows modal snap and map padding update to complete before animating, avoiding interruption
+      timer = setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.animateToRegion(
+            {
+              latitude: ongoingRideData.driver.current_location.coordinates[0],
+              longitude: ongoingRideData.driver.current_location.coordinates[1],
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            },
+            1000,
+          );
+        }
+      }, 1000);
     }
-    console.log(ongoingRideData?.driver?.current_location?.coordinates);
+
+    return () => clearTimeout(timer);
   }, [ongoingRideData?.driver?.current_location?.coordinates, rideStatus]);
 
   const [isMapReady, setIsMapReady] = useState(false);
@@ -113,6 +120,7 @@ const BookRide = () => {
                 customMapStyle={darkMapStyle}
                 mapPadding={isMapReady ? mapPadding : undefined}
                 onMapReady={() => setIsMapReady(true)}
+                toolbarEnabled={true}
               >
                 {/* Default user location marker - show when no route is set */}
                 {rideRouteCoords.length === 0 &&

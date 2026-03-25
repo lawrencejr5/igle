@@ -94,25 +94,29 @@ const DriverRideModal = () => {
 
   return (
     <View style={{ flex: 1, width: "100%", position: "absolute", bottom: 0 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          padding: 20,
-        }}
-      >
-        <TouchableWithoutFeedback
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      {!ongoingDelivery ||
+        (!ongoingRideData && (
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "flex-end",
+              padding: 20,
+            }}
+          >
+            <TouchableWithoutFeedback
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-            setLocationModalOpen(true);
-          }}
-        >
-          <View style={styles.locationButton}>
-            <Ionicons name="location" size={24} color="#fff" />
+                setLocationModalOpen(true);
+              }}
+            >
+              <View style={styles.locationButton}>
+                <Ionicons name="location" size={24} color="#fff" />
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </TouchableWithoutFeedback>
-      </View>
+        ))}
+
       <View
         style={styles.main_modal_container}
         onLayout={(e) => {

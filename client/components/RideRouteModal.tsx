@@ -702,7 +702,7 @@ const ChooseRideModal = () => {
   const [booking, setBooking] = useState<boolean>(false);
   const [selectedRideType, setSelectedRideType] = useState<
     "cab" | "keke" | "suv"
-  >("cab");
+  >("keke");
 
   // Calculate the visible height of the bottom sheet at the choosing_car snap point (index 2 = 40%)
   const visibleHeight = useVisibleHeight(40);
@@ -764,23 +764,6 @@ const ChooseRideModal = () => {
             contentContainerStyle={{ paddingHorizontal: 10 }}
           >
             <RideTypeCard
-              id="cab"
-              title="Cab"
-              icon={require("../assets/images/icons/sedan-icon.png")}
-              distanceKm={rideDetails?.distanceKm}
-              durationMins={rideDetails?.durationMins}
-              amount={rideDetails?.cab?.amount}
-              selected={selectedRideType === "cab"}
-              onPress={() => {
-                setSelectedRideType("cab");
-                setRideDetails((prev: any) => ({
-                  ...prev,
-                  amount: rideDetails?.cab?.amount,
-                }));
-              }}
-            />
-
-            <RideTypeCard
               id="keke"
               title="Keke"
               icon={require("../assets/images/icons/keke-icon.png")}
@@ -793,6 +776,23 @@ const ChooseRideModal = () => {
                 setRideDetails((prev: any) => ({
                   ...prev,
                   amount: rideDetails?.keke?.amount,
+                }));
+              }}
+            />
+
+            <RideTypeCard
+              id="cab"
+              title="Cab"
+              icon={require("../assets/images/icons/sedan-icon.png")}
+              distanceKm={rideDetails?.distanceKm}
+              durationMins={rideDetails?.durationMins}
+              amount={rideDetails?.cab?.amount}
+              selected={selectedRideType === "cab"}
+              onPress={() => {
+                setSelectedRideType("cab");
+                setRideDetails((prev: any) => ({
+                  ...prev,
+                  amount: rideDetails?.cab?.amount,
                 }));
               }}
             />
@@ -1036,10 +1036,10 @@ const AcceptedModal = () => {
       if (mapRef.current && ongoingRideData) {
         let latitude = ongoingRideData.pickup.coordinates[0];
         let longitude = ongoingRideData.pickup.coordinates[1];
-        
+
         if (
-          ongoingRideData.driver && 
-          ongoingRideData.driver.current_location && 
+          ongoingRideData.driver &&
+          ongoingRideData.driver.current_location &&
           ongoingRideData.driver.current_location.coordinates &&
           ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
           ongoingRideData.driver.current_location.coordinates[1] !== 0
@@ -1347,7 +1347,7 @@ const PayingModal = () => {
           justifyContent: "center",
           alignItems: "center",
           gap: 20,
-          marginBottom: 20,
+          marginBottom: 30,
         }}
       >
         <Pressable
@@ -1415,8 +1415,8 @@ const PaidModal = () => {
           let latitude = ongoingRideData.pickup.coordinates[0];
           let longitude = ongoingRideData.pickup.coordinates[1];
           if (
-            ongoingRideData.driver && 
-            ongoingRideData.driver.current_location && 
+            ongoingRideData.driver &&
+            ongoingRideData.driver.current_location &&
             ongoingRideData.driver.current_location.coordinates &&
             ongoingRideData.driver.current_location.coordinates[0] !== 0 &&
             ongoingRideData.driver.current_location.coordinates[1] !== 0
@@ -1451,26 +1451,10 @@ const PaidModal = () => {
             ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
             : "Alright, hang tight, we'll take it from here..."}
         </Text>
-
-        {!ongoingRideData?.scheduled && (
-          <View style={{ alignItems: "center", marginTop: 20 }}>
-            <View
-              style={{
-                backgroundColor: "#1e1e1e",
-                padding: 10,
-                borderRadius: 50,
-                borderWidth: 1,
-                borderColor: "#2e2e2e",
-              }}
-            >
-              <Ionicons name="hourglass-outline" size={20} color="#fff" />
-            </View>
-          </View>
-        )}
       </View>
 
       {/* 2 */}
-      <View style={{ marginBottom: 20 }}>
+      <View style={{ marginBottom: 40 }}>
         {ongoingRideData?.scheduled ? (
           <TouchableOpacity
             activeOpacity={0.7}
@@ -1551,7 +1535,7 @@ const TrackRide = () => {
       </View>
 
       {/* 2 */}
-      <View style={{ marginBottom: 30 }}>
+      <View style={{ marginBottom: 40 }}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => setRideInfoOpen(true)}
