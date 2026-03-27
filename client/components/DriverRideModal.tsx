@@ -937,7 +937,9 @@ const DeliveryIncomingModal = () => {
 };
 
 const DeliveryAcceptedModal = () => {
-  const { ongoingDeliveryData, setDriveStatus } = useDriverContext();
+  const { ongoingDeliveryData, setDriveStatus, cancelDelivery, cancelling } =
+    useDriverContext();
+  const { showNotification } = useNotificationContext();
 
   const getPackageIcon = (type?: string) => {
     switch (type) {
@@ -958,6 +960,14 @@ const DeliveryAcceptedModal = () => {
 
   const navigateToPickup = () => {
     setDriveStatus("arriving");
+  };
+
+  const cancel_delivery = async () => {
+    try {
+      await cancelDelivery();
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
   };
 
   return (
@@ -1048,6 +1058,21 @@ const DeliveryAcceptedModal = () => {
               <Text style={styles.navigateBtnText}>Navigate to Pickup</Text>
             </View>
           </TouchableWithoutFeedback>
+          <TouchableOpacity
+            onPress={cancel_delivery}
+            disabled={cancelling}
+            style={{ padding: 10, marginTop: 10 }}
+          >
+            <Text
+              style={{
+                color: cancelling ? "#ff000080" : "#ff0000",
+                fontFamily: "raleway-bold",
+                textAlign: "center",
+              }}
+            >
+              {cancelling ? "Cancelling..." : "Cancel delivery"}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </>
@@ -1060,7 +1085,10 @@ const DeliveryArrivingModal = () => {
     updateDeliveryStatus,
     setDriveStatus,
     setToPickupRouteCoords,
+    cancelDelivery,
+    cancelling,
   } = useDriverContext();
+  const { showNotification } = useNotificationContext();
   const [arriving, setArriving] = useState<boolean>(false);
 
   const markAsArrived = async () => {
@@ -1073,6 +1101,14 @@ const DeliveryArrivingModal = () => {
       console.log(error);
     } finally {
       setArriving(false);
+    }
+  };
+
+  const cancel_delivery = async () => {
+    try {
+      await cancelDelivery();
+    } catch (error: any) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -1094,13 +1130,34 @@ const DeliveryArrivingModal = () => {
           </View>
         </TouchableWithoutFeedback>
       </View>
+      <TouchableOpacity
+        onPress={cancel_delivery}
+        disabled={cancelling}
+        style={{ padding: 10, marginTop: 10, marginBottom: -20 }}
+      >
+        <Text
+          style={{
+            color: cancelling ? "#ff000080" : "#ff0000",
+            fontFamily: "raleway-bold",
+            textAlign: "center",
+          }}
+        >
+          {cancelling ? "Cancelling..." : "Cancel delivery"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const DeliveryArrivedModal = () => {
-  const { ongoingDeliveryData, updateDeliveryStatus, setDriveStatus } =
-    useDriverContext();
+  const {
+    ongoingDeliveryData,
+    updateDeliveryStatus,
+    setDriveStatus,
+    cancelDelivery,
+    cancelling,
+  } = useDriverContext();
+  const { showNotification } = useNotificationContext();
   const [pickingUp, setPickingUp] = useState<boolean>(false);
   const [isPackageExpanded, setIsPackageExpanded] = useState<boolean>(false);
 
@@ -1113,6 +1170,14 @@ const DeliveryArrivedModal = () => {
       console.log(error);
     } finally {
       setPickingUp(false);
+    }
+  };
+
+  const cancel_delivery = async () => {
+    try {
+      await cancelDelivery();
+    } catch (error: any) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -1328,13 +1393,34 @@ const DeliveryArrivedModal = () => {
           </View>
         </TouchableWithoutFeedback>
       </View>
+      <TouchableOpacity
+        onPress={cancel_delivery}
+        disabled={cancelling}
+        style={{ padding: 10, marginTop: 20, marginBottom: -20 }}
+      >
+        <Text
+          style={{
+            color: cancelling ? "#ff000080" : "#ff0000",
+            fontFamily: "raleway-bold",
+            textAlign: "center",
+          }}
+        >
+          {cancelling ? "Cancelling..." : "Cancel delivery"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const DeliveryPickedUpModal = () => {
-  const { ongoingDeliveryData, updateDeliveryStatus, setDriveStatus } =
-    useDriverContext();
+  const {
+    ongoingDeliveryData,
+    updateDeliveryStatus,
+    setDriveStatus,
+    cancelDelivery,
+    cancelling,
+  } = useDriverContext();
+  const { showNotification } = useNotificationContext();
   const [startingTransit, setStartingTransit] = useState<boolean>(false);
 
   const startTransit = async () => {
@@ -1346,6 +1432,14 @@ const DeliveryPickedUpModal = () => {
       console.log(error);
     } finally {
       setStartingTransit(false);
+    }
+  };
+
+  const cancel_delivery = async () => {
+    try {
+      await cancelDelivery();
+    } catch (error: any) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -1407,6 +1501,23 @@ const DeliveryPickedUpModal = () => {
           </View>
         </TouchableWithoutFeedback>
       </View>
+      {ongoingDeliveryData?.payment_status !== "paid" && (
+        <TouchableOpacity
+          onPress={cancel_delivery}
+          disabled={cancelling}
+          style={{ padding: 10, marginTop: 10, marginBottom: -20 }}
+        >
+          <Text
+            style={{
+              color: cancelling ? "#ff000080" : "#ff0000",
+              fontFamily: "raleway-bold",
+              textAlign: "center",
+            }}
+          >
+            {cancelling ? "Cancelling..." : "Cancel delivery"}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
