@@ -445,11 +445,24 @@ const IncomingModal = () => {
 };
 
 const AcceptedModal = () => {
-  const { ongoingRideData, setDriveStatus, setIncomingRideData } =
-    useDriverContext();
+  const {
+    ongoingRideData,
+    setDriveStatus,
+    setIncomingRideData,
+    cancelRide,
+    cancelling,
+  } = useDriverContext();
   const { showNotification } = useNotificationContext();
 
   const paid = ongoingRideData?.payment_status === "paid";
+
+  const cancel_ride = async () => {
+    try {
+      await cancelRide();
+    } catch (error: any) {
+      showNotification(error.message, "error");
+    }
+  };
 
   return (
     <>
@@ -535,19 +548,17 @@ const AcceptedModal = () => {
           )}
           <TouchableOpacity
             style={{ padding: 10, marginTop: 10 }}
-            onPress={() => {
-              setDriveStatus("searching");
-              setIncomingRideData(null);
-            }}
+            onPress={cancel_ride}
+            disabled={cancelling}
           >
             <Text
               style={{
-                color: "#ff0000",
+                color: cancelling ? "#ff000080" : "#ff0000",
                 fontFamily: "raleway-bold",
                 textAlign: "center",
               }}
             >
-              Cancel ride
+              {cancelling ? "Cancelling..." : "Cancel ride"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -562,7 +573,10 @@ const ArrivingModal = () => {
     updateRideStatus,
     setDriveStatus,
     setToPickupRouteCoords,
+    cancelRide,
+    cancelling,
   } = useDriverContext();
+  const { showNotification } = useNotificationContext();
 
   const [arriving, setArriving] = useState<boolean>(false);
   const set_arrived = async () => {
@@ -574,6 +588,14 @@ const ArrivingModal = () => {
       console.log(error);
     } finally {
       setArriving(false);
+    }
+  };
+
+  const cancel_ride = async () => {
+    try {
+      await cancelRide();
+    } catch (error: any) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -592,12 +614,33 @@ const ArrivingModal = () => {
           </View>
         </TouchableWithoutFeedback>
       </View>
+      <TouchableOpacity
+        onPress={cancel_ride}
+        disabled={cancelling}
+        style={{ padding: 10, marginTop: 8 }}
+      >
+        <Text
+          style={{
+            color: cancelling ? "#ff000080" : "#ff0000",
+            fontFamily: "raleway-bold",
+            textAlign: "center",
+          }}
+        >
+          {cancelling ? "Cancelling..." : "Cancel ride"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const ArrivedModal = () => {
-  const { updateRideStatus, setDriveStatus } = useDriverContext();
+  const {
+    ongoingRideData,
+    updateRideStatus,
+    setDriveStatus,
+    cancelRide,
+    cancelling,
+  } = useDriverContext();
   const { showNotification } = useNotificationContext();
 
   const [starting, setStarting] = useState<boolean>(false);
@@ -611,6 +654,14 @@ const ArrivedModal = () => {
       console.log(error);
     } finally {
       setStarting(false);
+    }
+  };
+
+  const cancel_ride = async () => {
+    try {
+      await cancelRide();
+    } catch (error: any) {
+      showNotification(error.message, "error");
     }
   };
 
@@ -628,6 +679,23 @@ const ArrivedModal = () => {
           </View>
         </TouchableWithoutFeedback>
       </View>
+      {ongoingRideData?.payment_status !== "paid" && (
+        <TouchableOpacity
+          onPress={cancel_ride}
+          disabled={cancelling}
+          style={{ padding: 10, marginTop: 20, marginBottom: -20 }}
+        >
+          <Text
+            style={{
+              color: cancelling ? "#ff000080" : "#ff0000",
+              fontFamily: "raleway-bold",
+              textAlign: "center",
+            }}
+          >
+            {cancelling ? "Cancelling..." : "Cancel ride"}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

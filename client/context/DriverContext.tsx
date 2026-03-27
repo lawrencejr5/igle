@@ -686,6 +686,40 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const [cancelling, setCancelling] = useState<boolean>(false);
+  const cancelRide = async (
+    reason: string = "No reason",
+  ): Promise<void> => {
+    const token = await AsyncStorage.getItem("token");
+    const ride_id = ongoingRideData?._id;
+    if (!ride_id) {
+      showNotification("No active ride found", "error");
+      return;
+    }
+    setCancelling(true);
+    try {
+      await axios.patch(
+        `${API_URLS.rides}/cancel?ride_id=${ride_id}`,
+        { reason, by: "driver" },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setOngoingRideData(null);
+      setIncomingRideData(null);
+      setToPickupRouteCoords([]);
+      setToDestinationRouteCoords([]);
+      setDriveStatus("searching");
+      setJobType("");
+      showNotification("Ride cancelled", "error");
+    } catch (error: any) {
+      const errMsg =
+        error.response?.data?.msg || "An error occurred while cancelling";
+      showNotification(errMsg, "error");
+      throw new Error(errMsg);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const updateRideStatus = async (
     status: "arrived" | "ongoing" | "completed",
   ): Promise<void> => {
@@ -1052,6 +1086,8 @@ const DriverContextPrvider: FC<{ children: ReactNode }> = ({ children }) => {
         ongoingRideData,
         setOngoingRideData,
         updateRideStatus,
+        cancelRide,
+        cancelling,
 
         // deliveries
         incomingDeliveryData,
@@ -1133,6 +1169,8 @@ interface DriverConextType {
   updateRideStatus: (
     status: "arrived" | "ongoing" | "completed",
   ) => Promise<void>;
+  cancelRide: (reason?: string) => Promise<void>;
+  cancelling: boolean;
 
   // Delivery props
   incomingDeliveryData: Delivery | null;
