@@ -824,7 +824,7 @@ const ChooseRideModal = () => {
       >
         <View
           style={{
-            marginBottom: 30,
+            marginBottom: 40,
             padding: 10,
             borderRadius: 30,
             backgroundColor: "#fff",

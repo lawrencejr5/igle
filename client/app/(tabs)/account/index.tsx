@@ -248,8 +248,18 @@ const Account = () => {
                 }}
                 style={styles.setting_box}
               >
-                <Entypo name="location-pin" size={20} color="#c6c6c6" />
+                <Entypo name="location" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Saved places</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push("/account/legal");
+                }}
+                style={styles.setting_box}
+              >
+                <Feather name="briefcase" size={20} color="#c6c6c6" />
+                <Text style={styles.setting_text}>Legal & Privacy</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
@@ -268,6 +278,7 @@ const Account = () => {
                 <Feather name="star" size={20} color="#c6c6c6" />
                 <Text style={styles.setting_text}>Rate us</Text>
               </TouchableOpacity>
+
               <TouchableWithoutFeedback
                 disabled={loggingOut}
                 onPress={handleLogout}
