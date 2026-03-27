@@ -132,7 +132,7 @@ const StartScreen = () => {
           height: "auto",
           justifyContent: "center",
           alignItems: "center",
-          marginTop: 120,
+          marginTop: 80,
         }}
       >
         <Image
@@ -163,7 +163,7 @@ const StartScreen = () => {
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.sign_btn}
-          onPress={() => router.replace("/(auth)/signin")}
+          onPress={() => router.push("/(auth)/signin")}
         >
           <Image
             source={require("../assets/images/icons/mail.png")}
@@ -219,6 +219,46 @@ const StartScreen = () => {
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Legal consent notice */}
+        <Text
+          allowFontScaling={false}
+          style={{
+            color: "#8b8b8b",
+            fontFamily: "raleway-regular",
+            fontSize: 12,
+            textAlign: "center",
+            marginTop: 20,
+            lineHeight: 24,
+            paddingHorizontal: 10,
+          }}
+        >
+          By signing up, you agree to our{" "}
+          <Text
+            allowFontScaling={false}
+            style={{ color: "#fff", fontFamily: "raleway-bold" }}
+            onPress={() =>
+              WebBrowser.openBrowserAsync(
+                "https://igle-landing.web.app/terms-and-conditions",
+              )
+            }
+          >
+            Terms & Conditions
+          </Text>{" "}
+          and{" "}
+          <Text
+            allowFontScaling={false}
+            style={{ color: "#fff", fontFamily: "raleway-bold" }}
+            onPress={() =>
+              WebBrowser.openBrowserAsync(
+                "https://igle-landing.web.app/privacy-policy",
+              )
+            }
+          >
+            Privacy Policy
+          </Text>
+          .
+        </Text>
       </View>
     </View>
   );

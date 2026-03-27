@@ -191,19 +191,10 @@ const Signin = () => {
             }}
           >
             {Platform.OS === "ios" ? (
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={
-                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
-                }
-                buttonStyle={
-                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                }
-                cornerRadius={30}
-                style={{
-                  width: "80%",
-                  height: 44,
-                  opacity: appleLoading ? 0.8 : 1,
-                }}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={[styles.oauth_btn, { opacity: appleLoading ? 0.7 : 1 }]}
+                disabled={appleLoading}
                 onPress={async () => {
                   try {
                     setAppleLoading(true);
@@ -232,7 +223,15 @@ const Signin = () => {
                     setAppleLoading(false);
                   }
                 }}
-              />
+              >
+                <Image
+                  source={require("../../assets/images/icons/apple-logo.png")}
+                  style={styles.oauth_img}
+                />
+                <Text style={styles.oauth_text}>
+                  {appleLoading ? "Signing in..." : "Continue with Apple"}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 activeOpacity={0.7}

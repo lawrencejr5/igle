@@ -12,6 +12,7 @@ import React, { useState } from "react";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
 import * as AppleAuthentication from "expo-apple-authentication";
+import * as WebBrowser from "expo-web-browser";
 
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -83,7 +84,7 @@ const Signup = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Back button */}
         <TouchableOpacity
           activeOpacity={0.7}
@@ -231,19 +232,10 @@ const Signup = () => {
             }}
           >
             {Platform.OS === "ios" ? (
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={
-                  AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
-                }
-                buttonStyle={
-                  AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                }
-                cornerRadius={30}
-                style={{
-                  width: "80%",
-                  height: 44,
-                  opacity: appleLoading ? 0.8 : 1,
-                }}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={[styles.oauth_btn, { opacity: appleLoading ? 0.7 : 1 }]}
+                disabled={appleLoading}
                 onPress={async () => {
                   try {
                     setAppleLoading(true);
@@ -272,7 +264,15 @@ const Signup = () => {
                     setAppleLoading(false);
                   }
                 }}
-              />
+              >
+                <Image
+                  source={require("../../assets/images/icons/apple-logo.png")}
+                  style={styles.oauth_img}
+                />
+                <Text style={styles.oauth_text}>
+                  {appleLoading ? "Signing in..." : "Continue with Apple"}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -293,7 +293,7 @@ const Signup = () => {
                   style={styles.oauth_img}
                 />
                 <Text style={styles.oauth_text}>
-                  {googleLoading ? "Signing in..." : "Google"}
+                  {googleLoading ? "Signing in..." : "Continue with Google"}
                 </Text>
               </TouchableOpacity>
             )}
@@ -321,6 +321,46 @@ const Signup = () => {
               Signin
             </Link>
           </View>
+
+          {/* Legal consent notice */}
+          <Text
+            allowFontScaling={false}
+            style={{
+              color: "#8b8b8b",
+              fontFamily: "raleway-regular",
+              fontSize: 12,
+              textAlign: "center",
+              marginBottom: 30,
+              lineHeight: 18,
+              paddingHorizontal: 10,
+            }}
+          >
+            By signing up, you agree to our{" "}
+            <Text
+              allowFontScaling={false}
+              style={{ color: "#fff", fontFamily: "raleway-bold" }}
+              onPress={() =>
+                WebBrowser.openBrowserAsync(
+                  "https://igle-landing.web.app/terms-and-conditions",
+                )
+              }
+            >
+              Terms & Conditions
+            </Text>{" "}
+            and{" "}
+            <Text
+              allowFontScaling={false}
+              style={{ color: "#fff", fontFamily: "raleway-bold" }}
+              onPress={() =>
+                WebBrowser.openBrowserAsync(
+                  "https://igle-landing.web.app/privacy-policy",
+                )
+              }
+            >
+              Privacy Policy
+            </Text>
+            .
+          </Text>
         </View>
       </ScrollView>
     </View>
