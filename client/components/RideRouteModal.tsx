@@ -51,6 +51,7 @@ import RideInfoModal from "./RideInfoModal";
 
 import { useRatingContext } from "../context/RatingContext";
 import DriverCard, { DriverDetailsModal } from "./DriverCard";
+import { router } from "expo-router";
 
 /** Helper hook to compute the exact visible height inside the bottom sheet based on its snap percentage. */
 const useVisibleHeight = (basePercent: number) => {
@@ -944,6 +945,22 @@ const SearchingModal = () => {
             ? `No Driver was found at this time to go to ${ongoingRideData.destination.address}`
             : searchText}
         </Text>
+
+        {ongoingRideData?.status !== "expired" && (
+          <TouchableWithoutFeedback onPress={cancel_ride} disabled={cancelling}>
+            <Text
+              style={{
+                color: cancelling ? "#ff000080" : "#ff4444",
+                marginTop: 18,
+                fontFamily: "raleway-bold",
+                fontSize: 14,
+                textAlign: "center",
+              }}
+            >
+              {cancelling ? "Cancelling..." : "Cancel ride"}
+            </Text>
+          </TouchableWithoutFeedback>
+        )}
       </View>
 
       {ongoingRideData?.status === "expired" && (
@@ -1327,7 +1344,10 @@ const PayingModal = () => {
           Confirm payment ({rideDetails?.amount.toLocaleString()} NGN)
         </Text>
 
-        <View style={styles.walletCard}>
+        <Pressable
+          onPress={() => router.push("/account/wallet")}
+          style={styles.walletCard}
+        >
           <View style={styles.walletCardLeft}>
             <View style={styles.walletIconContainer}>
               <Ionicons name="wallet" size={18} color="#fff" />
@@ -1337,7 +1357,7 @@ const PayingModal = () => {
           <Text style={styles.walletBalanceText}>
             ₦{userWalletBal.toLocaleString()}
           </Text>
-        </View>
+        </Pressable>
       </View>
 
       {/* 2 */}
@@ -1445,7 +1465,8 @@ const PaidModal = () => {
       {/* 1 */}
       <View>
         <Text
-          style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}
+          allowFontScaling={false}
+          style={[styles.header_text, { textAlign: "center", fontSize: 18 }]}
         >
           {ongoingRideData?.scheduled
             ? `Your ride has been scheduled so head to pickup in ${scheduledTimeDif} time`
@@ -1517,7 +1538,6 @@ const PaidModal = () => {
 
 const TrackRide = () => {
   const { ongoingRideData } = useRideContext();
-  const [reportModalOpen, setReportModalOpen] = useState(false);
   const [rideInfoOpen, setRideInfoOpen] = useState(false);
 
   // Calculate the visible height of the bottom sheet at the track_ride snap point (index 0 = 25%)
@@ -1528,7 +1548,8 @@ const TrackRide = () => {
       {/* 1 */}
       <View>
         <Text
-          style={[styles.header_text, { textAlign: "center", fontSize: 16 }]}
+          allowFontScaling={false}
+          style={[styles.header_text, { textAlign: "center", fontSize: 18 }]}
         >
           Tracking ride...
         </Text>

@@ -23,7 +23,8 @@ import BottomSheet, {
   TouchableWithoutFeedback,
 } from "@gorhom/bottom-sheet";
 
-import { Feather, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+import { Feather, FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 import { useDeliverContext, Delivery } from "../context/DeliveryContext";
 import { useMapContext } from "../context/MapContext";
@@ -2381,9 +2382,20 @@ const PayingModal = () => {
       </Text>
 
       <View style={{ marginTop: 25, paddingHorizontal: 10 }}>
-        <Text style={{ color: "#fff", fontFamily: "poppins-regular" }}>
-          Wallet balance: {userWalletBal.toLocaleString()} NGN
-        </Text>
+        <Pressable
+          onPress={() => router.push("/account/wallet")}
+          style={styles.walletCard}
+        >
+          <View style={styles.walletCardLeft}>
+            <View style={styles.walletIconContainer}>
+              <Ionicons name="wallet" size={18} color="#fff" />
+            </View>
+            <Text style={styles.walletLabel}>Current wallet balance:</Text>
+          </View>
+          <Text style={styles.walletBalanceText}>
+            ₦{userWalletBal.toLocaleString()}
+          </Text>
+        </Pressable>
 
         <View
           style={{
@@ -3294,6 +3306,37 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-semibold",
   },
   priceText: {
+    color: "#fff",
+    fontFamily: "poppins-bold",
+    fontSize: 18,
+  },
+  walletCard: {
+    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#1e1e1e",
+    borderWidth: 1,
+    borderColor: "#2e2e2e",
+    borderRadius: 16,
+    padding: 12,
+  },
+  walletCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  walletIconContainer: {
+    backgroundColor: "#292929ff",
+    padding: 8,
+    borderRadius: 12,
+  },
+  walletLabel: {
+    color: "#a0a0a0",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+  },
+  walletBalanceText: {
     color: "#fff",
     fontFamily: "poppins-bold",
     fontSize: 18,
