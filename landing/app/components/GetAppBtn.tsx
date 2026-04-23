@@ -30,7 +30,7 @@ export default function GetAppBtn() {
         <div className="dropdown-menu">
           {/* App Store Option */}
           <a
-            href="https://apps.apple.com/app/igle/id6471822837"
+            href="https://apps.apple.com/ng/app/igle/id6760672863"
             target="_blank"
             className="dropdown-item"
           >
