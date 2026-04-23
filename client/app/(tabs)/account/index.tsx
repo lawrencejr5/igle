@@ -64,7 +64,7 @@ const Account = () => {
 
   const handleRateUs = async () => {
     const url = Platform.select({
-      ios: "https://apps.apple.com/app/com.lawrencejr.igle", // Replace with actual App Store ID if available (e.g. id123456789)
+      ios: "https://apps.apple.com/ng/app/igle/id6760672863",
       android:
         "https://play.google.com/store/apps/details?id=com.lawrencejr.igle",
     });

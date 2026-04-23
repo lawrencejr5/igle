@@ -75,7 +75,7 @@ const SideNav: React.FC<{
   const handleRateUs = async () => {
     closeSideNav();
     const url = Platform.select({
-      ios: "https://apps.apple.com/app/com.lawrencejr.igle",
+      ios: "https://apps.apple.com/ng/app/igle/id6760672863",
       android:
         "https://play.google.com/store/apps/details?id=com.lawrencejr.igle",
     });
