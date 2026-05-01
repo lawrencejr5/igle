@@ -1,9 +1,19 @@
 // moved global auth session completion to root layout
 
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import React, { useState } from "react";
 
+import { router } from "expo-router";
+
 import { useAuthContext } from "../context/AuthContext";
+import { useOnboardingContext } from "../context/OnboardingContext";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
@@ -16,6 +26,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 const StartScreen = () => {
   const { googleLogin, appleLogin } = useAuthContext()!;
+  const {} = useOnboardingContext();
   const { showNotification } = useNotificationContext();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -149,50 +160,65 @@ const StartScreen = () => {
           marginBottom: 40,
         }}
       >
-        {/* Google Sign In */}
         <TouchableOpacity
           activeOpacity={0.7}
-          disabled={!request || googleAuthLoading}
-          style={[styles.sign_btn, { opacity: googleAuthLoading ? 0.8 : 1 }]}
-          onPress={async () => {
-            try {
-              setGoogleAuthLoading(true);
-              promptAsync();
-            } catch (err) {
-              console.log("promptAsync error", err);
-              setGoogleAuthLoading(false);
-              showNotification("Google sign-in failed to start", "error");
-            }
-          }}
+          style={styles.sign_btn}
+          onPress={() => router.push("/(auth)/signin")}
         >
           <Image
-            source={require("../assets/images/icons/google-logo.png")}
+            source={require("../assets/images/icons/mail.png")}
             style={styles.sign_image}
           />
           <Text style={styles.sign_text} allowFontScaling={false}>
-            {googleAuthLoading
-              ? "Signing with google..."
-              : "Continue with Google"}
+            Continue with Email
           </Text>
         </TouchableOpacity>
 
-        {/* Apple Sign In */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          disabled={appleAuthLoading}
-          style={[styles.sign_btn, { opacity: appleAuthLoading ? 0.8 : 1 }]}
-          onPress={handleAppleSignIn}
-        >
-          <Image
-            source={require("../assets/images/icons/apple-logo.png")}
-            style={{ height: 25, width: 24 }}
-          />
-          <Text style={styles.sign_text} allowFontScaling={false}>
-            {appleAuthLoading
-              ? "Signing in with Apple..."
-              : "Continue with Apple"}
-          </Text>
-        </TouchableOpacity>
+        {/* Apple Sign In — only available on iOS */}
+        {Platform.OS === "ios" ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={appleAuthLoading}
+            style={[styles.sign_btn, { opacity: appleAuthLoading ? 0.8 : 1 }]}
+            onPress={handleAppleSignIn}
+          >
+            <Image
+              source={require("../assets/images/icons/apple-logo.png")}
+              style={{ height: 25, width: 24 }}
+            />
+            <Text style={styles.sign_text} allowFontScaling={false}>
+              {appleAuthLoading
+                ? "Signing in with Apple..."
+                : "Continue with Apple"}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={!request || googleAuthLoading}
+            style={[styles.sign_btn, { opacity: googleAuthLoading ? 0.8 : 1 }]}
+            onPress={async () => {
+              try {
+                setGoogleAuthLoading(true);
+                promptAsync();
+              } catch (err) {
+                console.log("promptAsync error", err);
+                setGoogleAuthLoading(false);
+                showNotification("Google sign-in failed to start", "error");
+              }
+            }}
+          >
+            <Image
+              source={require("../assets/images/icons/google-logo.png")}
+              style={styles.sign_image}
+            />
+            <Text style={styles.sign_text} allowFontScaling={false}>
+              {googleAuthLoading
+                ? "Signing with google..."
+                : "Continue with Google"}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Legal consent notice */}
         <Text
