@@ -38,7 +38,7 @@ module.exports = {
         {
           "icon": "./assets/images/notification-icon.png",
           "sounds": [
-            "./assets/sounds/push-alert-1.wav"
+            "./assets/sounds/push_alert.wav"
           ]
         }
       ]
