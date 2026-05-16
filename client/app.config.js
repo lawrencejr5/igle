@@ -13,6 +13,12 @@ module.exports = {
       "expo-router",
       "expo-apple-authentication",
       [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true
+        }
+      ],
+      [
         "react-native-maps",
         {
           "iosGoogleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API,
@@ -31,6 +37,9 @@ module.exports = {
         "expo-notifications",
         {
           "icon": "./assets/images/notification-icon.png",
+          "sounds": [
+            "./assets/sounds/push-alert-1.wav"
+          ]
         }
       ]
     ],
