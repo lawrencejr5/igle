@@ -11,6 +11,7 @@ import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 
 import * as Linking from "expo-linking";
 import * as Haptics from "expo-haptics";
+import { useAudioPlayer } from "expo-audio";
 
 import {
   Ionicons,
@@ -48,6 +49,20 @@ const DriverRideModal = () => {
 
   const [openEarnings, setOpenEarnings] = useState(false);
   const [openAccount, setOpenAccount] = useState(false);
+
+  // ── Incoming request alert sound ──────────────────────────────────────────
+  const alertPlayer = useAudioPlayer(require("../assets/sounds/alert-14.wav"));
+
+  useEffect(() => {
+    if (driveStatus === "incoming") {
+      alertPlayer.loop = true;
+      alertPlayer.play();
+    } else {
+      alertPlayer.pause();
+      alertPlayer.seekTo(0);
+    }
+  }, [driveStatus]);
+  // ─────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     // When active data is available, set local UI state accordingly
