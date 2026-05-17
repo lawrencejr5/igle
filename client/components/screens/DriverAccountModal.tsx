@@ -21,6 +21,7 @@ import { useDriverAuthContext } from "../../context/DriverAuthContext";
 import EditProfileModal from "./EditProfileModal";
 import VehicleInformationModal from "./VehicleInformationModal";
 import DocumentsModal from "./DocumentsModal";
+import BankInformationModal from "./BankInformationModal";
 import ImagePickerModal from "../ImagePickerModal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -39,6 +40,7 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [vehicleInfoVisible, setVehicleInfoVisible] = useState(false);
   const [documentsVisible, setDocumentsVisible] = useState(false);
+  const [bankInfoVisible, setBankInfoVisible] = useState(false);
   const [showImageModal, setShowImageModal] = useState<boolean>(false);
 
   const pickImage = async () => {
@@ -271,6 +273,16 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
                   </View>
                   <FontAwesome name="chevron-right" size={16} color="#666" />
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.settingItem}
+                  onPress={() => setBankInfoVisible(true)}
+                >
+                  <View style={styles.settingLeft}>
+                    <Ionicons name="card-outline" size={20} color="#fff" />
+                    <Text style={styles.settingText}>Bank Information</Text>
+                  </View>
+                  <FontAwesome name="chevron-right" size={16} color="#666" />
+                </TouchableOpacity>
                 {/* <TouchableOpacity
                 style={[styles.settingItem, styles.logoutButton]}
               >
@@ -297,6 +309,10 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
           <DocumentsModal
             visible={documentsVisible}
             onClose={() => setDocumentsVisible(false)}
+          />
+          <BankInformationModal
+            visible={bankInfoVisible}
+            onClose={() => setBankInfoVisible(false)}
           />
         </View>
       </Modal>

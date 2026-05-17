@@ -222,6 +222,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
             back_image,
             selfie_with_licence,
           },
+          bank,
         } = data.driver;
 
         const driverInfo = {
@@ -249,6 +250,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           is_available,
           rating,
           createdAt,
+          bank,
         };
         return driverInfo;
       } else {
@@ -488,6 +490,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
         },
       );
       showNotification(data.msg, "success");
+      await getDriverProfile();
     } catch (error: any) {
       const errMsg = error.response?.data?.msg;
       console.log(errMsg || "Error saving bank info");
