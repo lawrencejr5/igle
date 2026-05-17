@@ -8,7 +8,7 @@ export const sendNotification = async (
   userIds: string[],
   title: string,
   body: string,
-  data: any = {}
+  data: any = {},
 ) => {
   try {
     // 1. Find all users involved (e.g., the passenger and driver)
@@ -38,7 +38,7 @@ export const sendNotification = async (
         // Construct the message
         messages.push({
           to: token,
-          sound: "default",
+          sound: "push_alert.wav",
           title: title,
           body: body,
           data: data, // This data is what you use for deep linking (e.g., { rideId: "123" })
@@ -74,7 +74,7 @@ export const sendNotification = async (
 
               if (userId) {
                 console.log(
-                  `Removing dead token: ${badToken} for user ${userId}`
+                  `Removing dead token: ${badToken} for user ${userId}`,
                 );
                 // Remove the bad token from the specific user's array
                 await User.findByIdAndUpdate(userId, {
