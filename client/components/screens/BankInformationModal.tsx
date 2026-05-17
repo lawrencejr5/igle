@@ -8,6 +8,9 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
 } from "react-native";
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
@@ -33,11 +36,13 @@ const BANK = [
 type BankInformationModalProps = {
   visible: boolean;
   onClose: () => void;
+  onCloseParent?: () => void;
 };
 
 const BankInformationModal: React.FC<BankInformationModalProps> = ({
   visible,
   onClose,
+  onCloseParent,
 }) => {
   const { driver, saveBankInfo } = useDriverAuthContext();
 
@@ -81,11 +86,12 @@ const BankInformationModal: React.FC<BankInformationModalProps> = ({
         account_number: formData.account_number,
         account_name: formData.account_name,
       });
-      onClose();
     } catch (error) {
       console.error("Failed to save bank info:", error);
     } finally {
       setLoading(false);
+      onClose();
+      if (onCloseParent) onCloseParent();
     }
   };
 
@@ -93,8 +99,9 @@ const BankInformationModal: React.FC<BankInformationModalProps> = ({
 
   return (
     <Modal transparent visible={visible} animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+      <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
+        <Pressable onPress={onClose} style={styles.backdrop}>
+          <Pressable onPress={() => {}} style={styles.sheet}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerText}>Bank Information</Text>
@@ -107,7 +114,7 @@ const BankInformationModal: React.FC<BankInformationModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Current bank info banner if already saved */}
             {hasSavedBank && (
               <View style={styles.savedBanner}>
@@ -206,8 +213,9 @@ const BankInformationModal: React.FC<BankInformationModalProps> = ({
               )}
             </TouchableOpacity>
           </ScrollView>
-        </View>
-      </View>
+          </Pressable>
+        </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

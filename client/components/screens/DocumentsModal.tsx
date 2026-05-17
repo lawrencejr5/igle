@@ -8,6 +8,9 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -18,11 +21,13 @@ import { useDriverAuthContext } from "../../context/DriverAuthContext";
 type DocumentsModalProps = {
   visible: boolean;
   onClose: () => void;
+  onCloseParent?: () => void;
 };
 
 const DocumentsModal: React.FC<DocumentsModalProps> = ({
   visible,
   onClose,
+  onCloseParent,
 }) => {
   const { driver, updateDriverLicense } = useDriverAuthContext();
   const [loading, setLoading] = useState(false);
@@ -95,13 +100,16 @@ const DocumentsModal: React.FC<DocumentsModalProps> = ({
       console.error("Failed to update driver license:", error);
     } finally {
       setLoading(false);
+      onClose();
+      if (onCloseParent) onCloseParent();
     }
   };
 
   return (
     <Modal transparent visible={visible} animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+      <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
+        <Pressable onPress={onClose} style={styles.backdrop}>
+          <Pressable onPress={() => {}} style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Driver's License Documents</Text>
             <TouchableOpacity
@@ -113,7 +121,7 @@ const DocumentsModal: React.FC<DocumentsModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <View style={styles.form}>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>License Number</Text>
@@ -287,8 +295,9 @@ const DocumentsModal: React.FC<DocumentsModalProps> = ({
               )}
             </TouchableOpacity>
           </ScrollView>
-        </View>
-      </View>
+          </Pressable>
+        </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

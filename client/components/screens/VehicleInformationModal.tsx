@@ -9,6 +9,9 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -19,11 +22,13 @@ import { useDriverAuthContext } from "../../context/DriverAuthContext";
 type VehicleInformationModalProps = {
   visible: boolean;
   onClose: () => void;
+  onCloseParent?: () => void;
 };
 
 const VehicleInformationModal: React.FC<VehicleInformationModalProps> = ({
   visible,
   onClose,
+  onCloseParent,
 }) => {
   const { driver, updateVehicleInfo } = useDriverAuthContext();
   const [loading, setLoading] = useState(false);
@@ -94,13 +99,16 @@ const VehicleInformationModal: React.FC<VehicleInformationModalProps> = ({
       console.error("Failed to update vehicle info:", error);
     } finally {
       setLoading(false);
+      onClose();
+      if (onCloseParent) onCloseParent();
     }
   };
 
   return (
     <Modal transparent visible={visible} animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+      <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
+        <Pressable onPress={onClose} style={styles.backdrop}>
+          <Pressable onPress={() => {}} style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Vehicle Information</Text>
             <TouchableOpacity
@@ -112,7 +120,7 @@ const VehicleInformationModal: React.FC<VehicleInformationModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <View style={styles.form}>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Vehicle Brand</Text>
@@ -299,8 +307,9 @@ const VehicleInformationModal: React.FC<VehicleInformationModalProps> = ({
               )}
             </TouchableOpacity>
           </ScrollView>
-        </View>
-      </View>
+          </Pressable>
+        </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

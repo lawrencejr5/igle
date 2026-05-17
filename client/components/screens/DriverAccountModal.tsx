@@ -301,18 +301,22 @@ const UserAccountModal: React.FC<UserAccountModalProps> = ({
           <EditProfileModal
             visible={editProfileVisible}
             onClose={() => setEditProfileVisible(false)}
+            onCloseParent={onClose}
           />
           <VehicleInformationModal
             visible={vehicleInfoVisible}
             onClose={() => setVehicleInfoVisible(false)}
+            onCloseParent={onClose}
           />
           <DocumentsModal
             visible={documentsVisible}
             onClose={() => setDocumentsVisible(false)}
+            onCloseParent={onClose}
           />
           <BankInformationModal
             visible={bankInfoVisible}
             onClose={() => setBankInfoVisible(false)}
+            onCloseParent={onClose}
           />
         </View>
       </Modal>

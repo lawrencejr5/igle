@@ -8,6 +8,9 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
 } from "react-native";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
@@ -15,11 +18,13 @@ import { useDriverAuthContext } from "../../context/DriverAuthContext";
 type EditProfileModalProps = {
   visible: boolean;
   onClose: () => void;
+  onCloseParent?: () => void;
 };
 
 const EditProfileModal: React.FC<EditProfileModalProps> = ({
   visible,
   onClose,
+  onCloseParent,
 }) => {
   const { driver, updateDriverInfo } = useDriverAuthContext();
   const [loading, setLoading] = useState(false);
@@ -40,13 +45,16 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       console.error("Failed to update profile:", error);
     } finally {
       setLoading(false);
+      onClose();
+      if (onCloseParent) onCloseParent();
     }
   };
 
   return (
     <Modal transparent visible={visible} animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+      <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
+        <Pressable onPress={onClose} style={styles.backdrop}>
+          <Pressable onPress={() => {}} style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Edit Profile</Text>
             <TouchableOpacity
@@ -58,7 +66,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <View style={styles.form}>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Full Name</Text>
@@ -144,8 +152,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               )}
             </TouchableOpacity>
           </ScrollView>
-        </View>
-      </View>
+          </Pressable>
+        </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
