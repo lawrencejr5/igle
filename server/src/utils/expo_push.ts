@@ -41,7 +41,8 @@ export const sendNotification = async (
           sound: "push_alert.wav",
           title: title,
           body: body,
-          data: data, // This data is what you use for deep linking (e.g., { rideId: "123" })
+          data: data,
+          channelId: "igle_ride",
         });
       }
     }

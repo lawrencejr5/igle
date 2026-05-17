@@ -12,25 +12,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function sendPushNotification(expoPushToken: string) {
-  const message = {
-    to: expoPushToken,
-    sound: "default",
-    title: "Original Title",
-    body: "And here is the body!",
-    data: { someData: "goes here" },
-  };
-
-  await fetch("https://exp.host/--/api/v2/push/send", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Accept-encoding": "gzip, deflate",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(message),
-  });
-}
 
 function handleRegistrationError(errorMessage: string) {
   console.warn(errorMessage);
@@ -38,11 +19,12 @@ function handleRegistrationError(errorMessage: string) {
 
 export async function registerForPushNotificationsAsync() {
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
+    await Notifications.setNotificationChannelAsync("igle_ride", {
+      name: "Igle Ride Alerts",
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#FF231F7C",
+      sound: "push_alert.wav",
     });
   }
 

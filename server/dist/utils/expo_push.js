@@ -40,10 +40,11 @@ const sendNotification = (userIds_1, title_1, body_1, ...args_1) => __awaiter(vo
                 // Construct the message
                 messages.push({
                     to: token,
-                    sound: "default",
+                    sound: "push_alert.wav",
                     title: title,
                     body: body,
-                    data: data, // This data is what you use for deep linking (e.g., { rideId: "123" })
+                    data: data,
+                    channelId: "igle_ride",
                 });
             }
         }
