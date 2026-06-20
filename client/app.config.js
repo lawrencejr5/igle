@@ -15,72 +15,72 @@ module.exports = {
       [
         "expo-audio",
         {
-          "enableBackgroundPlayback": true
-        }
+          enableBackgroundPlayback: true,
+        },
       ],
       [
         "react-native-maps",
         {
-          "iosGoogleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API,
-          "androidGoogleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
-        }
+          iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API,
+          androidGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API,
+        },
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Igle to use your location to find nearby rides and track your driver.",
-          "locationAlwaysPermission": "Allow Igle to use your location to find nearby rides and track your driver.",
-          "isIosBackgroundLocationEnabled": true
-        }
+          locationAlwaysAndWhenInUsePermission:
+            "Allow Igle to use your location to find nearby rides and track your driver.",
+          locationAlwaysPermission:
+            "Allow Igle to use your location to find nearby rides and track your driver.",
+          isIosBackgroundLocationEnabled: true,
+        },
       ],
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/notification-icon.png",
-          "sounds": [
-            "./assets/sounds/push_alert.wav"
-          ]
-        }
-      ]
+          icon: "./assets/images/notification-icon.png",
+          sounds: ["./assets/sounds/push_alert.wav"],
+        },
+      ],
     ],
     splash: {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#121212"
+      image: "./assets/images/splash-icon.png",
+      resizeMode: "contain",
+      backgroundColor: "#121212",
     },
     ios: {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.lawrencejr.igle",
-      "usesAppleSignIn": true,
-      "config": {
-        "googleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API
+      supportsTablet: false,
+      bundleIdentifier: "com.lawrencejr.igle",
+      icon: "icon-ios.png",
+      usesAppleSignIn: true,
+      config: {
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API,
       },
-      "infoPlist": {
-        "UIBackgroundModes": [
-          "location",
-          "fetch",
-          "remote-notification"
-        ],
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationWhenInUseUsageDescription": "Igle needs your location to accurately match you with drivers and provide route navigation.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Igle needs your location to accurately match you with drivers and provide route navigation."
-      }
+      infoPlist: {
+        UIBackgroundModes: ["location", "fetch", "remote-notification"],
+        ITSAppUsesNonExemptEncryption: false,
+        NSLocationWhenInUseUsageDescription:
+          "Igle needs your location to accurately match you with drivers and provide route navigation.",
+        NSLocationAlwaysAndWhenInUseUsageDescription:
+          "Igle needs your location to accurately match you with drivers and provide route navigation.",
+      },
     },
     android: {
-      "googleServicesFile": process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+      googleServicesFile:
+        process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
+      adaptiveIcon: {
+        foregroundImage: "./assets/images/adaptive-icon.png",
+        backgroundColor: "#ffffff",
       },
-      "package": "com.lawrencejr.igle"
+      package: "com.lawrencejr.igle",
     },
     web: {
-      "favicon": "./assets/images/favicon.png"
+      favicon: "./assets/images/favicon.png",
     },
     extra: {
       eas: {
-        "projectId": "19685ce9-a6ad-485b-bc81-e4654431869e"
-      }
-    }
-  }
+        projectId: "19685ce9-a6ad-485b-bc81-e4654431869e",
+      },
+    },
+  },
 };
