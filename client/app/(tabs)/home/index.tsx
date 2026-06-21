@@ -9,6 +9,8 @@ import {
   RefreshControl,
 } from "react-native";
 
+import * as Location from "expo-location";
+
 import { Image } from "expo-image";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -32,9 +34,31 @@ import { useAuthContext } from "../../../context/AuthContext";
 import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import { useMapContext } from "../../../context/MapContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
+
+const checkLocationPermission = async (
+  showNotification: any,
+): Promise<boolean> => {
+  try {
+    const { status: requestStatus } =
+      await Location.requestForegroundPermissionsAsync();
+    if (requestStatus !== "granted") {
+      showNotification(
+        "Location permission is required for rides and deliveries",
+        "error",
+      );
+    }
+    return true;
+  } catch (error) {
+    console.error("Error checking location permission:", error);
+    showNotification("Failed to verify location permissions", "error");
+    return false;
+  }
+};
 
 const Home = () => {
   const insets = useSafeAreaInsets();
+  const { showNotification } = useNotificationContext();
 
   // Function to get appropriate greeting based on time of day
   const getGreeting = () => {
@@ -293,11 +317,15 @@ const Home = () => {
                         </View>
                         <TouchableOpacity
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
-                          onPress={() => {
+                          onPress={async () => {
                             Haptics.impactAsync(
                               Haptics.ImpactFeedbackStyle.Light,
                             );
-                            router.push("../(book)/book_ride");
+                            if (
+                              await checkLocationPermission(showNotification)
+                            ) {
+                              router.push("../(book)/book_ride");
+                            }
                           }}
                         >
                           <Text style={styles.bannerBtnText}>Book ride</Text>
@@ -318,11 +346,15 @@ const Home = () => {
                         </View>
                         <TouchableOpacity
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
-                          onPress={() => {
+                          onPress={async () => {
                             Haptics.impactAsync(
                               Haptics.ImpactFeedbackStyle.Light,
                             );
-                            router.push("../(book)/book_delivery");
+                            if (
+                              await checkLocationPermission(showNotification)
+                            ) {
+                              router.push("../(book)/book_delivery");
+                            }
                           }}
                         >
                           <Text style={styles.bannerBtnText}>Send package</Text>
@@ -343,12 +375,16 @@ const Home = () => {
                         </View>
                         <TouchableOpacity
                           style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
-                          onPress={() => {
+                          onPress={async () => {
                             Haptics.impactAsync(
                               Haptics.ImpactFeedbackStyle.Light,
                             );
-                            setPickupTime("later");
-                            router.push("../(book)/book_ride");
+                            if (
+                              await checkLocationPermission(showNotification)
+                            ) {
+                              setPickupTime("later");
+                              router.push("../(book)/book_ride");
+                            }
                           }}
                         >
                           <Text style={styles.bannerBtnText}>Schedule</Text>
@@ -383,9 +419,11 @@ const Home = () => {
                   <View style={styles.serviceRow}>
                     <Pressable
                       style={styles.serviceCard}
-                      onPress={() => {
+                      onPress={async () => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        router.push("../(book)/book_ride");
+                        if (await checkLocationPermission(showNotification)) {
+                          router.push("../(book)/book_ride");
+                        }
                       }}
                     >
                       <View style={styles.serviceIconBox}>
@@ -401,9 +439,11 @@ const Home = () => {
 
                     <Pressable
                       style={styles.serviceCard}
-                      onPress={() => {
+                      onPress={async () => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        router.push("../(book)/book_delivery");
+                        if (await checkLocationPermission(showNotification)) {
+                          router.push("../(book)/book_delivery");
+                        }
                       }}
                     >
                       <View style={styles.serviceIconBox}>
@@ -490,6 +530,7 @@ const OngoingCard = ({
 }: {
   activity: { type: "ride" | "delivery"; data: any };
 }) => {
+  const { showNotification } = useNotificationContext();
   const isPackage = activity.type === "delivery";
 
   // Extract data based on type
@@ -548,8 +589,9 @@ const OngoingCard = ({
 
   const statusColors = getStatusColor(ongoing.status);
 
-  const handlePress = () => {
+  const handlePress = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!(await checkLocationPermission(showNotification))) return;
     // Navigate to appropriate screen based on activity type
     if (activity.type === "ride") {
       // Navigate to ride tracking or ride details
@@ -606,6 +648,7 @@ const OngoingCard = ({
 };
 
 const SavedPlaces = () => {
+  const { showNotification } = useNotificationContext();
   const { homePlace, officePlace, otherPlaces } = useSavedPlaceContext();
   const { setRideStatus, setModalUp } = useRideContext();
   const {
@@ -621,6 +664,7 @@ const SavedPlaces = () => {
     place_name: string;
   }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!(await checkLocationPermission(showNotification))) return;
 
     try {
       // Set the pickup location to current location

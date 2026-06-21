@@ -6,6 +6,8 @@ import * as Haptics from "expo-haptics";
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
+import * as Location from "expo-location";
+
 import Feather from "@expo/vector-icons/Feather";
 
 import { darkMapStyle } from "../../data/map.dark";
@@ -18,8 +20,21 @@ import { useLoading } from "../../context/LoadingContext";
 import AppLoading from "../../loadings/AppLoading";
 import { useRideContext } from "../../context/RideContext";
 import { router, useLocalSearchParams } from "expo-router";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const BookRide = () => {
+  const { showNotification } = useNotificationContext();
+
+  useEffect(() => {
+    const verifyPermission = async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== "granted") {
+        showNotification("Location permission is required for rides and deliveries", "error");
+        router.replace("/(tabs)/home");
+      }
+    };
+    verifyPermission();
+  }, []);
   const {
     region,
     getPlaceName,
