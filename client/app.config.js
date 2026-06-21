@@ -7,7 +7,14 @@ module.exports = {
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     userInterfaceStyle: "dark",
+    updates: {
+      url: "https://u.expo.dev/19685ce9-a6ad-485b-bc81-e4654431869e",
+    },
+    runtimeVersion: {
+      policy: "appVersion",
+    },
     plugins: [
+      "expo-updates",
       "expo-dev-client",
       "expo-web-browser",
       "expo-router",
