@@ -1111,7 +1111,7 @@ const AcceptedModal = () => {
       style={{
         height: visibleHeight,
         justifyContent: "space-between",
-        paddingBottom: 50,
+        paddingBottom: 30,
       }}
     >
       {/* 1 */}
