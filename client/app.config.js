@@ -3,7 +3,7 @@ module.exports = {
     name: "Igle",
     slug: "igle",
     scheme: "com.lawrencejr.igle",
-    version: "1.2",
+    version: "1.3",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     userInterfaceStyle: "dark",
@@ -51,7 +51,7 @@ module.exports = {
     ios: {
       supportsTablet: false,
       bundleIdentifier: "com.lawrencejr.igle",
-      icon: "icon-ios.png",
+      icon: "./assets/images/icon-ios.png",
       usesAppleSignIn: true,
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API,
