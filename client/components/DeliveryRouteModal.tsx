@@ -272,7 +272,7 @@ const StartModal = () => {
         style={styles.form}
         onPress={() => setDeliveryStatus("details")}
       >
-        <View style={styles.text_inp_container}>
+        <View style={styles.text_inp_container} pointerEvents="none">
           <FontAwesome6 name="truck" size={22} color="#8d8d8d" />
 
           <TextInput
@@ -1037,6 +1037,20 @@ const ChooseVehicleModal = () => {
   >("bike");
   const { setDeliveryStatus, deliveryData, setDeliveryData, requestDelivery } =
     useDeliverContext();
+
+  const selectRideScrollViewRef = React.useRef<any>(null);
+
+  const handleSelectRideType = (
+    type: "bike" | "cab" | "van" | "truck",
+    index: number
+  ) => {
+    setSelectedRideType(type);
+    selectRideScrollViewRef.current?.scrollTo({
+      x: index * 240,
+      animated: true,
+    });
+  };
+
   return (
     <>
       <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -1046,6 +1060,7 @@ const ChooseVehicleModal = () => {
       {/* Ride type selection - horizontally scrollable with snapping */}
       <View style={{ marginTop: 20 }}>
         <ScrollView
+          ref={selectRideScrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           decelerationRate="fast"
@@ -1061,7 +1076,7 @@ const ChooseVehicleModal = () => {
             amount={deliveryData?.deliveryDetails?.bikeAmount || 2500}
             selected={selectedRideType === "bike"}
             onPress={() => {
-              setSelectedRideType("bike");
+              handleSelectRideType("bike", 0);
             }}
           />
 
@@ -1073,7 +1088,7 @@ const ChooseVehicleModal = () => {
             amount={deliveryData?.deliveryDetails?.cabAmount || 3500}
             selected={selectedRideType === "cab"}
             onPress={() => {
-              setSelectedRideType("cab");
+              handleSelectRideType("cab", 1);
             }}
           />
 
@@ -1085,7 +1100,7 @@ const ChooseVehicleModal = () => {
             amount={deliveryData?.deliveryDetails?.vanAmount || 5000}
             selected={selectedRideType === "van"}
             onPress={() => {
-              setSelectedRideType("van");
+              handleSelectRideType("van", 2);
             }}
           />
           <RideTypeCard
@@ -1096,7 +1111,7 @@ const ChooseVehicleModal = () => {
             amount={deliveryData?.deliveryDetails?.truckAmount || 8000}
             selected={selectedRideType === "truck"}
             onPress={() => {
-              setSelectedRideType("truck");
+              handleSelectRideType("truck", 3);
             }}
           />
         </ScrollView>

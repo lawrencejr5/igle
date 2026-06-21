@@ -341,7 +341,7 @@ const StartModal = () => {
         }}
         style={styles.form}
       >
-        <View style={styles.text_inp_container}>
+        <View style={styles.text_inp_container} pointerEvents="none">
           <Image
             source={require("../assets/images/icons/car-icon.png")}
             style={{ height: 30, width: 30 }}
@@ -471,7 +471,9 @@ const BookingModal: FC<{
         </TouchableOpacity>
         {/* Route slection form */}
         <View style={styles.form}>
-          <View style={{ flex: 1, marginTop: 10, flexDirection: "row", gap: 15 }}>
+          <View
+            style={{ flex: 1, marginTop: 10, flexDirection: "row", gap: 15 }}
+          >
             {/* Select pickup and drop off */}
             <View style={{ alignItems: "center", marginTop: 15 }}>
               <View
@@ -546,7 +548,10 @@ const BookingModal: FC<{
                 >
                   <Ionicons name="location" size={24} color="#b7b7b7" />
                   <View>
-                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    <Text
+                      style={styles.suggestion_header_text}
+                      numberOfLines={1}
+                    >
                       {item.structured_formatting.main_text}
                     </Text>
                     <Text style={styles.suggestion_sub_text}>
@@ -575,7 +580,10 @@ const BookingModal: FC<{
                 >
                   <Ionicons name="location" size={24} color="#b7b7b7" />
                   <View>
-                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    <Text
+                      style={styles.suggestion_header_text}
+                      numberOfLines={1}
+                    >
                       {item.structured_formatting.main_text}
                     </Text>
                     <Text style={styles.suggestion_sub_text}>
@@ -607,7 +615,10 @@ const BookingModal: FC<{
                     color="#b7b7b7"
                   />
                   <View>
-                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    <Text
+                      style={styles.suggestion_header_text}
+                      numberOfLines={1}
+                    >
                       {item.place_name}
                     </Text>
                     <Text style={styles.suggestion_sub_text}>
@@ -710,6 +721,24 @@ const ChooseRideModal = () => {
     "cab" | "keke" | "suv"
   >("keke");
 
+  const selectRideScrollViewRef = React.useRef<any>(null);
+
+  const handleSelectRideType = (
+    type: "cab" | "keke" | "suv",
+    index: number,
+    amount?: number
+  ) => {
+    setSelectedRideType(type);
+    setRideDetails((prev: any) => ({
+      ...prev,
+      amount,
+    }));
+    selectRideScrollViewRef.current?.scrollTo({
+      x: index * 240,
+      animated: true,
+    });
+  };
+
   // Calculate the visible height of the bottom sheet at the choosing_car snap point (index 2 = 40%)
   const visibleHeight = useVisibleHeight(40);
 
@@ -762,6 +791,7 @@ const ChooseRideModal = () => {
         {/* Ride type selection - horizontally scrollable with snapping */}
         <View style={{ marginTop: 20 }}>
           <ScrollView
+            ref={selectRideScrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"
@@ -778,11 +808,7 @@ const ChooseRideModal = () => {
               amount={rideDetails?.keke?.amount}
               selected={selectedRideType === "keke"}
               onPress={() => {
-                setSelectedRideType("keke");
-                setRideDetails((prev: any) => ({
-                  ...prev,
-                  amount: rideDetails?.keke?.amount,
-                }));
+                handleSelectRideType("keke", 0, rideDetails?.keke?.amount);
               }}
             />
 
@@ -795,11 +821,7 @@ const ChooseRideModal = () => {
               amount={rideDetails?.cab?.amount}
               selected={selectedRideType === "cab"}
               onPress={() => {
-                setSelectedRideType("cab");
-                setRideDetails((prev: any) => ({
-                  ...prev,
-                  amount: rideDetails?.cab?.amount,
-                }));
+                handleSelectRideType("cab", 1, rideDetails?.cab?.amount);
               }}
             />
 
@@ -812,11 +834,7 @@ const ChooseRideModal = () => {
               amount={rideDetails?.suv?.amount}
               selected={selectedRideType === "suv"}
               onPress={() => {
-                setSelectedRideType("suv");
-                setRideDetails((prev: any) => ({
-                  ...prev,
-                  amount: rideDetails?.suv?.amount,
-                }));
+                handleSelectRideType("suv", 2, rideDetails?.suv?.amount);
               }}
             />
           </ScrollView>
