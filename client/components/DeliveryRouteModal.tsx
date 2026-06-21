@@ -24,7 +24,12 @@ import BottomSheet, {
   TouchableWithoutFeedback,
 } from "@gorhom/bottom-sheet";
 
-import { Feather, FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
+import {
+  Feather,
+  FontAwesome,
+  FontAwesome6,
+  Ionicons,
+} from "@expo/vector-icons";
 import { router } from "expo-router";
 
 import { useDeliverContext, Delivery } from "../context/DeliveryContext";
@@ -418,7 +423,7 @@ const DetailsModal = () => {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={"padding"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
     >
       <ScrollView
         style={{ flex: 1 }}
@@ -429,7 +434,6 @@ const DetailsModal = () => {
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
       >
         <Text style={[styles.header, { marginBottom: 12 }]}>
           Recipient info
@@ -860,7 +864,9 @@ const RouteModal = () => {
         </Text>
         {/* Route selection form */}
         <View style={styles.form}>
-          <View style={{ flex: 1, marginTop: 30, flexDirection: "row", gap: 15 }}>
+          <View
+            style={{ flex: 1, marginTop: 30, flexDirection: "row", gap: 15 }}
+          >
             {/* Select pickup and drop off */}
             <View style={{ alignItems: "center", marginTop: 15 }}>
               <View
@@ -935,7 +941,10 @@ const RouteModal = () => {
                 >
                   <Feather name="map-pin" size={20} color="#b7b7b7" />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    <Text
+                      style={styles.suggestion_header_text}
+                      numberOfLines={1}
+                    >
                       {item.structured_formatting.main_text}
                     </Text>
                     <Text style={styles.suggestion_sub_text} numberOfLines={1}>
@@ -945,7 +954,8 @@ const RouteModal = () => {
                 </Pressable>
               )}
             />
-          ) : activeSuggestion === "dropoff" && dropoffSuggestions.length > 0 ? (
+          ) : activeSuggestion === "dropoff" &&
+            dropoffSuggestions.length > 0 ? (
             <FlatList
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode="on-drag"
@@ -963,7 +973,10 @@ const RouteModal = () => {
                 >
                   <Feather name="map-pin" size={20} color="#b7b7b7" />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                    <Text
+                      style={styles.suggestion_header_text}
+                      numberOfLines={1}
+                    >
                       {item.structured_formatting.main_text}
                     </Text>
                     <Text style={styles.suggestion_sub_text} numberOfLines={1}>
@@ -991,7 +1004,10 @@ const RouteModal = () => {
                 <Feather name="search" size={20} color="#b7b7b7" />
                 <View>
                   <Text
-                    style={[styles.suggestion_header_text, { color: "#b7b7b7" }]}
+                    style={[
+                      styles.suggestion_header_text,
+                      { color: "#b7b7b7" },
+                    ]}
                   >
                     Start typing to search locations
                   </Text>
@@ -1042,7 +1058,7 @@ const ChooseVehicleModal = () => {
 
   const handleSelectRideType = (
     type: "bike" | "cab" | "van" | "truck",
-    index: number
+    index: number,
   ) => {
     setSelectedRideType(type);
     selectRideScrollViewRef.current?.scrollTo({
@@ -1444,7 +1460,8 @@ const AcceptedModal = () => {
           ongoingDeliveryData.driver.current_location.coordinates[1] !== 0
         ) {
           latitude = ongoingDeliveryData.driver.current_location.coordinates[0];
-          longitude = ongoingDeliveryData.driver.current_location.coordinates[1];
+          longitude =
+            ongoingDeliveryData.driver.current_location.coordinates[1];
         }
 
         mapRef.current.animateToRegion(
@@ -3062,19 +3079,19 @@ const RateModal = () => {
                 opacity: ratingLoading ? 0.5 : 1,
               }}
             >
-            <Text
-              style={{
-                color: "#121212",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
-              }}
-            >
-              {ratingLoading ? "Submitting" : "Submit review"}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={{
+                  color: "#121212",
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                }}
+              >
+                {ratingLoading ? "Submitting" : "Submit review"}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
     </TouchableWithoutFeedback>
   );
 };

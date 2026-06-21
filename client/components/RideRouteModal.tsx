@@ -726,7 +726,7 @@ const ChooseRideModal = () => {
   const handleSelectRideType = (
     type: "cab" | "keke" | "suv",
     index: number,
-    amount?: number
+    amount?: number,
   ) => {
     setSelectedRideType(type);
     setRideDetails((prev: any) => ({
@@ -1107,7 +1107,13 @@ const AcceptedModal = () => {
   const visibleHeight = useVisibleHeight(75);
 
   return (
-    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+    <View
+      style={{
+        height: visibleHeight,
+        justifyContent: "space-between",
+        paddingBottom: 50,
+      }}
+    >
       {/* 1 */}
       <View>
         <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -1263,7 +1269,13 @@ const PayModal = () => {
   const visibleHeight = useVisibleHeight(75);
 
   return (
-    <View style={{ height: visibleHeight, justifyContent: "space-between" }}>
+    <View
+      style={{
+        height: visibleHeight,
+        justifyContent: "space-between",
+        paddingBottom: 20,
+      }}
+    >
       {/* 1 */}
       <View>
         <Text style={[styles.header_text, { textAlign: "center" }]}>
@@ -1354,6 +1366,7 @@ const PayingModal = () => {
       style={{
         height: visibleHeight,
         justifyContent: "space-between",
+        paddingBottom: 20,
       }}
     >
       {/* 1 */}
