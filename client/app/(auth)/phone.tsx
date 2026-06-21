@@ -47,7 +47,7 @@ const AddPhone = () => {
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
         {/* Back button */}
         <TouchableWithoutFeedback
           onPress={() => router.back()}

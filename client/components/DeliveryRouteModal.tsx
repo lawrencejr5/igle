@@ -13,6 +13,7 @@ import {
   Linking,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -428,6 +429,7 @@ const DetailsModal = () => {
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         <Text style={[styles.header, { marginBottom: 12 }]}>
           Recipient info
@@ -851,175 +853,181 @@ const RouteModal = () => {
   };
 
   return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center" }]}>
-        Choose your route...
-      </Text>
-      {/* Route selection form */}
-      <View style={styles.form}>
-        <View style={{ flex: 1, marginTop: 30, flexDirection: "row", gap: 15 }}>
-          {/* Select pickup and drop off */}
-          <View style={{ alignItems: "center", marginTop: 15 }}>
-            <View
-              style={{
-                width: 15,
-                height: 15,
-                backgroundColor: "#9c9c9c",
-                borderRadius: 20,
-              }}
-            />
-            <View
-              style={{
-                width: 1,
-                height: 40,
-                borderLeftWidth: 1,
-                borderColor: "#9c9c9c",
-                borderStyle: "dashed",
-              }}
-            />
-            <View
-              style={{
-                width: 14,
-                height: 14,
-                backgroundColor: "#9c9c9c",
-              }}
-            />
-          </View>
-          <View>
-            <View style={styles.route_inp_container}>
-              <TextInput
-                style={[styles.route_input]}
-                placeholder="Pickup"
-                value={pickup}
-                onFocus={pickupFocus}
-                onChangeText={setPickup}
-                editable={true}
-                placeholderTextColor={"#b7b7b7"}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.header_text, { textAlign: "center" }]}>
+          Choose your route...
+        </Text>
+        {/* Route selection form */}
+        <View style={styles.form}>
+          <View style={{ flex: 1, marginTop: 30, flexDirection: "row", gap: 15 }}>
+            {/* Select pickup and drop off */}
+            <View style={{ alignItems: "center", marginTop: 15 }}>
+              <View
+                style={{
+                  width: 15,
+                  height: 15,
+                  backgroundColor: "#9c9c9c",
+                  borderRadius: 20,
+                }}
+              />
+              <View
+                style={{
+                  width: 1,
+                  height: 40,
+                  borderLeftWidth: 1,
+                  borderColor: "#9c9c9c",
+                  borderStyle: "dashed",
+                }}
+              />
+              <View
+                style={{
+                  width: 14,
+                  height: 14,
+                  backgroundColor: "#9c9c9c",
+                }}
               />
             </View>
-            <View style={styles.route_inp_container}>
-              <TextInput
-                style={styles.route_input}
-                placeholder="Drop off"
-                value={dropoff}
-                onFocus={dropoffFocus}
-                onChangeText={setDropOff}
-                editable={true}
-                placeholderTextColor={"#b7b7b7"}
-              />
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Suggestions */}
-      <View style={[styles.suggestions_container]}>
-        {activeSuggestion === "pickup" && pickupSuggestions.length > 0 ? (
-          <FlatList
-            data={pickupSuggestions}
-            keyExtractor={(item) => item.place_id}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.suggestion_box}
-                onPress={() =>
-                  setPickupFromSuggestion(
-                    item.place_id,
-                    item.structured_formatting.main_text,
-                  )
-                }
-              >
-                <Feather name="map-pin" size={20} color="#b7b7b7" />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
-                    {item.structured_formatting.main_text}
-                  </Text>
-                  <Text style={styles.suggestion_sub_text} numberOfLines={1}>
-                    {item.structured_formatting.secondary_text}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-          />
-        ) : activeSuggestion === "dropoff" && dropoffSuggestions.length > 0 ? (
-          <FlatList
-            data={dropoffSuggestions}
-            keyExtractor={(item) => item.place_id}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.suggestion_box}
-                onPress={() =>
-                  setDropoffFromSuggestion(
-                    item.place_id,
-                    item.structured_formatting.main_text,
-                  )
-                }
-              >
-                <Feather name="map-pin" size={20} color="#b7b7b7" />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
-                    {item.structured_formatting.main_text}
-                  </Text>
-                  <Text style={styles.suggestion_sub_text} numberOfLines={1}>
-                    {item.structured_formatting.secondary_text}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-          />
-        ) : (
-          <View
-            style={{
-              paddingVertical: 20,
-              paddingHorizontal: 5,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                marginBottom: 8,
-              }}
-            >
-              <Feather name="search" size={20} color="#b7b7b7" />
-              <View>
-                <Text
-                  style={[styles.suggestion_header_text, { color: "#b7b7b7" }]}
-                >
-                  Start typing to search locations
-                </Text>
-                <Text
-                  style={[styles.suggestion_sub_text, { color: "#b7b7b7" }]}
-                >
-                  Enter pickup or dropoff location above
-                </Text>
+            <View>
+              <View style={styles.route_inp_container}>
+                <TextInput
+                  style={[styles.route_input]}
+                  placeholder="Pickup"
+                  value={pickup}
+                  onFocus={pickupFocus}
+                  onChangeText={setPickup}
+                  editable={true}
+                  placeholderTextColor={"#b7b7b7"}
+                />
+              </View>
+              <View style={styles.route_inp_container}>
+                <TextInput
+                  style={styles.route_input}
+                  placeholder="Drop off"
+                  value={dropoff}
+                  onFocus={dropoffFocus}
+                  onChangeText={setDropOff}
+                  editable={true}
+                  placeholderTextColor={"#b7b7b7"}
+                />
               </View>
             </View>
           </View>
-        )}
-      </View>
+        </View>
 
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={submit}
-        style={{
-          marginBottom: 50,
-          padding: 10,
-          borderRadius: 30,
-          backgroundColor: "#fff",
-        }}
-      >
-        <Text
+        {/* Suggestions */}
+        <View style={[styles.suggestions_container]}>
+          {activeSuggestion === "pickup" && pickupSuggestions.length > 0 ? (
+            <FlatList
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              data={pickupSuggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.suggestion_box}
+                  onPress={() =>
+                    setPickupFromSuggestion(
+                      item.place_id,
+                      item.structured_formatting.main_text,
+                    )
+                  }
+                >
+                  <Feather name="map-pin" size={20} color="#b7b7b7" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                      {item.structured_formatting.main_text}
+                    </Text>
+                    <Text style={styles.suggestion_sub_text} numberOfLines={1}>
+                      {item.structured_formatting.secondary_text}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          ) : activeSuggestion === "dropoff" && dropoffSuggestions.length > 0 ? (
+            <FlatList
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              data={dropoffSuggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.suggestion_box}
+                  onPress={() =>
+                    setDropoffFromSuggestion(
+                      item.place_id,
+                      item.structured_formatting.main_text,
+                    )
+                  }
+                >
+                  <Feather name="map-pin" size={20} color="#b7b7b7" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                      {item.structured_formatting.main_text}
+                    </Text>
+                    <Text style={styles.suggestion_sub_text} numberOfLines={1}>
+                      {item.structured_formatting.secondary_text}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          ) : (
+            <View
+              style={{
+                paddingVertical: 20,
+                paddingHorizontal: 5,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 8,
+                }}
+              >
+                <Feather name="search" size={20} color="#b7b7b7" />
+                <View>
+                  <Text
+                    style={[styles.suggestion_header_text, { color: "#b7b7b7" }]}
+                  >
+                    Start typing to search locations
+                  </Text>
+                  <Text
+                    style={[styles.suggestion_sub_text, { color: "#b7b7b7" }]}
+                  >
+                    Enter pickup or dropoff location above
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={submit}
           style={{
-            textAlign: "center",
-            fontFamily: "raleway-bold",
-            color: "#121212",
+            marginBottom: 50,
+            padding: 10,
+            borderRadius: 30,
+            backgroundColor: "#fff",
           }}
         >
-          Set route
-        </Text>
-      </TouchableOpacity>
-    </>
+          <Text
+            style={{
+              textAlign: "center",
+              fontFamily: "raleway-bold",
+              color: "#121212",
+            }}
+          >
+            Set route
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -2881,163 +2889,164 @@ const RateModal = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={styles.header_text}>Delivery completed!</Text>
-      <View
-        style={{
-          flex: 1,
-          paddingBottom: 20,
-        }}
-      >
-        <View style={{ alignItems: "center" }}>
-          <Image
-            source={
-              ongoingDeliveryData?.driver.profile_img
-                ? { uri: ongoingDeliveryData.driver.profile_img }
-                : require("../assets/images/user.png")
-            }
-            style={{
-              width: 70,
-              height: 70,
-              borderRadius: 40,
-              marginTop: 20,
-            }}
-          />
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: "raleway-regular",
-              marginTop: 10,
-            }}
-          >
-            How was this driver?
-          </Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.header_text}>Delivery completed!</Text>
+        <View
+          style={{
+            flex: 1,
+            paddingBottom: 20,
+          }}
+        >
+          <View style={{ alignItems: "center" }}>
+            <Image
+              source={
+                ongoingDeliveryData?.driver.profile_img
+                  ? { uri: ongoingDeliveryData.driver.profile_img }
+                  : require("../assets/images/user.png")
+              }
+              style={{
+                width: 70,
+                height: 70,
+                borderRadius: 40,
+                marginTop: 20,
+              }}
+            />
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-regular",
+                marginTop: 10,
+              }}
+            >
+              How was this driver?
+            </Text>
 
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 20,
+                marginTop: 20,
+              }}
+            >
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <FontAwesome
+                    name={rating >= star ? "star" : "star-o"}
+                    size={30}
+                    color="#fff"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={{ width: "100%" }}>
+              <TextInput
+                value={review}
+                onChangeText={setReview}
+                style={{
+                  backgroundColor: "transparent",
+                  borderColor: "#fff",
+                  borderWidth: 1,
+                  color: "#fff",
+                  borderRadius: 10,
+                  padding: 20,
+                  marginTop: 20,
+                  fontFamily: "raleway-regular",
+                }}
+                placeholder="Write a review"
+                placeholderTextColor="#aaaaaa"
+              />
+            </View>
+          </View>
+
+          <View style={{ marginTop: 30 }}>
+            <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
+              Delivery summary
+            </Text>
+            {ongoingDeliveryData && (
+              <RideRoute
+                from={ongoingDeliveryData?.pickup.address || "Pickup location"}
+                to={ongoingDeliveryData.dropoff.address || "Drop-off location"}
+              />
+            )}
+
+            <Text
+              style={{
+                color: "#d2ceceff",
+                fontFamily: "raleway-bold",
+                fontSize: 14,
+                marginBottom: 10,
+              }}
+            >
+              **Package delivered {ongoingDeliveryData?.distance_km}km in{" "}
+              {ongoingDeliveryData?.duration_mins} mins
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-regular",
+                  fontSize: 18,
+                }}
+              >
+                Total fare:
+              </Text>
+              <Text style={styles.priceText}>
+                NGN {ongoingDeliveryData?.fare.toLocaleString()}(Paid)
+              </Text>
+            </View>
+          </View>
           <View
             style={{
               flexDirection: "row",
+              justifyContent: "center",
               gap: 20,
-              marginTop: 20,
+              marginTop: 50,
             }}
           >
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                <FontAwesome
-                  name={rating >= star ? "star" : "star-o"}
-                  size={30}
-                  color="#fff"
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={{ width: "100%" }}>
-            <TextInput
-              value={review}
-              onChangeText={setReview}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={resetDeliveryFlow}
               style={{
                 backgroundColor: "transparent",
                 borderColor: "#fff",
                 borderWidth: 1,
-                color: "#fff",
-                borderRadius: 10,
-                padding: 20,
-                marginTop: 20,
-                fontFamily: "raleway-regular",
-              }}
-              placeholder="Write a review"
-              placeholderTextColor="#aaaaaa"
-            />
-          </View>
-        </View>
-
-        <View style={{ marginTop: 30 }}>
-          <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
-            Delivery summary
-          </Text>
-          {ongoingDeliveryData && (
-            <RideRoute
-              from={ongoingDeliveryData?.pickup.address || "Pickup location"}
-              to={ongoingDeliveryData.dropoff.address || "Drop-off location"}
-            />
-          )}
-
-          <Text
-            style={{
-              color: "#d2ceceff",
-              fontFamily: "raleway-bold",
-              fontSize: 14,
-              marginBottom: 10,
-            }}
-          >
-            **Package delivered {ongoingDeliveryData?.distance_km}km in{" "}
-            {ongoingDeliveryData?.duration_mins} mins
-          </Text>
-
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-regular",
-                fontSize: 18,
+                borderRadius: 50,
+                width: 100,
+                paddingVertical: 10,
               }}
             >
-              Total fare:
-            </Text>
-            <Text style={styles.priceText}>
-              NGN {ongoingDeliveryData?.fare.toLocaleString()}(Paid)
-            </Text>
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: 20,
-            marginTop: 50,
-          }}
-        >
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={resetDeliveryFlow}
-            style={{
-              backgroundColor: "transparent",
-              borderColor: "#fff",
-              borderWidth: 1,
-              borderRadius: 50,
-              width: 100,
-              paddingVertical: 10,
-            }}
-          >
-            <Text
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                }}
+              >
+                Skip
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={rate_driver}
+              disabled={ratingLoading}
+              activeOpacity={0.7}
               style={{
-                color: "#fff",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
+                backgroundColor: "#fff",
+                borderRadius: 50,
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+                flex: 1,
+                opacity: ratingLoading ? 0.5 : 1,
               }}
             >
-              Skip
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={rate_driver}
-            disabled={ratingLoading}
-            activeOpacity={0.7}
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 50,
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-              flex: 1,
-              opacity: ratingLoading ? 0.5 : 1,
-            }}
-          >
             <Text
               style={{
                 color: "#121212",
@@ -3051,6 +3060,7 @@ const RateModal = () => {
         </View>
       </View>
     </View>
+    </TouchableWithoutFeedback>
   );
 };
 

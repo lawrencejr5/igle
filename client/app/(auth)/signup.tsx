@@ -84,7 +84,7 @@ const Signup = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
         {/* Back button */}
         <TouchableOpacity
           activeOpacity={0.7}

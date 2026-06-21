@@ -18,6 +18,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Keyboard,
 } from "react-native";
 
 // ─── TransactionItem ──────────────────────────────────────────────────────────
@@ -100,7 +101,10 @@ export const WithdrawModal: React.FC<{
       <Pressable style={styles.withdrawBackdrop} onPress={onClose}>
         <Pressable
           style={[styles.withdrawModal, { marginBottom: 20 }]}
-          onPress={(e) => e.stopPropagation()}
+          onPress={(e) => {
+            e.stopPropagation();
+            Keyboard.dismiss();
+          }}
         >
           <Text style={styles.withdrawTitle}>Withdraw Funds</Text>
           <Text style={styles.withdrawBalance}>

@@ -94,161 +94,165 @@ const WalletScreen: FC<{
         { transform: [{ translateY: walletTranslate }] },
       ]}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text
-          style={{
-            color: "#fff",
-            fontFamily: "raleway-bold",
-            fontSize: 25,
-          }}
-        >
-          Wallet
-        </Text>
-        <TouchableWithoutFeedback style={{ padding: 10 }} onPress={closeWallet}>
-          <FontAwesome5 name="times" size={24} color="#fff" />
-        </TouchableWithoutFeedback>
-      </View>
-
-      {/* Balance */}
-      <View
-        style={{
-          marginTop: 20,
-          flexDirection: "row",
-          justifyContent: "flex-end",
-        }}
-      >
-        <View>
-          <Text
-            style={{
-              color: "#c7c7c7",
-              fontFamily: "raleway-bold",
-              alignSelf: "flex-end",
-            }}
-          >
-            Balance:
-          </Text>
-          <Text
-            style={{ color: "#fff", fontFamily: "poppins-black", fontSize: 30 }}
-          >
-            {userWalletBal.toLocaleString()} NGN
-          </Text>
-        </View>
-      </View>
-
-      <View
-        style={{
-          height: 0.5,
-          backgroundColor: "#6e6d6dff",
-          width: "100%",
-          marginTop: 20,
-        }}
-      />
-
-      {/* Top up */}
-      <View style={{ marginTop: 30, flex: 1 }}>
-        <Text
-          style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 20 }}
-        >
-          Top up
-        </Text>
-        <View style={{ marginTop: 20 }}>
-          {/* Text input */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={{ flex: 1 }}>
           <View
             style={{
-              backgroundColor: "#4a4a4a",
-              borderRadius: 10,
-              paddingHorizontal: 20,
               flexDirection: "row",
+              alignItems: "flex-end",
               justifyContent: "space-between",
-              alignItems: "center",
             }}
           >
-            <TextInput
+            <Text
               style={{
                 color: "#fff",
-                fontSize: 30,
-                fontWeight: 600,
-                maxWidth: 230,
-                width: "100%",
-                height: "100%",
-                paddingVertical: 10,
-              }}
-              placeholder="0.00"
-              value={amount}
-              onChangeText={setAmount}
-              placeholderTextColor={"#b3afaf"}
-              inputMode="numeric"
-            />
-            <View
-              style={{
-                borderColor: "#b3afaf",
-                borderStyle: "solid",
-                borderLeftWidth: 1,
-                paddingLeft: 10,
+                fontFamily: "raleway-bold",
+                fontSize: 25,
               }}
             >
-              <Text
-                style={{
-                  fontFamily: "raleway-bold",
-                  fontSize: 20,
-                  color: "#fff",
-                }}
-              >
-                NGN
-              </Text>
-            </View>
+              Wallet
+            </Text>
+            <TouchableWithoutFeedback style={{ padding: 10 }} onPress={closeWallet}>
+              <FontAwesome5 name="times" size={24} color="#fff" />
+            </TouchableWithoutFeedback>
           </View>
+
+          {/* Balance */}
           <View
             style={{
-              marginTop: 30,
-              marginHorizontal: 5,
+              marginTop: 20,
               flexDirection: "row",
-              flexWrap: "wrap",
-              justifyContent: "flex-start",
-              gap: 10,
+              justifyContent: "flex-end",
             }}
           >
-            <Suggestion close={closeWallet} value={1500} />
-            <Suggestion close={closeWallet} value={3000} />
-            <Suggestion close={closeWallet} value={5000} />
-            <Suggestion close={closeWallet} value={10000} />
-            <Suggestion close={closeWallet} value={25000} />
-            <Suggestion close={closeWallet} value={50000} />
-          </View>
-        </View>
-        <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
-          <TouchableWithoutFeedback
-            onPress={fundWalletFunc}
-            disabled={btnLoading || !amount}
-          >
-            <View
-              style={{
-                backgroundColor: "#fff",
-                width: "100%",
-                padding: 15,
-                borderRadius: 30,
-                opacity: btnLoading ? 0.5 : 1,
-              }}
-            >
+            <View>
               <Text
                 style={{
-                  textAlign: "center",
+                  color: "#c7c7c7",
                   fontFamily: "raleway-bold",
-                  color: "#121212",
+                  alignSelf: "flex-end",
                 }}
               >
-                {btnLoading ? "Loading..." : "Continue"}
+                Balance:
+              </Text>
+              <Text
+                style={{ color: "#fff", fontFamily: "poppins-black", fontSize: 30 }}
+              >
+                {userWalletBal.toLocaleString()} NGN
               </Text>
             </View>
-          </TouchableWithoutFeedback>
+          </View>
+
+          <View
+            style={{
+              height: 0.5,
+              backgroundColor: "#6e6d6dff",
+              width: "100%",
+              marginTop: 20,
+            }}
+          />
+
+          {/* Top up */}
+          <View style={{ marginTop: 30, flex: 1 }}>
+            <Text
+              style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 20 }}
+            >
+              Top up
+            </Text>
+            <View style={{ marginTop: 20 }}>
+              {/* Text input */}
+              <View
+                style={{
+                  backgroundColor: "#4a4a4a",
+                  borderRadius: 10,
+                  paddingHorizontal: 20,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <TextInput
+                  style={{
+                    color: "#fff",
+                    fontSize: 30,
+                    fontWeight: 600,
+                    maxWidth: 230,
+                    width: "100%",
+                    height: "100%",
+                    paddingVertical: 10,
+                  }}
+                  placeholder="0.00"
+                  value={amount}
+                  onChangeText={setAmount}
+                  placeholderTextColor={"#b3afaf"}
+                  inputMode="numeric"
+                />
+                <View
+                  style={{
+                    borderColor: "#b3afaf",
+                    borderStyle: "solid",
+                    borderLeftWidth: 1,
+                    paddingLeft: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "raleway-bold",
+                      fontSize: 20,
+                      color: "#fff",
+                    }}
+                  >
+                    NGN
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={{
+                  marginTop: 30,
+                  marginHorizontal: 5,
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  justifyContent: "flex-start",
+                  gap: 10,
+                }}
+              >
+                <Suggestion close={closeWallet} value={1500} />
+                <Suggestion close={closeWallet} value={3000} />
+                <Suggestion close={closeWallet} value={5000} />
+                <Suggestion close={closeWallet} value={10000} />
+                <Suggestion close={closeWallet} value={25000} />
+                <Suggestion close={closeWallet} value={50000} />
+              </View>
+            </View>
+            <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
+              <TouchableWithoutFeedback
+                onPress={fundWalletFunc}
+                disabled={btnLoading || !amount}
+              >
+                <View
+                  style={{
+                    backgroundColor: "#fff",
+                    width: "100%",
+                    padding: 15,
+                    borderRadius: 30,
+                    opacity: btnLoading ? 0.5 : 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontFamily: "raleway-bold",
+                      color: "#121212",
+                    }}
+                  >
+                    {btnLoading ? "Loading..." : "Continue"}
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </View>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Animated.View>
   );
 };

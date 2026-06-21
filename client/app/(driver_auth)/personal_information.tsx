@@ -230,6 +230,7 @@ const PersonalInformation = () => {
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           <View style={{ marginTop: 25 }}>
             <Text style={styles.form_header_text}>Personal Information</Text>

@@ -87,6 +87,7 @@ const Feedback = () => {
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           <View style={styles.headerRow}>
             <Pressable

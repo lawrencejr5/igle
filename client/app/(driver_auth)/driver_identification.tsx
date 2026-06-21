@@ -275,6 +275,7 @@ const DriverIdentification = () => {
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Form Header */}
           <View style={{ marginTop: 20 }}>

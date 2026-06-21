@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Keyboard,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -108,7 +109,7 @@ const VehicleInformationModal: React.FC<VehicleInformationModalProps> = ({
     <Modal transparent visible={visible} animationType="slide">
       <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
         <Pressable onPress={onClose} style={styles.backdrop}>
-          <Pressable onPress={() => {}} style={styles.sheet}>
+          <Pressable onPress={Keyboard.dismiss} style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Vehicle Information</Text>
             <TouchableOpacity
@@ -120,7 +121,7 @@ const VehicleInformationModal: React.FC<VehicleInformationModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
             <View style={styles.form}>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Vehicle Brand</Text>

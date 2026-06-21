@@ -114,6 +114,7 @@ const BankDetails = () => {
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Header */}
           <View style={{ marginTop: 20 }}>

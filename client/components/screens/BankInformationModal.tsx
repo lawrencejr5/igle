@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Keyboard,
 } from "react-native";
 import { FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
@@ -101,7 +102,7 @@ const BankInformationModal: React.FC<BankInformationModalProps> = ({
     <Modal transparent visible={visible} animationType="slide">
       <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
         <Pressable onPress={onClose} style={styles.backdrop}>
-          <Pressable onPress={() => {}} style={styles.sheet}>
+          <Pressable onPress={Keyboard.dismiss} style={styles.sheet}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerText}>Bank Information</Text>
@@ -114,7 +115,7 @@ const BankInformationModal: React.FC<BankInformationModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
             {/* Current bank info banner if already saved */}
             {hasSavedBank && (
               <View style={styles.savedBanner}>

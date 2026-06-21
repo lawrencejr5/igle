@@ -7,6 +7,7 @@ import {
   TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -225,7 +226,7 @@ const EditNameModal: FC<{
     >
       <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
         <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-          <Pressable onPress={() => {}} style={styles.modal}>
+          <Pressable onPress={Keyboard.dismiss} style={styles.modal}>
             <Text style={styles.modal_header}>Update fullname</Text>
 
             <TextInput
@@ -280,7 +281,7 @@ const EditEmailModal: FC<{
     >
       <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
         <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-          <Pressable onPress={() => {}} style={styles.modal}>
+          <Pressable onPress={Keyboard.dismiss} style={styles.modal}>
             <Text style={styles.modal_header}>Update email</Text>
 
             <TextInput
@@ -333,7 +334,7 @@ const EditPhoneModal: FC<{
     >
       <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
         <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-          <Pressable onPress={() => {}} style={styles.modal}>
+          <Pressable onPress={Keyboard.dismiss} style={styles.modal}>
             <Text style={styles.modal_header}>Update phone</Text>
 
             <TextInput

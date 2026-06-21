@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Dimensions,
   PixelRatio,
+  Keyboard,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -434,194 +435,198 @@ const BookingModal: FC<{
   } = useRideContext();
 
   return (
-    <>
-      <Text style={[styles.header_text, { textAlign: "center" }]}>
-        Choose your route...
-      </Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.header_text, { textAlign: "center" }]}>
+          Choose your route...
+        </Text>
 
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => setPickupModal(true)}
-        style={{
-          paddingHorizontal: 20,
-          paddingVertical: 8,
-          borderRadius: 20,
-          backgroundColor: "#515151",
-          borderColor: "#fff",
-          borderWidth: pickupTime === "later" ? 1 : 0,
-          marginTop: 20,
-          alignSelf: "flex-end",
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <Text
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setPickupModal(true)}
           style={{
-            color: "#fff",
-            fontFamily: "raleway-semibold",
-            fontSize: 12,
+            paddingHorizontal: 20,
+            paddingVertical: 8,
+            borderRadius: 20,
+            backgroundColor: "#515151",
+            borderColor: "#fff",
+            borderWidth: pickupTime === "later" ? 1 : 0,
+            marginTop: 20,
+            alignSelf: "flex-end",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
           }}
         >
-          Pickup {pickupTime}
-        </Text>
-        <FontAwesome name="chevron-down" color={"#fff"} size={10} />
-      </TouchableOpacity>
-      {/* Route slection form */}
-      <View style={styles.form}>
-        <View style={{ flex: 1, marginTop: 10, flexDirection: "row", gap: 15 }}>
-          {/* Select pickup and drop off */}
-          <View style={{ alignItems: "center", marginTop: 15 }}>
-            <View
-              style={{
-                width: 15,
-                height: 15,
-                backgroundColor: "#9c9c9c",
-                borderRadius: 20,
-              }}
-            />
-            <View
-              style={{
-                width: 1,
-                height: 40,
-                borderLeftWidth: 1,
-                borderColor: "#9c9c9c",
-                borderStyle: "dashed",
-              }}
-            />
-            <View
-              style={{
-                width: 14,
-                height: 14,
-                backgroundColor: "#9c9c9c",
-              }}
-            />
-          </View>
-          <View>
-            <View style={styles.route_inp_container}>
-              <TextInput
-                style={[styles.route_input]}
-                placeholder="Pickup"
-                value={userAddress}
-                ref={pickupRef}
-                onFocus={pickupFocus}
-                onChangeText={setUserAddress}
-                placeholderTextColor={"#b7b7b7"}
+          <Text
+            style={{
+              color: "#fff",
+              fontFamily: "raleway-semibold",
+              fontSize: 12,
+            }}
+          >
+            Pickup {pickupTime}
+          </Text>
+          <FontAwesome name="chevron-down" color={"#fff"} size={10} />
+        </TouchableOpacity>
+        {/* Route slection form */}
+        <View style={styles.form}>
+          <View style={{ flex: 1, marginTop: 10, flexDirection: "row", gap: 15 }}>
+            {/* Select pickup and drop off */}
+            <View style={{ alignItems: "center", marginTop: 15 }}>
+              <View
+                style={{
+                  width: 15,
+                  height: 15,
+                  backgroundColor: "#9c9c9c",
+                  borderRadius: 20,
+                }}
+              />
+              <View
+                style={{
+                  width: 1,
+                  height: 40,
+                  borderLeftWidth: 1,
+                  borderColor: "#9c9c9c",
+                  borderStyle: "dashed",
+                }}
+              />
+              <View
+                style={{
+                  width: 14,
+                  height: 14,
+                  backgroundColor: "#9c9c9c",
+                }}
               />
             </View>
-            <View style={styles.route_inp_container}>
-              <TextInput
-                style={styles.route_input}
-                placeholder="Destination"
-                value={destination}
-                ref={destinationRef}
-                onFocus={destinationFocus}
-                onChangeText={setDestination}
-                placeholderTextColor={"#b7b7b7"}
-              />
+            <View>
+              <View style={styles.route_inp_container}>
+                <TextInput
+                  style={[styles.route_input]}
+                  placeholder="Pickup"
+                  value={userAddress}
+                  ref={pickupRef}
+                  onFocus={pickupFocus}
+                  onChangeText={setUserAddress}
+                  placeholderTextColor={"#b7b7b7"}
+                />
+              </View>
+              <View style={styles.route_inp_container}>
+                <TextInput
+                  style={styles.route_input}
+                  placeholder="Destination"
+                  value={destination}
+                  ref={destinationRef}
+                  onFocus={destinationFocus}
+                  onChangeText={setDestination}
+                  placeholderTextColor={"#b7b7b7"}
+                />
+              </View>
             </View>
           </View>
         </View>
-      </View>
 
-      {/* Suggestions */}
-      <View style={[styles.suggestions_container]}>
-        {activeSuggestion === "pickup" ? (
-          <FlatList
-            keyboardShouldPersistTaps="handled"
-            data={pickupSuggestions}
-            keyExtractor={(item) => item.place_id}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.suggestion_box}
-                onPress={() =>
-                  set_pickup_func(
-                    item.place_id,
-                    item.structured_formatting.main_text,
-                  )
-                }
-              >
-                <Ionicons name="location" size={24} color="#b7b7b7" />
-                <View>
-                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
-                    {item.structured_formatting.main_text}
-                  </Text>
-                  <Text style={styles.suggestion_sub_text}>
-                    {item.structured_formatting.secondary_text}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-          />
-        ) : activeSuggestion === "destination" ? (
-          <FlatList
-            keyboardShouldPersistTaps="handled"
-            data={destinationSuggestions}
-            keyExtractor={(item) => item.place_id}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.suggestion_box}
-                onPress={() =>
-                  set_destination_func(
-                    item.place_id,
-                    item.structured_formatting.main_text,
-                    item.structured_formatting.secondary_text,
-                  )
-                }
-              >
-                <Ionicons name="location" size={24} color="#b7b7b7" />
-                <View>
-                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
-                    {item.structured_formatting.main_text}
-                  </Text>
-                  <Text style={styles.suggestion_sub_text}>
-                    {item.structured_formatting.secondary_text}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-          />
-        ) : (
-          <FlatList
-            keyboardShouldPersistTaps="handled"
-            data={rideHistory as any}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.suggestion_box}
-                onPress={() =>
-                  set_destination_func(
-                    item.place_id,
-                    item.place_name,
-                    item.place_sub_name,
-                  )
-                }
-              >
-                <MaterialCommunityIcons
-                  name="history"
-                  size={24}
-                  color="#b7b7b7"
-                />
-                <View>
-                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
-                    {item.place_name}
-                  </Text>
-                  <Text style={styles.suggestion_sub_text}>
-                    {item.place_sub_name}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-          />
-        )}
+        {/* Suggestions */}
+        <View style={[styles.suggestions_container]}>
+          {activeSuggestion === "pickup" ? (
+            <FlatList
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              data={pickupSuggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.suggestion_box}
+                  onPress={() =>
+                    set_pickup_func(
+                      item.place_id,
+                      item.structured_formatting.main_text,
+                    )
+                  }
+                >
+                  <Ionicons name="location" size={24} color="#b7b7b7" />
+                  <View>
+                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                      {item.structured_formatting.main_text}
+                    </Text>
+                    <Text style={styles.suggestion_sub_text}>
+                      {item.structured_formatting.secondary_text}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          ) : activeSuggestion === "destination" ? (
+            <FlatList
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              data={destinationSuggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.suggestion_box}
+                  onPress={() =>
+                    set_destination_func(
+                      item.place_id,
+                      item.structured_formatting.main_text,
+                      item.structured_formatting.secondary_text,
+                    )
+                  }
+                >
+                  <Ionicons name="location" size={24} color="#b7b7b7" />
+                  <View>
+                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                      {item.structured_formatting.main_text}
+                    </Text>
+                    <Text style={styles.suggestion_sub_text}>
+                      {item.structured_formatting.secondary_text}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          ) : (
+            <FlatList
+              keyboardShouldPersistTaps="handled"
+              data={rideHistory as any}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.suggestion_box}
+                  onPress={() =>
+                    set_destination_func(
+                      item.place_id,
+                      item.place_name,
+                      item.place_sub_name,
+                    )
+                  }
+                >
+                  <MaterialCommunityIcons
+                    name="history"
+                    size={24}
+                    color="#b7b7b7"
+                  />
+                  <View>
+                    <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                      {item.place_name}
+                    </Text>
+                    <Text style={styles.suggestion_sub_text}>
+                      {item.place_sub_name}
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          )}
+        </View>
+        <PickupTimeModal
+          open={dateTimeModal}
+          setOpen={setDateTimeModal}
+          place_id={placeId}
+        />
+        <SelectPickupTimeModal />
       </View>
-      <PickupTimeModal
-        open={dateTimeModal}
-        setOpen={setDateTimeModal}
-        place_id={placeId}
-      />
-      <SelectPickupTimeModal />
-    </>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -1729,179 +1734,181 @@ const RateModal = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={styles.header_text}>You have arrived!</Text>
-      <View
-        style={{
-          flex: 1,
-          paddingBottom: 20,
-        }}
-      >
-        <View style={{ alignItems: "center" }}>
-          <Image
-            source={
-              (ongoingRideData?.driver as any)?.profile_img
-                ? { uri: (ongoingRideData?.driver as any).profile_img }
-                : require("../assets/images/user.png")
-            }
-            style={{
-              width: 70,
-              height: 70,
-              borderRadius: 40,
-              marginTop: 20,
-            }}
-          />
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: "raleway-regular",
-              marginTop: 10,
-            }}
-          >
-            How was this driver?
-          </Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.header_text}>You have arrived!</Text>
+        <View
+          style={{
+            flex: 1,
+            paddingBottom: 20,
+          }}
+        >
+          <View style={{ alignItems: "center" }}>
+            <Image
+              source={
+                (ongoingRideData?.driver as any)?.profile_img
+                  ? { uri: (ongoingRideData?.driver as any).profile_img }
+                  : require("../assets/images/user.png")
+              }
+              style={{
+                width: 70,
+                height: 70,
+                borderRadius: 40,
+                marginTop: 20,
+              }}
+            />
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-regular",
+                marginTop: 10,
+              }}
+            >
+              How was this driver?
+            </Text>
 
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 20,
+                marginTop: 20,
+              }}
+            >
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <FontAwesome
+                    name={rating >= star ? "star" : "star-o"}
+                    size={30}
+                    color="#fff"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={{ width: "100%" }}>
+              <TextInput
+                value={review}
+                onChangeText={setReview}
+                style={{
+                  backgroundColor: "transparent",
+                  borderColor: "#fff",
+                  borderWidth: 1,
+                  color: "#fff",
+                  borderRadius: 10,
+                  padding: 20,
+                  marginTop: 20,
+                  fontFamily: "raleway-regular",
+                  paddingVertical: 10,
+                }}
+                placeholder="Write a review"
+              />
+            </View>
+          </View>
+
+          <View style={{ marginTop: 30 }}>
+            <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
+              Ride summary
+            </Text>
+            {ongoingRideData && (
+              <RideRoute
+                from={ongoingRideData?.pickup.address}
+                to={ongoingRideData.destination.address}
+              />
+            )}
+
+            <Text
+              style={{
+                color: "#d2ceceff",
+                fontFamily: "raleway-bold",
+                fontSize: 14,
+                marginBottom: 10,
+              }}
+            >
+              **You rode {ongoingRideData?.distance_km}km for{" "}
+              {ongoingRideData?.duration_mins} mins
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-regular",
+                  fontSize: 18,
+                }}
+              >
+                Total fare:
+              </Text>
+              <Text style={styles.priceText}>
+                NGN {ongoingRideData?.fare.toLocaleString()}(Paid)
+              </Text>
+            </View>
+          </View>
           <View
             style={{
               flexDirection: "row",
+              justifyContent: "center",
               gap: 20,
-              marginTop: 20,
+              marginTop: 50,
             }}
           >
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                <FontAwesome
-                  name={rating >= star ? "star" : "star-o"}
-                  size={30}
-                  color="#fff"
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={{ width: "100%" }}>
-            <TextInput
-              value={review}
-              onChangeText={setReview}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={async () => {
+                await getActiveRide();
+                resetRide();
+              }}
               style={{
                 backgroundColor: "transparent",
                 borderColor: "#fff",
                 borderWidth: 1,
-                color: "#fff",
-                borderRadius: 10,
-                padding: 20,
-                marginTop: 20,
-                fontFamily: "raleway-regular",
+                borderRadius: 50,
+                width: 100,
                 paddingVertical: 10,
               }}
-              placeholder="Write a review"
-            />
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                }}
+              >
+                Skip
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={rate_driver}
+              disabled={ratingLoading}
+              activeOpacity={0.7}
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 50,
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+                flex: 1,
+                opacity: ratingLoading ? 0.5 : 1,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#121212",
+                  fontFamily: "raleway-bold",
+                  textAlign: "center",
+                }}
+              >
+                {ratingLoading ? "Submitting" : "Submit review"}
+              </Text>
+            </TouchableOpacity>
           </View>
-        </View>
-
-        <View style={{ marginTop: 30 }}>
-          <Text style={{ color: "#fff", fontFamily: "raleway-bold" }}>
-            Ride summary
-          </Text>
-          {ongoingRideData && (
-            <RideRoute
-              from={ongoingRideData?.pickup.address}
-              to={ongoingRideData.destination.address}
-            />
-          )}
-
-          <Text
-            style={{
-              color: "#d2ceceff",
-              fontFamily: "raleway-bold",
-              fontSize: 14,
-              marginBottom: 10,
-            }}
-          >
-            **You rode {ongoingRideData?.distance_km}km for{" "}
-            {ongoingRideData?.duration_mins} mins
-          </Text>
-
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-regular",
-                fontSize: 18,
-              }}
-            >
-              Total fare:
-            </Text>
-            <Text style={styles.priceText}>
-              NGN {ongoingRideData?.fare.toLocaleString()}(Paid)
-            </Text>
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: 20,
-            marginTop: 50,
-          }}
-        >
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={async () => {
-              await getActiveRide();
-              resetRide();
-            }}
-            style={{
-              backgroundColor: "transparent",
-              borderColor: "#fff",
-              borderWidth: 1,
-              borderRadius: 50,
-              width: 100,
-              paddingVertical: 10,
-            }}
-          >
-            <Text
-              style={{
-                color: "#fff",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
-              }}
-            >
-              Skip
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={rate_driver}
-            disabled={ratingLoading}
-            activeOpacity={0.7}
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 50,
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-              flex: 1,
-              opacity: ratingLoading ? 0.5 : 1,
-            }}
-          >
-            <Text
-              style={{
-                color: "#121212",
-                fontFamily: "raleway-bold",
-                textAlign: "center",
-              }}
-            >
-              {ratingLoading ? "Submitting" : "Submit review"}
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 

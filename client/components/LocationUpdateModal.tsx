@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
@@ -125,95 +127,97 @@ const LocationUpdateModal: React.FC<LocationUpdateModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Update Location</Text>
-          <View style={styles.placeholder} />
-        </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Update Location</Text>
+            <View style={styles.placeholder} />
+          </View>
 
-        {/* Map */}
-        <View style={styles.mapContainer}>
-          {region && (
-            <MapView
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              initialRegion={region}
-              customMapStyle={darkMapStyle}
-              onPress={handleMapPress}
-            >
-              {selectedLocation && (
-                <Marker
-                  coordinate={{
-                    latitude: selectedLocation[0],
-                    longitude: selectedLocation[1],
-                  }}
-                  title="Selected Location"
-                  pinColor="#33b735"
+          {/* Map */}
+          <View style={styles.mapContainer}>
+            {region && (
+              <MapView
+                style={styles.map}
+                provider={PROVIDER_GOOGLE}
+                initialRegion={region}
+                customMapStyle={darkMapStyle}
+                onPress={handleMapPress}
+              >
+                {selectedLocation && (
+                  <Marker
+                    coordinate={{
+                      latitude: selectedLocation[0],
+                      longitude: selectedLocation[1],
+                    }}
+                    title="Selected Location"
+                    pinColor="#33b735"
+                  />
+                )}
+              </MapView>
+            )}
+          </View>
+
+          {/* Manual Input Section */}
+          <View style={styles.inputSection}>
+            <Text style={styles.sectionTitle}>Manual Coordinates</Text>
+            <View style={styles.coordinateInputs}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Latitude</Text>
+                <TextInput
+                  style={styles.input}
+                  value={manualLat}
+                  onChangeText={(value) => handleManualInputChange("lat", value)}
+                  placeholder="Enter latitude"
+                  placeholderTextColor="#666"
+                  keyboardType="numeric"
                 />
-              )}
-            </MapView>
-          )}
-        </View>
-
-        {/* Manual Input Section */}
-        <View style={styles.inputSection}>
-          <Text style={styles.sectionTitle}>Manual Coordinates</Text>
-          <View style={styles.coordinateInputs}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Latitude</Text>
-              <TextInput
-                style={styles.input}
-                value={manualLat}
-                onChangeText={(value) => handleManualInputChange("lat", value)}
-                placeholder="Enter latitude"
-                placeholderTextColor="#666"
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Longitude</Text>
-              <TextInput
-                style={styles.input}
-                value={manualLng}
-                onChangeText={(value) => handleManualInputChange("lng", value)}
-                placeholder="Enter longitude"
-                placeholderTextColor="#666"
-                keyboardType="numeric"
-              />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Longitude</Text>
+                <TextInput
+                  style={styles.input}
+                  value={manualLng}
+                  onChangeText={(value) => handleManualInputChange("lng", value)}
+                  placeholder="Enter longitude"
+                  placeholderTextColor="#666"
+                  keyboardType="numeric"
+                />
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.currentLocationButton}
-            onPress={handleUseCurrentLocation}
-          >
-            <Ionicons name="location" size={20} color="#33b735" />
-            <Text style={styles.currentLocationText}>Use Current Location</Text>
-          </TouchableOpacity>
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.currentLocationButton}
+              onPress={handleUseCurrentLocation}
+            >
+              <Ionicons name="location" size={20} color="#33b735" />
+              <Text style={styles.currentLocationText}>Use Current Location</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.updateButton,
-              !selectedLocation && styles.updateButtonDisabled,
-            ]}
-            onPress={handleUpdateLocation}
-            disabled={!selectedLocation || isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.updateButtonText}>Update Location</Text>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.updateButton,
+                !selectedLocation && styles.updateButtonDisabled,
+              ]}
+              onPress={handleUpdateLocation}
+              disabled={!selectedLocation || isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.updateButtonText}>Update Location</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };

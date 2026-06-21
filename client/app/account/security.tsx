@@ -5,6 +5,7 @@ import {
   Pressable,
   TextInput,
   Modal,
+  Keyboard,
 } from "react-native";
 import React, { FC, Dispatch, SetStateAction, useState } from "react";
 
@@ -119,7 +120,7 @@ const ChangePasswordModal: FC<{
       onRequestClose={() => setOpen(false)}
     >
       <Pressable onPress={() => setOpen(false)} style={styles.modal_overlay}>
-        <Pressable onPress={() => {}} style={styles.modal}>
+        <Pressable onPress={Keyboard.dismiss} style={styles.modal}>
           <Text style={styles.modal_header}>Change password</Text>
           <TextInput
             value={oldPassword}

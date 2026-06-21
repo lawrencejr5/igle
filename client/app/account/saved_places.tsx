@@ -18,6 +18,7 @@ import {
   Keyboard,
   Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -309,60 +310,64 @@ const PlaceModal: FC<{
       }}
     >
       <BottomSheetView style={{ paddingHorizontal: 20 }}>
-        <Text
-          style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 18 }}
-        >
-          Choose address
-        </Text>
-        <View style={{ marginTop: 20 }}>
-          <View style={styles.text_inp_holder}>
-            <MaterialIcons name="place" size={20} color={"#fff"} />
-            <TextInput
-              value={placeHeader}
-              onChangeText={setPlaceHeader}
-              editable={editable}
-              placeholder="Enter place eg. Hotel, School"
-              style={styles.text_inp}
-            />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ width: "100%", height: "100%" }}>
+            <Text
+              style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 18 }}
+            >
+              Choose address
+            </Text>
+            <View style={{ marginTop: 20 }}>
+              <View style={styles.text_inp_holder}>
+                <MaterialIcons name="place" size={20} color={"#fff"} />
+                <TextInput
+                  value={placeHeader}
+                  onChangeText={setPlaceHeader}
+                  editable={editable}
+                  placeholder="Enter place eg. Hotel, School"
+                  style={styles.text_inp}
+                />
+              </View>
+              <View style={styles.text_inp_holder}>
+                <Feather name="search" size={20} color={"#fff"} />
+                <TextInput
+                  value={place}
+                  onChangeText={setPlace}
+                  placeholder="Search address"
+                  style={styles.text_inp}
+                />
+              </View>
+            </View>
+            <View style={[styles.suggestions_container]}>
+              <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.place_id}
+                renderItem={({ item }) => (
+                  <Pressable
+                    style={styles.suggestion_box}
+                    onPress={() =>
+                      save_place(
+                        item.place_id,
+                        item.structured_formatting.main_text,
+                        item.structured_formatting.secondary_text,
+                      )
+                    }
+                  >
+                    <Ionicons name="location" size={24} color="#b7b7b7" />
+                    <View>
+                      <Text style={styles.suggestion_header_text} numberOfLines={1}>
+                        {item.structured_formatting.main_text}
+                      </Text>
+                      <Text style={styles.suggestion_sub_text}>
+                        {item.structured_formatting.secondary_text}
+                      </Text>
+                    </View>
+                  </Pressable>
+                )}
+              />
+            </View>
           </View>
-          <View style={styles.text_inp_holder}>
-            <Feather name="search" size={20} color={"#fff"} />
-            <TextInput
-              value={place}
-              onChangeText={setPlace}
-              placeholder="Search address"
-              style={styles.text_inp}
-            />
-          </View>
-        </View>
-        <View style={[styles.suggestions_container]}>
-          <FlatList
-            data={searchResults}
-            keyExtractor={(item) => item.place_id}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.suggestion_box}
-                onPress={() =>
-                  save_place(
-                    item.place_id,
-                    item.structured_formatting.main_text,
-                    item.structured_formatting.secondary_text,
-                  )
-                }
-              >
-                <Ionicons name="location" size={24} color="#b7b7b7" />
-                <View>
-                  <Text style={styles.suggestion_header_text} numberOfLines={1}>
-                    {item.structured_formatting.main_text}
-                  </Text>
-                  <Text style={styles.suggestion_sub_text}>
-                    {item.structured_formatting.secondary_text}
-                  </Text>
-                </View>
-              </Pressable>
-            )}
-          />
-        </View>
+        </TouchableWithoutFeedback>
       </BottomSheetView>
     </BottomSheet>
   );

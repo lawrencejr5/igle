@@ -80,7 +80,7 @@ const Signin = () => {
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
         {/* Back button */}
         <TouchableOpacity
           onPress={() => router.replace("/get_started")}

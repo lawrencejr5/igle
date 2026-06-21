@@ -55,6 +55,8 @@ const AddFullname = () => {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         style={styles.container}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header texts... */}
         <View style={{ marginTop: 60, paddingHorizontal: 10 }}>

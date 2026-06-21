@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Keyboard,
 } from "react-native";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useDriverAuthContext } from "../../context/DriverAuthContext";
@@ -54,7 +55,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     <Modal transparent visible={visible} animationType="slide">
       <KeyboardAvoidingView behavior={"padding"} style={{ flex: 1 }}>
         <Pressable onPress={onClose} style={styles.backdrop}>
-          <Pressable onPress={() => {}} style={styles.sheet}>
+          <Pressable onPress={Keyboard.dismiss} style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.headerText}>Edit Profile</Text>
             <TouchableOpacity
@@ -66,7 +67,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
             <View style={styles.form}>
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Full Name</Text>
