@@ -11,31 +11,31 @@ const TABS = [
   {
     name: "home",
     label: "Home",
-    sf: "house.fill",
+    sf: { default: "house", selected: "house.fill" },
     icon: require("../../assets/images/icons/home-fill-grey.png"),
   },
   {
     name: "rides",
     label: "Rides",
-    sf: "car",
+    sf: { default: "car", selected: "car.fill" },
     icon: require("../../assets/images/icons/schedule-fill.png"),
   },
   {
     name: "delivery",
     label: "Deliveries",
-    sf: "shippingbox.fill",
+    sf: { default: "shippingbox", selected: "shippingbox.fill" },
     icon: require("../../assets/images/icons/delivery-tab-icon.png"),
   },
   {
     name: "tasks",
     label: "Tasks",
-    sf: "checkmark.square.fill",
+    sf: { default: "checkmark.square", selected: "checkmark.square.fill" },
     icon: require("../../assets/images/icons/task-icon.png"),
   },
   {
     name: "account",
     label: "Account",
-    sf: "person.fill",
+    sf: { default: "person", selected: "person.fill" },
     icon: require("../../assets/images/icons/user-fill.png"),
   },
 ];
