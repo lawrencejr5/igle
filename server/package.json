@@ -14,7 +14,7 @@
   "dependencies": {
     "agenda": "^5.0.0",
     "apple-signin-auth": "^2.0.0",
-    "axios": "^1.11.0",
+    "axios": "^1.16.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
@@ -23,8 +23,8 @@
     "express": "^5.1.0",
     "google-auth-library": "^10.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.4",
-    "multer": "^2.0.2",
+    "mongoose": "^8.22.1",
+    "multer": "^2.2.0",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
