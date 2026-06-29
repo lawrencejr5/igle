@@ -5,6 +5,7 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -272,7 +273,7 @@ const EmptyState = ({
       <View
         style={{
           position: "absolute",
-          bottom: 10,
+          bottom: Platform.OS === "ios" ? 95 : 10,
           alignItems: "center",
           flex: 1,
         }}
