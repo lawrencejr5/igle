@@ -7,7 +7,7 @@ import { useSegments } from "expo-router";
 
 import * as Haptics from "expo-haptics";
 
-import { Tabs } from "expo-router";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 const TabsLayout = () => {
   const insets = useSafeAreaInsets();
@@ -17,122 +17,71 @@ const TabsLayout = () => {
       style={{
         backgroundColor: "#121212",
         flex: 1,
-        paddingBottom: insets.bottom - 10,
       }}
     >
-      <Tabs
+      <NativeTabs
         screenListeners={{
           tabPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           },
         }}
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: {
-            height: 70,
-            borderTopWidth: 0,
-            elevation: 0,
+        tintColor="#fff"
+        iconColor={{ default: "#797979", selected: "#fff" }}
+        labelStyle={{
+          default: {
+            color: "#797979",
+            fontFamily: "raleway-semibold",
+            fontSize: 10,
           },
-          tabBarActiveTintColor: "#fff",
-          tabBarInactiveTintColor: "#606060",
-          tabBarLabelStyle: { fontFamily: "raleway-semibold", fontSize: 10 },
-          tabBarBackground: () => (
-            <View
-              style={{
-                flex: 1,
-                overflow: "hidden",
-                backgroundColor: "#121212",
-              }}
-            />
-          ),
+          selected: {
+            color: "#fff",
+            fontFamily: "raleway-semibold",
+            fontSize: 10,
+          },
         }}
+        backgroundColor="#1a1a1a"
+        blurEffect="systemChromeMaterialDark"
+        shadowColor="transparent"
       >
-        <Tabs.Screen
-          name="home"
-          options={{
-            title: "Home",
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={require("../../assets/images/icons/home-fill-grey.png")}
-                style={{
-                  height: 22,
-                  width: 22,
-                  tintColor: focused ? "#fff" : "#797979",
-                }}
-                resizeMode="contain"
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="rides"
-          options={{
-            title: "Rides",
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={require("../../assets/images/icons/schedule-fill.png")}
-                style={{
-                  height: 25,
-                  width: 25,
-                  tintColor: focused ? "#fff" : "#797979",
-                }}
-                resizeMode="contain"
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
+        <NativeTabs.Trigger name="home" disableAutomaticContentInsets={true}>
+          <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon
+            sf="house.fill"
+            src={require("../../assets/images/icons/home-fill-grey.png")}
+          />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="rides" disableAutomaticContentInsets={true}>
+          <NativeTabs.Trigger.Label>Rides</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon
+            sf="car"
+            src={require("../../assets/images/icons/schedule-fill.png")}
+          />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger
           name="delivery"
-          options={{
-            title: "Deliveries",
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={require("../../assets/images/icons/delivery-tab-icon.png")}
-                style={{
-                  height: 25,
-                  width: 25,
-                  tintColor: focused ? "#fff" : "#797979",
-                }}
-                resizeMode="contain"
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="tasks"
-          options={{
-            title: "Tasks",
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={require("../../assets/images/icons/task-icon.png")}
-                style={{
-                  height: 22,
-                  width: 22,
-                  tintColor: focused ? "#fff" : "#797979",
-                }}
-                resizeMode="contain"
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="account"
-          options={{
-            title: "Account",
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={require("../../assets/images/icons/user-fill.png")}
-                style={{
-                  height: 22,
-                  width: 22,
-                  tintColor: focused ? "#fff" : "#797979",
-                }}
-                resizeMode="contain"
-              />
-            ),
-          }}
-        />
-      </Tabs>
+          disableAutomaticContentInsets={true}
+        >
+          <NativeTabs.Trigger.Label>Deliveries</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon
+            sf="box.truck.fill"
+            src={require("../../assets/images/icons/delivery-tab-icon.png")}
+          />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="tasks" disableAutomaticContentInsets={true}>
+          <NativeTabs.Trigger.Label>Tasks</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon
+            sf="checkmark.square.fill"
+            src={require("../../assets/images/icons/task-icon.png")}
+          />
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="account" disableAutomaticContentInsets={true}>
+          <NativeTabs.Trigger.Label>Account</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon
+            sf="person.fill"
+            src={require("../../assets/images/icons/user-fill.png")}
+          />
+        </NativeTabs.Trigger>
+      </NativeTabs>
     </View>
   );
 };
