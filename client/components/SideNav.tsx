@@ -24,6 +24,7 @@ import * as Haptics from "expo-haptics";
 import { useAuthContext } from "../context/AuthContext";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
 import { useNotificationContext } from "../context/NotificationContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SideNav: React.FC<{
   mode: "driver" | "rider";
@@ -33,6 +34,7 @@ const SideNav: React.FC<{
   const { signedIn } = useAuthContext();
   const { driver } = useDriverAuthContext();
   const { showNotification } = useNotificationContext();
+  const insets = useSafeAreaInsets();
 
   const go_to_driver = () => {
     if (signedIn?.is_driver) {
@@ -109,7 +111,11 @@ const SideNav: React.FC<{
             <Animated.View
               style={[
                 styles.sidenav,
-                { transform: [{ translateX: sideNavTranslate }] },
+                {
+                  transform: [{ translateX: sideNavTranslate }],
+                  paddingBottom: Platform.OS === "ios" ? insets.bottom + 90 : 80,
+                  paddingTop: insets.top > 0 ? insets.top + 15 : 50,
+                },
               ]}
             >
               <View>
@@ -234,7 +240,8 @@ const SideNav: React.FC<{
                 styles.sidenav,
                 {
                   transform: [{ translateX: sideNavTranslate }],
-                  paddingBottom: 50,
+                  paddingBottom: insets.bottom + 20,
+                  paddingTop: insets.top > 0 ? insets.top + 15 : 50,
                 },
               ]}
             >
