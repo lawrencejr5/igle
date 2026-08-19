@@ -3,7 +3,7 @@ module.exports = {
     name: "Igle",
     slug: "igle",
     scheme: "com.lawrencejr.igle",
-    version: "1.3",
+    version: "1.3.1",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     userInterfaceStyle: "dark",
