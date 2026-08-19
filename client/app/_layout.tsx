@@ -74,7 +74,38 @@ const RootLayout = () => {
                                                 headerShown: false,
                                                 animation: "ios_from_right",
                                               }}
-                                            />
+                                            >
+                                              <Stack.Screen
+                                                name="index"
+                                                options={{
+                                                  animation: "fade",
+                                                }}
+                                              />
+                                              <Stack.Screen
+                                                name="onboarding"
+                                                options={{
+                                                  animation: "fade",
+                                                }}
+                                              />
+                                              <Stack.Screen
+                                                name="get_started"
+                                                options={{
+                                                  animation: "fade",
+                                                }}
+                                              />
+                                              <Stack.Screen
+                                                name="(tabs)"
+                                                options={{
+                                                  animation: "fade",
+                                                }}
+                                              />
+                                              <Stack.Screen
+                                                name="(driver)"
+                                                options={{
+                                                  animation: "fade",
+                                                }}
+                                              />
+                                            </Stack>
                                           </TaskProvider>
                                         </FeedbackProvider>
                                       </DriverContextPrvider>
