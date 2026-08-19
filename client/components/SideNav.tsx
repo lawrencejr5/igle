@@ -113,8 +113,8 @@ const SideNav: React.FC<{
                 styles.sidenav,
                 {
                   transform: [{ translateX: sideNavTranslate }],
-                  paddingBottom: Platform.OS === "ios" ? insets.bottom + 90 : 80,
-                  paddingTop: insets.top > 0 ? insets.top + 15 : 50,
+                  paddingBottom: insets.bottom,
+                  paddingTop: Platform.OS === "ios" ? insets.top + 15 : 50,
                 },
               ]}
             >

@@ -314,10 +314,14 @@ const InTransitDeliveries = ({
   refreshing: boolean;
   onRefresh: () => Promise<void>;
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       style={{ flex: 1, marginTop: 20 }}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={{
+        paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 20,
+      }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -437,10 +441,14 @@ const DeliveredDeliveries = ({
   refreshing: boolean;
   onRefresh: () => Promise<void>;
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       style={{ flex: 1, marginTop: 20 }}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={{
+        paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 20,
+      }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -562,10 +570,14 @@ const CancelledDeliveries = ({
   refreshing: boolean;
   onRefresh: () => Promise<void>;
 }) => {
+  const insets = useSafeAreaInsets();
   return (
     <ScrollView
       style={{ flex: 1, marginTop: 20 }}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={{
+        paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 20,
+      }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

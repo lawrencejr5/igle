@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Pressable,
+  Platform,
 } from "react-native";
 import React, {
   FC,
@@ -23,6 +24,7 @@ import * as Haptics from "expo-haptics";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { useWalletContext } from "../../context/WalletContext";
 import { useNotificationContext } from "../../context/NotificationContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const WalletScreen: FC<{
   open: boolean;
@@ -30,6 +32,7 @@ const WalletScreen: FC<{
 }> = ({ open, setOpen }) => {
   const { userWalletBal, fundWallet, verify_payment } = useWalletContext();
   const { showNotification } = useNotificationContext();
+  const insets = useSafeAreaInsets();
 
   const window_height = Dimensions.get("window").height;
   const walletTranslate = useRef(new Animated.Value(window_height)).current;
@@ -88,7 +91,7 @@ const WalletScreen: FC<{
           width: "100%",
           position: "absolute",
           zIndex: 502,
-          paddingTop: 50,
+          paddingTop: Platform.OS === "ios" ? insets.top + 20 : 50,
           paddingHorizontal: 20,
         },
         { transform: [{ translateY: walletTranslate }] },
@@ -112,7 +115,10 @@ const WalletScreen: FC<{
             >
               Wallet
             </Text>
-            <TouchableWithoutFeedback style={{ padding: 10 }} onPress={closeWallet}>
+            <TouchableWithoutFeedback
+              style={{ padding: 10 }}
+              onPress={closeWallet}
+            >
               <FontAwesome5 name="times" size={24} color="#fff" />
             </TouchableWithoutFeedback>
           </View>
@@ -136,7 +142,11 @@ const WalletScreen: FC<{
                 Balance:
               </Text>
               <Text
-                style={{ color: "#fff", fontFamily: "poppins-black", fontSize: 30 }}
+                style={{
+                  color: "#fff",
+                  fontFamily: "poppins-black",
+                  fontSize: 30,
+                }}
               >
                 {userWalletBal.toLocaleString()} NGN
               </Text>
@@ -155,7 +165,11 @@ const WalletScreen: FC<{
           {/* Top up */}
           <View style={{ marginTop: 30, flex: 1 }}>
             <Text
-              style={{ color: "#fff", fontFamily: "raleway-bold", fontSize: 20 }}
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                fontSize: 20,
+              }}
             >
               Top up
             </Text>
@@ -224,7 +238,14 @@ const WalletScreen: FC<{
                 <Suggestion close={closeWallet} value={50000} />
               </View>
             </View>
-            <View style={{ position: "absolute", bottom: 20, width: "100%" }}>
+            <View
+              style={{
+                position: "absolute",
+                bottom:
+                  Platform.OS === "ios" ? Math.max(insets.bottom + 20, 20) : 20,
+                width: "100%",
+              }}
+            >
               <TouchableWithoutFeedback
                 onPress={fundWalletFunc}
                 disabled={btnLoading || !amount}

@@ -4,6 +4,7 @@ import {
   View,
   ScrollView,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 
@@ -51,7 +52,10 @@ const RewardRoot = () => {
 
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={[
+                styles.scrollContent,
+                Platform.OS === "ios" && { paddingBottom: insets.bottom + 80 },
+              ]}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}

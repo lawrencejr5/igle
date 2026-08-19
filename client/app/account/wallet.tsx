@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import React, { FC, useState } from "react";
 
@@ -14,10 +15,12 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { useWalletContext } from "../../context/WalletContext";
 import { useNotificationContext } from "../../context/NotificationContext";
 import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const WalletPage: FC = () => {
   const { userWalletBal, fundWallet } = useWalletContext();
   const { showNotification } = useNotificationContext();
+  const insets = useSafeAreaInsets();
 
   const [amount, setAmount] = useState<string>("");
   const [btnLoading, setBtnLoading] = useState<boolean>(false);
@@ -41,7 +44,13 @@ const WalletPage: FC = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
-        <View style={{ flex: 1, paddingTop: 50, paddingHorizontal: 20 }}>
+        <View
+          style={{
+            flex: 1,
+            paddingTop: Platform.OS === "ios" ? insets.top + 20 : 50,
+            paddingHorizontal: 20,
+          }}
+        >
           <ScrollView
             contentContainerStyle={{ paddingBottom: 140 }}
             showsVerticalScrollIndicator={false}
@@ -188,7 +197,14 @@ const WalletPage: FC = () => {
           </ScrollView>
         </View>
 
-        <View style={{ padding: 20, backgroundColor: "transparent" }}>
+        <View
+          style={{
+            paddingHorizontal: 20,
+            paddingTop: 20,
+            paddingBottom: Platform.OS === "ios" ? Math.max(insets.bottom, 20) : 20,
+            backgroundColor: "transparent",
+          }}
+        >
           <TouchableWithoutFeedback onPress={fundWalletFunc} disabled={!amount}>
             <View
               style={{

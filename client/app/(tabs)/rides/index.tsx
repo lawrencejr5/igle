@@ -297,6 +297,7 @@ const EmptyState = ({
 
 const OngoingRide = ({ data }: { data: any }) => {
   const { showNotification } = useNotificationContext();
+  const insets = useSafeAreaInsets();
 
   const {
     payForRide,
@@ -412,6 +413,9 @@ const OngoingRide = ({ data }: { data: any }) => {
   return (
     <ScrollView
       style={{ flex: 1 }}
+      contentContainerStyle={{
+        paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 20,
+      }}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
@@ -700,6 +704,7 @@ const OngoingRide = ({ data }: { data: any }) => {
 };
 const ScheduledRides = ({ data }: { data: any }) => {
   const { showNotification } = useNotificationContext();
+  const insets = useSafeAreaInsets();
 
   const {
     cancelRideRequest,
@@ -812,6 +817,9 @@ const ScheduledRides = ({ data }: { data: any }) => {
         data={data}
         keyExtractor={(ride) => ride._id}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 20,
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -1009,6 +1017,7 @@ const ScheduledRides = ({ data }: { data: any }) => {
 
 const CompletedRides = ({ data }: { data: any }) => {
   const { getUserCompletedRides } = useRideContext();
+  const insets = useSafeAreaInsets();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -1029,6 +1038,9 @@ const CompletedRides = ({ data }: { data: any }) => {
         data={data}
         keyExtractor={(ride) => ride._id}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 20,
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -1144,6 +1156,7 @@ const CompletedRides = ({ data }: { data: any }) => {
 
 const CancelledRides = ({ data }: { data: any }) => {
   const { rebookRideRequest, getUserCancelledRides } = useRideContext();
+  const insets = useSafeAreaInsets();
   const [rebookingId, setRebookingId] = React.useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -1176,6 +1189,9 @@ const CancelledRides = ({ data }: { data: any }) => {
         data={data}
         keyExtractor={(ride) => ride._id}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 20,
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

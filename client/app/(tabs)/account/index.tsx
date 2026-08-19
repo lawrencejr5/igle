@@ -95,8 +95,10 @@ const Account = () => {
               backgroundColor: "#121212",
               flex: 1,
               paddingTop: insets.top,
-              paddingBottom: 30,
               paddingHorizontal: 20,
+            }}
+            contentContainerStyle={{
+              paddingBottom: Platform.OS === "ios" ? insets.bottom + 80 : 30,
             }}
             refreshControl={
               <RefreshControl
