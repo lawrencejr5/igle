@@ -37,6 +37,7 @@ interface DriverLicence {
   front_image: string;
   back_image: string;
   selfie_with_licence: string;
+  identification_type?: "driver_licence" | "passport" | "national_id";
 }
 
 interface BankInfo {
@@ -70,6 +71,7 @@ interface DriverType {
   vehicle_type?: "cab" | "keke" | "suv" | "bike" | "van" | "truck";
   vehicle?: Vehicle;
   driver_licence?: DriverLicence;
+  identification_type?: "driver_licence" | "passport" | "national_id";
   driver_licence_number?: string;
   driver_licence_expiry_date?: string;
   driver_licence_front?: string;
@@ -205,6 +207,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           rating,
           profile_img,
           date_of_birth,
+          identification_type,
           user: { name, email, phone, createdAt },
           vehicle: {
             brand,
@@ -234,6 +237,7 @@ const DriverAuthProvider: React.FC<{ children: ReactNode }> = ({
           email,
           phone,
           date_of_birth,
+          identification_type,
           total_trips,
           vehicle_brand: brand,
           vehicle_model: model,

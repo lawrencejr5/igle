@@ -14,6 +14,7 @@ export interface DriverType extends Document {
     year: string;
     plate_number: string;
   };
+  identification_type?: "driver_licence" | "passport" | "national_id";
   driver_licence: {
     number: string;
     expiry_date: string;
@@ -73,6 +74,11 @@ const DriverSchema = new Schema<DriverType>(
       color: { type: String },
       year: { type: String },
       plate_number: { type: String },
+    },
+    identification_type: {
+      type: String,
+      enum: ["driver_licence", "passport", "national_id"],
+      default: "driver_licence",
     },
     driver_licence: {
       number: { type: String },
