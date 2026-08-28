@@ -286,9 +286,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
     if (result) {
       const { distanceKm, durationMins } = result;
 
-      const BASE_FARE = Number(process.env.EXPO_PUBLIC_BASE_FARE) || 300;
-      const PRICE_PER_KM = Number(process.env.EXPO_PUBLIC_PRICE_PER_KM) || 100;
-      const PRICE_PER_MIN = Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN) || 20;
+      const BASE_FARE = 500;
+      const PRICE_PER_KM = 150;
+      const PRICE_PER_MIN = 15;
 
       // multipliers for vehicle types — tweak as needed or replace with env vars
       const MULT = {
@@ -343,12 +343,9 @@ const MapContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const { distanceKm, durationMins } = result;
 
       // Delivery pricing (adjust these as needed)
-      const DELIVERY_BASE_FARE =
-        Number(process.env.EXPO_PUBLIC_BASE_FARE) || 500;
-      const DELIVERY_PRICE_PER_KM =
-        Number(process.env.EXPO_PUBLIC_PRICE_PER_KM) || 100;
-      const DELIVERY_PRICE_PER_MIN =
-        Number(process.env.EXPO_PUBLIC_PRICE_PER_MIN) || 20;
+      const DELIVERY_BASE_FARE = 700;
+      const DELIVERY_PRICE_PER_KM = 100;
+      const DELIVERY_PRICE_PER_MIN = 15;
 
       // Delivery vehicle multipliers
       const DELIVERY_MULT = {
