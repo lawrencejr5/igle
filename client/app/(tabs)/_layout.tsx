@@ -11,31 +11,34 @@ const TABS = [
   {
     name: "home",
     label: "Home",
-    sf: { default: "house", selected: "house.fill" },
+    sf: { default: "house.fill", selected: "house.fill" },
     icon: require("../../assets/images/icons/home-fill-grey.png"),
   },
   {
     name: "rides",
     label: "Rides",
-    sf: { default: "car", selected: "car.fill" },
+    sf: { default: "car.fill", selected: "car.fill" },
     icon: require("../../assets/images/icons/schedule-fill.png"),
   },
   {
     name: "delivery",
     label: "Deliveries",
-    sf: { default: "shippingbox", selected: "shippingbox.fill" },
+    sf: { default: "shippingbox.fill", selected: "shippingbox.fill" },
     icon: require("../../assets/images/icons/delivery-tab-icon.png"),
   },
   {
     name: "food",
     label: "Food",
-    sf: { default: "fork.knife", selected: "fork.knife" },
-    icon: require("../../assets/images/icons/food-icon.png"),
+    sf: {
+      default: "fork.knife.circle.fill",
+      selected: "fork.knife.circle.fill",
+    },
+    icon: require("../../assets/images/icons/food-icon-fill.png"),
   },
   {
     name: "account",
     label: "Account",
-    sf: { default: "person", selected: "person.fill" },
+    sf: { default: "person.fill", selected: "person.fill" },
     icon: require("../../assets/images/icons/user-fill.png"),
   },
 ];
@@ -183,7 +186,7 @@ const AndroidTabsLayout = () => {
             title: "Food",
             tabBarIcon: ({ focused }) => (
               <Image
-                source={require("../../assets/images/icons/food-icon.png")}
+                source={require("../../assets/images/icons/food-icon-fill.png")}
                 style={{
                   height: 22,
                   width: 22,
@@ -225,4 +228,3 @@ const TabsLayout = () => {
 };
 
 export default TabsLayout;
-

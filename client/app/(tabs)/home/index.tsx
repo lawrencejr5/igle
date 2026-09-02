@@ -333,7 +333,7 @@ const Home = () => {
                       </View>
                     </View>
                     {/* Food banner — 2nd slot */}
-                    <View style={[styles.bannerCard, { backgroundColor: "#fff4e6" }]}>
+                    <View style={styles.bannerCard}>
                       <Image
                         source={require("../../../assets/images/icons/banner-food.png")}
                         style={{ width: 60, height: 60, alignSelf: "center" }}
@@ -346,7 +346,7 @@ const Home = () => {
                           </Text>
                         </View>
                         <TouchableOpacity
-                          style={[styles.bannerBtn, { alignSelf: "flex-end", backgroundColor: "#ff9d00" }]}
+                          style={[styles.bannerBtn, { alignSelf: "flex-end" }]}
                           onPress={() => {
                             Haptics.impactAsync(
                               Haptics.ImpactFeedbackStyle.Light,
@@ -453,13 +453,16 @@ const Home = () => {
                         }
                       }}
                     >
-                      <View style={styles.serviceIconBox}>
-                        <Feather name="navigation" size={14} color="#fff" />
+                      <View style={styles.serviceCardTop}>
+                        <View style={styles.serviceIconBox}>
+                          <Feather name="navigation" size={16} color="#fff" />
+                        </View>
+                        <Feather name="arrow-up-right" size={14} color="#666" />
                       </View>
-                      <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
+                      <View style={{ marginTop: 12 }}>
                         <Text style={styles.serviceTitle}>Book ride</Text>
                         <Text style={styles.serviceSubtitle}>
-                          Nearby driver
+                          Request ride
                         </Text>
                       </View>
                     </Pressable>
@@ -473,13 +476,16 @@ const Home = () => {
                         }
                       }}
                     >
-                      <View style={styles.serviceIconBox}>
-                        <Feather name="truck" size={14} color="#fff" />
+                      <View style={styles.serviceCardTop}>
+                        <View style={styles.serviceIconBox}>
+                          <Feather name="truck" size={16} color="#fff" />
+                        </View>
+                        <Feather name="arrow-up-right" size={14} color="#666" />
                       </View>
-                      <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
+                      <View style={{ marginTop: 12 }}>
                         <Text style={styles.serviceTitle}>Deliver</Text>
                         <Text style={styles.serviceSubtitle}>
-                          Door-to-door
+                          Send package
                         </Text>
                       </View>
                     </Pressable>
@@ -491,17 +497,20 @@ const Home = () => {
                         router.push("../(book)/food");
                       }}
                     >
-                      <View style={[styles.serviceIconBox, { backgroundColor: "#ff9d00" }]}>
-                        <Image
-                          source={require("../../../assets/images/icons/food-icon.png")}
-                          style={{ width: 14, height: 14, tintColor: "#fff" }}
-                          contentFit="contain"
-                        />
+                      <View style={styles.serviceCardTop}>
+                        <View style={styles.serviceIconBox}>
+                          <Image
+                            source={require("../../../assets/images/icons/food-icon.png")}
+                            style={{ width: 16, height: 16, tintColor: "#fff" }}
+                            contentFit="contain"
+                          />
+                        </View>
+                        <Feather name="arrow-up-right" size={14} color="#666" />
                       </View>
-                      <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
+                      <View style={{ marginTop: 12 }}>
                         <Text style={styles.serviceTitle}>Order food</Text>
                         <Text style={styles.serviceSubtitle}>
-                          Doorstep
+                          Tasty meals
                         </Text>
                       </View>
                     </Pressable>
@@ -1074,35 +1083,42 @@ const styles = StyleSheet.create({
   },
   serviceRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
   },
   serviceCard: {
-    flexDirection: "column",
-    alignItems: "center",
-    backgroundColor: "#2e2e2eff",
-    padding: 12,
-    borderRadius: 10,
     flex: 1,
-    justifyContent: "center",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    backgroundColor: "#1e1e1e",
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+    height: 105,
+  },
+  serviceCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   serviceIconBox: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 10,
-    alignSelf: "flex-start",
-    backgroundColor: "#555555",
+    backgroundColor: "#2a2a2a",
     alignItems: "center",
     justifyContent: "center",
   },
   serviceTitle: {
     color: "#fff",
     fontFamily: "raleway-bold",
-    fontSize: 12,
+    fontSize: 13,
   },
   serviceSubtitle: {
-    color: "#c1c1c1",
+    color: "#9CA3AF",
     fontFamily: "raleway-regular",
     fontSize: 10,
+    marginTop: 2,
   },
   ongoingCard: {
     width: "100%",
