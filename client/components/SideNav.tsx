@@ -154,7 +154,7 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
-                    router.replace("/(tabs)/rides");
+                    router.navigate("/rides");
                   }}
                 >
                   <FontAwesome name="car" size={20} color="#c6c6c6" />
@@ -164,11 +164,25 @@ const SideNav: React.FC<{
                   style={styles.sidenav_content_box}
                   onPress={() => {
                     closeSideNav();
-                    router.replace("/(tabs)/delivery");
+                    router.navigate("/delivery");
                   }}
                 >
                   <FontAwesome name="truck" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Deliveries</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                    router.navigate("/food");
+                  }}
+                >
+                  <Image
+                    source={require("../assets/images/icons/food-icon-fill.png")}
+                    style={{ width: 20, height: 20, tintColor: "#c6c6c6" }}
+                    contentFit="contain"
+                  />
+                  <Text style={styles.sidenav_content_text}>Food orders</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.sidenav_content_box}
@@ -193,32 +207,6 @@ const SideNav: React.FC<{
                     contentFit="contain"
                   />
                   <Text style={styles.sidenav_content_text}>Tasks</Text>
-                </TouchableOpacity>
-                {/* <TouchableOpacity
-                  style={styles.sidenav_content_box}
-                  onPress={() => {
-                    closeSideNav();
-                  }}
-                >
-                  <Ionicons name="pricetag" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Promotions</Text>
-                </TouchableOpacity> */}
-                <TouchableOpacity
-                  style={styles.sidenav_content_box}
-                  onPress={() => {
-                    closeSideNav();
-                    router.push("/account/feedback");
-                  }}
-                >
-                  <Feather name="help-circle" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>Support</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.sidenav_content_box}
-                  onPress={handleAbout}
-                >
-                  <FontAwesome name="info-circle" size={20} color="#c6c6c6" />
-                  <Text style={styles.sidenav_content_text}>About</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.sidenav_content_box}
@@ -346,7 +334,7 @@ const SideNav: React.FC<{
                   style={styles.switch_btn}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.replace("../(tabs)/home");
+                    router.navigate("/home");
                   }}
                 >
                   <Text style={styles.switch_btn_text}>Rider mode</Text>
