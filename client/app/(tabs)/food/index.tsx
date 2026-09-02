@@ -336,7 +336,18 @@ const CompletedOrders = ({
       {data.map((order) => {
         const statusColors = getStatusColor(order.status);
         return (
-          <View key={order.id} style={styles.history_card}>
+          <TouchableOpacity
+            key={order.id}
+            style={styles.history_card}
+            activeOpacity={0.85}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({
+                pathname: "/(tabs)/food/order/[id]",
+                params: { id: order.id },
+              });
+            }}
+          >
             <View style={styles.history_left}>
               <View style={styles.history_icon_box}>
                 <Image
@@ -370,7 +381,7 @@ const CompletedOrders = ({
               </View>
               <Text style={styles.history_total}>{order.total}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         );
       })}
     </ScrollView>
@@ -417,7 +428,18 @@ const CancelledOrders = ({
       {data.map((order) => {
         const statusColors = getStatusColor(order.status);
         return (
-          <View key={order.id} style={styles.history_card}>
+          <TouchableOpacity
+            key={order.id}
+            style={styles.history_card}
+            activeOpacity={0.85}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push({
+                pathname: "/(tabs)/food/order/[id]",
+                params: { id: order.id },
+              });
+            }}
+          >
             <View style={styles.history_left}>
               <View style={[styles.history_icon_box, { backgroundColor: "#2a2a2a" }]}>
                 <Image
@@ -451,7 +473,7 @@ const CancelledOrders = ({
               </View>
               <Text style={styles.history_total}>{order.total}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         );
       })}
     </ScrollView>
