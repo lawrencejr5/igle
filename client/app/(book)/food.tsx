@@ -13,25 +13,26 @@ import React, { useState, useMemo } from "react";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 // ─── Restaurant Data ──────────────────────────────────────────────────────────
 
 const RESTAURANTS = [
   {
     id: "1",
-    name: "KFC Naija",
-    cuisine: "Chicken",
-    category: "Chicken",
-    rating: 4.7,
+    name: "Pizza Palace",
+    cuisine: "Italian · Gourmet Pizza",
+    category: "Pizza",
+    rating: 4.9,
     deliveryTime: "20–30 min",
-    deliveryFee: "₦500",
-    image: require("../../assets/images/restaurants/alex-haney-CAhjZmVk5H4-unsplash.jpg"),
+    deliveryFee: "₦550",
+    image: require("../../assets/images/restaurants/ivan-torres-MQUqbmszGGM-unsplash.jpg"),
   },
   {
     id: "2",
-    name: "Pizza Palace",
-    cuisine: "Italian · Pizza",
-    category: "Pizza",
+    name: "Smokey BBQ & Ribs",
+    cuisine: "American · BBQ & Grill",
+    category: "Burgers",
     rating: 4.5,
     deliveryTime: "25–35 min",
     deliveryFee: "₦600",
@@ -39,53 +40,54 @@ const RESTAURANTS = [
   },
   {
     id: "3",
-    name: "Burger Barn",
-    cuisine: "American · Burgers",
-    category: "Burgers",
-    rating: 4.4,
+    name: "Crispy Crunch Chicken",
+    cuisine: "Fast Food · Fried Chicken",
+    category: "Chicken",
+    rating: 4.8,
     deliveryTime: "15–25 min",
     deliveryFee: "₦450",
     image: require("../../assets/images/restaurants/brian-chan-NbXjZomyNEM-unsplash.jpg"),
   },
   {
     id: "4",
-    name: "Spice Route",
-    cuisine: "Fast Food · Snacks",
-    category: "Fast Food",
-    rating: 4.3,
-    deliveryTime: "20–30 min",
-    deliveryFee: "₦400",
+    name: "Prime Steakhouse",
+    cuisine: "Gourmet · Steaks & Salads",
+    category: "Rice",
+    rating: 4.6,
+    deliveryTime: "25–40 min",
+    deliveryFee: "₦700",
     image: require("../../assets/images/restaurants/edward-howell-vvUy1hWVYEA-unsplash.jpg"),
   },
+
   {
     id: "5",
-    name: "Mama's Kitchen",
-    cuisine: "Nigerian · Rice & Stew",
-    category: "Rice",
-    rating: 4.8,
-    deliveryTime: "30–45 min",
-    deliveryFee: "₦350",
-    image: require("../../assets/images/restaurants/ivan-torres-MQUqbmszGGM-unsplash.jpg"),
-  },
-  {
-    id: "6",
-    name: "Street Bites",
-    cuisine: "Fast Food · Shawarma",
-    category: "Fast Food",
-    rating: 4.2,
-    deliveryTime: "15–20 min",
-    deliveryFee: "₦300",
+    name: "Wok & Noodle House",
+    cuisine: "Asian · Stir-Fry & Noodles",
+    category: "Asian",
+    rating: 4.4,
+    deliveryTime: "15–25 min",
+    deliveryFee: "₦400",
     image: require("../../assets/images/restaurants/orijit-chatterjee-wEBg_pYtynw-unsplash.jpg"),
   },
   {
-    id: "7",
-    name: "Sushi Stop",
-    cuisine: "Asian · Japanese",
+    id: "6",
+    name: "Tokyo Bento & Grill",
+    cuisine: "Asian · Japanese & Seafood",
     category: "Asian",
-    rating: 4.6,
-    deliveryTime: "35–50 min",
+    rating: 4.7,
+    deliveryTime: "30–45 min",
     deliveryFee: "₦800",
     image: require("../../assets/images/restaurants/vinn-koonyosying-vBOxsZrfiCw-unsplash.jpg"),
+  },
+  {
+    id: "7",
+    name: "The Social Bistro",
+    cuisine: "Continental · Drinks & Bites",
+    category: "Fast Food",
+    rating: 4.7,
+    deliveryTime: "20–30 min",
+    deliveryFee: "₦500",
+    image: require("../../assets/images/restaurants/alex-haney-CAhjZmVk5H4-unsplash.jpg"),
   },
 ];
 
@@ -129,11 +131,17 @@ const OrderFood = () => {
     >
       {/* ── Header ── */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.back_btn} onPress={() => router.back()}>
-          <Feather name="chevron-left" size={22} color="#fff" />
-        </TouchableOpacity>
+        <Pressable
+          style={styles.back_btn}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.back();
+          }}
+        >
+          <Feather name="arrow-left" size={25} color="#fff" />
+        </Pressable>
         <Text style={styles.header_title}>Order Food</Text>
-        <View style={{ width: 38 }} />
+        <View style={{ width: 45 }} />
       </View>
 
       {/* ── Search ── */}
@@ -236,44 +244,48 @@ const RestaurantCard = ({
 }) => {
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.85}>
-      {/* Image */}
-      <Image
-        source={restaurant.image}
-        style={styles.card_image}
-        contentFit="cover"
-      />
-
-      {/* Cuisine badge */}
-      <View style={styles.cuisine_badge}>
-        <Text style={styles.cuisine_badge_text}>{restaurant.category}</Text>
+      {/* Banner Image on Left */}
+      <View style={styles.card_left}>
+        <Image
+          source={restaurant.image}
+          style={styles.card_image}
+          contentFit="cover"
+        />
+        <View style={styles.cuisine_badge}>
+          <Text style={styles.cuisine_badge_text}>{restaurant.category}</Text>
+        </View>
       </View>
 
-      {/* Card body */}
-      <View style={styles.card_body}>
+      {/* Content on Right */}
+      <View style={styles.card_right}>
         <View style={styles.card_top_row}>
-          <Text style={styles.card_name}>{restaurant.name}</Text>
+          <Text style={styles.card_name} numberOfLines={1}>
+            {restaurant.name}
+          </Text>
           {/* Rating */}
           <View style={styles.rating_box}>
             <Image
               source={require("../../assets/images/icons/star-icon.png")}
-              style={{ width: 12, height: 12, tintColor: "#FFB800" }}
+              style={{ width: 11, height: 11, tintColor: "#fff" }}
               contentFit="contain"
             />
             <Text style={styles.rating_text}>{restaurant.rating}</Text>
           </View>
         </View>
 
-        <Text style={styles.card_cuisine}>{restaurant.cuisine}</Text>
+        <Text style={styles.card_cuisine} numberOfLines={1}>
+          {restaurant.cuisine}
+        </Text>
 
         {/* Bottom row */}
         <View style={styles.card_bottom_row}>
           <View style={styles.card_meta_item}>
-            <Feather name="clock" size={12} color="#9CA3AF" />
+            <Feather name="clock" size={11} color="#9CA3AF" />
             <Text style={styles.card_meta_text}>{restaurant.deliveryTime}</Text>
           </View>
           <View style={styles.dot_separator} />
           <View style={styles.card_meta_item}>
-            <Feather name="truck" size={12} color="#9CA3AF" />
+            <Feather name="truck" size={11} color="#9CA3AF" />
             <Text style={styles.card_meta_text}>
               {restaurant.deliveryFee} delivery
             </Text>
@@ -300,10 +312,10 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   back_btn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "#1e1e1e",
+    width: 45,
+    height: 45,
+    borderRadius: 10,
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -336,24 +348,30 @@ const styles = StyleSheet.create({
   category_scroll: {
     paddingHorizontal: 16,
     gap: 8,
-    paddingBottom: 14,
+    paddingVertical: 14,
+    alignItems: "center",
   },
   category_pill: {
     paddingHorizontal: 16,
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#2a2a2a",
     backgroundColor: "#1a1a1a",
+    justifyContent: "center",
+    alignItems: "center",
+    height: 36,
   },
   category_pill_active: {
-    backgroundColor: "#ff9d00",
-    borderColor: "#ff9d00",
+    backgroundColor: "#fff",
+    borderColor: "#fff",
   },
   category_pill_text: {
     color: "#9CA3AF",
     fontFamily: "raleway-semibold",
     fontSize: 13,
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
   category_pill_text_active: {
     color: "#121212",
@@ -361,6 +379,7 @@ const styles = StyleSheet.create({
   // List
   list_content: {
     paddingHorizontal: 16,
+    marginTop: 20,
   },
   section_label: {
     color: "#fff",
@@ -368,35 +387,47 @@ const styles = StyleSheet.create({
     fontSize: 17,
     marginBottom: 14,
   },
-  // Restaurant card
+  // Horizontal Restaurant Card
   card: {
+    flexDirection: "row",
     backgroundColor: "#1a1a1a",
     borderRadius: 16,
-    marginBottom: 14,
+    marginBottom: 12,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#2a2a2a",
+    padding: 10,
+    alignItems: "center",
+    gap: 12,
+  },
+  card_left: {
+    position: "relative",
+    width: 105,
+    height: 95,
+    borderRadius: 12,
+    overflow: "hidden",
   },
   card_image: {
     width: "100%",
-    height: 160,
+    height: "100%",
   },
   cuisine_badge: {
     position: "absolute",
-    top: 12,
-    right: 12,
+    bottom: 6,
+    left: 6,
     backgroundColor: "#121212cc",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   cuisine_badge_text: {
     color: "#fff",
     fontFamily: "raleway-semibold",
-    fontSize: 11,
+    fontSize: 10,
   },
-  card_body: {
-    padding: 14,
+  card_right: {
+    flex: 1,
+    justifyContent: "center",
   },
   card_top_row: {
     flexDirection: "row",
@@ -407,21 +438,23 @@ const styles = StyleSheet.create({
   card_name: {
     color: "#fff",
     fontFamily: "raleway-bold",
-    fontSize: 16,
+    fontSize: 15,
+    flex: 1,
+    marginRight: 6,
   },
   rating_box: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     backgroundColor: "#2a2a2a",
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   rating_text: {
-    color: "#FFB800",
+    color: "#fff",
     fontFamily: "raleway-bold",
-    fontSize: 12,
+    fontSize: 11,
   },
   card_cuisine: {
     color: "#9CA3AF",
@@ -437,12 +470,12 @@ const styles = StyleSheet.create({
   card_meta_item: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
   },
   card_meta_text: {
     color: "#9CA3AF",
     fontFamily: "raleway-regular",
-    fontSize: 12,
+    fontSize: 11,
   },
   dot_separator: {
     width: 3,
