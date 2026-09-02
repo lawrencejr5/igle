@@ -9,9 +9,10 @@ import {
   TextInput,
   Keyboard,
   TouchableWithoutFeedback,
+  Animated,
 } from "react-native";
 import { Image } from "expo-image";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -449,13 +450,73 @@ const SingleRestaurant = () => {
     });
   };
 
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Animated sticky header interpolation
+  const stickyHeaderOpacity = scrollY.interpolate({
+    inputRange: [130, 190],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
+  const stickyHeaderTranslateY = scrollY.interpolate({
+    inputRange: [130, 190],
+    outputRange: [-12, 0],
+    extrapolate: "clamp",
+  });
+
   return (
     <View style={styles.container}>
-      <ScrollView
+      {/* ── Fixed Animated Header ── */}
+      <Animated.View
+        style={[
+          styles.sticky_header,
+          {
+            paddingTop: Platform.OS === "ios" ? insets.top : insets.top + 6,
+            opacity: stickyHeaderOpacity,
+            transform: [{ translateY: stickyHeaderTranslateY }],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.sticky_back_btn}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.back();
+          }}
+        >
+          <Feather name="arrow-left" size={20} color="#fff" />
+        </TouchableOpacity>
+
+        <Text style={styles.sticky_title} numberOfLines={1}>
+          {restaurant.name}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.sticky_fav_btn}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setIsFavorite((prev) => !prev);
+          }}
+        >
+          <Feather
+            name="heart"
+            size={18}
+            color={isFavorite ? "#ff4d4d" : "#fff"}
+          />
+        </TouchableOpacity>
+      </Animated.View>
+
+      <Animated.ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           paddingBottom: cartTotalItems > 0 ? 110 : insets.bottom + 30,
         }}
@@ -655,7 +716,7 @@ const SingleRestaurant = () => {
               })
             )}
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
 
         {/* ── Floating Cart Bar ── */}
         {cartTotalItems > 0 && (
@@ -701,6 +762,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
+  },
+  // Sticky Animated Header
+  sticky_header: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    backgroundColor: "#121212f2",
+    borderBottomWidth: 1,
+    borderBottomColor: "#1e1e1e",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  sticky_back_btn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#1e1e1e",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sticky_title: {
+    flex: 1,
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
+  },
+  sticky_fav_btn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#1e1e1e",
+    alignItems: "center",
+    justifyContent: "center",
   },
   // Hero
   hero_box: {
