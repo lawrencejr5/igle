@@ -15,6 +15,7 @@ import { useLoading } from "../../../context/LoadingContext";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 // ─── Dummy Data ───────────────────────────────────────────────────────────────
 
@@ -280,7 +281,13 @@ const ActiveOrder = ({
         </View>
 
         {/* Track CTA */}
-        <TouchableOpacity style={styles.track_btn}>
+        <TouchableOpacity
+          style={styles.track_btn}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push("/(tabs)/food/track");
+          }}
+        >
           <Text style={styles.track_btn_text}>Track Order</Text>
           <Feather name="arrow-right" size={14} color="#121212" />
         </TouchableOpacity>
