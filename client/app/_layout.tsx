@@ -82,6 +82,12 @@ const RootLayout = () => {
                                                   animation: "fade",
                                                 }}
                                               />
+                                              <Stack.Screen
+                                                name="account/wallet"
+                                                options={{
+                                                  presentation: "modal",
+                                                }}
+                                              />
                                             </Stack>
                                           </TaskProvider>
                                         </FeedbackProvider>

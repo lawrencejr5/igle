@@ -27,11 +27,13 @@ const WalletPage: FC = () => {
 
   const fundWalletFunc = async () => {
     setBtnLoading(true);
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/account");
+    }
     try {
       await fundWallet("wallet", Number(amount));
-      setBtnLoading(false);
-      // Ensure Account tab shows its root after funding
-      router.replace("/(tabs)/account");
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {
@@ -41,35 +43,21 @@ const WalletPage: FC = () => {
     }
   };
 
-  const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/(tabs)/account");
-    }
-  };
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View
         style={{
           flex: 1,
           backgroundColor: "#121212",
-          paddingTop: insets.top,
+          paddingTop: Platform.OS === "ios" ? 30 : 30,
         }}
       >
         <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
-          <Pressable
-            style={{ paddingVertical: 15 }}
-            onPress={handleBack}
-          >
-            <Feather name="chevron-left" size={30} color={"#fff"} />
-          </Pressable>
           <Text
             style={{
-              fontFamily: "raleway-semibold",
               color: "#fff",
-              fontSize: 22,
+              fontFamily: "raleway-bold",
+              fontSize: 25,
             }}
           >
             Wallet
@@ -83,7 +71,6 @@ const WalletPage: FC = () => {
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
           >
-
             {/* Balance */}
             <View
               style={{
@@ -207,7 +194,8 @@ const WalletPage: FC = () => {
           style={{
             paddingHorizontal: 20,
             paddingTop: 20,
-            paddingBottom: Platform.OS === "ios" ? Math.max(insets.bottom, 20) : 20,
+            paddingBottom:
+              Platform.OS === "ios" ? Math.max(insets.bottom, 20) : 20,
             backgroundColor: "transparent",
           }}
         >
@@ -245,9 +233,13 @@ const Suggestion: FC<{ value: number }> = ({ value }) => {
   const { fundWallet } = useWalletContext();
 
   const fundWalletFunc = async () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/account");
+    }
     try {
       await fundWallet("wallet", Number(value));
-      router.replace("/(tabs)/account");
     } catch (error: any) {
       showNotification(error.message, "error");
     } finally {

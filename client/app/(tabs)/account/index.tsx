@@ -19,7 +19,6 @@ import * as Haptics from "expo-haptics";
 import Entypo from "@expo/vector-icons/Entypo";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import WalletScreen from "../../../components/screens/Wallet";
 
 import { useAuthContext } from "../../../context/AuthContext";
 import { useWalletContext } from "../../../context/WalletContext";
@@ -32,8 +31,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Account = () => {
   const insets = useSafeAreaInsets();
-
-  const [walletOpen, setWalletOpen] = useState<boolean>(false);
 
   const { logout, signedIn, getUserData } = useAuthContext();
   const { userWalletBal, walletLoading, getWalletBalance } = useWalletContext();
@@ -151,7 +148,7 @@ const Account = () => {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setWalletOpen((prev: any) => !prev);
+                router.push("/account/wallet");
               }}
               style={{
                 backgroundColor: "#2c2c2c",
@@ -303,9 +300,6 @@ const Account = () => {
               </TouchableWithoutFeedback>
             </View>
           </ScrollView>
-
-          {/* Wallet screen */}
-          <WalletScreen open={walletOpen} setOpen={setWalletOpen} />
         </>
       )}
     </>
