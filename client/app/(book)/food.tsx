@@ -7,6 +7,8 @@ import {
   TextInput,
   Pressable,
   Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useMemo } from "react";
@@ -121,115 +123,131 @@ const OrderFood = () => {
   }, [search, activeCategory]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: Platform.OS === "ios" ? insets.top : insets.top + 10,
-        },
-      ]}
-    >
-      {/* ── Header ── */}
-      <View style={styles.header}>
-        <Pressable
-          style={styles.back_btn}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.back();
-          }}
-        >
-          <Feather name="arrow-left" size={25} color="#fff" />
-        </Pressable>
-        <Text style={styles.header_title}>Order Food</Text>
-        <View style={{ width: 45 }} />
-      </View>
-
-      {/* ── Search ── */}
-      <View style={styles.search_container}>
-        <Feather
-          name="search"
-          size={16}
-          color="#777"
-          style={{ marginLeft: 4 }}
-        />
-        <TextInput
-          style={styles.search_input}
-          placeholder="Search restaurants or dishes…"
-          placeholderTextColor="#555"
-          value={search}
-          onChangeText={setSearch}
-          returnKeyType="search"
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch("")}>
-            <Feather
-              name="x"
-              size={16}
-              color="#777"
-              style={{ marginRight: 4 }}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* ── Category Pills ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.category_scroll}
-      >
-        {CATEGORIES.map((cat) => (
-          <Pressable
-            key={cat}
-            onPress={() => setActiveCategory(cat)}
-            style={[
-              styles.category_pill,
-              activeCategory === cat && styles.category_pill_active,
-            ]}
-          >
-            <Text
-              style={[
-                styles.category_pill_text,
-                activeCategory === cat && styles.category_pill_text_active,
-              ]}
-            >
-              {cat}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {/* ── Restaurant List ── */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.list_content,
-          Platform.OS === "ios"
-            ? { paddingBottom: insets.bottom + 20 }
-            : { paddingBottom: 40 },
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View
+        style={[
+          styles.container,
+          {
+            paddingTop: Platform.OS === "ios" ? insets.top : insets.top + 10,
+          },
         ]}
       >
-        <Text style={styles.section_label}>Restaurants Around You</Text>
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <Pressable
+            style={styles.back_btn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.back();
+            }}
+          >
+            <Feather name="arrow-left" size={25} color="#fff" />
+          </Pressable>
+          <Text style={styles.header_title}>Order Food</Text>
+          <View style={{ width: 45 }} />
+        </View>
 
-        {filtered.length === 0 ? (
-          <View style={styles.no_results}>
-            <Image
-              source={require("../../assets/images/icons/no-results.png")}
-              style={styles.no_results_img}
-              contentFit="contain"
-            />
-            <Text style={styles.no_results_text}>No restaurants found</Text>
-            <Text style={styles.no_results_sub}>
-              Try a different search or category
-            </Text>
-          </View>
-        ) : (
-          filtered.map((restaurant) => (
-            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-          ))
-        )}
-      </ScrollView>
-    </View>
+        {/* ── Search ── */}
+        <View style={styles.search_container}>
+          <Feather
+            name="search"
+            size={16}
+            color="#777"
+            style={{ marginLeft: 4 }}
+          />
+          <TextInput
+            style={styles.search_input}
+            placeholder="Search restaurants or dishes…"
+            placeholderTextColor="#555"
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+            onSubmitEditing={Keyboard.dismiss}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setSearch("");
+                Keyboard.dismiss();
+              }}
+            >
+              <Feather
+                name="x"
+                size={16}
+                color="#777"
+                style={{ marginRight: 4 }}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* ── Category Pills ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0 }}
+          contentContainerStyle={styles.category_scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          {CATEGORIES.map((cat) => (
+            <Pressable
+              key={cat}
+              onPress={() => {
+                Keyboard.dismiss();
+                setActiveCategory(cat);
+              }}
+              style={[
+                styles.category_pill,
+                activeCategory === cat && styles.category_pill_active,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.category_pill_text,
+                  activeCategory === cat && styles.category_pill_text_active,
+                ]}
+              >
+                {cat}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* ── Restaurant List ── */}
+        <ScrollView
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.list_content,
+            Platform.OS === "ios"
+              ? { paddingBottom: insets.bottom + 20 }
+              : { paddingBottom: 40 },
+          ]}
+        >
+          <Text style={styles.section_label}>Restaurants Around You</Text>
+
+          {filtered.length === 0 ? (
+            <View style={styles.no_results}>
+              <Image
+                source={require("../../assets/images/icons/no-results.png")}
+                style={styles.no_results_img}
+                contentFit="contain"
+              />
+              <Text style={styles.no_results_text}>No restaurants found</Text>
+              <Text style={styles.no_results_sub}>
+                Try a different search or category
+              </Text>
+            </View>
+          ) : (
+            filtered.map((restaurant) => (
+              <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+            ))
+          )}
+        </ScrollView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
