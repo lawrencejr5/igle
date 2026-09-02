@@ -285,7 +285,7 @@ const ActiveOrder = ({
           style={styles.track_btn}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push("/(tabs)/food/track");
+            router.push("/food/track");
           }}
         >
           <Text style={styles.track_btn_text}>Track Order</Text>
@@ -343,7 +343,7 @@ const CompletedOrders = ({
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push({
-                pathname: "/(tabs)/food/order/[id]",
+                pathname: "/food/order/[id]",
                 params: { id: order.id },
               });
             }}
@@ -435,7 +435,7 @@ const CancelledOrders = ({
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push({
-                pathname: "/(tabs)/food/order/[id]",
+                pathname: "/food/order/[id]",
                 params: { id: order.id },
               });
             }}
