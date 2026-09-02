@@ -261,7 +261,17 @@ const RestaurantCard = ({
   restaurant: (typeof RESTAURANTS)[0];
 }) => {
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push({
+          pathname: "/(book)/restaurant/[id]",
+          params: { id: restaurant.id },
+        });
+      }}
+    >
       {/* Banner Image on Left */}
       <View style={styles.card_left}>
         <Image
