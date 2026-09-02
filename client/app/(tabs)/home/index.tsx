@@ -203,19 +203,22 @@ const Home = () => {
 
   return (
     <>
-      {appLoading || locationLoading ? (
+      {(appLoading || (locationLoading && !cityAddress)) && !refreshing ? (
         <AppLoading />
       ) : (
         <>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            style={[styles.container, { paddingTop: insets.top + 10 }]}
+            style={styles.container}
+            contentContainerStyle={{ paddingTop: insets.top + 10 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#121212"
-                colors={["#121212"]}
+                tintColor="#ffffff"
+                colors={["#ffffff"]}
+                progressBackgroundColor="#1e1e1e"
+                progressViewOffset={insets.top + 10}
               />
             }
           >
