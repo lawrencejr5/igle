@@ -4,6 +4,8 @@ import {
   View,
   ScrollView,
   RefreshControl,
+  TouchableOpacity,
+  Pressable,
   Platform,
 } from "react-native";
 import { Image } from "expo-image";
@@ -14,6 +16,8 @@ import { useLoading } from "../../context/LoadingContext";
 import RewardCard from "../../components/RewardCard";
 import { useTaskContext } from "../../context/TaskContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 // Removed mock data; using TaskContext instead
 
@@ -22,6 +26,14 @@ const RewardRoot = () => {
   const { appLoading } = useLoading();
   const [refreshing, setRefreshing] = useState(false);
   const { tasks, refresh, claimTask } = useTaskContext();
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.navigate("/home");
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -43,9 +55,30 @@ const RewardRoot = () => {
       ) : (
         <>
           <View style={[styles.container, { paddingTop: insets.top }]}>
-            <View style={styles.header}>
-              <Text style={styles.headerText}>Tasks</Text>
-              <Text style={styles.headerSubtext}>
+            <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
+              <Pressable
+                style={{ paddingVertical: 15 }}
+                onPress={handleBack}
+              >
+                <Feather name="chevron-left" size={30} color={"#fff"} />
+              </Pressable>
+              <Text
+                style={{
+                  fontFamily: "raleway-semibold",
+                  color: "#fff",
+                  fontSize: 22,
+                }}
+              >
+                Tasks
+              </Text>
+              <Text
+                style={{
+                  color: "#9CA3AF",
+                  fontSize: 14,
+                  marginTop: 6,
+                  fontFamily: "raleway-regular",
+                }}
+              >
                 Complete challenges to earn bonuses and discounts
               </Text>
             </View>

@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import React, { FC, useState } from "react";
 
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5, Feather } from "@expo/vector-icons";
 import { useWalletContext } from "../../context/WalletContext";
 import { useNotificationContext } from "../../context/NotificationContext";
 import { router } from "expo-router";
@@ -41,42 +41,48 @@ const WalletPage: FC = () => {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/account");
+    }
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={{ flex: 1, backgroundColor: "#121212" }}>
-        <View
-          style={{
-            flex: 1,
-            paddingTop: Platform.OS === "ios" ? insets.top + 20 : 50,
-            paddingHorizontal: 20,
-          }}
-        >
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#121212",
+          paddingTop: insets.top,
+        }}
+      >
+        <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+          <Pressable
+            style={{ paddingVertical: 15 }}
+            onPress={handleBack}
+          >
+            <Feather name="chevron-left" size={30} color={"#fff"} />
+          </Pressable>
+          <Text
+            style={{
+              fontFamily: "raleway-semibold",
+              color: "#fff",
+              fontSize: 22,
+            }}
+          >
+            Wallet
+          </Text>
+        </View>
+
+        <View style={{ flex: 1, paddingHorizontal: 20 }}>
           <ScrollView
             contentContainerStyle={{ paddingBottom: 140 }}
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
           >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "flex-end",
-                justifyContent: "space-between",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "raleway-bold",
-                  fontSize: 25,
-                }}
-              >
-                Wallet
-              </Text>
-              <TouchableOpacity onPress={() => router.replace("/(tabs)/account")}>
-                <FontAwesome5 name="times" size={24} color="#fff" />
-              </TouchableOpacity>
-            </View>
 
             {/* Balance */}
             <View
