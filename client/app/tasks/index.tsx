@@ -9,10 +9,10 @@ import {
 import { Image } from "expo-image";
 
 import React, { useState } from "react";
-import AppLoading from "../../../loadings/AppLoading";
-import { useLoading } from "../../../context/LoadingContext";
-import RewardCard from "../../../components/RewardCard";
-import { useTaskContext } from "../../../context/TaskContext";
+import AppLoading from "../../loadings/AppLoading";
+import { useLoading } from "../../context/LoadingContext";
+import RewardCard from "../../components/RewardCard";
+import { useTaskContext } from "../../context/TaskContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Removed mock data; using TaskContext instead
@@ -97,7 +97,7 @@ const RewardRoot = () => {
               {tasks.length === 0 && (
                 <View style={styles.emptyState}>
                   <Image
-                    source={require("../../../assets/images/icons/task-icon.png")}
+                    source={require("../../assets/images/icons/task-icon.png")}
                     style={styles.emptyEmoji}
                   />
                   <Text style={styles.emptyTitle}>No Tasks Yet</Text>

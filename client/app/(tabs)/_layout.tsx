@@ -27,10 +27,10 @@ const TABS = [
     icon: require("../../assets/images/icons/delivery-tab-icon.png"),
   },
   {
-    name: "tasks",
-    label: "Tasks",
-    sf: { default: "checkmark.square", selected: "checkmark.square.fill" },
-    icon: require("../../assets/images/icons/task-icon.png"),
+    name: "food",
+    label: "Food",
+    sf: { default: "fork.knife", selected: "fork.knife" },
+    icon: require("../../assets/images/icons/food-icon.png"),
   },
   {
     name: "account",
@@ -178,12 +178,12 @@ const AndroidTabsLayout = () => {
           }}
         />
         <Tabs.Screen
-          name="tasks"
+          name="food"
           options={{
-            title: "Tasks",
+            title: "Food",
             tabBarIcon: ({ focused }) => (
               <Image
-                source={require("../../assets/images/icons/task-icon.png")}
+                source={require("../../assets/images/icons/food-icon.png")}
                 style={{
                   height: 22,
                   width: 22,

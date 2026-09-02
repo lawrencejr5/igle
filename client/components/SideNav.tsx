@@ -180,6 +180,20 @@ const SideNav: React.FC<{
                   <Entypo name="wallet" size={20} color="#c6c6c6" />
                   <Text style={styles.sidenav_content_text}>Wallet</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.sidenav_content_box}
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("/tasks");
+                  }}
+                >
+                  <Image
+                    source={require("../assets/images/icons/task-icon.png")}
+                    style={{ width: 20, height: 20, tintColor: "#c6c6c6" }}
+                    contentFit="contain"
+                  />
+                  <Text style={styles.sidenav_content_text}>Tasks</Text>
+                </TouchableOpacity>
                 {/* <TouchableOpacity
                   style={styles.sidenav_content_box}
                   onPress={() => {

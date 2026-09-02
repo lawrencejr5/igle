@@ -332,6 +332,32 @@ const Home = () => {
                         </TouchableOpacity>
                       </View>
                     </View>
+                    {/* Food banner — 2nd slot */}
+                    <View style={[styles.bannerCard, { backgroundColor: "#fff4e6" }]}>
+                      <Image
+                        source={require("../../../assets/images/icons/banner-food.png")}
+                        style={{ width: 60, height: 60, alignSelf: "center" }}
+                      />
+                      <View style={styles.bannerContent}>
+                        <View>
+                          <Text style={styles.bannerTitle}>Order food</Text>
+                          <Text style={styles.bannerSubtitle}>
+                            Delivered to your door
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={[styles.bannerBtn, { alignSelf: "flex-end", backgroundColor: "#ff9d00" }]}
+                          onPress={() => {
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light,
+                            );
+                            router.push("../(book)/food");
+                          }}
+                        >
+                          <Text style={styles.bannerBtnText}>Order now</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                     <View style={styles.bannerCard}>
                       <Image
                         source={require("../../../assets/images/icons/banner-delivery.png")}
@@ -393,7 +419,7 @@ const Home = () => {
                     </View>
                   </ScrollView>
                   <View style={styles.dotContainer}>
-                    {[0, 1, 2].map((i) => (
+                    {[0, 1, 2, 3].map((i) => (
                       <View
                         key={i}
                         style={[
@@ -404,6 +430,7 @@ const Home = () => {
                     ))}
                   </View>
                 </View>
+
                 {/* Services section */}
                 <View style={{ marginTop: 30 }}>
                   <Text
@@ -427,12 +454,12 @@ const Home = () => {
                       }}
                     >
                       <View style={styles.serviceIconBox}>
-                        <Feather name="navigation" size={16} color="#fff" />
+                        <Feather name="navigation" size={14} color="#fff" />
                       </View>
                       <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
                         <Text style={styles.serviceTitle}>Book ride</Text>
                         <Text style={styles.serviceSubtitle}>
-                          Request a nearby driver
+                          Nearby driver
                         </Text>
                       </View>
                     </Pressable>
@@ -447,12 +474,34 @@ const Home = () => {
                       }}
                     >
                       <View style={styles.serviceIconBox}>
-                        <Feather name="truck" size={16} color="#fff" />
+                        <Feather name="truck" size={14} color="#fff" />
                       </View>
                       <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
-                        <Text style={styles.serviceTitle}>Deliver package</Text>
+                        <Text style={styles.serviceTitle}>Deliver</Text>
                         <Text style={styles.serviceSubtitle}>
-                          Fast door-to-door
+                          Door-to-door
+                        </Text>
+                      </View>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.serviceCard}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        router.push("../(book)/food");
+                      }}
+                    >
+                      <View style={[styles.serviceIconBox, { backgroundColor: "#ff9d00" }]}>
+                        <Image
+                          source={require("../../../assets/images/icons/food-icon.png")}
+                          style={{ width: 14, height: 14, tintColor: "#fff" }}
+                          contentFit="contain"
+                        />
+                      </View>
+                      <View style={{ marginTop: 8, alignSelf: "flex-start" }}>
+                        <Text style={styles.serviceTitle}>Order food</Text>
+                        <Text style={styles.serviceSubtitle}>
+                          Doorstep
                         </Text>
                       </View>
                     </Pressable>
@@ -1048,12 +1097,12 @@ const styles = StyleSheet.create({
   serviceTitle: {
     color: "#fff",
     fontFamily: "raleway-bold",
-    fontSize: 14,
+    fontSize: 12,
   },
   serviceSubtitle: {
     color: "#c1c1c1",
     fontFamily: "raleway-regular",
-    fontSize: 11,
+    fontSize: 10,
   },
   ongoingCard: {
     width: "100%",
