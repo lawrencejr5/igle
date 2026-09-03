@@ -683,6 +683,7 @@ type UserType = {
   phone: string;
   driver_application: string;
   is_driver: boolean;
+  is_restaurant?: boolean;
 };
 
 export interface AuthContextType {

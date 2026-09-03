@@ -37,8 +37,9 @@ const SideNav: React.FC<{
   const insets = useSafeAreaInsets();
 
   const go_to_driver = () => {
+    closeSideNav();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (signedIn?.is_driver) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       router.replace("../(driver)/home");
     } else {
       if (signedIn?.driver_application === "none")
@@ -48,6 +49,16 @@ const SideNav: React.FC<{
       else if (signedIn?.driver_application === "submitted")
         router.replace("../(driver_auth)/reviewing_message");
       else router.replace("../(tabs)/home");
+    }
+  };
+
+  const go_to_restaurant = () => {
+    closeSideNav();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (signedIn?.is_restaurant) {
+      router.replace("../(restaurant)/home");
+    } else {
+      router.push("../(restaurant_auth)/register");
     }
   };
 
@@ -217,12 +228,32 @@ const SideNav: React.FC<{
                 </TouchableOpacity>
               </View>
 
-              {/* Switch mode */}
-              <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
+              {/* Switch mode - Stacked Vertical Buttons */}
+              <View
+                style={{ marginBottom: 25, paddingHorizontal: 10, gap: 10 }}
+              >
+                {/* Driver Mode Button */}
                 <TouchableWithoutFeedback onPress={go_to_driver}>
                   <View style={styles.switch_btn}>
+                    <FontAwesome name="car" size={16} color="#121212" />
                     <Text style={styles.switch_btn_text}>
                       {signedIn?.is_driver ? "Driver mode" : "Become a driver"}
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+
+                {/* Restaurant Mode Button */}
+                <TouchableWithoutFeedback onPress={go_to_restaurant}>
+                  <View style={styles.switch_btn_restaurant}>
+                    <Image
+                      source={require("../assets/images/icons/food-icon-fill.png")}
+                      style={{ width: 16, height: 16, tintColor: "#fff" }}
+                      contentFit="contain"
+                    />
+                    <Text style={styles.switch_btn_restaurant_text}>
+                      {signedIn?.is_restaurant
+                        ? "Restaurant mode"
+                        : "Partner as a restaurant"}
                     </Text>
                   </View>
                 </TouchableWithoutFeedback>
@@ -334,7 +365,7 @@ const SideNav: React.FC<{
                   style={styles.switch_btn}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.navigate("/home");
+                    router.replace("/(tabs)/home");
                   }}
                 >
                   <Text style={styles.switch_btn_text}>Rider mode</Text>
@@ -420,18 +451,37 @@ const styles = StyleSheet.create({
   },
   switch_btn: {
     backgroundColor: "#fff",
-    padding: 10,
-    paddingHorizontal: 30,
-    borderRadius: 5,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
   },
   switch_btn_text: {
     color: "#121212",
     fontFamily: "raleway-bold",
-    fontSize: 16,
+    fontSize: 15,
+  },
+  switch_btn_restaurant: {
+    backgroundColor: "#393939",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#3a3a3a",
+  },
+  switch_btn_restaurant_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 15,
   },
 });
 
