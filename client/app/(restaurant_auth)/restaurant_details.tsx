@@ -16,6 +16,7 @@ import React, { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
 
 // ─── Category Tags ─────────────────────────────────────────────────────────────
@@ -55,6 +56,33 @@ const ALL_CATEGORIES = [
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+// Helper to parse time string like "08:00 AM" into a Date object
+const parseTimeString = (timeStr: string): Date => {
+  const d = new Date();
+  if (!timeStr) return d;
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return d;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hours < 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  d.setHours(hours, minutes, 0, 0);
+  return d;
+};
+
+// Helper to format Date object into "08:00 AM" string
+const formatTimeDate = (date: Date): string => {
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  const period = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  const formattedHours = hours < 10 ? `0${hours}` : `${hours}`;
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
+  return `${formattedHours}:${formattedMinutes} ${period}`;
+};
+
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
 const RestaurantDetails = () => {
@@ -86,6 +114,47 @@ const RestaurantDetails = () => {
       ]),
     ),
   );
+
+  // Time Picker modal state
+  const [timePickerState, setTimePickerState] = useState<{
+    show: boolean;
+    day: string;
+    field: "open" | "close";
+    date: Date;
+  }>({
+    show: false,
+    day: "Mon",
+    field: "open",
+    date: new Date(),
+  });
+
+  const openTimePicker = (day: string, field: "open" | "close") => {
+    const timeStr = hours[day][field];
+    setTimePickerState({
+      show: true,
+      day,
+      field,
+      date: parseTimeString(timeStr),
+    });
+  };
+
+  const handleTimeChange = (
+    event: any,
+    selectedDate?: Date,
+  ) => {
+    if (event?.type === "dismissed") {
+      setTimePickerState((prev) => ({ ...prev, show: false }));
+      return;
+    }
+    if (Platform.OS === "android") {
+      setTimePickerState((prev) => ({ ...prev, show: false }));
+    }
+    if (selectedDate) {
+      const formatted = formatTimeDate(selectedDate);
+      updateHour(timePickerState.day, timePickerState.field, formatted);
+      setTimePickerState((prev) => ({ ...prev, date: selectedDate }));
+    }
+  };
 
   // ── Image Pickers ──────────────────────────────────────────────────────────
 
@@ -369,19 +438,23 @@ const RestaurantDetails = () => {
                     <Text style={localStyles.hours_closed_text}>Closed</Text>
                   ) : (
                     <View style={localStyles.hours_inputs}>
-                      <TextInput
-                        style={localStyles.hours_input}
-                        value={hours[day].open}
-                        onChangeText={(v) => updateHour(day, "open", v)}
-                        placeholderTextColor="#777"
-                      />
+                      <TouchableOpacity
+                        style={localStyles.hours_btn}
+                        onPress={() => openTimePicker(day, "open")}
+                      >
+                        <Text style={localStyles.hours_btn_text}>
+                          {hours[day].open}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={{ color: "#777" }}>–</Text>
-                      <TextInput
-                        style={localStyles.hours_input}
-                        value={hours[day].close}
-                        onChangeText={(v) => updateHour(day, "close", v)}
-                        placeholderTextColor="#777"
-                      />
+                      <TouchableOpacity
+                        style={localStyles.hours_btn}
+                        onPress={() => openTimePicker(day, "close")}
+                      >
+                        <Text style={localStyles.hours_btn_text}>
+                          {hours[day].close}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   )}
                   <TouchableOpacity onPress={() => toggleDayClosed(day)}>
@@ -504,6 +577,61 @@ const RestaurantDetails = () => {
           </View>
         </View>
       </Modal>
+
+      {/* ── Time Picker ── */}
+      {timePickerState.show &&
+        (Platform.OS === "ios" ? (
+          <Modal
+            transparent
+            animationType="fade"
+            visible={timePickerState.show}
+            onRequestClose={() =>
+              setTimePickerState((prev) => ({ ...prev, show: false }))
+            }
+          >
+            <TouchableOpacity
+              style={localStyles.time_picker_overlay}
+              activeOpacity={1}
+              onPress={() =>
+                setTimePickerState((prev) => ({ ...prev, show: false }))
+              }
+            >
+              <View
+                style={localStyles.time_picker_sheet}
+                onStartShouldSetResponder={() => true}
+              >
+                <View style={localStyles.time_picker_header}>
+                  <Text style={localStyles.time_picker_title}>
+                    Select {timePickerState.field === "open" ? "Opening" : "Closing"} Time ({timePickerState.day})
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setTimePickerState((prev) => ({ ...prev, show: false }))
+                    }
+                  >
+                    <Text style={localStyles.time_picker_done}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={timePickerState.date}
+                  mode="time"
+                  is24Hour={false}
+                  display="spinner"
+                  textColor="#ffffff"
+                  onChange={handleTimeChange}
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        ) : (
+          <DateTimePicker
+            value={timePickerState.date}
+            mode="time"
+            is24Hour={false}
+            display="default"
+            onChange={handleTimeChange}
+          />
+        ))}
     </View>
   );
 };
@@ -599,16 +727,19 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  hours_input: {
+  hours_btn: {
     flex: 1,
     backgroundColor: "#2a2a2a",
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hours_btn_text: {
     color: "#fff",
     fontFamily: "raleway-semibold",
     fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 6,
-    textAlign: "center",
   },
   hours_closed_text: {
     flex: 1,
@@ -713,6 +844,37 @@ const localStyles = StyleSheet.create({
   },
   modal_done_text: {
     color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 15,
+  },
+  time_picker_overlay: {
+    flex: 1,
+    backgroundColor: "#000000aa",
+    justifyContent: "flex-end",
+  },
+  time_picker_sheet: {
+    backgroundColor: "#1e1e1e",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
+    paddingTop: 16,
+  },
+  time_picker_header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  time_picker_title: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 15,
+  },
+  time_picker_done: {
+    color: "#fff",
     fontFamily: "raleway-bold",
     fontSize: 15,
   },
