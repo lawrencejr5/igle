@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Modal,
   Pressable,
+  Keyboard,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -206,12 +207,13 @@ const RestaurantDetails = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#121212" }}>
-      <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: "#121212" }}
-        behavior="padding"
-        keyboardVerticalOffset={0}
-      >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={{ flex: 1, backgroundColor: "#121212" }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1, backgroundColor: "#121212" }}
+          behavior="padding"
+          keyboardVerticalOffset={0}
+        >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.header_text}>Restaurant Registration</Text>
@@ -631,7 +633,8 @@ const RestaurantDetails = () => {
             onChange={handleTimeChange}
           />
         ))}
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 

@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   Text,
   TextInput,
@@ -8,34 +9,194 @@ import {
   Platform,
   TouchableOpacity,
   StyleSheet,
+  Modal,
+  ActivityIndicator,
+  Keyboard,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as Location from "expo-location";
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
 import { darkMapStyle } from "../../data/map.dark";
 
 const RADIUS_OPTIONS = [1, 2, 3, 5, 7, 10, 15, 20];
+const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API;
+
+interface GooglePlacePrediction {
+  place_id: string;
+  description: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
 
 const RestaurantLocation = () => {
   const styles = driver_reg_styles();
   const mapRef = useRef<MapView>(null);
+  const fullMapRef = useRef<MapView>(null);
 
   const [streetAddress, setStreetAddress] = useState("");
   const [landmark, setLandmark] = useState("");
   const [deliveryRadius, setDeliveryRadius] = useState(5);
 
   const [pinCoords, setPinCoords] = useState({
-    latitude: 6.5244,
-    longitude: 3.3792,
+    latitude: 6.2059, // Asaba default fallback
+    longitude: 6.6959,
   });
 
-  const initialRegion = {
-    latitude: 6.5244,
-    longitude: 3.3792,
-    latitudeDelta: 0.02,
-    longitudeDelta: 0.02,
+  // Modal map state
+  const [showFullMap, setShowFullMap] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState<GooglePlacePrediction[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedAddressText, setSelectedAddressText] = useState("");
+  const [tempCoords, setTempCoords] = useState({
+    latitude: 6.2059,
+    longitude: 6.6959,
+  });
+
+  // Automatically fetch user's current location on mount
+  useEffect(() => {
+    getUserCurrentLocation();
+  }, []);
+
+  const getUserCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+
+      const loc = await Location.getCurrentPositionAsync({});
+      const current = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      };
+      setPinCoords(current);
+      setTempCoords(current);
+      fetchAddressForCoords(current);
+    } catch (err) {
+      console.log("Error getting user location:", err);
+    }
+  };
+
+  // Reverse geocode coords to get readable address string
+  const fetchAddressForCoords = async (coords: { latitude: number; longitude: number }) => {
+    try {
+      if (API_KEY) {
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.latitude},${coords.longitude}&key=${API_KEY}`;
+        const { data } = await axios.get(url);
+        if (data.results && data.results.length > 0) {
+          const formatted = data.results[0].formatted_address;
+          setSelectedAddressText(formatted);
+          return formatted;
+        }
+      }
+      const addresses = await Location.reverseGeocodeAsync(coords);
+      if (addresses && addresses.length > 0) {
+        const addr = addresses[0];
+        const formatted = [addr.name || addr.streetNumber, addr.street, addr.district || addr.subregion, addr.city]
+          .filter(Boolean)
+          .join(", ");
+        setSelectedAddressText(formatted || `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`);
+        return formatted;
+      }
+    } catch (err) {
+      console.log("Reverse geocode error:", err);
+    }
+    setSelectedAddressText(`${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`);
+    return "";
+  };
+
+  const openFullMap = () => {
+    setTempCoords(pinCoords);
+    setShowFullMap(true);
+    fetchAddressForCoords(pinCoords);
+  };
+
+  const confirmLocation = () => {
+    setPinCoords(tempCoords);
+    setShowFullMap(false);
+    if (selectedAddressText) {
+      setStreetAddress(selectedAddressText);
+    }
+    mapRef.current?.animateToRegion({
+      ...tempCoords,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
+  };
+
+  const handleMapPointChange = (coords: { latitude: number; longitude: number }) => {
+    Keyboard.dismiss();
+    setTempCoords(coords);
+    fetchAddressForCoords(coords);
+  };
+
+  // Fetch Google Places Autocomplete Suggestions (matching MapContext.tsx getSuggestions pattern)
+  const handleSearchTextChange = async (text: string) => {
+    setSearchQuery(text);
+    if (!text.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    setSearching(true);
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+        text
+      )}&key=${API_KEY}&location=${tempCoords.latitude},${
+        tempCoords.longitude
+      }&radius=10000&components=country:ng`;
+
+      const { data } = await axios.get(url);
+      if (data && data.predictions) {
+        setSuggestions(data.predictions);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.log("Google Places autocomplete error:", error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Fetch Place details (lat/lng) on suggestion click (matching MapContext.tsx getPlaceCoords pattern)
+  const selectSuggestion = async (item: GooglePlacePrediction) => {
+    Keyboard.dismiss();
+    const mainText = item.structured_formatting.main_text;
+    const fullText = item.description;
+    setSearchQuery(fullText);
+    setSelectedAddressText(fullText);
+    setShowSuggestions(false);
+
+    try {
+      setSearching(true);
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${item.place_id}&key=${API_KEY}`;
+      const { data } = await axios.get(url);
+      if (data.result && data.result.geometry) {
+        const location = data.result.geometry.location;
+        const newCoords = {
+          latitude: location.lat,
+          longitude: location.lng,
+        };
+        setTempCoords(newCoords);
+        fullMapRef.current?.animateToRegion({
+          ...newCoords,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
+      }
+    } catch (err) {
+      console.log("Place details error:", err);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const handleNext = () => {
@@ -91,37 +252,43 @@ const RestaurantLocation = () => {
             </Text>
           </View>
 
-          {/* ── Map Pin Drop ── */}
+          {/* ── Map Preview Box (Clickable to open full screen map) ── */}
           <View style={{ marginTop: 20 }}>
             <Text style={[styles.inp_label, { marginBottom: 8 }]}>
-              Drop a Pin on Your Location
+              Location Map Pin Drop
             </Text>
-            <View style={localStyles.map_container}>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={openFullMap}
+              style={localStyles.map_container}
+            >
               <MapView
                 ref={mapRef}
                 style={StyleSheet.absoluteFillObject}
                 provider={PROVIDER_GOOGLE}
-                initialRegion={initialRegion}
+                initialRegion={{
+                  ...pinCoords,
+                  latitudeDelta: 0.02,
+                  longitudeDelta: 0.02,
+                }}
                 customMapStyle={darkMapStyle}
-                onPress={(e) => setPinCoords(e.nativeEvent.coordinate)}
+                pointerEvents="none"
               >
-                <Marker
-                  coordinate={pinCoords}
-                  draggable
-                  onDragEnd={(e) => setPinCoords(e.nativeEvent.coordinate)}
-                >
+                <Marker coordinate={pinCoords}>
                   <View style={localStyles.pin_marker}>
                     <Feather name="map-pin" size={20} color="#fff" />
                   </View>
                 </Marker>
               </MapView>
-              <View style={localStyles.map_hint_badge}>
-                <Feather name="info" size={12} color="#aaa" />
-                <Text style={localStyles.map_hint_text}>
-                  Tap map or drag pin to set location
+              
+              <View style={localStyles.map_overlay_badge}>
+                <Feather name="maximize-2" size={14} color="#fff" />
+                <Text style={localStyles.map_overlay_text}>
+                  Tap to open full screen map & search
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
 
             {/* Coords display */}
             <View style={localStyles.coords_row}>
@@ -143,16 +310,19 @@ const RestaurantLocation = () => {
           {/* ── Street Address ── */}
           <View style={styles.inp_container}>
             <Text style={styles.inp_label}>Street Address</Text>
-            <View style={styles.inp_holder}>
-              <Feather name="map-pin" size={18} color="white" />
-              <TextInput
-                style={styles.text_input}
-                placeholder="e.g. 88 Isaac John Street, Ikeja GRA"
-                placeholderTextColor="#c5c5c5"
-                value={streetAddress}
-                onChangeText={setStreetAddress}
-              />
-            </View>
+            <TouchableOpacity onPress={openFullMap}>
+              <View style={[styles.inp_holder, { opacity: 0.9 }]}>
+                <Feather name="map-pin" size={18} color="white" />
+                <TextInput
+                  style={[styles.text_input, { color: streetAddress ? "#fff" : "#c5c5c5" }]}
+                  placeholder="Select location on map to set address..."
+                  placeholderTextColor="#c5c5c5"
+                  value={streetAddress}
+                  editable={false}
+                  pointerEvents="none"
+                />
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* ── Landmark ── */}
@@ -217,6 +387,140 @@ const RestaurantLocation = () => {
           </TouchableWithoutFeedback>
         </View>
       </KeyboardAvoidingView>
+
+      {/* ── Full Screen Map Modal ── */}
+      <Modal
+        visible={showFullMap}
+        animationType="slide"
+        onRequestClose={() => setShowFullMap(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: "#121212" }}>
+          {/* Full Screen Map */}
+          <MapView
+            ref={fullMapRef}
+            style={StyleSheet.absoluteFillObject}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
+              ...tempCoords,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            customMapStyle={darkMapStyle}
+            onPress={(e) => handleMapPointChange(e.nativeEvent.coordinate)}
+          >
+            <Marker
+              coordinate={tempCoords}
+              draggable
+              onDragEnd={(e) => handleMapPointChange(e.nativeEvent.coordinate)}
+            >
+              <View style={localStyles.pin_marker_large}>
+                <Feather name="map-pin" size={24} color="#fff" />
+              </View>
+            </Marker>
+          </MapView>
+
+          {/* Top Search Bar & Suggestions Header */}
+          <View style={localStyles.full_map_header}>
+            <View style={localStyles.search_input_box}>
+              <Feather name="search" size={18} color="#aaa" />
+              <TextInput
+                style={localStyles.search_input}
+                placeholder="Search address or area..."
+                placeholderTextColor="#777"
+                value={searchQuery}
+                onChangeText={handleSearchTextChange}
+                returnKeyType="search"
+              />
+              {searching ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : searchQuery.length > 0 ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchQuery("");
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                  }}
+                >
+                  <Feather name="x" size={16} color="#aaa" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            {/* Suggestions Dropdown Card */}
+            {showSuggestions && suggestions.length > 0 && (
+              <View style={localStyles.suggestions_card}>
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                  style={{ maxHeight: 220 }}
+                >
+                  {suggestions.map((item) => (
+                    <TouchableOpacity
+                      key={item.place_id}
+                      style={localStyles.suggestion_row}
+                      onPress={() => selectSuggestion(item)}
+                    >
+                      <Feather name="map-pin" size={16} color="#aaa" style={{ marginTop: 2 }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={localStyles.suggestion_title} numberOfLines={1}>
+                          {item.structured_formatting?.main_text || item.description}
+                        </Text>
+                        <Text style={localStyles.suggestion_subtitle} numberOfLines={1}>
+                          {item.structured_formatting?.secondary_text || item.description}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Floating Instructions Badge */}
+          {!showSuggestions && (
+            <View style={localStyles.full_map_badge}>
+              <Feather name="info" size={14} color="#fff" />
+              <Text style={localStyles.full_map_badge_text}>
+                Tap map or drag marker to set precise location
+              </Text>
+            </View>
+          )}
+
+          {/* Bottom Confirmation Bar */}
+          <View style={localStyles.full_map_bottom}>
+            <View style={{ marginBottom: 14 }}>
+              {/* Location Address */}
+              <Text style={{ color: "#aaa", fontFamily: "raleway-semibold", fontSize: 11, letterSpacing: 0.3 }}>
+                LOCATION ADDRESS
+              </Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "raleway-bold",
+                  fontSize: 14,
+                  marginTop: 2,
+                  marginBottom: 8,
+                }}
+                numberOfLines={2}
+              >
+                {selectedAddressText || "Tap map to get location address"}
+              </Text>
+
+              {/* Coordinates */}
+              <Text style={{ color: "#777", fontFamily: "raleway-semibold", fontSize: 10, letterSpacing: 0.3 }}>
+                COORDINATES
+              </Text>
+              <Text style={{ color: "#aaa", fontFamily: "raleway-bold", fontSize: 12, marginTop: 2 }}>
+                {tempCoords.latitude.toFixed(6)}, {tempCoords.longitude.toFixed(6)}
+              </Text>
+            </View>
+
+            <TouchableOpacity style={localStyles.done_btn} onPress={confirmLocation}>
+              <Text style={localStyles.done_btn_text}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -227,7 +531,7 @@ export default RestaurantLocation;
 
 const localStyles = StyleSheet.create({
   map_container: {
-    height: 240,
+    height: 200,
     borderRadius: 14,
     overflow: "hidden",
     position: "relative",
@@ -240,22 +544,30 @@ const localStyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#fff",
   },
-  map_hint_badge: {
+  pin_marker_large: {
+    backgroundColor: "#121212",
+    padding: 10,
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: "#fff",
+  },
+  map_overlay_badge: {
     position: "absolute",
-    bottom: 10,
-    left: 10,
+    bottom: 12,
+    left: 12,
+    right: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    backgroundColor: "#121212cc",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#000000cc",
+    paddingVertical: 10,
+    borderRadius: 10,
   },
-  map_hint_text: {
-    color: "#aaa",
-    fontFamily: "raleway-regular",
-    fontSize: 11,
+  map_overlay_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 13,
   },
   coords_row: {
     flexDirection: "row",
@@ -306,5 +618,104 @@ const localStyles = StyleSheet.create({
   },
   radius_chip_text_selected: {
     color: "#121212",
+  },
+
+  // Full Screen Map Modal
+  full_map_header: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 30,
+    left: 16,
+    right: 16,
+    zIndex: 10,
+  },
+  search_input_box: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1e1e1ecc",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#333",
+    gap: 10,
+  },
+  search_input: {
+    flex: 1,
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+  },
+  suggestions_card: {
+    backgroundColor: "#1e1e1ef2",
+    borderRadius: 12,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: "#333",
+    overflow: "hidden",
+  },
+  suggestion_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#282828",
+  },
+  suggestion_title: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 13,
+  },
+  suggestion_subtitle: {
+    color: "#aaa",
+    fontFamily: "raleway-regular",
+    fontSize: 11,
+    marginTop: 2,
+  },
+  full_map_badge: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 115 : 95,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#000000bb",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    zIndex: 10,
+  },
+  full_map_badge_text: {
+    color: "#fff",
+    fontFamily: "raleway-regular",
+    fontSize: 12,
+  },
+  full_map_bottom: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#181818",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === "ios" ? 34 : 20,
+    zIndex: 10,
+    borderTopWidth: 1,
+    borderColor: "#282828",
+  },
+  done_btn: {
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: "center",
+    width: "100%",
+  },
+  done_btn_text: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 16,
   },
 });
