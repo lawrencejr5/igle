@@ -15,7 +15,7 @@ import * as Haptics from "expo-haptics";
 import Notification from "../components/Notification";
 
 // Status type
-type StatusType = "error" | "success" | "";
+type StatusType = "error" | "success" | "warning" | "info" | "";
 
 // Notification type
 export interface NotificationType {

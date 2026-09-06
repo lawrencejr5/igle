@@ -684,6 +684,7 @@ type UserType = {
   driver_application: string;
   is_driver: boolean;
   is_restaurant?: boolean;
+  restaurant_application?: string;
 };
 
 export interface AuthContextType {

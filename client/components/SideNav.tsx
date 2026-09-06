@@ -23,16 +23,18 @@ import * as Haptics from "expo-haptics";
 
 import { useAuthContext } from "../context/AuthContext";
 import { useDriverAuthContext } from "../context/DriverAuthContext";
+import { useRestaurantContext } from "../context/RestaurantContext";
 import { useNotificationContext } from "../context/NotificationContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SideNav: React.FC<{
-  mode: "driver" | "rider";
+  mode: "driver" | "rider" | "restaurant";
   open: boolean;
   setSideNavOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }> = ({ open, setSideNavOpen, mode }) => {
   const { signedIn } = useAuthContext();
   const { driver } = useDriverAuthContext();
+  const { restaurant } = useRestaurantContext();
   const { showNotification } = useNotificationContext();
   const insets = useSafeAreaInsets();
 
@@ -55,8 +57,10 @@ const SideNav: React.FC<{
   const go_to_restaurant = () => {
     closeSideNav();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (signedIn?.is_restaurant) {
+    if (signedIn?.is_restaurant || signedIn?.restaurant_application === "approved") {
       router.replace("../(restaurant)/home");
+    } else if (signedIn?.restaurant_application === "submitted" || signedIn?.restaurant_application === "pending") {
+      router.replace("../(restaurant_auth)/restaurant_verification");
     } else {
       router.push("../(restaurant_auth)/restaurant_details");
     }
@@ -251,8 +255,11 @@ const SideNav: React.FC<{
                       contentFit="contain"
                     />
                     <Text style={styles.switch_btn_restaurant_text}>
-                      {signedIn?.is_restaurant
-                        ? "Restaurant mode"
+                      {signedIn?.is_restaurant ||
+                      (signedIn?.restaurant_application &&
+                        signedIn.restaurant_application !== "none") ||
+                      restaurant?._id
+                        ? "My restaurant"
                         : "Partner as a restaurant"}
                     </Text>
                   </View>
@@ -369,6 +376,138 @@ const SideNav: React.FC<{
                   }}
                 >
                   <Text style={styles.switch_btn_text}>Rider mode</Text>
+                </Pressable>
+              </View>
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  else if (mode === "restaurant")
+    return (
+      <TouchableWithoutFeedback onPress={closeSideNav}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <Animated.View
+              style={[
+                styles.sidenav,
+                {
+                  transform: [{ translateX: sideNavTranslate }],
+                  paddingBottom: insets.bottom + 20,
+                  paddingTop: Platform.OS === "ios" ? insets.top + 15 : 50,
+                },
+              ]}
+            >
+              <View>
+                {/* Logo */}
+                <View style={styles.logo_container}>
+                  <Text style={styles.logo_text}>Igle Vendor</Text>
+                  <TouchableWithoutFeedback
+                    onPress={closeSideNav}
+                    style={{ padding: 10 }}
+                  >
+                    <Feather name="sidebar" size={24} color="#fff" />
+                  </TouchableWithoutFeedback>
+                </View>
+
+                {/* Restaurant Profile Card */}
+                <View style={styles.user_card}>
+                  <Image
+                    source={
+                      restaurant?.logo
+                        ? { uri: restaurant.logo }
+                        : signedIn?.profile_pic
+                        ? { uri: signedIn.profile_pic }
+                        : require("../assets/images/user.png")
+                    }
+                    style={styles.user_img}
+                  />
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.user_name} numberOfLines={1}>
+                      {restaurant?.name || signedIn?.name || "Restaurant Store"}
+                    </Text>
+                    <Text style={styles.user_type} numberOfLines={1}>
+                      {restaurant?.category_tags && restaurant.category_tags.length > 0
+                        ? restaurant.category_tags.slice(0, 2).join(" • ")
+                        : "Vendor"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Side bar values */}
+              <View>
+                <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("/(restaurant)/home");
+                  }}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <Feather name="shopping-bag" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Live Orders</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("/(restaurant_auth)/restaurant_details?mode=edit");
+                  }}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <Feather name="list" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Menu & Details</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
+                    showNotification("Payouts & Earnings feature coming soon", "info");
+                  }}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <Entypo name="wallet" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Payouts & Earnings</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
+                    showNotification("Store Reviews feature coming soon", "info");
+                  }}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <Ionicons name="star" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Store Reviews</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleRateUs}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <FontAwesome name="star" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Rate us</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Switch mode - Single Button: Back to user */}
+              <View style={{ marginBottom: 30, paddingHorizontal: 10 }}>
+                <Pressable
+                  style={styles.switch_btn}
+                  onPress={() => {
+                    closeSideNav();
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.replace("/(tabs)/home");
+                  }}
+                >
+                  <Feather name="arrow-left" size={16} color="#121212" />
+                  <Text style={styles.switch_btn_text}>Back to user</Text>
                 </Pressable>
               </View>
             </Animated.View>

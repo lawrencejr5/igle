@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import SideNav from "../../../components/SideNav";
+import { useRestaurantContext } from "../../../context/RestaurantContext";
 
 // ─── Dummy Live Vendor Orders ──────────────────────────────────────────────────
 
@@ -58,13 +59,34 @@ const INITIAL_VENDOR_ORDERS: VendorOrder[] = [
 
 const RestaurantHome = () => {
   const insets = useSafeAreaInsets();
-  const [isStoreOnline, setIsStoreOnline] = useState(true);
+  const { restaurant, setRestaurantOnlineStatus, fetchRestaurantProfile } =
+    useRestaurantContext();
+
+  const [isStoreOnline, setIsStoreOnline] = useState(
+    restaurant?.is_online ?? true
+  );
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [orders, setOrders] = useState<VendorOrder[]>(INITIAL_VENDOR_ORDERS);
 
-  const toggleOnlineStatus = () => {
+  React.useEffect(() => {
+    fetchRestaurantProfile();
+  }, []);
+
+  React.useEffect(() => {
+    if (restaurant?.is_online !== undefined) {
+      setIsStoreOnline(restaurant.is_online);
+    }
+  }, [restaurant?.is_online]);
+
+  const toggleOnlineStatus = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsStoreOnline((prev) => !prev);
+    const newStatus = !isStoreOnline;
+    setIsStoreOnline(newStatus);
+    try {
+      await setRestaurantOnlineStatus(newStatus);
+    } catch (e) {
+      setIsStoreOnline(!newStatus);
+    }
   };
 
   const handleUpdateOrderStatus = (orderId: string, nextStatus: VendorOrder["status"]) => {
@@ -97,8 +119,12 @@ const RestaurantHome = () => {
           </TouchableOpacity>
 
           <View style={styles.header_center}>
-            <Text style={styles.store_title}>Pizza Palace</Text>
-            <Text style={styles.store_subtitle}>Vendor Dashboard</Text>
+            <Text style={styles.store_title}>
+              {restaurant?.name || "Restaurant Dashboard"}
+            </Text>
+            <Text style={styles.store_subtitle}>
+              {restaurant?.category_tags?.slice(0, 2).join(" • ") || "Vendor Dashboard"}
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -173,8 +199,12 @@ const RestaurantHome = () => {
 
             <View style={styles.metric_card}>
               <Text style={styles.metric_label}>STORE RATING</Text>
-              <Text style={styles.metric_value}>4.9 ★</Text>
-              <Text style={styles.metric_sub_gray}>Based on 320 ratings</Text>
+              <Text style={styles.metric_value}>
+                {restaurant?.rating ? restaurant.rating.toFixed(1) : "5.0"} ★
+              </Text>
+              <Text style={styles.metric_sub_gray}>
+                Based on {restaurant?.num_of_reviews || 0} reviews
+              </Text>
             </View>
           </View>
 
@@ -281,7 +311,7 @@ const RestaurantHome = () => {
 
       {/* SideNav Drawer */}
       <SideNav
-        mode="rider"
+        mode="restaurant"
         open={sideNavOpen}
         setSideNavOpen={setSideNavOpen}
       />

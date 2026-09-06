@@ -15,6 +15,22 @@ const Notification = ({ notification }: { notification: NotificationType }) => {
 
   const styles = create_styles();
 
+  const getColor = () => {
+    switch (notification?.status) {
+      case "error":
+        return "#ff0000";
+      case "warning":
+        return "#ff9800";
+      case "info":
+        return "#2196f3";
+      case "success":
+      default:
+        return "#4dc900";
+    }
+  };
+
+  const statusColor = getColor();
+
   return (
     <Animated.View
       style={[
@@ -25,21 +41,10 @@ const Notification = ({ notification }: { notification: NotificationType }) => {
       ]}
     >
       <View style={styles.notification}>
-        <Text
-          style={[
-            styles.notiText,
-            {
-              color: notification?.status == "error" ? "#ff0000" : "#4dc900",
-            },
-          ]}
-        >
+        <Text style={[styles.notiText, { color: statusColor }]}>
           {notification?.message}
         </Text>
-        <AntDesign
-          name="exclamation-circle"
-          size={16}
-          color={notification?.status == "error" ? "#ff0000" : "#4dc900"}
-        />
+        <AntDesign name="exclamation-circle" size={16} color={statusColor} />
       </View>
     </Animated.View>
   );

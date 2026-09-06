@@ -132,6 +132,12 @@ const RestaurantVerification = () => {
     }
   };
 
+  React.useEffect(() => {
+    if (restaurant?.application === "approved" || restaurant?.is_verified) {
+      router.replace("/(restaurant)/home");
+    }
+  }, [restaurant]);
+
   const isAlreadySubmitted =
     submitted ||
     (restaurant?.application && restaurant.application !== "none");
