@@ -20,6 +20,8 @@ export interface UserType extends Document {
   };
   driver_application: "none" | "rejected" | "submitted" | "approved";
   is_driver: boolean;
+  restaurant_application?: "none" | "rejected" | "submitted" | "approved";
+  is_restaurant?: boolean;
   is_verified: boolean;
   is_deleted?: boolean;
   deleted_at?: Date;
@@ -67,6 +69,12 @@ const UserSchema = new Schema<UserType>(
       default: "none",
     },
     is_driver: { type: Boolean, default: false },
+    restaurant_application: {
+      type: String,
+      enum: ["none", "submitted", "rejected", "approved"],
+      default: "none",
+    },
+    is_restaurant: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },
     // soft delete fields
     is_deleted: { type: Boolean, default: false },
