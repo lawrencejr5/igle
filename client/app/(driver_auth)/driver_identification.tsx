@@ -103,7 +103,9 @@ const DriverIdentification = () => {
   const { showNotification } = useNotificationContext()!;
 
   const vehicleType = driver?.vehicle_type ?? "cab";
-  const allowedTypes: IdType[] = ALLOWED_TYPES[vehicleType] ?? ["driver_licence"];
+  const allowedTypes: IdType[] = ALLOWED_TYPES[vehicleType] ?? [
+    "driver_licence",
+  ];
   const showSelector = allowedTypes.length > 1;
 
   const [selectedType, setSelectedType] = useState<IdType>(allowedTypes[0]);
@@ -111,7 +113,9 @@ const DriverIdentification = () => {
 
   const [idNumber, setIdNumber] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<string>("");
-  const [expiryDateObj, setExpiryDateObj] = useState<Date | undefined>(undefined);
+  const [expiryDateObj, setExpiryDateObj] = useState<Date | undefined>(
+    undefined,
+  );
   const [showExpiryPicker, setShowExpiryPicker] = useState<boolean>(false);
 
   const [frontImage, setFrontImage] = useState<string>("");
@@ -193,7 +197,8 @@ const DriverIdentification = () => {
     if (!currentImageType) return;
     const capturedType = currentImageType;
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         showNotification("Media library permission is required", "error");
         return;
@@ -265,7 +270,10 @@ const DriverIdentification = () => {
         router.push("/vehicle_information");
       }, 1500);
     } catch (err: any) {
-      showNotification(err?.message || "Failed to update identification", "error");
+      showNotification(
+        err?.message || "Failed to update identification",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -311,7 +319,7 @@ const DriverIdentification = () => {
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
         behavior="padding"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        keyboardVerticalOffset={0}
       >
         <Header />
 

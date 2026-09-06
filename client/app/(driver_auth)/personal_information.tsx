@@ -212,7 +212,7 @@ const PersonalInformation = () => {
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#121212" }}
         behavior="padding"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        keyboardVerticalOffset={0}
       >
         <Header />
         <View style={styles.progress_bar_container}>

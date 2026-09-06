@@ -58,7 +58,7 @@ const SideNav: React.FC<{
     if (signedIn?.is_restaurant) {
       router.replace("../(restaurant)/home");
     } else {
-      router.push("../(restaurant_auth)/register");
+      router.push("../(restaurant_auth)/restaurant_details");
     }
   };
 

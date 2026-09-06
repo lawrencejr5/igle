@@ -6,87 +6,43 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
-
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-
 import { router } from "expo-router";
-
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
-import Header from "../../components/driver_reg/Header";
-
-import { useDriverAuthContext } from "../../context/DriverAuthContext";
-import { useAuthContext } from "../../context/AuthContext";
-import { useNotificationContext } from "../../context/NotificationContext";
 import CustomDropdown from "../../components/CustomDropdown";
 
-const BankDetails = () => {
+const BANK = [
+  { key: "058", label: "GTBank" },
+  { key: "044", label: "Access Bank" },
+  { key: "057", label: "Zenith Bank" },
+  { key: "033", label: "UBA" },
+  { key: "011", label: "First Bank" },
+  { key: "070", label: "Fidelity" },
+  { key: "076", label: "Polaris" },
+  { key: "035", label: "Wema" },
+  { key: "232", label: "Sterling" },
+  { key: "032", label: "Union Bank" },
+  { key: "50515", label: "Moniepoint MFB" },
+  { key: "999992", label: "Opay (Paycom)" },
+  { key: "999991", label: "PalmPay" },
+  { key: "50211", label: "Kuda" },
+];
+
+const RestaurantBank = () => {
   const styles = driver_reg_styles();
-  const { saveBankInfo } = useDriverAuthContext();
-  const { getUserData, updateDriverApplication } = useAuthContext();
-  const { showNotification, notification } = useNotificationContext()!;
 
-  const BANK = [
-    { key: "058", label: "GTBank" },
-    { key: "044", label: "Access Bank" },
-    { key: "057", label: "Zenith Bank" },
-    { key: "033", label: "UBA" },
-    { key: "011", label: "First Bank" },
-    { key: "070", label: "Fidelity" },
-    { key: "076", label: "Polaris" },
-    { key: "035", label: "Wema" },
-    { key: "232", label: "Sterling" },
-    { key: "032", label: "Union Bank" },
-    { key: "50515", label: "Moniepoint MFB" },
-    { key: "999992", label: "Opay (Paycom)" },
-    { key: "999991", label: "PalmPay" },
-    { key: "50211", label: "Kuda" },
-  ];
-
-  // initialize bankName from selected code
+  const [bankCode, setBankCode] = useState<string>("058");
   const [bankName, setBankName] = useState<string>(
-    BANK.find((b) => b.key === bankCode)?.label || "",
+    BANK.find((b) => b.key === "058")?.label || "",
   );
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [accountName, setAccountName] = useState<string>("");
-  const [bankCode, setBankCode] = useState<string>("058");
-  const [loading, setLoading] = useState(false);
 
-  const handleNext = async (): Promise<void> => {
-    if (
-      !bankName ||
-      !accountNumber.trim() ||
-      !accountName.trim() ||
-      !bankCode.trim()
-    ) {
-      showNotification("All fields are required", "error");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const bankInfo = {
-        bank_name: bankName.trim(),
-        account_number: accountNumber.trim(),
-        account_name: accountName.trim(),
-        bank_code: bankCode.trim(),
-      };
-
-      await saveBankInfo(bankInfo);
-      await updateDriverApplication("submitted");
-      await getUserData();
-      setTimeout(() => {
-        router.push("/reviewing_message");
-      }, 1500);
-    } catch (err: any) {
-      showNotification(
-        err.message || "Failed to save bank information",
-        "error",
-      );
-    } finally {
-      setLoading(false);
-    }
+  const handleNext = () => {
+    router.push("/(restaurant_auth)/restaurant_verification");
   };
 
   return (
@@ -96,13 +52,31 @@ const BankDetails = () => {
         behavior="padding"
         keyboardVerticalOffset={0}
       >
-        <Header />
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.header_text}>Restaurant Registration</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/home")}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+          >
+            <Text
+              style={{
+                color: "#ff453a",
+                fontFamily: "raleway-bold",
+                fontSize: 14,
+              }}
+            >
+              Cancel
+            </Text>
+          </TouchableOpacity>
+        </View>
 
+        {/* Progress — step 3 of 4 */}
         <View style={styles.progress_bar_container}>
           <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
           <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
           <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
-          <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
+          <View style={[styles.progress_bar, { backgroundColor: "#484848" }]} />
         </View>
 
         <ScrollView
@@ -120,14 +94,13 @@ const BankDetails = () => {
           <View style={{ marginTop: 20 }}>
             <Text style={styles.form_header_text}>Bank Details</Text>
             <Text style={styles.form_subheader_text}>
-              Please provide your bank account information for payments
+              Provide your restaurant's bank account for receiving payouts
             </Text>
           </View>
 
           {/* Form */}
           <View style={{ marginTop: 20 }}>
-            {/* Bank name removed - using dropdown to select bank and code */}
-
+            {/* Bank Dropdown */}
             <View style={styles.inp_container}>
               <Text style={styles.inp_label}>Bank</Text>
               <View style={[styles.inp_holder, { paddingVertical: 0 }]}>
@@ -146,6 +119,7 @@ const BankDetails = () => {
               </View>
             </View>
 
+            {/* Account Number */}
             <View style={styles.inp_container}>
               <Text style={styles.inp_label}>Account Number</Text>
               <View style={styles.inp_holder}>
@@ -163,6 +137,7 @@ const BankDetails = () => {
               </View>
             </View>
 
+            {/* Account Name */}
             <View style={styles.inp_container}>
               <Text style={styles.inp_label}>Account Name</Text>
               <View style={styles.inp_holder}>
@@ -170,7 +145,7 @@ const BankDetails = () => {
                 <TextInput
                   style={styles.text_input}
                   autoCapitalize="words"
-                  placeholder="e.g. John Doe"
+                  placeholder="e.g. Mama's Kitchen Ltd"
                   placeholderTextColor="#c5c5c5"
                   value={accountName}
                   onChangeText={setAccountName}
@@ -180,14 +155,13 @@ const BankDetails = () => {
           </View>
         </ScrollView>
 
+        {/* Next Button */}
         <View
           style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 10 }}
         >
-          <TouchableWithoutFeedback onPress={handleNext} disabled={loading}>
-            <View style={[styles.sign_btn, loading && { opacity: 0.6 }]}>
-              <Text style={styles.sign_btn_text}>
-                {loading ? "Saving..." : "Submit"}
-              </Text>
+          <TouchableWithoutFeedback onPress={handleNext}>
+            <View style={styles.sign_btn}>
+              <Text style={styles.sign_btn_text}>Next: Verification</Text>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -196,4 +170,4 @@ const BankDetails = () => {
   );
 };
 
-export default BankDetails;
+export default RestaurantBank;

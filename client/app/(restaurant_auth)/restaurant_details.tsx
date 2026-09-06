@@ -1,0 +1,719 @@
+import {
+  Text,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Pressable,
+} from "react-native";
+import { Image } from "expo-image";
+import React, { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { driver_reg_styles } from "../../styles/driver_reg_styles";
+
+// ─── Category Tags ─────────────────────────────────────────────────────────────
+
+const ALL_CATEGORIES = [
+  "Nigerian",
+  "Fast Food",
+  "Pizza",
+  "Burgers",
+  "Chicken",
+  "Shawarma",
+  "Chinese",
+  "Asian",
+  "Continental",
+  "Seafood",
+  "Grills & BBQ",
+  "Soups & Swallow",
+  "Rice Dishes",
+  "Pasta",
+  "Salads",
+  "Wraps & Sandwiches",
+  "Breakfast",
+  "Desserts",
+  "Ice Cream",
+  "Drinks & Smoothies",
+  "Pastries & Bakery",
+  "Vegan",
+  "Healthy",
+  "Sushi",
+  "Indian",
+  "Lebanese",
+  "Street Food",
+  "Snacks",
+  "Noodles",
+  "Pepper Soup",
+];
+
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
+
+const RestaurantDetails = () => {
+  const styles = driver_reg_styles();
+
+  // Image states
+  const [logoUri, setLogoUri] = useState<string>("");
+  const [bannerUri, setBannerUri] = useState<string>("");
+
+  // Form states
+  const [restaurantName, setRestaurantName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [description, setDescription] = useState("");
+
+  // Category tags
+  const [categorySearch, setCategorySearch] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+  // Operating hours: per day { open: string, close: string, closed: bool }
+  const [hours, setHours] = useState<
+    Record<string, { open: string; close: string; closed: boolean }>
+  >(
+    Object.fromEntries(
+      DAYS.map((d) => [
+        d,
+        { open: "08:00 AM", close: "10:00 PM", closed: false },
+      ]),
+    ),
+  );
+
+  // ── Image Pickers ──────────────────────────────────────────────────────────
+
+  const pickImage = async (
+    setter: (uri: string) => void,
+    aspect: [number, number],
+  ) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect,
+      quality: 0.85,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setter(result.assets[0].uri);
+    }
+  };
+
+  // ── Category helpers ───────────────────────────────────────────────────────
+
+  const toggleCategory = (cat: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
+    );
+  };
+
+  const filteredCategories = ALL_CATEGORIES.filter((c) =>
+    c.toLowerCase().includes(categorySearch.toLowerCase()),
+  );
+
+  // ── Hours helpers ──────────────────────────────────────────────────────────
+
+  const updateHour = (day: string, field: "open" | "close", value: string) => {
+    setHours((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }));
+  };
+
+  const toggleDayClosed = (day: string) => {
+    setHours((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], closed: !prev[day].closed },
+    }));
+  };
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+
+  const handleNext = () => {
+    router.push("/(restaurant_auth)/restaurant_location");
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#121212" }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: "#121212" }}
+        behavior="padding"
+        keyboardVerticalOffset={0}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.header_text}>Restaurant Registration</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/home")}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+          >
+            <Text
+              style={{
+                color: "#ff453a",
+                fontFamily: "raleway-bold",
+                fontSize: 14,
+              }}
+            >
+              Cancel
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Progress — step 1 of 4 */}
+        <View style={styles.progress_bar_container}>
+          <View style={[styles.progress_bar, { backgroundColor: "#fff" }]} />
+          <View style={[styles.progress_bar, { backgroundColor: "#484848" }]} />
+          <View style={[styles.progress_bar, { backgroundColor: "#484848" }]} />
+          <View style={[styles.progress_bar, { backgroundColor: "#484848" }]} />
+        </View>
+
+        <ScrollView
+          style={{ flex: 1, backgroundColor: "#121212" }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={{ marginTop: 20 }}>
+            <Text style={styles.form_header_text}>Restaurant Details</Text>
+            <Text style={styles.form_subheader_text}>
+              Tell customers who you are and what you serve
+            </Text>
+          </View>
+
+          {/* ── Banner ── */}
+          <View style={{ marginTop: 20 }}>
+            <Text style={[styles.inp_label, { marginBottom: 8 }]}>
+              Restaurant Banner
+            </Text>
+            <TouchableOpacity
+              onPress={() => pickImage(setBannerUri, [16, 9])}
+              style={localStyles.banner_picker}
+            >
+              {bannerUri ? (
+                <Image
+                  source={{ uri: bannerUri }}
+                  style={StyleSheet.absoluteFillObject}
+                  contentFit="cover"
+                />
+              ) : null}
+              <View
+                style={[
+                  localStyles.banner_overlay,
+                  bannerUri ? { backgroundColor: "#00000066" } : {},
+                ]}
+              >
+                <Feather name="image" size={28} color="#fff" />
+                <Text style={localStyles.picker_hint}>
+                  {bannerUri
+                    ? "Tap to change banner"
+                    : "Tap to upload banner photo"}
+                </Text>
+                <Text style={localStyles.picker_sub}>
+                  Recommended: 1200 × 675px
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* ── Logo ── */}
+          <View style={{ marginTop: 16 }}>
+            <Text style={[styles.inp_label, { marginBottom: 8 }]}>
+              Restaurant Logo / Profile Picture
+            </Text>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 16 }}
+            >
+              <TouchableOpacity
+                onPress={() => pickImage(setLogoUri, [1, 1])}
+                style={localStyles.logo_picker}
+              >
+                {logoUri ? (
+                  <Image
+                    source={{ uri: logoUri }}
+                    style={StyleSheet.absoluteFillObject}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Feather name="camera" size={22} color="#aaa" />
+                )}
+              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontFamily: "raleway-semibold",
+                    fontSize: 13,
+                  }}
+                >
+                  {logoUri ? "Logo uploaded ✓" : "Upload your restaurant logo"}
+                </Text>
+                <Text
+                  style={{
+                    color: "#777",
+                    fontFamily: "raleway-regular",
+                    fontSize: 11,
+                    marginTop: 3,
+                  }}
+                >
+                  Shown as your profile icon to customers
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* ── Restaurant Name ── */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Restaurant Name</Text>
+            <View style={styles.inp_holder}>
+              <Feather name="shopping-bag" size={18} color="white" />
+              <TextInput
+                style={styles.text_input}
+                placeholder="e.g. Mama's Kitchen & Grill"
+                placeholderTextColor="#c5c5c5"
+                value={restaurantName}
+                onChangeText={setRestaurantName}
+              />
+            </View>
+          </View>
+
+          {/* ── Category Tags ── */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Category Tags</Text>
+            {selectedCategories.length > 0 && (
+              <View style={localStyles.tag_row}>
+                {selectedCategories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={localStyles.tag_chip}
+                    onPress={() => toggleCategory(cat)}
+                  >
+                    <Text style={localStyles.tag_chip_text}>{cat}</Text>
+                    <Feather name="x" size={11} color="#121212" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.inp_holder}
+              onPress={() => setShowCategoryModal(true)}
+            >
+              <Feather name="tag" size={18} color="white" />
+              <Text
+                style={{
+                  color: "#c5c5c5",
+                  fontFamily: "raleway-semibold",
+                  fontSize: 14,
+                }}
+              >
+                {selectedCategories.length === 0
+                  ? "Select categories..."
+                  : `${selectedCategories.length} selected — tap to edit`}
+              </Text>
+              <Feather
+                name="chevron-down"
+                size={16}
+                color="#c5c5c5"
+                style={{ marginLeft: "auto" }}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* ── Phone ── */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Contact Phone</Text>
+            <View style={styles.inp_holder}>
+              <Feather name="phone" size={18} color="white" />
+              <TextInput
+                style={styles.text_input}
+                placeholder="+234 800 000 0000"
+                placeholderTextColor="#c5c5c5"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+            </View>
+          </View>
+
+          {/* ── Email ── */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Contact Email</Text>
+            <View style={styles.inp_holder}>
+              <Feather name="mail" size={18} color="white" />
+              <TextInput
+                style={styles.text_input}
+                placeholder="restaurant@email.com"
+                placeholderTextColor="#c5c5c5"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+          </View>
+
+          {/* ── Operating Hours ── */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Operating Hours</Text>
+            <View style={localStyles.hours_card}>
+              {DAYS.map((day) => (
+                <View key={day} style={localStyles.hours_row}>
+                  <Text style={localStyles.hours_day}>{day}</Text>
+                  {hours[day].closed ? (
+                    <Text style={localStyles.hours_closed_text}>Closed</Text>
+                  ) : (
+                    <View style={localStyles.hours_inputs}>
+                      <TextInput
+                        style={localStyles.hours_input}
+                        value={hours[day].open}
+                        onChangeText={(v) => updateHour(day, "open", v)}
+                        placeholderTextColor="#777"
+                      />
+                      <Text style={{ color: "#777" }}>–</Text>
+                      <TextInput
+                        style={localStyles.hours_input}
+                        value={hours[day].close}
+                        onChangeText={(v) => updateHour(day, "close", v)}
+                        placeholderTextColor="#777"
+                      />
+                    </View>
+                  )}
+                  <TouchableOpacity onPress={() => toggleDayClosed(day)}>
+                    <View
+                      style={[
+                        localStyles.closed_toggle,
+                        hours[day].closed && localStyles.closed_toggle_active,
+                      ]}
+                    >
+                      <Text style={localStyles.closed_toggle_text}>
+                        {hours[day].closed ? "Open" : "Close"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* ── Description ── */}
+          <View style={styles.inp_container}>
+            <Text style={styles.inp_label}>Restaurant Description</Text>
+            <View
+              style={[
+                styles.inp_holder,
+                { alignItems: "flex-start", paddingTop: 12 },
+              ]}
+            >
+              <TextInput
+                style={[
+                  styles.text_input,
+                  { minHeight: 90, textAlignVertical: "top" },
+                ]}
+                placeholder="Describe your restaurant, signature dishes, vibe..."
+                placeholderTextColor="#c5c5c5"
+                multiline
+                value={description}
+                onChangeText={setDescription}
+              />
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* Next Button */}
+        <View
+          style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 10 }}
+        >
+          <TouchableWithoutFeedback onPress={handleNext}>
+            <View style={styles.sign_btn}>
+              <Text style={styles.sign_btn_text}>Next: Location</Text>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </KeyboardAvoidingView>
+
+      {/* ── Category Modal ── */}
+      <Modal
+        visible={showCategoryModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={localStyles.modal_overlay}>
+          <View style={localStyles.modal_sheet}>
+            <View style={localStyles.modal_handle} />
+            <Text style={localStyles.modal_title}>Select Categories</Text>
+            <View style={localStyles.modal_search_box}>
+              <Feather name="search" size={16} color="#777" />
+              <TextInput
+                style={localStyles.modal_search_input}
+                placeholder="Search categories..."
+                placeholderTextColor="#777"
+                value={categorySearch}
+                onChangeText={setCategorySearch}
+              />
+            </View>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
+            >
+              <View style={localStyles.cat_grid}>
+                {filteredCategories.map((cat) => {
+                  const selected = selectedCategories.includes(cat);
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[
+                        localStyles.cat_option,
+                        selected && localStyles.cat_option_selected,
+                      ]}
+                      onPress={() => toggleCategory(cat)}
+                    >
+                      <Text
+                        style={[
+                          localStyles.cat_option_text,
+                          selected && localStyles.cat_option_text_selected,
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                      {selected && (
+                        <Feather name="check" size={12} color="#121212" />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+            <Pressable
+              style={localStyles.modal_done_btn}
+              onPress={() => {
+                setShowCategoryModal(false);
+                setCategorySearch("");
+              }}
+            >
+              <Text style={localStyles.modal_done_text}>
+                Done ({selectedCategories.length} selected)
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+export default RestaurantDetails;
+
+// ─── Local Styles ──────────────────────────────────────────────────────────────
+
+const localStyles = StyleSheet.create({
+  // Banner
+  banner_picker: {
+    height: 160,
+    borderRadius: 14,
+    backgroundColor: "#2a2a2a",
+    overflow: "hidden",
+    position: "relative",
+  },
+  banner_overlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  picker_hint: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+  },
+  picker_sub: {
+    color: "#aaa",
+    fontFamily: "raleway-regular",
+    fontSize: 11,
+  },
+  // Logo
+  logo_picker: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#2a2a2a",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#3a3a3a",
+  },
+  // Tags
+  tag_row: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  tag_chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  tag_chip_text: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 12,
+  },
+  // Hours
+  hours_card: {
+    backgroundColor: "#1e1e1e",
+    borderRadius: 12,
+    marginTop: 10,
+    overflow: "hidden",
+  },
+  hours_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+    gap: 8,
+  },
+  hours_day: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 13,
+    width: 34,
+  },
+  hours_inputs: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  hours_input: {
+    flex: 1,
+    backgroundColor: "#2a2a2a",
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+    textAlign: "center",
+  },
+  hours_closed_text: {
+    flex: 1,
+    color: "#555",
+    fontFamily: "raleway-semibold",
+    fontSize: 12,
+  },
+  closed_toggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: "#2a2a2a",
+  },
+  closed_toggle_active: {
+    backgroundColor: "#ffffff22",
+  },
+  closed_toggle_text: {
+    color: "#aaa",
+    fontFamily: "raleway-semibold",
+    fontSize: 11,
+  },
+  // Modal
+  modal_overlay: {
+    flex: 1,
+    backgroundColor: "#000000aa",
+    justifyContent: "flex-end",
+  },
+  modal_sheet: {
+    backgroundColor: "#1a1a1a",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    maxHeight: "80%",
+  },
+  modal_handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#3a3a3a",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  modal_title: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 18,
+    marginBottom: 14,
+  },
+  modal_search_box: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2a2a2a",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    marginBottom: 14,
+  },
+  modal_search_input: {
+    flex: 1,
+    color: "#fff",
+    fontFamily: "raleway-regular",
+    fontSize: 14,
+  },
+  cat_grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingBottom: 16,
+  },
+  cat_option: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#2a2a2a",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#3a3a3a",
+  },
+  cat_option_selected: {
+    backgroundColor: "#fff",
+    borderColor: "#fff",
+  },
+  cat_option_text: {
+    color: "#ccc",
+    fontFamily: "raleway-semibold",
+    fontSize: 13,
+  },
+  cat_option_text_selected: {
+    color: "#121212",
+  },
+  modal_done_btn: {
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 12,
+  },
+  modal_done_text: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 15,
+  },
+});
