@@ -130,6 +130,7 @@ interface RestaurantContextType {
   registrationDraft: RestaurantRegistrationDraft;
   updateRegistrationDraft: (data: Partial<RestaurantRegistrationDraft>) => void;
   resetRegistrationDraft: () => void;
+  populateDraftFromRestaurant: (rest: RestaurantType) => void;
   submitRegistration: () => Promise<void>;
   registerRestaurant: (formData: FormData) => Promise<void>;
   fetchRestaurantProfile: () => Promise<RestaurantType | null>;
@@ -155,6 +156,33 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 
   const resetRegistrationDraft = () => {
     setRegistrationDraft(initialRegistrationDraft);
+  };
+
+  const populateDraftFromRestaurant = (rest: RestaurantType) => {
+    setRegistrationDraft({
+      logoUri: rest.logo || "",
+      bannerUri: rest.banner || "",
+      name: rest.name || "",
+      phone: rest.phone || "",
+      email: rest.email || "",
+      description: rest.description || "",
+      category_tags: rest.category_tags || [],
+      operating_hours:
+        rest.operating_hours?.length > 0
+          ? rest.operating_hours
+          : initialRegistrationDraft.operating_hours,
+      address: rest.location?.address || "",
+      landmark: rest.location?.landmark || "",
+      latitude: rest.location?.coordinates?.coordinates?.[1] ?? null,
+      longitude: rest.location?.coordinates?.coordinates?.[0] ?? null,
+      delivery_radius_km: rest.location?.delivery_radius_km || 5,
+      bank_name: rest.bank?.bank_name || "GTBank",
+      account_number: rest.bank?.account_number || "",
+      account_name: rest.bank?.account_name || "",
+      bank_code: rest.bank?.bank_code || "058",
+      government_id_uri: rest.verification?.government_id || "",
+      cac_document_uri: rest.verification?.cac_document || "",
+    });
   };
 
   // Fetch current restaurant profile
@@ -330,6 +358,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         registrationDraft,
         updateRegistrationDraft,
         resetRegistrationDraft,
+        populateDraftFromRestaurant,
         submitRegistration,
         registerRestaurant,
         fetchRestaurantProfile,

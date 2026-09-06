@@ -16,7 +16,7 @@ import { Image } from "expo-image";
 import React, { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
 import { useRestaurantContext } from "../../context/RestaurantContext";
@@ -90,8 +90,20 @@ const formatTimeDate = (date: Date): string => {
 
 const RestaurantDetails = () => {
   const styles = driver_reg_styles();
-  const { registrationDraft, updateRegistrationDraft } = useRestaurantContext();
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const { restaurant, registrationDraft, updateRegistrationDraft } = useRestaurantContext();
   const { showNotification } = useNotificationContext()!;
+
+  // Automatically navigate to verification screen if application is already submitted
+  React.useEffect(() => {
+    if (
+      params.mode !== "edit" &&
+      restaurant?.application &&
+      restaurant.application !== "none"
+    ) {
+      router.replace("/(restaurant_auth)/restaurant_verification");
+    }
+  }, [restaurant, params.mode]);
 
   // Image states
   const [logoUri, setLogoUri] = useState<string>(registrationDraft.logoUri || "");
@@ -102,6 +114,17 @@ const RestaurantDetails = () => {
   const [phone, setPhone] = useState(registrationDraft.phone || "");
   const [email, setEmail] = useState(registrationDraft.email || "");
   const [description, setDescription] = useState(registrationDraft.description || "");
+
+  // Sync state if draft changes (e.g., after populateDraftFromRestaurant)
+  React.useEffect(() => {
+    if (registrationDraft.name) setRestaurantName(registrationDraft.name);
+    if (registrationDraft.phone) setPhone(registrationDraft.phone);
+    if (registrationDraft.email) setEmail(registrationDraft.email);
+    if (registrationDraft.description) setDescription(registrationDraft.description);
+    if (registrationDraft.logoUri) setLogoUri(registrationDraft.logoUri);
+    if (registrationDraft.bannerUri) setBannerUri(registrationDraft.bannerUri);
+    if (registrationDraft.category_tags?.length) setSelectedCategories(registrationDraft.category_tags);
+  }, [registrationDraft]);
 
   // Category tags
   const [categorySearch, setCategorySearch] = useState("");

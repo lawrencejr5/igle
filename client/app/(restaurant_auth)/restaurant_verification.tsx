@@ -76,8 +76,10 @@ const DocUploadCard = ({
 const RestaurantVerification = () => {
   const styles = driver_reg_styles();
   const {
+    restaurant,
     registrationDraft,
     updateRegistrationDraft,
+    populateDraftFromRestaurant,
     submitRegistration,
     loading: isSubmitting,
   } = useRestaurantContext();
@@ -128,9 +130,13 @@ const RestaurantVerification = () => {
     }
   };
 
-  // ── Success Screen ──────────────────────────────────────────────────────────
+  const isAlreadySubmitted =
+    submitted ||
+    (restaurant?.application && restaurant.application !== "none");
 
-  if (submitted) {
+  // ── Success / Submitted Screen ──────────────────────────────────────────────
+
+  if (isAlreadySubmitted) {
     return (
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         {/* Header */}
@@ -186,30 +192,40 @@ const RestaurantVerification = () => {
             </Text>
             . Once approved, you'll be able to start receiving orders.
           </Text>
-
-          {!cacUri && (
-            <View style={localStyles.cac_tip}>
-              <Feather name="info" size={14} color="#f5c518" />
-              <Text style={localStyles.cac_tip_text}>
-                Tip: Adding your CAC document speeds up verification and earns
-                your store the{" "}
-                <Text style={{ color: "#f5c518", fontFamily: "raleway-bold" }}>
-                  Verified ★ badge
-                </Text>
-                .
-              </Text>
-            </View>
-          )}
         </View>
 
-        <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
+        <View style={{ paddingHorizontal: 20, paddingBottom: 30, alignItems: "center", gap: 14 }}>
           <TouchableWithoutFeedback
             onPress={() => router.replace("/(tabs)/home")}
           >
-            <View style={styles.sign_btn}>
+            <View style={[styles.sign_btn, { width: "100%" }]}>
               <Text style={styles.sign_btn_text}>Go back home</Text>
             </View>
           </TouchableWithoutFeedback>
+
+          <TouchableOpacity
+            onPress={() => {
+              if (restaurant) {
+                populateDraftFromRestaurant(restaurant);
+              }
+              router.push({
+                pathname: "/(restaurant_auth)/restaurant_details",
+                params: { mode: "edit" },
+              });
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 15, right: 15 }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontFamily: "raleway-bold",
+                fontSize: 14,
+                textDecorationLine: "underline",
+              }}
+            >
+              Edit application details
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -279,26 +295,15 @@ const RestaurantVerification = () => {
 
           {/* ── CAC Document ── */}
           <View style={{ marginTop: 20 }}>
-            <Text style={[styles.inp_label, { marginBottom: 6 }]}>
+            <Text style={[styles.inp_label, { marginBottom: 10 }]}>
               CAC Registration Document
             </Text>
-            <View style={localStyles.cac_notice}>
-              <Feather name="star" size={14} color="#f5c518" />
-              <Text style={localStyles.cac_notice_text}>
-                Restaurants with a verified CAC document receive the{" "}
-                <Text style={{ color: "#f5c518", fontFamily: "raleway-bold" }}>
-                  Verified ★
-                </Text>{" "}
-                badge, which increases customer trust and order volume.
-              </Text>
-            </View>
             <DocUploadCard
               title="CAC Certificate / Business Registration"
               description="Certificate of Incorporation or Business Name certificate"
               uri={cacUri}
               onPress={() => pickDoc(setCacUri, "cac_document_uri")}
               required={false}
-              badge="Verified ★"
             />
           </View>
 
