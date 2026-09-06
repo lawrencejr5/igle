@@ -101,7 +101,7 @@ const RestaurantDetails = () => {
   // Category tags
   const [categorySearch, setCategorySearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Operating hours: per day { open: string, close: string, closed: bool }
   const [hours, setHours] = useState<
@@ -138,10 +138,7 @@ const RestaurantDetails = () => {
     });
   };
 
-  const handleTimeChange = (
-    event: any,
-    selectedDate?: Date,
-  ) => {
+  const handleTimeChange = (event: any, selectedDate?: Date) => {
     if (event?.type === "dismissed") {
       setTimePickerState((prev) => ({ ...prev, show: false }));
       return;
@@ -244,7 +241,7 @@ const RestaurantDetails = () => {
 
         <ScrollView
           style={{ flex: 1, backgroundColor: "#121212" }}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 400 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -355,43 +352,111 @@ const RestaurantDetails = () => {
           {/* ── Category Tags ── */}
           <View style={styles.inp_container}>
             <Text style={styles.inp_label}>Category Tags</Text>
-            {selectedCategories.length > 0 && (
-              <View style={localStyles.tag_row}>
+
+            {/* Inline Input Container with Pills */}
+            <View
+              style={[
+                styles.inp_holder,
+                {
+                  alignItems:
+                    selectedCategories.length > 0 ? "flex-start" : "center",
+                },
+              ]}
+            >
+              <Feather
+                name="tag"
+                size={18}
+                color="white"
+                style={{
+                  marginTop:
+                    selectedCategories.length > 0
+                      ? Platform.OS === "ios"
+                        ? 4
+                        : 6
+                      : 0,
+                }}
+              />
+
+              <View style={localStyles.category_input_wrap}>
+                {/* Pill Tags */}
                 {selectedCategories.map((cat) => (
-                  <TouchableOpacity
-                    key={cat}
-                    style={localStyles.tag_chip}
-                    onPress={() => toggleCategory(cat)}
-                  >
+                  <View key={cat} style={localStyles.tag_chip}>
                     <Text style={localStyles.tag_chip_text}>{cat}</Text>
-                    <Feather name="x" size={11} color="#121212" />
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => toggleCategory(cat)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Feather name="x" size={12} color="#121212" />
+                    </TouchableOpacity>
+                  </View>
                 ))}
+
+                {/* Inline Search Input */}
+                <TextInput
+                  style={localStyles.category_text_input}
+                  placeholder={
+                    selectedCategories.length === 0
+                      ? "Search & add categories..."
+                      : "Add more..."
+                  }
+                  placeholderTextColor="#c5c5c5"
+                  value={categorySearch}
+                  onChangeText={setCategorySearch}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => {
+                    // Small delay to allow tapping suggestions
+                    setTimeout(() => setIsInputFocused(false), 200);
+                  }}
+                />
+              </View>
+            </View>
+
+            {/* Suggestions Dropdown */}
+            {(isInputFocused || categorySearch.trim().length > 0) && (
+              <View style={localStyles.suggestions_container}>
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                  style={{ maxHeight: 180 }}
+                >
+                  {filteredCategories.length > 0 ? (
+                    filteredCategories.map((cat) => {
+                      const isSelected = selectedCategories.includes(cat);
+                      return (
+                        <TouchableOpacity
+                          key={cat}
+                          style={[
+                            localStyles.suggestion_item,
+                            isSelected && localStyles.suggestion_item_selected,
+                          ]}
+                          onPress={() => {
+                            toggleCategory(cat);
+                            setCategorySearch("");
+                          }}
+                        >
+                          <Text
+                            style={[
+                              localStyles.suggestion_text,
+                              isSelected &&
+                                localStyles.suggestion_text_selected,
+                            ]}
+                          >
+                            {cat}
+                          </Text>
+                          {isSelected && (
+                            <Feather name="check" size={14} color="#fff" />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })
+                  ) : (
+                    <Text style={localStyles.no_suggestions_text}>
+                      No matching categories found
+                    </Text>
+                  )}
+                </ScrollView>
               </View>
             )}
-            <TouchableOpacity
-              style={styles.inp_holder}
-              onPress={() => setShowCategoryModal(true)}
-            >
-              <Feather name="tag" size={18} color="white" />
-              <Text
-                style={{
-                  color: "#c5c5c5",
-                  fontFamily: "raleway-semibold",
-                  fontSize: 14,
-                }}
-              >
-                {selectedCategories.length === 0
-                  ? "Select categories..."
-                  : `${selectedCategories.length} selected — tap to edit`}
-              </Text>
-              <Feather
-                name="chevron-down"
-                size={16}
-                color="#c5c5c5"
-                style={{ marginLeft: "auto" }}
-              />
-            </TouchableOpacity>
           </View>
 
           {/* ── Phone ── */}
@@ -510,74 +575,6 @@ const RestaurantDetails = () => {
         </View>
       </KeyboardAvoidingView>
 
-      {/* ── Category Modal ── */}
-      <Modal
-        visible={showCategoryModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowCategoryModal(false)}
-      >
-        <View style={localStyles.modal_overlay}>
-          <View style={localStyles.modal_sheet}>
-            <View style={localStyles.modal_handle} />
-            <Text style={localStyles.modal_title}>Select Categories</Text>
-            <View style={localStyles.modal_search_box}>
-              <Feather name="search" size={16} color="#777" />
-              <TextInput
-                style={localStyles.modal_search_input}
-                placeholder="Search categories..."
-                placeholderTextColor="#777"
-                value={categorySearch}
-                onChangeText={setCategorySearch}
-              />
-            </View>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={{ flex: 1 }}
-            >
-              <View style={localStyles.cat_grid}>
-                {filteredCategories.map((cat) => {
-                  const selected = selectedCategories.includes(cat);
-                  return (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[
-                        localStyles.cat_option,
-                        selected && localStyles.cat_option_selected,
-                      ]}
-                      onPress={() => toggleCategory(cat)}
-                    >
-                      <Text
-                        style={[
-                          localStyles.cat_option_text,
-                          selected && localStyles.cat_option_text_selected,
-                        ]}
-                      >
-                        {cat}
-                      </Text>
-                      {selected && (
-                        <Feather name="check" size={12} color="#121212" />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-            <Pressable
-              style={localStyles.modal_done_btn}
-              onPress={() => {
-                setShowCategoryModal(false);
-                setCategorySearch("");
-              }}
-            >
-              <Text style={localStyles.modal_done_text}>
-                Done ({selectedCategories.length} selected)
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
       {/* ── Time Picker ── */}
       {timePickerState.show &&
         (Platform.OS === "ios" ? (
@@ -602,7 +599,9 @@ const RestaurantDetails = () => {
               >
                 <View style={localStyles.time_picker_header}>
                   <Text style={localStyles.time_picker_title}>
-                    Select {timePickerState.field === "open" ? "Opening" : "Closing"} Time ({timePickerState.day})
+                    Select{" "}
+                    {timePickerState.field === "open" ? "Opening" : "Closing"}{" "}
+                    Time ({timePickerState.day})
                   </Text>
                   <TouchableOpacity
                     onPress={() =>
@@ -678,17 +677,36 @@ const localStyles = StyleSheet.create({
     borderColor: "#3a3a3a",
   },
   // Tags
-  tag_row: {
+  // Tags & Suggestions
+  category_input_box: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#757575",
+    gap: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginTop: 10,
+    borderRadius: 7,
+  },
+  category_input_wrap: {
+    flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
+    alignItems: "center",
     gap: 6,
-    marginBottom: 8,
-    marginTop: 8,
+  },
+  category_text_input: {
+    flex: 1,
+    minWidth: 120,
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+    paddingVertical: Platform.OS === "ios" ? 10 : 8,
   },
   tag_chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
     backgroundColor: "#fff",
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -698,6 +716,42 @@ const localStyles = StyleSheet.create({
     color: "#121212",
     fontFamily: "raleway-bold",
     fontSize: 12,
+  },
+  suggestions_container: {
+    backgroundColor: "#1e1e1e",
+    borderRadius: 10,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: "#333",
+    overflow: "hidden",
+  },
+  suggestion_item: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#2a2a2a",
+  },
+  suggestion_item_selected: {
+    backgroundColor: "#2a2a2a",
+  },
+  suggestion_text: {
+    color: "#ccc",
+    fontFamily: "raleway-semibold",
+    fontSize: 14,
+  },
+  suggestion_text_selected: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+  },
+  no_suggestions_text: {
+    color: "#777",
+    fontFamily: "raleway-regular",
+    fontSize: 13,
+    padding: 14,
+    textAlign: "center",
   },
   // Hours
   hours_card: {
