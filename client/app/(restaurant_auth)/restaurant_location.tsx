@@ -20,6 +20,8 @@ import { router } from "expo-router";
 import * as Location from "expo-location";
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
 import { darkMapStyle } from "../../data/map.dark";
+import { useRestaurantContext } from "../../context/RestaurantContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const RADIUS_OPTIONS = [1, 2, 3, 5, 7, 10, 15, 20];
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API;
@@ -35,16 +37,22 @@ interface GooglePlacePrediction {
 
 const RestaurantLocation = () => {
   const styles = driver_reg_styles();
+  const { registrationDraft, updateRegistrationDraft } = useRestaurantContext();
+  const { showNotification } = useNotificationContext()!;
   const mapRef = useRef<MapView>(null);
   const fullMapRef = useRef<MapView>(null);
 
-  const [streetAddress, setStreetAddress] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [deliveryRadius, setDeliveryRadius] = useState(5);
+  const [streetAddress, setStreetAddress] = useState(
+    registrationDraft.address || ""
+  );
+  const [landmark, setLandmark] = useState(registrationDraft.landmark || "");
+  const [deliveryRadius, setDeliveryRadius] = useState(
+    registrationDraft.delivery_radius_km || 5
+  );
 
   const [pinCoords, setPinCoords] = useState({
-    latitude: 6.2059, // Asaba default fallback
-    longitude: 6.6959,
+    latitude: registrationDraft.latitude ?? 6.2059, // Asaba default fallback
+    longitude: registrationDraft.longitude ?? 6.6959,
   });
 
   // Modal map state
@@ -55,13 +63,15 @@ const RestaurantLocation = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedAddressText, setSelectedAddressText] = useState("");
   const [tempCoords, setTempCoords] = useState({
-    latitude: 6.2059,
-    longitude: 6.6959,
+    latitude: registrationDraft.latitude ?? 6.2059,
+    longitude: registrationDraft.longitude ?? 6.6959,
   });
 
-  // Automatically fetch user's current location on mount
+  // Automatically fetch user's current location on mount if not set yet
   useEffect(() => {
-    getUserCurrentLocation();
+    if (!registrationDraft.latitude || !registrationDraft.longitude) {
+      getUserCurrentLocation();
+    }
   }, []);
 
   const getUserCurrentLocation = async () => {
@@ -200,6 +210,17 @@ const RestaurantLocation = () => {
   };
 
   const handleNext = () => {
+    if (!streetAddress.trim()) {
+      showNotification("Please select your restaurant's location on the map", "error");
+      return;
+    }
+    updateRegistrationDraft({
+      address: streetAddress,
+      landmark,
+      latitude: pinCoords.latitude,
+      longitude: pinCoords.longitude,
+      delivery_radius_km: deliveryRadius,
+    });
     router.push("/(restaurant_auth)/restaurant_bank");
   };
 

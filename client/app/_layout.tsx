@@ -22,6 +22,7 @@ import SavedPlaceProvider from "../context/SavedPlaceContext";
 import ActivityProvider from "../context/ActivityContext";
 import RatingProvider from "../context/RatingContext";
 import TaskProvider from "../context/TaskContext";
+import { RestaurantProvider } from "../context/RestaurantContext";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TransactionContextProvider from "../context/TransactionContext";
@@ -64,36 +65,38 @@ const RootLayout = () => {
                             <RatingProvider>
                               <DriverAuthProvider>
                                 <AuthProvider>
-                                  <RideContextProvider>
-                                    <DeliverProvider>
-                                      <DriverContextPrvider>
-                                        <FeedbackProvider>
-                                          <TaskProvider>
-                                            <Stack
-                                              screenOptions={{
-                                                headerShown: false,
-                                                animation: "ios_from_right",
-                                                contentStyle: { backgroundColor: "#121212" },
-                                              }}
-                                            >
-                                              <Stack.Screen
-                                                name="index"
-                                                options={{
-                                                  animation: "fade",
+                                  <RestaurantProvider>
+                                    <RideContextProvider>
+                                      <DeliverProvider>
+                                        <DriverContextPrvider>
+                                          <FeedbackProvider>
+                                            <TaskProvider>
+                                              <Stack
+                                                screenOptions={{
+                                                  headerShown: false,
+                                                  animation: "ios_from_right",
+                                                  contentStyle: { backgroundColor: "#121212" },
                                                 }}
-                                              />
-                                              <Stack.Screen
-                                                name="account/wallet"
-                                                options={{
-                                                  presentation: "modal",
-                                                }}
-                                              />
-                                            </Stack>
-                                          </TaskProvider>
-                                        </FeedbackProvider>
-                                      </DriverContextPrvider>
-                                    </DeliverProvider>
-                                  </RideContextProvider>
+                                              >
+                                                <Stack.Screen
+                                                  name="index"
+                                                  options={{
+                                                    animation: "fade",
+                                                  }}
+                                                />
+                                                <Stack.Screen
+                                                  name="account/wallet"
+                                                  options={{
+                                                    presentation: "modal",
+                                                  }}
+                                                />
+                                              </Stack>
+                                            </TaskProvider>
+                                          </FeedbackProvider>
+                                        </DriverContextPrvider>
+                                      </DeliverProvider>
+                                    </RideContextProvider>
+                                  </RestaurantProvider>
                                 </AuthProvider>
                               </DriverAuthProvider>
                             </RatingProvider>

@@ -19,6 +19,8 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
+import { useRestaurantContext } from "../../context/RestaurantContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 // ─── Category Tags ─────────────────────────────────────────────────────────────
 
@@ -88,33 +90,44 @@ const formatTimeDate = (date: Date): string => {
 
 const RestaurantDetails = () => {
   const styles = driver_reg_styles();
+  const { registrationDraft, updateRegistrationDraft } = useRestaurantContext();
+  const { showNotification } = useNotificationContext()!;
 
   // Image states
-  const [logoUri, setLogoUri] = useState<string>("");
-  const [bannerUri, setBannerUri] = useState<string>("");
+  const [logoUri, setLogoUri] = useState<string>(registrationDraft.logoUri || "");
+  const [bannerUri, setBannerUri] = useState<string>(registrationDraft.bannerUri || "");
 
   // Form states
-  const [restaurantName, setRestaurantName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [description, setDescription] = useState("");
+  const [restaurantName, setRestaurantName] = useState(registrationDraft.name || "");
+  const [phone, setPhone] = useState(registrationDraft.phone || "");
+  const [email, setEmail] = useState(registrationDraft.email || "");
+  const [description, setDescription] = useState(registrationDraft.description || "");
 
   // Category tags
   const [categorySearch, setCategorySearch] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    registrationDraft.category_tags || []
+  );
   const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Operating hours: per day { open: string, close: string, closed: bool }
   const [hours, setHours] = useState<
     Record<string, { open: string; close: string; closed: boolean }>
-  >(
-    Object.fromEntries(
+  >(() => {
+    if (registrationDraft.operating_hours?.length > 0) {
+      const map: Record<string, { open: string; close: string; closed: boolean }> = {};
+      registrationDraft.operating_hours.forEach((h) => {
+        map[h.day] = { open: h.open, close: h.close, closed: h.closed };
+      });
+      return map;
+    }
+    return Object.fromEntries(
       DAYS.map((d) => [
         d,
         { open: "08:00 AM", close: "10:00 PM", closed: false },
-      ]),
-    ),
-  );
+      ])
+    );
+  });
 
   // Time Picker modal state
   const [timePickerState, setTimePickerState] = useState<{
@@ -203,6 +216,45 @@ const RestaurantDetails = () => {
   // ── Navigation ─────────────────────────────────────────────────────────────
 
   const handleNext = () => {
+    if (!logoUri) {
+      showNotification("Please upload a logo image for your restaurant", "error");
+      return;
+    }
+    if (!restaurantName.trim()) {
+      showNotification("Please enter your restaurant name", "error");
+      return;
+    }
+    if (!phone.trim()) {
+      showNotification("Please enter a contact phone number", "error");
+      return;
+    }
+    if (!email.trim() || !email.includes("@")) {
+      showNotification("Please enter a valid contact email address", "error");
+      return;
+    }
+    if (selectedCategories.length === 0) {
+      showNotification("Please select at least one category tag", "error");
+      return;
+    }
+
+    const operatingHoursArray = DAYS.map((d) => ({
+      day: d,
+      open: hours[d]?.open || "08:00 AM",
+      close: hours[d]?.close || "10:00 PM",
+      closed: !!hours[d]?.closed,
+    }));
+
+    updateRegistrationDraft({
+      logoUri,
+      bannerUri,
+      name: restaurantName,
+      phone,
+      email,
+      description,
+      category_tags: selectedCategories,
+      operating_hours: operatingHoursArray,
+    });
+
     router.push("/(restaurant_auth)/restaurant_location");
   };
 

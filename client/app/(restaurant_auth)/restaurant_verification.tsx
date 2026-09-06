@@ -14,6 +14,8 @@ import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
+import { useRestaurantContext } from "../../context/RestaurantContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 // ─── Document Upload Card Component ───────────────────────────────────────────
 
@@ -73,13 +75,26 @@ const DocUploadCard = ({
 
 const RestaurantVerification = () => {
   const styles = driver_reg_styles();
+  const {
+    registrationDraft,
+    updateRegistrationDraft,
+    submitRegistration,
+    loading: isSubmitting,
+  } = useRestaurantContext();
+  const { showNotification } = useNotificationContext()!;
 
-  const [govIdUri, setGovIdUri] = useState<string>("");
-  const [cacUri, setCacUri] = useState<string>("");
+  const [govIdUri, setGovIdUri] = useState<string>(
+    registrationDraft.government_id_uri || ""
+  );
+  const [cacUri, setCacUri] = useState<string>(
+    registrationDraft.cac_document_uri || ""
+  );
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const pickDoc = async (setter: (uri: string) => void) => {
+  const pickDoc = async (
+    setter: (uri: string) => void,
+    fieldKey: "government_id_uri" | "cac_document_uri"
+  ) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -87,18 +102,30 @@ const RestaurantVerification = () => {
       quality: 0.9,
     });
     if (!result.canceled && result.assets?.length) {
-      setter(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      setter(uri);
+      updateRegistrationDraft({ [fieldKey]: uri });
     }
   };
 
-  const handleSubmit = () => {
-    if (!govIdUri) return;
-    setLoading(true);
-    // UI-only: simulate submission delay
-    setTimeout(() => {
-      setLoading(false);
+  const handleSubmit = async () => {
+    if (!govIdUri) {
+      showNotification(
+        "Please upload a Government-issued ID to submit your application",
+        "error"
+      );
+      return;
+    }
+    try {
+      updateRegistrationDraft({
+        government_id_uri: govIdUri,
+        cac_document_uri: cacUri,
+      });
+      await submitRegistration();
       setSubmitted(true);
-    }, 1200);
+    } catch (err) {
+      console.log("Restaurant application submit error:", err);
+    }
   };
 
   // ── Success Screen ──────────────────────────────────────────────────────────
@@ -245,7 +272,7 @@ const RestaurantVerification = () => {
               title="Government ID"
               description="National ID, Passport, or Driver's Licence"
               uri={govIdUri}
-              onPress={() => pickDoc(setGovIdUri)}
+              onPress={() => pickDoc(setGovIdUri, "government_id_uri")}
               required
             />
           </View>
@@ -269,7 +296,7 @@ const RestaurantVerification = () => {
               title="CAC Certificate / Business Registration"
               description="Certificate of Incorporation or Business Name certificate"
               uri={cacUri}
-              onPress={() => pickDoc(setCacUri)}
+              onPress={() => pickDoc(setCacUri, "cac_document_uri")}
               required={false}
               badge="Verified ★"
             />
@@ -292,16 +319,16 @@ const RestaurantVerification = () => {
         >
           <TouchableWithoutFeedback
             onPress={handleSubmit}
-            disabled={!govIdUri || loading}
+            disabled={!govIdUri || isSubmitting}
           >
             <View
               style={[
                 styles.sign_btn,
-                (!govIdUri || loading) && { opacity: 0.5 },
+                (!govIdUri || isSubmitting) && { opacity: 0.5 },
               ]}
             >
               <Text style={styles.sign_btn_text}>
-                {loading ? "Submitting..." : "Submit Application"}
+                {isSubmitting ? "Submitting..." : "Submit Application"}
               </Text>
             </View>
           </TouchableWithoutFeedback>

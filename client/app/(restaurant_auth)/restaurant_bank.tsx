@@ -13,6 +13,8 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
 import { driver_reg_styles } from "../../styles/driver_reg_styles";
 import CustomDropdown from "../../components/CustomDropdown";
+import { useRestaurantContext } from "../../context/RestaurantContext";
+import { useNotificationContext } from "../../context/NotificationContext";
 
 const BANK = [
   { key: "058", label: "GTBank" },
@@ -33,15 +35,42 @@ const BANK = [
 
 const RestaurantBank = () => {
   const styles = driver_reg_styles();
+  const { registrationDraft, updateRegistrationDraft } = useRestaurantContext();
+  const { showNotification } = useNotificationContext()!;
 
-  const [bankCode, setBankCode] = useState<string>("058");
-  const [bankName, setBankName] = useState<string>(
-    BANK.find((b) => b.key === "058")?.label || "",
+  const [bankCode, setBankCode] = useState<string>(
+    registrationDraft.bank_code || "058"
   );
-  const [accountNumber, setAccountNumber] = useState<string>("");
-  const [accountName, setAccountName] = useState<string>("");
+  const [bankName, setBankName] = useState<string>(
+    registrationDraft.bank_name || BANK.find((b) => b.key === "058")?.label || ""
+  );
+  const [accountNumber, setAccountNumber] = useState<string>(
+    registrationDraft.account_number || ""
+  );
+  const [accountName, setAccountName] = useState<string>(
+    registrationDraft.account_name || ""
+  );
 
   const handleNext = () => {
+    if (!bankCode || !bankName) {
+      showNotification("Please select your bank", "error");
+      return;
+    }
+    if (!accountNumber.trim() || accountNumber.trim().length !== 10) {
+      showNotification("Please enter a valid 10-digit account number", "error");
+      return;
+    }
+    if (!accountName.trim()) {
+      showNotification("Please enter the account name", "error");
+      return;
+    }
+
+    updateRegistrationDraft({
+      bank_name: bankName,
+      account_number: accountNumber,
+      account_name: accountName,
+      bank_code: bankCode,
+    });
     router.push("/(restaurant_auth)/restaurant_verification");
   };
 

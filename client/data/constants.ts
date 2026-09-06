@@ -13,6 +13,7 @@ export const API_URLS = {
   report: "http://192.168.18.3:5000/api/v1/report",
   tasks: "http://192.168.18.3:5000/api/v1/tasks",
   user_tasks: "http://192.168.18.3:5000/api/v1/user_tasks",
+  restaurants: "http://192.168.18.3:5000/api/v1/restaurants",
 };
 
 export const SOCKET_URL = "http://192.168.18.3:5000";
