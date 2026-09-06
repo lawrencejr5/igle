@@ -131,6 +131,18 @@ interface RestaurantContextType {
   updateRegistrationDraft: (data: Partial<RestaurantRegistrationDraft>) => void;
   resetRegistrationDraft: () => void;
   populateDraftFromRestaurant: (rest: RestaurantType) => void;
+  saveStageDetails: (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ) => Promise<RestaurantType | null>;
+  saveStageLocation: (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ) => Promise<RestaurantType | null>;
+  saveStageBank: (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ) => Promise<{ restaurant: RestaurantType; account_name: string } | null>;
+  submitStageVerification: (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ) => Promise<RestaurantType | null>;
   submitRegistration: () => Promise<void>;
   registerRestaurant: (formData: FormData) => Promise<void>;
   fetchRestaurantProfile: () => Promise<RestaurantType | null>;
@@ -313,6 +325,213 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     await registerRestaurant(formData);
   };
 
+  // Stage 1: Save Details
+  const saveStageDetails = async (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ): Promise<RestaurantType | null> => {
+    setLoading(true);
+    try {
+      const draft = { ...registrationDraft, ...overrideData };
+      const token =
+        (await AsyncStorage.getItem("token")) ||
+        (await AsyncStorage.getItem("userToken"));
+      if (!token) throw new Error("Authentication token not found");
+
+      const formData = new FormData();
+      formData.append("name", draft.name);
+      formData.append("phone", draft.phone);
+      formData.append("email", draft.email);
+      formData.append("description", draft.description);
+      formData.append("category_tags", JSON.stringify(draft.category_tags));
+      formData.append("operating_hours", JSON.stringify(draft.operating_hours));
+
+      if (draft.logoUri && !draft.logoUri.startsWith("http")) {
+        const filename = draft.logoUri.split("/").pop() || "logo.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
+        formData.append("logo", { uri: draft.logoUri, name: filename, type } as any);
+      }
+      if (draft.bannerUri && !draft.bannerUri.startsWith("http")) {
+        const filename = draft.bannerUri.split("/").pop() || "banner.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
+        formData.append("banner", { uri: draft.bannerUri, name: filename, type } as any);
+      }
+
+      const { data } = await axios.post(
+        `${API_URLS.restaurants}/save-details`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (data?.restaurant) {
+        setRestaurant(data.restaurant);
+        return data.restaurant;
+      }
+      return null;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.msg || err?.message || "Failed to save details";
+      showNotification(errorMessage, "error");
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Stage 2: Save Location
+  const saveStageLocation = async (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ): Promise<RestaurantType | null> => {
+    setLoading(true);
+    try {
+      const draft = { ...registrationDraft, ...overrideData };
+      const token =
+        (await AsyncStorage.getItem("token")) ||
+        (await AsyncStorage.getItem("userToken"));
+      if (!token) throw new Error("Authentication token not found");
+
+      const { data } = await axios.post(
+        `${API_URLS.restaurants}/save-location`,
+        {
+          address: draft.address,
+          landmark: draft.landmark,
+          latitude: draft.latitude,
+          longitude: draft.longitude,
+          delivery_radius_km: draft.delivery_radius_km,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data?.restaurant) {
+        setRestaurant(data.restaurant);
+        return data.restaurant;
+      }
+      return null;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.msg || err?.message || "Failed to save location";
+      showNotification(errorMessage, "error");
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Stage 3: Save & Verify Bank Details
+  const saveStageBank = async (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ): Promise<{ restaurant: RestaurantType; account_name: string } | null> => {
+    setLoading(true);
+    try {
+      const draft = { ...registrationDraft, ...overrideData };
+      const token =
+        (await AsyncStorage.getItem("token")) ||
+        (await AsyncStorage.getItem("userToken"));
+      if (!token) throw new Error("Authentication token not found");
+
+      const { data } = await axios.post(
+        `${API_URLS.restaurants}/save-bank`,
+        {
+          bank_name: draft.bank_name,
+          bank_code: draft.bank_code,
+          account_number: draft.account_number,
+          account_name: draft.account_name,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data?.restaurant) {
+        setRestaurant(data.restaurant);
+        if (data.account_name) {
+          updateRegistrationDraft({ account_name: data.account_name });
+        }
+        showNotification(
+          data.msg || "Bank account details verified successfully",
+          "success"
+        );
+        return { restaurant: data.restaurant, account_name: data.account_name };
+      }
+      return null;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Bank account verification failed";
+      showNotification(errorMessage, "error");
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Stage 4: Submit Verification Documents
+  const submitStageVerification = async (
+    overrideData?: Partial<RestaurantRegistrationDraft>
+  ): Promise<RestaurantType | null> => {
+    setLoading(true);
+    try {
+      const draft = { ...registrationDraft, ...overrideData };
+      const token =
+        (await AsyncStorage.getItem("token")) ||
+        (await AsyncStorage.getItem("userToken"));
+      if (!token) throw new Error("Authentication token not found");
+
+      const formData = new FormData();
+      if (draft.government_id_uri && !draft.government_id_uri.startsWith("http")) {
+        const filename = draft.government_id_uri.split("/").pop() || "gov_id.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
+        formData.append("government_id", { uri: draft.government_id_uri, name: filename, type } as any);
+      }
+      if (draft.cac_document_uri && !draft.cac_document_uri.startsWith("http")) {
+        const filename = draft.cac_document_uri.split("/").pop() || "cac.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
+        formData.append("cac_document", { uri: draft.cac_document_uri, name: filename, type } as any);
+      }
+
+      const { data } = await axios.post(
+        `${API_URLS.restaurants}/save-verification`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (data?.restaurant) {
+        setRestaurant(data.restaurant);
+        showNotification(
+          data.msg || "Restaurant application submitted successfully!",
+          "success"
+        );
+        return data.restaurant;
+      }
+      return null;
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Failed to submit application";
+      showNotification(errorMessage, "error");
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Toggle restaurant online/offline status
   const setRestaurantOnlineStatus = async (
     is_online: boolean
@@ -359,6 +578,10 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         updateRegistrationDraft,
         resetRegistrationDraft,
         populateDraftFromRestaurant,
+        saveStageDetails,
+        saveStageLocation,
+        saveStageBank,
+        submitStageVerification,
         submitRegistration,
         registerRestaurant,
         fetchRestaurantProfile,

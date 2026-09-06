@@ -7,6 +7,7 @@ import {
   Platform,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -80,7 +81,7 @@ const RestaurantVerification = () => {
     registrationDraft,
     updateRegistrationDraft,
     populateDraftFromRestaurant,
-    submitRegistration,
+    submitStageVerification,
     loading: isSubmitting,
   } = useRestaurantContext();
   const { showNotification } = useNotificationContext()!;
@@ -119,11 +120,12 @@ const RestaurantVerification = () => {
       return;
     }
     try {
-      updateRegistrationDraft({
+      const draftData = {
         government_id_uri: govIdUri,
         cac_document_uri: cacUri,
-      });
-      await submitRegistration();
+      };
+      updateRegistrationDraft(draftData);
+      await submitStageVerification(draftData);
       setSubmitted(true);
     } catch (err) {
       console.log("Restaurant application submit error:", err);
@@ -332,9 +334,11 @@ const RestaurantVerification = () => {
                 (!govIdUri || isSubmitting) && { opacity: 0.5 },
               ]}
             >
-              <Text style={styles.sign_btn_text}>
-                {isSubmitting ? "Submitting..." : "Submit Application"}
-              </Text>
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#121212" />
+              ) : (
+                <Text style={styles.sign_btn_text}>Submit Application</Text>
+              )}
             </View>
           </TouchableWithoutFeedback>
         </View>

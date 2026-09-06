@@ -37,3 +37,13 @@ export const verify_paystack_transaction = async (reference: string) => {
   const { data } = await paystack_api.get(`/transaction/verify/${reference}`);
   return data.data; // contains status, customer, amount, etc.
 };
+
+export const resolve_bank_account = async (
+  account_number: string,
+  bank_code: string
+) => {
+  const { data } = await paystack_api.get(
+    `/bank/resolve?account_number=${account_number}&bank_code=${bank_code}`
+  );
+  return data.data; // contains account_number, account_name, bank_id
+};

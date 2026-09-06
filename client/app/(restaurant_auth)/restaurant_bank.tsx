@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -35,7 +36,12 @@ const BANK = [
 
 const RestaurantBank = () => {
   const styles = driver_reg_styles();
-  const { registrationDraft, updateRegistrationDraft } = useRestaurantContext();
+  const {
+    registrationDraft,
+    updateRegistrationDraft,
+    saveStageBank,
+    loading: isVerifyingBank,
+  } = useRestaurantContext();
   const { showNotification } = useNotificationContext()!;
 
   const [bankCode, setBankCode] = useState<string>(
@@ -51,7 +57,7 @@ const RestaurantBank = () => {
     registrationDraft.account_name || ""
   );
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!bankCode || !bankName) {
       showNotification("Please select your bank", "error");
       return;
@@ -65,13 +71,24 @@ const RestaurantBank = () => {
       return;
     }
 
-    updateRegistrationDraft({
+    const draftData = {
       bank_name: bankName,
       account_number: accountNumber,
       account_name: accountName,
       bank_code: bankCode,
-    });
-    router.push("/(restaurant_auth)/restaurant_verification");
+    };
+
+    updateRegistrationDraft(draftData);
+
+    try {
+      const res = await saveStageBank(draftData);
+      if (res?.account_name) {
+        setAccountName(res.account_name);
+      }
+      router.push("/(restaurant_auth)/restaurant_verification");
+    } catch (e) {
+      // Error toast handled by saveStageBank in context
+    }
   };
 
   return (
@@ -188,9 +205,21 @@ const RestaurantBank = () => {
         <View
           style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 10 }}
         >
-          <TouchableWithoutFeedback onPress={handleNext}>
-            <View style={styles.sign_btn}>
-              <Text style={styles.sign_btn_text}>Next: Verification</Text>
+          <TouchableWithoutFeedback
+            onPress={handleNext}
+            disabled={isVerifyingBank}
+          >
+            <View
+              style={[
+                styles.sign_btn,
+                isVerifyingBank && { opacity: 0.6 },
+              ]}
+            >
+              {isVerifyingBank ? (
+                <ActivityIndicator size="small" color="#121212" />
+              ) : (
+                <Text style={styles.sign_btn_text}>Next: Verification</Text>
+              )}
             </View>
           </TouchableWithoutFeedback>
         </View>

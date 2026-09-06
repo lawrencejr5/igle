@@ -37,7 +37,12 @@ interface GooglePlacePrediction {
 
 const RestaurantLocation = () => {
   const styles = driver_reg_styles();
-  const { registrationDraft, updateRegistrationDraft } = useRestaurantContext();
+  const {
+    registrationDraft,
+    updateRegistrationDraft,
+    saveStageLocation,
+    loading: isSavingStage,
+  } = useRestaurantContext();
   const { showNotification } = useNotificationContext()!;
   const mapRef = useRef<MapView>(null);
   const fullMapRef = useRef<MapView>(null);
@@ -209,19 +214,28 @@ const RestaurantLocation = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!streetAddress.trim()) {
       showNotification("Please select your restaurant's location on the map", "error");
       return;
     }
-    updateRegistrationDraft({
+
+    const draftData = {
       address: streetAddress,
       landmark,
       latitude: pinCoords.latitude,
       longitude: pinCoords.longitude,
       delivery_radius_km: deliveryRadius,
-    });
-    router.push("/(restaurant_auth)/restaurant_bank");
+    };
+
+    updateRegistrationDraft(draftData);
+
+    try {
+      await saveStageLocation(draftData);
+      router.push("/(restaurant_auth)/restaurant_bank");
+    } catch (e) {
+      // Error toast displayed by context
+    }
   };
 
   return (
@@ -401,9 +415,16 @@ const RestaurantLocation = () => {
         <View
           style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 10 }}
         >
-          <TouchableWithoutFeedback onPress={handleNext}>
-            <View style={styles.sign_btn}>
-              <Text style={styles.sign_btn_text}>Next: Bank Details</Text>
+          <TouchableWithoutFeedback
+            onPress={handleNext}
+            disabled={isSavingStage}
+          >
+            <View style={[styles.sign_btn, isSavingStage && { opacity: 0.6 }]}>
+              {isSavingStage ? (
+                <ActivityIndicator size="small" color="#121212" />
+              ) : (
+                <Text style={styles.sign_btn_text}>Next: Bank Details</Text>
+              )}
             </View>
           </TouchableWithoutFeedback>
         </View>

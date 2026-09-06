@@ -11,6 +11,7 @@ import {
   Modal,
   Pressable,
   Keyboard,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -91,7 +92,13 @@ const formatTimeDate = (date: Date): string => {
 const RestaurantDetails = () => {
   const styles = driver_reg_styles();
   const params = useLocalSearchParams<{ mode?: string }>();
-  const { restaurant, registrationDraft, updateRegistrationDraft } = useRestaurantContext();
+  const {
+    restaurant,
+    registrationDraft,
+    updateRegistrationDraft,
+    saveStageDetails,
+    loading: isSavingStage,
+  } = useRestaurantContext();
   const { showNotification } = useNotificationContext()!;
 
   // Automatically navigate to verification screen if application is already submitted
@@ -238,7 +245,7 @@ const RestaurantDetails = () => {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!logoUri) {
       showNotification("Please upload a logo image for your restaurant", "error");
       return;
@@ -267,7 +274,7 @@ const RestaurantDetails = () => {
       closed: !!hours[d]?.closed,
     }));
 
-    updateRegistrationDraft({
+    const draftData = {
       logoUri,
       bannerUri,
       name: restaurantName,
@@ -276,9 +283,16 @@ const RestaurantDetails = () => {
       description,
       category_tags: selectedCategories,
       operating_hours: operatingHoursArray,
-    });
+    };
 
-    router.push("/(restaurant_auth)/restaurant_location");
+    updateRegistrationDraft(draftData);
+
+    try {
+      await saveStageDetails(draftData);
+      router.push("/(restaurant_auth)/restaurant_location");
+    } catch (e) {
+      // Error toast already displayed by context
+    }
   };
 
   return (
@@ -644,9 +658,16 @@ const RestaurantDetails = () => {
         <View
           style={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 10 }}
         >
-          <TouchableWithoutFeedback onPress={handleNext}>
-            <View style={styles.sign_btn}>
-              <Text style={styles.sign_btn_text}>Next: Location</Text>
+          <TouchableWithoutFeedback
+            onPress={handleNext}
+            disabled={isSavingStage}
+          >
+            <View style={[styles.sign_btn, isSavingStage && { opacity: 0.6 }]}>
+              {isSavingStage ? (
+                <ActivityIndicator size="small" color="#121212" />
+              ) : (
+                <Text style={styles.sign_btn_text}>Next: Location</Text>
+              )}
             </View>
           </TouchableWithoutFeedback>
         </View>
