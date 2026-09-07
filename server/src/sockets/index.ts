@@ -6,11 +6,13 @@ import Driver from "../models/driver";
 import { ride_socket_events } from "./ride";
 import { user_socket_events } from "./user";
 import { location_socket_events } from "./location";
+import { food_socket_events } from "./food";
 
 export const handle_socket_events = (io: Server, socket: Socket) => {
   user_socket_events(io, socket);
   ride_socket_events(io, socket);
   location_socket_events(io, socket);
+  food_socket_events(io, socket);
 
   socket.on("disconnect", async () => {
     await User.findOneAndUpdate(

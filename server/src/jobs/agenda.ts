@@ -3,9 +3,14 @@ const mongoConnectionString = process.env.MONGO_URI;
 
 import Ride from "../models/ride";
 import Driver from "../models/driver";
+import FoodOrder from "../models/foodOrder";
+import Restaurant from "../models/restaurant";
+import Wallet from "../models/wallet";
+import Transaction from "../models/transaction";
 
 import { sendNotification } from "../utils/expo_push";
-import { get_driver_socket_id } from "../utils/get_id";
+import { get_driver_socket_id, get_user_socket_id } from "../utils/get_id";
+import { generate_unique_reference } from "../utils/gen_unique_ref";
 
 import { expire_ride } from "../controllers/ride";
 
@@ -157,5 +162,84 @@ agenda.define("enable_scheduled_ride", async (job: Job) => {
         { type: "ride_booking", role: "driver" }
       );
     }
+  }
+});
+
+// 3. FOOD ORDER 3-MINUTE ACCEPTANCE TIMEOUT JOB
+agenda.define("check_food_order_timeout", async (job: Job) => {
+  const { order_id } = job.attrs.data;
+  if (!order_id) return;
+
+  const order = await FoodOrder.findById(order_id);
+
+  // If order is still "placed" after 3 minutes (not accepted, preparing, or cancelled)
+  if (order && order.status === "placed") {
+    console.log(`Food order ${order_id} timed out after 3 minutes.`);
+    order.status = "rejected";
+    order.cancellation = {
+      cancelled_by: "system",
+      reason: "Restaurant did not accept order within 3 minutes timeout",
+    };
+    order.status_timestamps.cancelled_at = new Date();
+    await order.save();
+
+    // Refund customer's money back to in-app wallet
+    const customerWallet = await Wallet.findOne({ owner_id: order.customer });
+    if (customerWallet) {
+      customerWallet.balance += order.pricing.total;
+      await customerWallet.save();
+
+      await Transaction.create({
+        wallet_id: customerWallet._id,
+        type: "payout",
+        amount: order.pricing.total,
+        status: "success",
+        channel: "wallet",
+        reference: generate_unique_reference(),
+        metadata: {
+          order_id: order._id,
+          order_number: order.order_number,
+          reason: "3-minute vendor response timeout refund",
+        },
+      });
+    }
+
+    // Socket notification to customer
+    const customerSocket = await get_user_socket_id(order.customer);
+    if (customerSocket) {
+      io.to(customerSocket).emit("food_order_timeout", {
+        order_id: order._id,
+        order_number: order.order_number,
+        msg: "The restaurant did not accept your order in time. Your payment has been refunded to your wallet.",
+      });
+    }
+
+    // Notify room tracking
+    io.to(`food_order_${order._id}`).emit("food_order_updated", {
+      order_id: order._id,
+      status: "rejected",
+      msg: "Order timed out and was cancelled.",
+    });
+
+    // Socket notification to vendor
+    const restaurant = await Restaurant.findById(order.restaurant);
+    if (restaurant?.user) {
+      const vendorSocket = await get_user_socket_id(restaurant.user);
+      if (vendorSocket) {
+        io.to(vendorSocket).emit("food_order_expired", {
+          order_id: order._id,
+          order_number: order.order_number,
+          msg: "Order timed out due to no response in 3 minutes.",
+        });
+      }
+    }
+
+    // Push notification to customer
+    await sendNotification(
+      [order.customer.toString()],
+      "Order Refunded 💳",
+      `Restaurant did not respond in 3 mins. NGN ${order.pricing.total.toLocaleString()} has been refunded to your wallet.`,
+      { type: "food_order_timeout", order_id: String(order._id) }
+    );
   }
 });

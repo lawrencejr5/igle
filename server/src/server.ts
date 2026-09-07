@@ -31,6 +31,8 @@ import SystemSettingsRouter from "./routes/system_settings";
 import RatingRouter from "./routes/rating";
 import RestaurantRouter from "./routes/restaurant";
 import MenuRouter from "./routes/menu";
+import BasketRouter from "./routes/basket";
+import FoodOrderRouter from "./routes/foodOrder";
 
 import { handle_socket_events } from "./sockets";
 import { agenda } from "./jobs/agenda";
@@ -42,6 +44,8 @@ app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/drivers", DriverRouter);
 app.use("/api/v1/restaurants", RestaurantRouter);
 app.use("/api/v1/menu", MenuRouter);
+app.use("/api/v1/basket", BasketRouter);
+app.use("/api/v1/orders", FoodOrderRouter);
 app.use("/api/v1/rides", RideRouter);
 app.use("/api/v1/tasks", TaskRouter);
 app.use("/api/v1/user_tasks", UserTaskRouter);
