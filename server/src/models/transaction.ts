@@ -6,13 +6,16 @@ export interface TransactionType extends Document {
     | "funding"
     | "ride_payment"
     | "delivery_payment"
+    | "food_payment"
     | "driver_payment"
+    | "restaurant_refund"
     | "payout";
   amount: number;
   status?: "pending" | "success" | "failed";
   channel: "card" | "transfer" | "cash" | "wallet";
   ride_id?: Types.ObjectId;
   delivery_id?: Types.ObjectId;
+  food_order_id?: Types.ObjectId;
   reference?: string;
   metadata?: Record<string, any>;
   createdAt?: Date;
@@ -27,7 +30,9 @@ const TransactionSchema = new Schema<TransactionType>(
         "funding",
         "ride_payment",
         "delivery_payment",
+        "food_payment",
         "driver_payment",
+        "restaurant_refund",
         "payout",
       ],
       required: true,
@@ -53,6 +58,13 @@ const TransactionSchema = new Schema<TransactionType>(
         return this.type === "delivery_payment";
       },
     },
+    food_order_id: {
+      type: Schema.Types.ObjectId,
+      ref: "FoodOrder",
+      required: function () {
+        return this.type === "food_payment";
+      },
+    },
 
     amount: { type: Number, required: true },
 
@@ -72,12 +84,12 @@ const TransactionSchema = new Schema<TransactionType>(
 
     metadata: { type: Schema.Types.Mixed }, // any extra info (e.g., driver id, transfer details)
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const TransactionModel = mongoose.model<TransactionType>(
   "Transaction",
-  TransactionSchema
+  TransactionSchema,
 );
 export default TransactionModel;
 
@@ -85,7 +97,7 @@ const update_db = async () => {
   try {
     const data = await TransactionModel.updateMany(
       { "metadata.for": "driver_wallet_crediting" },
-      { type: "driver_payment" }
+      { type: "driver_payment" },
     );
     console.log(data.matchedCount);
   } catch (err) {

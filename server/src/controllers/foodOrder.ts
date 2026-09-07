@@ -103,20 +103,6 @@ export const place_food_order = async (req: Request, res: Response) => {
 
     const paymentReference = generate_unique_reference();
 
-    // Create Transaction Record
-    await Transaction.create({
-      wallet_id: customerWallet._id,
-      type: "delivery_payment",
-      amount: total,
-      status: "success",
-      channel: "wallet",
-      reference: paymentReference,
-      metadata: {
-        restaurant_id: restaurant._id,
-        restaurant_name: restaurant.name,
-      },
-    });
-
     // Build item snapshots
     const itemSnapshots = basket.items.map((item: any) => ({
       menu_item_id: item.menu_item._id,
@@ -128,7 +114,7 @@ export const place_food_order = async (req: Request, res: Response) => {
       item_total: item.item_total,
     }));
 
-    // Generate unique human readable order number (e.g. FO-98241)
+    // Generate unique human readable order number (e.g. IGL-98241)
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const order_number = `IGL-${randomNum}`;
 
@@ -181,6 +167,22 @@ export const place_food_order = async (req: Request, res: Response) => {
     });
 
     await order.save();
+
+    // Create Transaction Record linked to FoodOrder
+    await Transaction.create({
+      wallet_id: customerWallet._id,
+      type: "food_payment",
+      amount: total,
+      status: "success",
+      channel: "wallet",
+      reference: paymentReference,
+      food_order_id: order._id,
+      metadata: {
+        restaurant_id: restaurant._id,
+        restaurant_name: restaurant.name,
+        order_number: order.order_number,
+      },
+    });
 
     // Clear Customer Basket after order placement
     await Basket.findOneAndDelete({ user: user_id });
@@ -352,6 +354,7 @@ export const reject_food_order = async (req: Request, res: Response) => {
         status: "success",
         channel: "wallet",
         reference: generate_unique_reference(),
+        food_order_id: order._id,
         metadata: {
           order_id: order._id,
           order_number: order.order_number,
@@ -511,6 +514,7 @@ export const cancel_food_order = async (req: Request, res: Response) => {
         status: "success",
         channel: "wallet",
         reference: generate_unique_reference(),
+        food_order_id: order._id,
         metadata: {
           order_id: order._id,
           order_number: order.order_number,

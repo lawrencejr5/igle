@@ -196,6 +196,7 @@ agenda.define("check_food_order_timeout", async (job: Job) => {
         status: "success",
         channel: "wallet",
         reference: generate_unique_reference(),
+        food_order_id: order._id,
         metadata: {
           order_id: order._id,
           order_number: order.order_number,

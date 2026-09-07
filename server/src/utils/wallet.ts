@@ -8,10 +8,18 @@ import { sendNotification } from "./expo_push";
 interface WalletInput {
   wallet_id: Types.ObjectId;
   amount: number;
-  type: "funding" | "ride_payment" | "delivery_payment" | "payout";
+  type:
+    | "funding"
+    | "ride_payment"
+    | "delivery_payment"
+    | "food_payment"
+    | "driver_payment"
+    | "restaurant_payment"
+    | "payout";
   channel: "card" | "transfer" | "cash" | "wallet";
   ride_id?: Types.ObjectId;
   delivery_id?: Types.ObjectId;
+  food_order_id?: Types.ObjectId;
   reference?: string;
   status?: "pending" | "success" | "failed";
   metadata?: Record<string, any>;
@@ -114,6 +122,7 @@ export const debit_wallet = async (
     wallet_id,
     ride_id,
     delivery_id,
+    food_order_id,
     type,
     amount,
     reference,
@@ -163,6 +172,7 @@ export const debit_wallet = async (
             channel: "wallet",
             ride_id: ride_id && ride_id,
             delivery_id: delivery_id && delivery_id,
+            food_order_id: food_order_id && food_order_id,
             reference,
             metadata,
           },
