@@ -23,7 +23,11 @@ export const place_food_order = async (req: Request, res: Response) => {
       return res.status(401).json({ msg: "User not authenticated" });
     }
 
-    const { delivery_address } = req.body;
+    const { restaurant_id, delivery_address } = req.body;
+
+    if (!restaurant_id) {
+      return res.status(400).json({ msg: "restaurant_id is required to place an order" });
+    }
 
     if (!delivery_address || !delivery_address.address) {
       return res
@@ -37,15 +41,16 @@ export const place_food_order = async (req: Request, res: Response) => {
       return res.status(404).json({ msg: "User account not found" });
     }
 
-    // Fetch user basket
-    const basket = await Basket.findOne({ user: user_id }).populate(
-      "items.menu_item",
-    );
+    // Fetch user basket specifically for this restaurant
+    const basket = await Basket.findOne({
+      user: user_id,
+      restaurant: restaurant_id,
+    }).populate("items.menu_item");
 
     if (!basket || !basket.items || basket.items.length === 0) {
       return res
         .status(400)
-        .json({ msg: "Your basket is empty. Add items first." });
+        .json({ msg: "Your basket for this restaurant is empty. Add items first." });
     }
 
     // Fetch restaurant
@@ -184,8 +189,8 @@ export const place_food_order = async (req: Request, res: Response) => {
       },
     });
 
-    // Clear Customer Basket after order placement
-    await Basket.findOneAndDelete({ user: user_id });
+    // Clear ONLY this restaurant's Basket after order placement
+    await Basket.findOneAndDelete({ user: user_id, restaurant: restaurant_id });
 
     // Schedule 3-Minute Vendor Response Timeout Job
     await agenda.schedule("in 3 minutes", "check_food_order_timeout", {

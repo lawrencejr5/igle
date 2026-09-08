@@ -4,8 +4,9 @@ import Basket from "../models/basket";
 import MenuItem from "../models/menuItem";
 import Restaurant from "../models/restaurant";
 
-// 1. Get User Basket
+// 1. Get User Basket(s)
 // GET /api/v1/basket
+// Optional query: ?restaurant_id=xxx
 export const get_user_basket = async (req: Request, res: Response) => {
   try {
     const user_id = req.user?.id;
@@ -13,30 +14,47 @@ export const get_user_basket = async (req: Request, res: Response) => {
       return res.status(401).json({ msg: "User not authenticated" });
     }
 
-    const basket = await Basket.findOne({ user: user_id })
-      .populate("restaurant", "name logo banner location is_online category_tags rating")
+    const { restaurant_id } = req.query;
+
+    if (restaurant_id) {
+      const basket = await Basket.findOne({
+        user: user_id,
+        restaurant: restaurant_id,
+      })
+        .populate(
+          "restaurant",
+          "name logo banner location is_online category_tags rating"
+        )
+        .populate({
+          path: "items.menu_item",
+          select: "name price image is_available preparation_time_mins",
+        });
+
+      return res.status(200).json({ basket: basket || null });
+    }
+
+    // Return all active restaurant baskets for the customer
+    const baskets = await Basket.find({ user: user_id })
+      .populate(
+        "restaurant",
+        "name logo banner location is_online category_tags rating"
+      )
       .populate({
         path: "items.menu_item",
         select: "name price image is_available preparation_time_mins",
-      });
+      })
+      .sort({ updatedAt: -1 });
 
-    if (!basket) {
-      return res.status(200).json({
-        basket: null,
-        msg: "No active basket found",
-      });
-    }
-
-    return res.status(200).json({ basket });
+    return res.status(200).json({ baskets });
   } catch (error: any) {
     console.error("get_user_basket error:", error);
     return res
       .status(500)
-      .json({ msg: "Server error fetching basket", error: error.message });
+      .json({ msg: "Server error fetching baskets", error: error.message });
   }
 };
 
-// 2. Add Item to Basket
+// 2. Add Item to Basket (Stores item in specific restaurant basket)
 // POST /api/v1/basket/add
 export const add_item_to_basket = async (req: Request, res: Response) => {
   try {
@@ -45,13 +63,8 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
       return res.status(401).json({ msg: "User not authenticated" });
     }
 
-    const {
-      menu_item_id,
-      quantity,
-      selected_options,
-      special_instructions,
-      clear_existing,
-    } = req.body;
+    const { menu_item_id, quantity, selected_options, special_instructions } =
+      req.body;
 
     if (!menu_item_id) {
       return res.status(400).json({ msg: "menu_item_id is required" });
@@ -70,7 +83,9 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
     }
 
     if (!menuItem.is_available) {
-      return res.status(400).json({ msg: `"${menuItem.name}" is currently out of stock` });
+      return res
+        .status(400)
+        .json({ msg: `"${menuItem.name}" is currently out of stock` });
     }
 
     // Verify restaurant is active
@@ -83,32 +98,16 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
       return res.status(404).json({ msg: "Associated restaurant not found" });
     }
 
-    let basket = await Basket.findOne({ user: user_id });
-
-    // Single Restaurant per Basket Check
-    if (basket && basket.items.length > 0) {
-      const existingRestaurantId = basket.restaurant.toString();
-      const targetRestaurantId = menuItem.restaurant.toString();
-
-      if (existingRestaurantId !== targetRestaurantId) {
-        if (clear_existing) {
-          // Reset basket for new restaurant
-          basket.restaurant = menuItem.restaurant;
-          basket.items = [];
-          basket.subtotal = 0;
-        } else {
-          return res.status(400).json({
-            msg: `Your basket contains items from another restaurant (${restaurant.name}). Would you like to clear your current basket and add items from this restaurant?`,
-            code: "DIFFERENT_RESTAURANT_BASKET",
-            current_restaurant_id: existingRestaurantId,
-            new_restaurant_id: targetRestaurantId,
-          });
-        }
-      }
-    }
+    // Find or create basket specifically for THIS user and THIS restaurant
+    let basket = await Basket.findOne({
+      user: user_id,
+      restaurant: menuItem.restaurant,
+    });
 
     // Calculate options price modifiers
-    const parsedOptions = Array.isArray(selected_options) ? selected_options : [];
+    const parsedOptions = Array.isArray(selected_options)
+      ? selected_options
+      : [];
     let optionsExtraPrice = 0;
     parsedOptions.forEach((opt: any) => {
       if (opt.price_modifier && !isNaN(Number(opt.price_modifier))) {
@@ -118,6 +117,7 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
 
     const unitPrice = menuItem.price;
     const itemTotal = (unitPrice + optionsExtraPrice) * qty;
+    const menuItemId = menuItem._id as mongoose.Types.ObjectId;
 
     if (!basket) {
       basket = new Basket({
@@ -125,7 +125,7 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
         restaurant: menuItem.restaurant,
         items: [
           {
-            menu_item: menuItem._id,
+            menu_item: menuItemId,
             quantity: qty,
             unit_price: unitPrice,
             selected_options: parsedOptions,
@@ -136,9 +136,7 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
         subtotal: itemTotal,
       });
     } else {
-      basket.restaurant = menuItem.restaurant;
-
-      // Check if identical item + identical options already exist in basket
+      // Helper to check if item options match
       const optionsMatch = (opts1: any[], opts2: any[]) => {
         if (opts1.length !== opts2.length) return false;
         const s1 = opts1
@@ -151,8 +149,6 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
           .join("|");
         return s1 === s2;
       };
-
-      const menuItemId = menuItem._id as mongoose.Types.ObjectId;
 
       const existingIndex = basket.items.findIndex(
         (item) =>
@@ -167,7 +163,8 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
         basket.items[existingIndex].item_total =
           (unitPrice + optionsExtraPrice) * updatedQty;
         if (special_instructions) {
-          basket.items[existingIndex].special_instructions = special_instructions;
+          basket.items[existingIndex].special_instructions =
+            special_instructions;
         }
       } else {
         // Push new item entry
@@ -196,7 +193,7 @@ export const add_item_to_basket = async (req: Request, res: Response) => {
     ]);
 
     return res.status(200).json({
-      msg: "Item added to basket",
+      msg: `Item added to ${restaurant.name} basket`,
       basket,
     });
   } catch (error: any) {
@@ -227,10 +224,15 @@ export const update_basket_item_quantity = async (
     }
 
     const newQty = Number(quantity);
-    const basket = await Basket.findOne({ user: user_id });
+
+    // Find basket containing this itemId for the user
+    const basket = await Basket.findOne({
+      user: user_id,
+      "items._id": itemId,
+    });
 
     if (!basket) {
-      return res.status(404).json({ msg: "Basket not found" });
+      return res.status(404).json({ msg: "Item not found in any active basket" });
     }
 
     const itemIndex = basket.items.findIndex(
@@ -242,7 +244,6 @@ export const update_basket_item_quantity = async (
     }
 
     if (newQty <= 0) {
-      // Remove item
       basket.items.splice(itemIndex, 1);
     } else {
       const item = basket.items[itemIndex];
@@ -253,6 +254,15 @@ export const update_basket_item_quantity = async (
 
       item.quantity = newQty;
       item.item_total = (item.unit_price + optionsExtra) * newQty;
+    }
+
+    // If basket items empty after removal, delete basket
+    if (basket.items.length === 0) {
+      await Basket.findByIdAndDelete(basket._id);
+      return res.status(200).json({
+        msg: "Basket item removed and empty basket cleared",
+        basket: null,
+      });
     }
 
     // Recalculate subtotal
@@ -290,15 +300,26 @@ export const remove_item_from_basket = async (req: Request, res: Response) => {
     }
 
     const { itemId } = req.params;
-    const basket = await Basket.findOne({ user: user_id });
+    const basket = await Basket.findOne({
+      user: user_id,
+      "items._id": itemId,
+    });
 
     if (!basket) {
-      return res.status(404).json({ msg: "Basket not found" });
+      return res.status(404).json({ msg: "Item not found in any active basket" });
     }
 
     basket.items = basket.items.filter(
       (item) => item._id?.toString() !== itemId
     );
+
+    if (basket.items.length === 0) {
+      await Basket.findByIdAndDelete(basket._id);
+      return res.status(200).json({
+        msg: "Item removed and empty basket cleared",
+        basket: null,
+      });
+    }
 
     basket.subtotal = basket.items.reduce(
       (sum, item) => sum + (item.item_total || 0),
@@ -324,8 +345,9 @@ export const remove_item_from_basket = async (req: Request, res: Response) => {
   }
 };
 
-// 5. Clear Basket
+// 5. Clear Basket (Clears specific restaurant basket or all)
 // DELETE /api/v1/basket
+// Optional query: ?restaurant_id=xxx
 export const clear_basket = async (req: Request, res: Response) => {
   try {
     const user_id = req.user?.id;
@@ -333,10 +355,21 @@ export const clear_basket = async (req: Request, res: Response) => {
       return res.status(401).json({ msg: "User not authenticated" });
     }
 
-    await Basket.findOneAndDelete({ user: user_id });
+    const { restaurant_id } = req.query;
+
+    if (restaurant_id) {
+      await Basket.findOneAndDelete({
+        user: user_id,
+        restaurant: restaurant_id,
+      });
+    } else {
+      await Basket.deleteMany({ user: user_id });
+    }
 
     return res.status(200).json({
-      msg: "Basket cleared successfully",
+      msg: restaurant_id
+        ? "Restaurant basket cleared successfully"
+        : "All user baskets cleared successfully",
       basket: null,
     });
   } catch (error: any) {

@@ -11,8 +11,22 @@ const uploadToCloudinary = async (
   filePath: string,
   folder: string = "restaurants/menu_items"
 ): Promise<string> => {
-  const result = await cloudinary.uploader.upload(filePath, { folder });
-  return result.secure_url;
+  try {
+    const result = await cloudinary.uploader.upload(filePath, { folder });
+    return result.secure_url;
+  } catch (error: any) {
+    console.error("Cloudinary upload failed:", error);
+    if (
+      error.code === "EAI_AGAIN" ||
+      error.errno === -3001 ||
+      error.message?.includes("getaddrinfo")
+    ) {
+      throw new Error(
+        "Network connection error: Unable to reach Cloudinary image service (api.cloudinary.com). Please check your internet connection."
+      );
+    }
+    throw error;
+  }
 };
 
 // ─── MENU CATEGORY CONTROLLERS ────────────────────────────────────────────────

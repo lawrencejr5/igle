@@ -31,7 +31,6 @@ const BasketSchema = new Schema<BasketType>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
     },
     restaurant: {
       type: Schema.Types.ObjectId,
@@ -62,5 +61,8 @@ const BasketSchema = new Schema<BasketType>(
   },
   { timestamps: true }
 );
+
+// Compound unique index: user can have one basket per restaurant
+BasketSchema.index({ user: 1, restaurant: 1 }, { unique: true });
 
 export default mongoose.model<BasketType>("Basket", BasketSchema);
