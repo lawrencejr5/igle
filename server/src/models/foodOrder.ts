@@ -186,10 +186,9 @@ const FoodOrderSchema = new Schema<FoodOrderType>(
       cancelled_at: { type: Date, default: null },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-FoodOrderSchema.index({ order_number: 1 }, { unique: true });
 FoodOrderSchema.index({ customer: 1, createdAt: -1 });
 FoodOrderSchema.index({ restaurant: 1, status: 1, createdAt: -1 });
 FoodOrderSchema.index({ driver: 1, status: 1 });

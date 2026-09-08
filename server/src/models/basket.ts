@@ -63,7 +63,4 @@ const BasketSchema = new Schema<BasketType>(
   { timestamps: true }
 );
 
-// Index to quickly look up a user's active cart
-BasketSchema.index({ user: 1 }, { unique: true });
-
 export default mongoose.model<BasketType>("Basket", BasketSchema);
