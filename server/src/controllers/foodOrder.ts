@@ -112,6 +112,7 @@ export const place_food_order = async (req: Request, res: Response) => {
     const itemSnapshots = basket.items.map((item: any) => ({
       menu_item_id: item.menu_item._id,
       name: item.menu_item.name,
+      image: item.menu_item.image || "",
       price: item.unit_price,
       quantity: item.quantity,
       selected_options: item.selected_options || [],

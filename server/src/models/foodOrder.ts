@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface FoodOrderItemSnapshot {
   menu_item_id: mongoose.Types.ObjectId;
   name: string;
+  image?: string;
   price: number;
   quantity: number;
   selected_options: {
@@ -102,6 +103,7 @@ const FoodOrderSchema = new Schema<FoodOrderType>(
           required: true,
         },
         name: { type: String, required: true },
+        image: { type: String, default: "" },
         price: { type: Number, required: true },
         quantity: { type: Number, required: true, min: 1 },
         selected_options: [

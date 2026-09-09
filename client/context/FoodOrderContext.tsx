@@ -18,6 +18,7 @@ export interface FoodOrderItemSnapshot {
   _id?: string;
   menu_item_id: string;
   name: string;
+  image?: string;
   price: number;
   quantity: number;
   selected_options: {

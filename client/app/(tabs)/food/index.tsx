@@ -9,78 +9,37 @@ import {
   Platform,
 } from "react-native";
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AppLoading from "../../../loadings/AppLoading";
 import { useLoading } from "../../../context/LoadingContext";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-
-// ─── Dummy Data ───────────────────────────────────────────────────────────────
-
-const DUMMY_ACTIVE_ORDER = {
-  id: "fo_001",
-  restaurant: "KFC Naija",
-  items: "1x Zinger Burger, 2x Chips",
-  status: "preparing",
-  estimatedTime: "25–35 min",
-  total: "₦5,200",
-};
-
-const DUMMY_COMPLETED_ORDERS = [
-  {
-    id: "fo_002",
-    restaurant: "Pizza Palace",
-    items: "1x Pepperoni Pizza (Large)",
-    status: "delivered",
-    date: "Aug 30, 2026",
-    total: "₦8,500",
-  },
-  {
-    id: "fo_003",
-    restaurant: "Burger Barn",
-    items: "2x Smash Burger, 1x Milkshake",
-    status: "delivered",
-    date: "Aug 27, 2026",
-    total: "₦6,100",
-  },
-  {
-    id: "fo_004",
-    restaurant: "Mama's Kitchen",
-    items: "1x Jollof Rice (Large), 1x Chicken",
-    status: "delivered",
-    date: "Aug 22, 2026",
-    total: "₦4,300",
-  },
-];
-
-const DUMMY_CANCELLED_ORDERS = [
-  {
-    id: "fo_005",
-    restaurant: "Street Bites",
-    items: "1x Shawarma, 1x Malt",
-    status: "cancelled",
-    date: "Aug 19, 2026",
-    total: "₦3,700",
-  },
-];
+import {
+  useFoodOrderContext,
+  FoodOrderType,
+} from "../../../context/FoodOrderContext";
 
 // ─── Status color helper ──────────────────────────────────────────────────────
 
 const getStatusColor = (status: string) => {
   switch (status) {
+    case "placed":
+      return { bg: "#ff9d003a", text: "#ff9d00", label: "Placed" };
     case "preparing":
-    case "accepted":
-      return { bg: "#ff9d003a", text: "#ff9d00" };
-    case "on_the_way":
-      return { bg: "#2196f33a", text: "#2196f3" };
+      return { bg: "#ff9d003a", text: "#ff9d00", label: "Preparing" };
+    case "ready_for_pickup":
+      return { bg: "#2196f33a", text: "#2196f3", label: "Ready" };
+    case "in_transit":
+      return { bg: "#2196f33a", text: "#2196f3", label: "In Transit" };
     case "delivered":
-      return { bg: "#4caf503a", text: "#4caf50" };
+      return { bg: "#4caf503a", text: "#4caf50", label: "Delivered" };
     case "cancelled":
-      return { bg: "#f443363a", text: "#f44336" };
+    case "rejected":
+      return { bg: "#f443363a", text: "#f44336", label: "Cancelled" };
     default:
-      return { bg: "#ff9d003a", text: "#ff9d00" };
+      return { bg: "#ff9d003a", text: "#ff9d00", label: status };
   }
 };
 
@@ -89,16 +48,40 @@ const getStatusColor = (status: string) => {
 const FoodRoot = () => {
   const insets = useSafeAreaInsets();
   const { appLoading } = useLoading();
-  const [category, setCategory] = useState<"active" | "completed" | "cancelled">("active");
+  const { customerOrders, fetchCustomerOrders } = useFoodOrderContext();
+
+  const [category, setCategory] = useState<"active" | "completed" | "cancelled">(
+    "active"
+  );
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    fetchCustomerOrders();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // No-op for now — backend integration later
-    setTimeout(() => setRefreshing(false), 800);
+    await fetchCustomerOrders();
+    setRefreshing(false);
   };
 
-  const hasCancelled = DUMMY_CANCELLED_ORDERS.length > 0;
+  const activeOrders = useMemo(() => {
+    return customerOrders.filter((o) =>
+      ["placed", "preparing", "ready_for_pickup", "in_transit"].includes(o.status)
+    );
+  }, [customerOrders]);
+
+  const completedOrders = useMemo(() => {
+    return customerOrders.filter((o) => o.status === "delivered");
+  }, [customerOrders]);
+
+  const cancelledOrders = useMemo(() => {
+    return customerOrders.filter((o) =>
+      ["cancelled", "rejected"].includes(o.status)
+    );
+  }, [customerOrders]);
+
+  const hasCancelled = cancelledOrders.length > 0;
 
   return (
     <>
@@ -118,8 +101,8 @@ const FoodRoot = () => {
 
             {/* Active Tab */}
             {category === "active" && (
-              <ActiveOrder
-                order={DUMMY_ACTIVE_ORDER}
+              <ActiveOrderSection
+                orders={activeOrders}
                 refreshing={refreshing}
                 onRefresh={onRefresh}
               />
@@ -128,7 +111,7 @@ const FoodRoot = () => {
             {/* Completed Tab */}
             {category === "completed" && (
               <CompletedOrders
-                data={DUMMY_COMPLETED_ORDERS}
+                data={completedOrders}
                 refreshing={refreshing}
                 onRefresh={onRefresh}
               />
@@ -137,7 +120,7 @@ const FoodRoot = () => {
             {/* Cancelled Tab */}
             {category === "cancelled" && (
               <CancelledOrders
-                data={DUMMY_CANCELLED_ORDERS}
+                data={cancelledOrders}
                 refreshing={refreshing}
                 onRefresh={onRefresh}
               />
@@ -197,18 +180,18 @@ const CategoryTabs = ({
   );
 };
 
-// ─── Active Order ─────────────────────────────────────────────────────────────
+// ─── Active Orders Section ────────────────────────────────────────────────────
 
-const ActiveOrder = ({
-  order,
+const ActiveOrderSection = ({
+  orders,
   refreshing,
   onRefresh,
 }: {
-  order: typeof DUMMY_ACTIVE_ORDER | null;
+  orders: FoodOrderType[];
   refreshing: boolean;
   onRefresh: () => void;
 }) => {
-  if (!order) {
+  if (!orders || orders.length === 0) {
     return (
       <EmptyState
         message="You don't have any active food orders"
@@ -217,8 +200,6 @@ const ActiveOrder = ({
       />
     );
   }
-
-  const statusColors = getStatusColor(order.status);
 
   return (
     <ScrollView
@@ -236,62 +217,83 @@ const ActiveOrder = ({
         />
       }
     >
-      {/* Active order card */}
-      <View style={styles.active_card}>
-        {/* Header row */}
-        <View style={styles.active_card_header}>
-          <View style={styles.food_icon_box}>
-            <Image
-              source={require("../../../assets/images/icons/food-icon-fill.png")}
-              style={{ width: 20, height: 20, tintColor: "#fff" }}
-              contentFit="contain"
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.active_restaurant}>{order.restaurant}</Text>
-            <Text style={styles.active_items} numberOfLines={1}>
-              {order.items}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.status_badge,
-              { backgroundColor: statusColors.bg },
-            ]}
-          >
-            <Text style={[styles.status_text, { color: statusColors.text }]}>
-              {order.status === "preparing" ? "Preparing" : order.status}
-            </Text>
-          </View>
-        </View>
+      {orders.map((order) => {
+        const statusColors = getStatusColor(order.status);
+        const restaurantName =
+          typeof order.restaurant === "object"
+            ? order.restaurant.name
+            : "Restaurant";
+        const itemsSummary =
+          order.items && order.items.length > 0
+            ? order.items.map((i) => `${i.quantity}x ${i.name}`).join(", ")
+            : "Food order items";
+        const total = order.pricing?.total
+          ? `₦${order.pricing.total.toLocaleString()}`
+          : "₦0";
 
-        {/* Divider */}
-        <View style={styles.divider} />
+        return (
+          <View key={order._id} style={[styles.active_card, { marginBottom: 14 }]}>
+            {/* Header row */}
+            <View style={styles.active_card_header}>
+              <View style={styles.food_icon_box}>
+                <Image
+                  source={require("../../../assets/images/icons/food-icon-fill.png")}
+                  style={{ width: 20, height: 20, tintColor: "#fff" }}
+                  contentFit="contain"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.active_restaurant}>{restaurantName}</Text>
+                <Text style={styles.active_items} numberOfLines={1}>
+                  {itemsSummary}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.status_badge,
+                  { backgroundColor: statusColors.bg },
+                ]}
+              >
+                <Text
+                  style={[styles.status_text, { color: statusColors.text }]}
+                >
+                  {statusColors.label}
+                </Text>
+              </View>
+            </View>
 
-        {/* Info row */}
-        <View style={styles.active_info_row}>
-          <View style={styles.active_info_item}>
-            <Feather name="clock" size={13} color="#9CA3AF" />
-            <Text style={styles.active_info_text}>{order.estimatedTime}</Text>
-          </View>
-          <View style={styles.active_info_item}>
-            <Feather name="credit-card" size={13} color="#9CA3AF" />
-            <Text style={styles.active_info_text}>{order.total}</Text>
-          </View>
-        </View>
+            {/* Divider */}
+            <View style={styles.divider} />
 
-        {/* Track CTA */}
-        <TouchableOpacity
-          style={styles.track_btn}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push("/food/track");
-          }}
-        >
-          <Text style={styles.track_btn_text}>Track Order</Text>
-          <Feather name="arrow-right" size={14} color="#121212" />
-        </TouchableOpacity>
-      </View>
+            {/* Info row */}
+            <View style={styles.active_info_row}>
+              <View style={styles.active_info_item}>
+                <Feather name="clock" size={13} color="#9CA3AF" />
+                <Text style={styles.active_info_text}>20–35 min</Text>
+              </View>
+              <View style={styles.active_info_item}>
+                <Feather name="credit-card" size={13} color="#9CA3AF" />
+                <Text style={styles.active_info_text}>{total}</Text>
+              </View>
+            </View>
+
+            {/* Track CTA */}
+            <TouchableOpacity
+              style={styles.track_btn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({
+                  pathname: "/food/track",
+                  params: { id: order._id },
+                });
+              }}
+            >
+              <Text style={styles.track_btn_text}>Track Order</Text>
+              <Feather name="arrow-right" size={14} color="#121212" />
+            </TouchableOpacity>
+          </View>
+        );
+      })}
     </ScrollView>
   );
 };
@@ -303,7 +305,7 @@ const CompletedOrders = ({
   refreshing,
   onRefresh,
 }: {
-  data: typeof DUMMY_COMPLETED_ORDERS;
+  data: FoodOrderType[];
   refreshing: boolean;
   onRefresh: () => void;
 }) => {
@@ -335,16 +337,35 @@ const CompletedOrders = ({
     >
       {data.map((order) => {
         const statusColors = getStatusColor(order.status);
+        const restaurantName =
+          typeof order.restaurant === "object"
+            ? order.restaurant.name
+            : "Restaurant";
+        const itemsSummary =
+          order.items && order.items.length > 0
+            ? order.items.map((i) => `${i.quantity}x ${i.name}`).join(", ")
+            : "Food order items";
+        const total = order.pricing?.total
+          ? `₦${order.pricing.total.toLocaleString()}`
+          : "₦0";
+        const dateStr = order.createdAt
+          ? new Date(order.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "";
+
         return (
           <TouchableOpacity
-            key={order.id}
+            key={order._id}
             style={styles.history_card}
             activeOpacity={0.85}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push({
                 pathname: "/food/order/[id]",
-                params: { id: order.id },
+                params: { id: order._id },
               });
             }}
           >
@@ -358,12 +379,14 @@ const CompletedOrders = ({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.history_restaurant}>
-                  {order.restaurant}
+                  {restaurantName}
                 </Text>
                 <Text style={styles.history_items} numberOfLines={1}>
-                  {order.items}
+                  {itemsSummary}
                 </Text>
-                <Text style={styles.history_date}>{order.date}</Text>
+                {dateStr ? (
+                  <Text style={styles.history_date}>{dateStr}</Text>
+                ) : null}
               </View>
             </View>
             <View style={{ alignItems: "flex-end", gap: 6 }}>
@@ -379,7 +402,7 @@ const CompletedOrders = ({
                   Delivered
                 </Text>
               </View>
-              <Text style={styles.history_total}>{order.total}</Text>
+              <Text style={styles.history_total}>{total}</Text>
             </View>
           </TouchableOpacity>
         );
@@ -395,7 +418,7 @@ const CancelledOrders = ({
   refreshing,
   onRefresh,
 }: {
-  data: typeof DUMMY_CANCELLED_ORDERS;
+  data: FoodOrderType[];
   refreshing: boolean;
   onRefresh: () => void;
 }) => {
@@ -427,21 +450,45 @@ const CancelledOrders = ({
     >
       {data.map((order) => {
         const statusColors = getStatusColor(order.status);
+        const restaurantName =
+          typeof order.restaurant === "object"
+            ? order.restaurant.name
+            : "Restaurant";
+        const itemsSummary =
+          order.items && order.items.length > 0
+            ? order.items.map((i) => `${i.quantity}x ${i.name}`).join(", ")
+            : "Food order items";
+        const total = order.pricing?.total
+          ? `₦${order.pricing.total.toLocaleString()}`
+          : "₦0";
+        const dateStr = order.createdAt
+          ? new Date(order.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "";
+
         return (
           <TouchableOpacity
-            key={order.id}
+            key={order._id}
             style={styles.history_card}
             activeOpacity={0.85}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push({
                 pathname: "/food/order/[id]",
-                params: { id: order.id },
+                params: { id: order._id },
               });
             }}
           >
             <View style={styles.history_left}>
-              <View style={[styles.history_icon_box, { backgroundColor: "#2a2a2a" }]}>
+              <View
+                style={[
+                  styles.history_icon_box,
+                  { backgroundColor: "#2a2a2a" },
+                ]}
+              >
                 <Image
                   source={require("../../../assets/images/icons/food-icon-fill.png")}
                   style={{ width: 16, height: 16, tintColor: "#666" }}
@@ -450,12 +497,14 @@ const CancelledOrders = ({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.history_restaurant}>
-                  {order.restaurant}
+                  {restaurantName}
                 </Text>
                 <Text style={styles.history_items} numberOfLines={1}>
-                  {order.items}
+                  {itemsSummary}
                 </Text>
-                <Text style={styles.history_date}>{order.date}</Text>
+                {dateStr ? (
+                  <Text style={styles.history_date}>{dateStr}</Text>
+                ) : null}
               </View>
             </View>
             <View style={{ alignItems: "flex-end", gap: 6 }}>
@@ -471,7 +520,7 @@ const CancelledOrders = ({
                   Cancelled
                 </Text>
               </View>
-              <Text style={styles.history_total}>{order.total}</Text>
+              <Text style={styles.history_total}>{total}</Text>
             </View>
           </TouchableOpacity>
         );
