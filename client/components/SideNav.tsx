@@ -453,7 +453,7 @@ const SideNav: React.FC<{
                 <TouchableOpacity
                   onPress={() => {
                     closeSideNav();
-                    router.push("/(restaurant_auth)/restaurant_details?mode=edit");
+                    router.push("/(restaurant)/menu" as any);
                   }}
                 >
                   <View style={styles.sidenav_content_box}>

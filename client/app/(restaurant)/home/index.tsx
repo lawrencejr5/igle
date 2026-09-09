@@ -263,7 +263,7 @@ const RestaurantHome = () => {
               <TouchableOpacity
                 style={styles.tool_card}
                 onPress={() =>
-                  router.push("/(restaurant_auth)/restaurant_details?mode=edit")
+                  router.push("/(restaurant)/menu" as any)
                 }
               >
                 <View style={styles.tool_icon_box}>
