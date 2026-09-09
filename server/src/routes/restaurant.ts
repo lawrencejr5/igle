@@ -8,6 +8,7 @@ import {
   get_restaurant_profile,
   set_restaurant_online_status,
   get_all_restaurants,
+  get_restaurant_by_id,
 } from "../controllers/restaurant";
 import { auth } from "../middleware/auth";
 import { upload } from "../middleware/upload";
@@ -18,6 +19,7 @@ RestaurantRouter.use(auth);
 
 RestaurantRouter.get("/all", get_all_restaurants);
 RestaurantRouter.get("/me", get_restaurant_profile);
+RestaurantRouter.get("/:id", get_restaurant_by_id);
 
 // Stage 1: Details
 RestaurantRouter.post(

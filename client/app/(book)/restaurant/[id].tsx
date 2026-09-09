@@ -10,386 +10,25 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Animated,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import {
+  useRestaurantContext,
+  RestaurantType,
+} from "../../../context/RestaurantContext";
+import {
+  useMenuContext,
+  MenuItem,
+  MenuCategory,
+} from "../../../context/MenuContext";
 
-// ─── Restaurant & Products Data ───────────────────────────────────────────────
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: "Popular" | "Mains" | "Sides" | "Drinks" | "Desserts";
-  image?: any;
-}
-
-export interface RestaurantData {
-  id: string;
-  name: string;
-  cuisine: string;
-  category: string;
-  rating: number;
-  deliveryTime: string;
-  deliveryFee: string;
-  minOrder: string;
-  image: any;
-  address: string;
-  products: Product[];
-}
-
-export const RESTAURANTS_DATA: Record<string, RestaurantData> = {
-  "1": {
-    id: "1",
-    name: "Pizza Palace",
-    cuisine: "Italian · Gourmet Pizza",
-    category: "Pizza",
-    rating: 4.9,
-    deliveryTime: "20–30 min",
-    deliveryFee: "₦550",
-    minOrder: "₦2,500",
-    address: "12 Marina Boulevard, Victoria Island",
-    image: require("../../../assets/images/restaurants/ivan-torres-MQUqbmszGGM-unsplash.jpg"),
-    products: [
-      {
-        id: "p1_1",
-        name: "Pepperoni Feast Pizza",
-        description: "Double pepperoni, mozzarella, rich tomato sauce & oregano",
-        price: 6500,
-        category: "Popular",
-      },
-      {
-        id: "p1_2",
-        name: "Four Cheese Supreme",
-        description: "Mozzarella, cheddar, parmesan & blue cheese blend",
-        price: 7200,
-        category: "Mains",
-      },
-      {
-        id: "p1_3",
-        name: "Garlic Butter Breadsticks",
-        description: "Freshly baked dough strips brushed with garlic butter & herbs",
-        price: 2000,
-        category: "Sides",
-      },
-      {
-        id: "p1_4",
-        name: "Cheesy Meatballs & Sauce",
-        description: "Tender beef meatballs in marinara sauce topped with melted cheese",
-        price: 3500,
-        category: "Sides",
-      },
-      {
-        id: "p1_5",
-        name: "Cold Coca-Cola (50cl)",
-        description: "Refreshing ice-cold carbonated soft drink",
-        price: 800,
-        category: "Drinks",
-      },
-    ],
-  },
-  "2": {
-    id: "2",
-    name: "Smokey BBQ & Ribs",
-    cuisine: "American · BBQ & Grill",
-    category: "Burgers",
-    rating: 4.5,
-    deliveryTime: "25–35 min",
-    deliveryFee: "₦600",
-    minOrder: "₦3,000",
-    address: "45 Admiralty Way, Lekki Phase 1",
-    image: require("../../../assets/images/restaurants/alexandru-bogdan-ghita-UeYkqQh4PoI-unsplash.jpg"),
-    products: [
-      {
-        id: "p2_1",
-        name: "Full Rack Smoked Ribs",
-        description: "Slow-smoked pork ribs glazed with signature BBQ sauce & fries",
-        price: 12500,
-        category: "Popular",
-      },
-      {
-        id: "p2_2",
-        name: "Pulled Pork Sandwich",
-        description: "Tender shredded pork, BBQ sauce, crispy onions on brioche",
-        price: 5500,
-        category: "Mains",
-      },
-      {
-        id: "p2_3",
-        name: "Loaded BBQ Fries",
-        description: "Crispy fries topped with melted cheese, bacon & BBQ drizzle",
-        price: 3200,
-        category: "Sides",
-      },
-      {
-        id: "p2_4",
-        name: "Creamy Coleslaw",
-        description: "Fresh cabbage & carrot slaw in tangy dressing",
-        price: 1500,
-        category: "Sides",
-      },
-      {
-        id: "p2_5",
-        name: "Ice Cold Malt Can",
-        description: "Rich non-alcoholic malt beverage",
-        price: 1000,
-        category: "Drinks",
-      },
-    ],
-  },
-  "3": {
-    id: "3",
-    name: "Crispy Crunch Chicken",
-    cuisine: "Fast Food · Fried Chicken",
-    category: "Chicken",
-    rating: 4.8,
-    deliveryTime: "15–25 min",
-    deliveryFee: "₦450",
-    minOrder: "₦2,000",
-    address: "88 Isaac John Street, Ikeja GRA",
-    image: require("../../../assets/images/restaurants/brian-chan-NbXjZomyNEM-unsplash.jpg"),
-    products: [
-      {
-        id: "p3_1",
-        name: "6pc Crispy Bucket & Fries",
-        description: "6 pieces of golden crispy chicken served with large chips",
-        price: 8500,
-        category: "Popular",
-      },
-      {
-        id: "p3_2",
-        name: "Zinger Chicken Burger",
-        description: "Spicy crispy chicken breast fillet with mayo & lettuce",
-        price: 3800,
-        category: "Mains",
-      },
-      {
-        id: "p3_3",
-        name: "Spicy Wings (6pcs)",
-        description: "Deep fried chicken wings tossed in hot chili glaze",
-        price: 4200,
-        category: "Sides",
-      },
-      {
-        id: "p3_4",
-        name: "Cajun Seasoned Chips",
-        description: "Crispy fries dusted with spicy Cajun seasoning",
-        price: 1800,
-        category: "Sides",
-      },
-      {
-        id: "p3_5",
-        name: "Chocolate Milkshake",
-        description: "Thick creamy chocolate ice cream milkshake",
-        price: 2500,
-        category: "Desserts",
-      },
-    ],
-  },
-  "4": {
-    id: "4",
-    name: "Prime Steakhouse",
-    cuisine: "Gourmet · Steaks & Salads",
-    category: "Rice",
-    rating: 4.6,
-    deliveryTime: "25–40 min",
-    deliveryFee: "₦700",
-    minOrder: "₦5,000",
-    address: "5 Ahmadu Bello Way, Victoria Island",
-    image: require("../../../assets/images/restaurants/edward-howell-vvUy1hWVYEA-unsplash.jpg"),
-    products: [
-      {
-        id: "p4_1",
-        name: "Ribeye Steak 300g & Mash",
-        description: "Prime Angus ribeye steak, garlic mashed potato & peppercorn jus",
-        price: 18000,
-        category: "Popular",
-      },
-      {
-        id: "p4_2",
-        name: "Grilled Lamb Chops",
-        description: "Tender rosemary lamb chops served with mint jus & roasted veg",
-        price: 16500,
-        category: "Mains",
-      },
-      {
-        id: "p4_3",
-        name: "Truffle Parmesan Fries",
-        description: "Hand-cut potato fries with truffle oil & aged parmesan",
-        price: 4500,
-        category: "Sides",
-      },
-      {
-        id: "p4_4",
-        name: "Caesar Salad with Chicken",
-        description: "Romaine lettuce, grilled chicken breast, croutons & Caesar dressing",
-        price: 4200,
-        category: "Sides",
-      },
-      {
-        id: "p4_5",
-        name: "Sparkling Water (75cl)",
-        description: "Chilled premium Italian sparkling mineral water",
-        price: 1200,
-        category: "Drinks",
-      },
-    ],
-  },
-  "5": {
-    id: "5",
-    name: "Wok & Noodle House",
-    cuisine: "Asian · Stir-Fry & Noodles",
-    category: "Asian",
-    rating: 4.4,
-    deliveryTime: "15–25 min",
-    deliveryFee: "₦400",
-    minOrder: "₦2,000",
-    address: "21 Commercial Avenue, Yaba",
-    image: require("../../../assets/images/restaurants/orijit-chatterjee-wEBg_pYtynw-unsplash.jpg"),
-    products: [
-      {
-        id: "p5_1",
-        name: "Special Chicken Chow Mein",
-        description: "Stir-fried egg noodles with tender chicken, vegetables & soy sauce",
-        price: 4800,
-        category: "Popular",
-      },
-      {
-        id: "p5_2",
-        name: "Singapore Rice Noodles",
-        description: "Thin vermicelli noodles with curry spice, shrimp & veggies",
-        price: 5200,
-        category: "Mains",
-      },
-      {
-        id: "p5_3",
-        name: "Crispy Spring Rolls (4pcs)",
-        description: "Golden fried vegetable spring rolls with sweet chili dip",
-        price: 2500,
-        category: "Sides",
-      },
-      {
-        id: "p5_4",
-        name: "Sweet & Sour Chicken",
-        description: "Crispy chicken bites in pineapple sweet & sour sauce",
-        price: 5800,
-        category: "Mains",
-      },
-      {
-        id: "p5_5",
-        name: "Jasmine Green Tea",
-        description: "Hot aromatic brewed oriental green tea",
-        price: 1500,
-        category: "Drinks",
-      },
-    ],
-  },
-  "6": {
-    id: "6",
-    name: "Tokyo Bento & Grill",
-    cuisine: "Asian · Japanese & Seafood",
-    category: "Asian",
-    rating: 4.7,
-    deliveryTime: "30–45 min",
-    deliveryFee: "₦800",
-    minOrder: "₦4,000",
-    address: "14 Akin Adesola Street, Victoria Island",
-    image: require("../../../assets/images/restaurants/vinn-koonyosying-vBOxsZrfiCw-unsplash.jpg"),
-    products: [
-      {
-        id: "p6_1",
-        name: "Teriyaki Chicken Bento Box",
-        description: "Grilled chicken teriyaki, steamed rice, gyoza & cabbage salad",
-        price: 6500,
-        category: "Popular",
-      },
-      {
-        id: "p6_2",
-        name: "Salmon Nigiri & Sushi Roll",
-        description: "Fresh salmon nigiri (4pcs) & spicy tuna roll (6pcs)",
-        price: 8200,
-        category: "Mains",
-      },
-      {
-        id: "p6_3",
-        name: "Tempura Prawns (5pcs)",
-        description: "Light & crispy battered king prawns with tentsuyu sauce",
-        price: 4500,
-        category: "Sides",
-      },
-      {
-        id: "p6_4",
-        name: "Miso Soup & Edamame",
-        description: "Traditional soybean broth with tofu & salted edamame pods",
-        price: 2200,
-        category: "Sides",
-      },
-      {
-        id: "p6_5",
-        name: "Japanese Iced Green Tea",
-        description: "Refreshing unsweetened cold Japanese matcha green tea",
-        price: 1800,
-        category: "Drinks",
-      },
-    ],
-  },
-  "7": {
-    id: "7",
-    name: "The Social Bistro",
-    cuisine: "Continental · Drinks & Bites",
-    category: "Fast Food",
-    rating: 4.7,
-    deliveryTime: "20–30 min",
-    deliveryFee: "₦500",
-    minOrder: "₦2,500",
-    address: "33 Glover Road, Ikoyi",
-    image: require("../../../assets/images/restaurants/alex-haney-CAhjZmVk5H4-unsplash.jpg"),
-    products: [
-      {
-        id: "p7_1",
-        name: "Avocado Toast & Poached Egg",
-        description: "Sourdough bread topped with mashed avocado, chili flakes & poached egg",
-        price: 4200,
-        category: "Popular",
-      },
-      {
-        id: "p7_2",
-        name: "Truffle Mushroom Pasta",
-        description: "Penne pasta with wild mushrooms in creamy truffle sauce",
-        price: 6800,
-        category: "Mains",
-      },
-      {
-        id: "p7_3",
-        name: "Club Sandwich & Chips",
-        description: "Triple-decker chicken, bacon, lettuce & tomato sandwich",
-        price: 5000,
-        category: "Mains",
-      },
-      {
-        id: "p7_4",
-        name: "Berry Waffle Sundae",
-        description: "Belgian waffle with fresh berries & vanilla ice cream",
-        price: 3500,
-        category: "Desserts",
-      },
-      {
-        id: "p7_5",
-        name: "Iced Caramel Latte",
-        description: "Espresso with cold milk & caramel syrup over ice",
-        price: 2800,
-        category: "Drinks",
-      },
-    ],
-  },
-};
-
-const MENU_CATEGORIES = ["All", "Popular", "Mains", "Sides", "Drinks", "Desserts"];
+const DEFAULT_HERO_IMAGE = require("../../../assets/images/restaurants/ivan-torres-MQUqbmszGGM-unsplash.jpg");
 
 // ─── Single Restaurant Screen Component ────────────────────────────────────────
 
@@ -397,37 +36,94 @@ const SingleRestaurant = () => {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  // Fallback to first restaurant if invalid ID
-  const restaurant = RESTAURANTS_DATA[id || "1"] || RESTAURANTS_DATA["1"];
+  const { fetchRestaurantById } = useRestaurantContext();
+  const { fetchPublicCategories, fetchPublicMenuItems } = useMenuContext();
+
+  const [restaurant, setRestaurant] = useState<RestaurantType | null>(null);
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // Filter products by search and category
+  useEffect(() => {
+    if (!id) return;
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [restData, catsData, itemsData] = await Promise.all([
+          fetchRestaurantById(id),
+          fetchPublicCategories(id),
+          fetchPublicMenuItems(id),
+        ]);
+        setRestaurant(restData);
+        setCategories(catsData || []);
+        setMenuItems(itemsData || []);
+      } catch (err) {
+        console.log("Error loading single restaurant details", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id]);
+
+  const categoryTabs = useMemo(() => {
+    const catNamesFromItems = Array.from(
+      new Set(
+        menuItems
+          .map((item) =>
+            typeof item.category === "object"
+              ? item.category?.name
+              : item.category
+          )
+          .filter(Boolean)
+      )
+    ) as string[];
+
+    const combined = Array.from(
+      new Set([...categories.map((c) => c.name), ...catNamesFromItems])
+    );
+
+    return ["All", ...combined];
+  }, [categories, menuItems]);
+
   const filteredProducts = useMemo(() => {
-    return restaurant.products.filter((p) => {
-      const matchesCategory = activeTab === "All" || p.category === activeTab;
+    return menuItems.filter((item) => {
+      const itemCategoryName =
+        typeof item.category === "object"
+          ? item.category?.name
+          : item.category || "";
+
+      const matchesCategory =
+        activeTab === "All" ||
+        itemCategoryName.toLowerCase() === activeTab.toLowerCase();
+
       const matchesSearch =
         searchQuery.trim() === "" ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase());
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description &&
+          item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
       return matchesCategory && matchesSearch;
     });
-  }, [restaurant.products, activeTab, searchQuery]);
+  }, [menuItems, activeTab, searchQuery]);
 
-  // Cart helper calculations
   const cartTotalItems = useMemo(() => {
     return Object.values(cart).reduce((sum, count) => sum + count, 0);
   }, [cart]);
 
   const cartTotalPrice = useMemo(() => {
     return Object.entries(cart).reduce((sum, [productId, count]) => {
-      const prod = restaurant.products.find((p) => p.id === productId);
+      const prod = menuItems.find((p) => p._id === productId);
       return sum + (prod ? prod.price * count : 0);
     }, 0);
-  }, [cart, restaurant.products]);
+  }, [cart, menuItems]);
 
   const addToCart = (productId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -452,7 +148,6 @@ const SingleRestaurant = () => {
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // Animated sticky header interpolation
   const stickyHeaderOpacity = scrollY.interpolate({
     inputRange: [130, 190],
     outputRange: [0, 1],
@@ -464,6 +159,34 @@ const SingleRestaurant = () => {
     outputRange: [-12, 0],
     extrapolate: "clamp",
   });
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loading_center]}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={styles.loading_text_full}>
+          Loading store & menu items...
+        </Text>
+      </View>
+    );
+  }
+
+  const restaurantName = restaurant?.name || "Restaurant Store";
+  const restaurantRating = restaurant?.rating
+    ? Number(restaurant.rating).toFixed(1)
+    : "5.0";
+  const restaurantCuisine =
+    restaurant?.category_tags && restaurant.category_tags.length > 0
+      ? restaurant.category_tags.join(" • ")
+      : restaurant?.description || "Gourmet & Fast Food";
+  const restaurantAddress =
+    restaurant?.location?.address ||
+    restaurant?.location?.landmark ||
+    "Main Campus Area";
+  const heroImage =
+    restaurant?.banner || restaurant?.logo
+      ? { uri: restaurant.banner || restaurant.logo }
+      : DEFAULT_HERO_IMAGE;
 
   return (
     <View style={styles.container}>
@@ -489,7 +212,7 @@ const SingleRestaurant = () => {
         </TouchableOpacity>
 
         <Text style={styles.sticky_title} numberOfLines={1}>
-          {restaurant.name}
+          {restaurantName}
         </Text>
 
         <TouchableOpacity
@@ -521,236 +244,244 @@ const SingleRestaurant = () => {
           paddingBottom: cartTotalItems > 0 ? 110 : insets.bottom + 30,
         }}
       >
-          {/* ── Banner Image Hero ── */}
-          <View style={styles.hero_box}>
-            <Image
-              source={restaurant.image}
-              style={styles.hero_image}
-              contentFit="cover"
-            />
-            {/* Top Bar Floating Buttons */}
-            <View style={[styles.hero_top_bar, { paddingTop: insets.top + 6 }]}>
-              <TouchableOpacity
-                style={styles.floating_btn}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  router.back();
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="#fff" />
-              </TouchableOpacity>
+        {/* ── Banner Image Hero ── */}
+        <View style={styles.hero_box}>
+          <Image source={heroImage} style={styles.hero_image} contentFit="cover" />
+          {/* Top Bar Floating Buttons */}
+          <View style={[styles.hero_top_bar, { paddingTop: insets.top + 6 }]}>
+            <TouchableOpacity
+              style={styles.floating_btn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.back();
+              }}
+            >
+              <Feather name="arrow-left" size={20} color="#fff" />
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.floating_btn}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setIsFavorite((prev) => !prev);
-                }}
-              >
-                <Feather
-                  name="heart"
-                  size={19}
-                  color={isFavorite ? "#ff4d4d" : "#fff"}
-                />
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.floating_btn}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsFavorite((prev) => !prev);
+              }}
+            >
+              <Feather
+                name="heart"
+                size={19}
+                color={isFavorite ? "#ff4d4d" : "#fff"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ── Restaurant Header Meta ── */}
+        <View style={styles.info_section}>
+          <View style={styles.title_row}>
+            <Text style={styles.restaurant_name}>{restaurantName}</Text>
+            <View style={styles.rating_badge}>
+              <Image
+                source={require("../../../assets/images/icons/star-icon.png")}
+                style={{ width: 12, height: 12, tintColor: "#fff" }}
+                contentFit="contain"
+              />
+              <Text style={styles.rating_text}>{restaurantRating}</Text>
             </View>
           </View>
 
-          {/* ── Restaurant Header Meta ── */}
-          <View style={styles.info_section}>
-            <View style={styles.title_row}>
-              <Text style={styles.restaurant_name}>{restaurant.name}</Text>
-              <View style={styles.rating_badge}>
-                <Image
-                  source={require("../../../assets/images/icons/star-icon.png")}
-                  style={{ width: 12, height: 12, tintColor: "#fff" }}
-                  contentFit="contain"
-                />
-                <Text style={styles.rating_text}>{restaurant.rating}</Text>
-              </View>
-            </View>
+          <Text style={styles.restaurant_cuisine}>{restaurantCuisine}</Text>
 
-            <Text style={styles.restaurant_cuisine}>{restaurant.cuisine}</Text>
-
-            <View style={styles.address_row}>
-              <Feather name="map-pin" size={13} color="#9CA3AF" />
-              <Text style={styles.address_text} numberOfLines={1}>
-                {restaurant.address}
-              </Text>
-            </View>
-
-            {/* Delivery Details Row */}
-            <View style={styles.meta_bar}>
-              <View style={styles.meta_column}>
-                <Text style={styles.meta_label}>DELIVERY TIME</Text>
-                <Text style={styles.meta_value}>{restaurant.deliveryTime}</Text>
-              </View>
-              <View style={styles.meta_divider} />
-              <View style={styles.meta_column}>
-                <Text style={styles.meta_label}>DELIVERY FEE</Text>
-                <Text style={styles.meta_value}>{restaurant.deliveryFee}</Text>
-              </View>
-              <View style={styles.meta_divider} />
-              <View style={styles.meta_column}>
-                <Text style={styles.meta_label}>MIN ORDER</Text>
-                <Text style={styles.meta_value}>{restaurant.minOrder}</Text>
-              </View>
-            </View>
+          <View style={styles.address_row}>
+            <Feather name="map-pin" size={13} color="#9CA3AF" />
+            <Text style={styles.address_text} numberOfLines={1}>
+              {restaurantAddress}
+            </Text>
           </View>
 
-          {/* ── Menu Search Input ── */}
-          <View style={styles.search_bar}>
-            <Feather name="search" size={16} color="#777" />
-            <TextInput
-              style={styles.search_input}
-              placeholder="Search in menu…"
-              placeholderTextColor="#555"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-              onSubmitEditing={Keyboard.dismiss}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchQuery("");
-                  Keyboard.dismiss();
-                }}
-              >
-                <Feather name="x" size={16} color="#777" />
-              </TouchableOpacity>
-            )}
+          {/* Delivery Details Row */}
+          <View style={styles.meta_bar}>
+            <View style={styles.meta_column}>
+              <Text style={styles.meta_label}>DELIVERY TIME</Text>
+              <Text style={styles.meta_value}>20–35 min</Text>
+            </View>
+            <View style={styles.meta_divider} />
+            <View style={styles.meta_column}>
+              <Text style={styles.meta_label}>DELIVERY FEE</Text>
+              <Text style={styles.meta_value}>₦500</Text>
+            </View>
+            <View style={styles.meta_divider} />
+            <View style={styles.meta_column}>
+              <Text style={styles.meta_label}>MIN ORDER</Text>
+              <Text style={styles.meta_value}>₦2,000</Text>
+            </View>
           </View>
+        </View>
 
-          {/* ── Category Filter Pills ── */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            style={{ flexGrow: 0 }}
-            contentContainerStyle={styles.category_scroll}
-            keyboardShouldPersistTaps="handled"
-          >
-            {MENU_CATEGORIES.map((cat) => (
-              <Pressable
-                key={cat}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setActiveTab(cat);
-                }}
+        {/* ── Menu Search Input ── */}
+        <View style={styles.search_bar}>
+          <Feather name="search" size={16} color="#777" />
+          <TextInput
+            style={styles.search_input}
+            placeholder="Search in menu…"
+            placeholderTextColor="#555"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            onSubmitEditing={Keyboard.dismiss}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setSearchQuery("");
+                Keyboard.dismiss();
+              }}
+            >
+              <Feather name="x" size={16} color="#777" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* ── Category Filter Pills ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          style={{ flexGrow: 0 }}
+          contentContainerStyle={styles.category_scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          {categoryTabs.map((cat) => (
+            <Pressable
+              key={cat}
+              onPress={() => {
+                Keyboard.dismiss();
+                setActiveTab(cat);
+              }}
+              style={[
+                styles.category_pill,
+                activeTab === cat && styles.category_pill_active,
+              ]}
+            >
+              <Text
                 style={[
-                  styles.category_pill,
-                  activeTab === cat && styles.category_pill_active,
+                  styles.category_pill_text,
+                  activeTab === cat && styles.category_pill_text_active,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.category_pill_text,
-                    activeTab === cat && styles.category_pill_text_active,
-                  ]}
-                >
-                  {cat}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                {cat}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
 
-          {/* ── Products List ── */}
-          <View style={styles.products_section}>
-            <Text style={styles.section_title}>
-              {activeTab === "All" ? "Menu Items" : activeTab}
-            </Text>
+        {/* ── Products List ── */}
+        <View style={styles.products_section}>
+          <Text style={styles.section_title}>
+            {activeTab === "All" ? "Menu Items" : activeTab}
+          </Text>
 
-            {filteredProducts.length === 0 ? (
-              <View style={styles.empty_products}>
-                <Text style={styles.empty_title}>No items found</Text>
-                <Text style={styles.empty_sub}>
-                  Try another category or search term
-                </Text>
-              </View>
-            ) : (
-              filteredProducts.map((product) => {
-                const count = cart[product.id] || 0;
-                return (
-                  <View key={product.id} style={styles.product_card}>
-                    <View style={styles.product_info}>
-                      <Text style={styles.product_name}>{product.name}</Text>
+          {filteredProducts.length === 0 ? (
+            <View style={styles.empty_products}>
+              <Text style={styles.empty_title}>No items found</Text>
+              <Text style={styles.empty_sub}>
+                There are no menu items matching your search or selected category.
+              </Text>
+            </View>
+          ) : (
+            filteredProducts.map((product) => {
+              const count = cart[product._id] || 0;
+              return (
+                <View key={product._id} style={styles.product_card}>
+                  {/* Menu Item Image */}
+                  <View style={styles.product_image_container}>
+                    <Image
+                      source={
+                        product.image
+                          ? { uri: product.image }
+                          : DEFAULT_HERO_IMAGE
+                      }
+                      style={styles.product_image}
+                      contentFit="cover"
+                    />
+                  </View>
+
+                  <View style={styles.product_info}>
+                    <Text style={styles.product_name}>{product.name}</Text>
+                    {product.description ? (
                       <Text style={styles.product_desc} numberOfLines={2}>
                         {product.description}
                       </Text>
-                      <Text style={styles.product_price}>
-                        ₦{product.price.toLocaleString()}
-                      </Text>
-                    </View>
-
-                    {/* Action Button / Quantity Controls */}
-                    <View style={styles.product_action}>
-                      {count === 0 ? (
-                        <TouchableOpacity
-                          style={styles.add_btn}
-                          onPress={() => addToCart(product.id)}
-                        >
-                          <Feather name="plus" size={15} color="#121212" />
-                          <Text style={styles.add_btn_text}>ADD</Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <View style={styles.qty_controls}>
-                          <TouchableOpacity
-                            style={styles.qty_btn}
-                            onPress={() => removeFromCart(product.id)}
-                          >
-                            <Feather name="minus" size={14} color="#fff" />
-                          </TouchableOpacity>
-                          <Text style={styles.qty_text}>{count}</Text>
-                          <TouchableOpacity
-                            style={styles.qty_btn}
-                            onPress={() => addToCart(product.id)}
-                          >
-                            <Feather name="plus" size={14} color="#fff" />
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
+                    ) : null}
+                    <Text style={styles.product_price}>
+                      ₦{product.price.toLocaleString()}
+                    </Text>
                   </View>
-                );
-              })
-            )}
-          </View>
-        </Animated.ScrollView>
 
-        {/* ── Floating Cart Bar ── */}
-        {cartTotalItems > 0 && (
-          <View
-            style={[
-              styles.cart_bar_container,
-              { bottom: Platform.OS === "ios" ? insets.bottom + 12 : 20 },
-            ]}
+                  {/* Action Button / Quantity Controls */}
+                  <View style={styles.product_action}>
+                    {count === 0 ? (
+                      <TouchableOpacity
+                        style={styles.add_btn}
+                        onPress={() => addToCart(product._id)}
+                      >
+                        <Feather name="plus" size={15} color="#121212" />
+                        <Text style={styles.add_btn_text}>ADD</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.qty_controls}>
+                        <TouchableOpacity
+                          style={styles.qty_btn}
+                          onPress={() => removeFromCart(product._id)}
+                        >
+                          <Feather name="minus" size={14} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={styles.qty_text}>{count}</Text>
+                        <TouchableOpacity
+                          style={styles.qty_btn}
+                          onPress={() => addToCart(product._id)}
+                        >
+                          <Feather name="plus" size={14} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </View>
+      </Animated.ScrollView>
+
+      {/* ── Floating Cart Bar ── */}
+      {cartTotalItems > 0 && (
+        <View
+          style={[
+            styles.cart_bar_container,
+            { bottom: Platform.OS === "ios" ? insets.bottom + 12 : 20 },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.cart_bar}
+            activeOpacity={0.9}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }}
           >
-            <TouchableOpacity
-              style={styles.cart_bar}
-              activeOpacity={0.9}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                // Future cart checkout step
-              }}
-            >
-              <View style={styles.cart_badge}>
-                <Text style={styles.cart_badge_text}>{cartTotalItems}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cart_bar_title}>View Order</Text>
-                <Text style={styles.cart_bar_sub}>
-                  {restaurant.name}
-                </Text>
-              </View>
-              <Text style={styles.cart_total_price}>
-                ₦{cartTotalPrice.toLocaleString()}
-              </Text>
-              <Feather name="arrow-right" size={18} color="#121212" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+            <View style={styles.cart_badge}>
+              <Text style={styles.cart_badge_text}>{cartTotalItems}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cart_bar_title}>View Order</Text>
+              <Text style={styles.cart_bar_sub}>{restaurantName}</Text>
+            </View>
+            <Text style={styles.cart_total_price}>
+              ₦{cartTotalPrice.toLocaleString()}
+            </Text>
+            <Feather name="arrow-right" size={18} color="#121212" />
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -762,6 +493,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
+  },
+  loading_center: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  loading_text_full: {
+    color: "#888",
+    fontFamily: "raleway-regular",
+    fontSize: 14,
   },
   // Sticky Animated Header
   sticky_header: {
@@ -979,15 +720,25 @@ const styles = StyleSheet.create({
   },
   product_card: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: "#1a1a1a",
     borderRadius: 14,
-    padding: 14,
+    padding: 12,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: "#2a2a2a",
     gap: 12,
+  },
+  product_image_container: {
+    width: 76,
+    height: 76,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#2a2a2a",
+  },
+  product_image: {
+    width: "100%",
+    height: "100%",
   },
   product_info: {
     flex: 1,

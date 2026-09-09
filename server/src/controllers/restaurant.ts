@@ -509,3 +509,18 @@ export const get_all_restaurants = async (req: Request, res: Response) => {
       .json({ msg: error.message || "Failed to fetch registered restaurants" });
   }
 };
+
+// ─── Get Single Restaurant Profile by ID (Public) ─────────────────────────
+// GET /api/v1/restaurants/:id
+export const get_restaurant_by_id = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const restaurant = await Restaurant.findById(id);
+    if (!restaurant) {
+      return res.status(404).json({ msg: "Restaurant profile not found" });
+    }
+    return res.status(200).json({ restaurant });
+  } catch (error: any) {
+    return res.status(500).json({ msg: error.message || "Server error" });
+  }
+};

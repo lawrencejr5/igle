@@ -150,6 +150,7 @@ interface RestaurantContextType {
   allRestaurants: RestaurantType[];
   restaurantsLoading: boolean;
   fetchAllRestaurants: () => Promise<RestaurantType[]>;
+  fetchRestaurantById: (id: string) => Promise<RestaurantType | null>;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
@@ -593,6 +594,27 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const fetchRestaurantById = async (
+    id: string
+  ): Promise<RestaurantType | null> => {
+    try {
+      const token =
+        (await AsyncStorage.getItem("token")) ||
+        (await AsyncStorage.getItem("userToken"));
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const { data } = await axios.get(`${API_URLS.restaurants}/${id}`, {
+        headers,
+      });
+      return data?.restaurant || null;
+    } catch (err: any) {
+      console.log(
+        "fetchRestaurantById error:",
+        err?.response?.data || err.message
+      );
+      return null;
+    }
+  };
+
   useEffect(() => {
     fetchRestaurantProfile();
   }, []);
@@ -618,6 +640,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         allRestaurants,
         restaurantsLoading,
         fetchAllRestaurants,
+        fetchRestaurantById,
       }}
     >
       {children}
