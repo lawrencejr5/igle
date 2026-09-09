@@ -572,9 +572,11 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
   const fetchAllRestaurants = async (): Promise<RestaurantType[]> => {
     setRestaurantsLoading(true);
     try {
-      const token = await getAuthToken();
+      const token =
+        (await AsyncStorage.getItem("token")) ||
+        (await AsyncStorage.getItem("userToken"));
       if (!token) return [];
-      const { data } = await axios.get(`${API_URL}/all`, {
+      const { data } = await axios.get(`${API_URLS.restaurants}/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const list = data?.restaurants || [];
