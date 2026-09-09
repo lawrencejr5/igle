@@ -9,118 +9,96 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import {
+  useRestaurantContext,
+  RestaurantType,
+} from "../../context/RestaurantContext";
 
-// ─── Restaurant Data ──────────────────────────────────────────────────────────
+// ─── Restaurant Helper ────────────────────────────────────────────────────────
 
-const RESTAURANTS = [
-  {
-    id: "1",
-    name: "Pizza Palace",
-    cuisine: "Italian · Gourmet Pizza",
-    category: "Pizza",
-    rating: 4.9,
-    deliveryTime: "20–30 min",
-    deliveryFee: "₦550",
-    image: require("../../assets/images/restaurants/ivan-torres-MQUqbmszGGM-unsplash.jpg"),
-  },
-  {
-    id: "2",
-    name: "Smokey BBQ & Ribs",
-    cuisine: "American · BBQ & Grill",
-    category: "Burgers",
-    rating: 4.5,
-    deliveryTime: "25–35 min",
-    deliveryFee: "₦600",
-    image: require("../../assets/images/restaurants/alexandru-bogdan-ghita-UeYkqQh4PoI-unsplash.jpg"),
-  },
-  {
-    id: "3",
-    name: "Crispy Crunch Chicken",
-    cuisine: "Fast Food · Fried Chicken",
-    category: "Chicken",
-    rating: 4.8,
-    deliveryTime: "15–25 min",
-    deliveryFee: "₦450",
-    image: require("../../assets/images/restaurants/brian-chan-NbXjZomyNEM-unsplash.jpg"),
-  },
-  {
-    id: "4",
-    name: "Prime Steakhouse",
-    cuisine: "Gourmet · Steaks & Salads",
-    category: "Rice",
-    rating: 4.6,
-    deliveryTime: "25–40 min",
-    deliveryFee: "₦700",
-    image: require("../../assets/images/restaurants/edward-howell-vvUy1hWVYEA-unsplash.jpg"),
-  },
+const DEFAULT_RESTAURANT_IMAGE = require("../../assets/images/restaurants/ivan-torres-MQUqbmszGGM-unsplash.jpg");
 
-  {
-    id: "5",
-    name: "Wok & Noodle House",
-    cuisine: "Asian · Stir-Fry & Noodles",
-    category: "Asian",
-    rating: 4.4,
-    deliveryTime: "15–25 min",
-    deliveryFee: "₦400",
-    image: require("../../assets/images/restaurants/orijit-chatterjee-wEBg_pYtynw-unsplash.jpg"),
-  },
-  {
-    id: "6",
-    name: "Tokyo Bento & Grill",
-    cuisine: "Asian · Japanese & Seafood",
-    category: "Asian",
-    rating: 4.7,
-    deliveryTime: "30–45 min",
-    deliveryFee: "₦800",
-    image: require("../../assets/images/restaurants/vinn-koonyosying-vBOxsZrfiCw-unsplash.jpg"),
-  },
-  {
-    id: "7",
-    name: "The Social Bistro",
-    cuisine: "Continental · Drinks & Bites",
-    category: "Fast Food",
-    rating: 4.7,
-    deliveryTime: "20–30 min",
+const mapRestaurantToCard = (rest: RestaurantType) => {
+  const imageSource =
+    rest.banner || rest.logo
+      ? { uri: rest.banner || rest.logo }
+      : DEFAULT_RESTAURANT_IMAGE;
+
+  const category =
+    rest.category_tags && rest.category_tags.length > 0
+      ? rest.category_tags[0]
+      : "Restaurant";
+
+  const cuisine =
+    rest.category_tags && rest.category_tags.length > 0
+      ? rest.category_tags.join(" • ")
+      : rest.description || "Gourmet & Fast Food";
+
+  const rating = rest.rating ? Number(rest.rating).toFixed(1) : "5.0";
+
+  return {
+    id: rest._id,
+    name: rest.name,
+    category,
+    cuisine,
+    rating,
+    deliveryTime: "20–35 min",
     deliveryFee: "₦500",
-    image: require("../../assets/images/restaurants/alex-haney-CAhjZmVk5H4-unsplash.jpg"),
-  },
-];
-
-const CATEGORIES = [
-  "All",
-  "Chicken",
-  "Pizza",
-  "Burgers",
-  "Fast Food",
-  "Rice",
-  "Asian",
-];
+    image: imageSource,
+    raw: rest,
+  };
+};
 
 // ─── Root Screen ──────────────────────────────────────────────────────────────
 
 const OrderFood = () => {
   const insets = useSafeAreaInsets();
+  const { allRestaurants, fetchAllRestaurants, restaurantsLoading } =
+    useRestaurantContext();
+
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
 
+  useEffect(() => {
+    fetchAllRestaurants();
+  }, []);
+
+  const categories = useMemo(() => {
+    const extracted = Array.from(
+      new Set(allRestaurants.flatMap((r) => r.category_tags || []))
+    ).filter(Boolean);
+    return extracted.length > 0
+      ? ["All", ...extracted]
+      : ["All", "Fast Food", "African", "Pizza", "Burgers", "Drinks"];
+  }, [allRestaurants]);
+
+  const mappedRestaurants = useMemo(() => {
+    return allRestaurants.map(mapRestaurantToCard);
+  }, [allRestaurants]);
+
   const filtered = useMemo(() => {
-    return RESTAURANTS.filter((r) => {
+    return mappedRestaurants.filter((r) => {
       const matchesCategory =
-        activeCategory === "All" || r.category === activeCategory;
+        activeCategory === "All" ||
+        r.category.toLowerCase() === activeCategory.toLowerCase() ||
+        (r.raw.category_tags || []).some(
+          (t: string) => t.toLowerCase() === activeCategory.toLowerCase()
+        );
       const matchesSearch =
         search.trim() === "" ||
         r.name.toLowerCase().includes(search.toLowerCase()) ||
         r.cuisine.toLowerCase().includes(search.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [search, activeCategory]);
+  }, [mappedRestaurants, search, activeCategory]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -189,7 +167,7 @@ const OrderFood = () => {
           contentContainerStyle={styles.category_scroll}
           keyboardShouldPersistTaps="handled"
         >
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <Pressable
               key={cat}
               onPress={() => {
@@ -228,7 +206,14 @@ const OrderFood = () => {
         >
           <Text style={styles.section_label}>Restaurants Around You</Text>
 
-          {filtered.length === 0 ? (
+          {restaurantsLoading ? (
+            <View style={styles.loading_container}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loading_text}>
+                Loading available restaurants...
+              </Text>
+            </View>
+          ) : filtered.length === 0 ? (
             <View style={styles.no_results}>
               <Image
                 source={require("../../assets/images/icons/no-results.png")}
@@ -237,7 +222,7 @@ const OrderFood = () => {
               />
               <Text style={styles.no_results_text}>No restaurants found</Text>
               <Text style={styles.no_results_sub}>
-                Try a different search or category
+                There are no registered restaurants matching your search.
               </Text>
             </View>
           ) : (
@@ -258,7 +243,7 @@ export default OrderFood;
 const RestaurantCard = ({
   restaurant,
 }: {
-  restaurant: (typeof RESTAURANTS)[0];
+  restaurant: ReturnType<typeof mapRestaurantToCard>;
 }) => {
   return (
     <TouchableOpacity
@@ -533,5 +518,16 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-regular",
     fontSize: 13,
     textAlign: "center",
+  },
+  loading_container: {
+    paddingVertical: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  loading_text: {
+    color: "#888",
+    fontFamily: "raleway-regular",
+    fontSize: 14,
   },
 });

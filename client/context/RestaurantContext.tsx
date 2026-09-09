@@ -147,6 +147,9 @@ interface RestaurantContextType {
   registerRestaurant: (formData: FormData) => Promise<void>;
   fetchRestaurantProfile: () => Promise<RestaurantType | null>;
   setRestaurantOnlineStatus: (is_online: boolean) => Promise<void>;
+  allRestaurants: RestaurantType[];
+  restaurantsLoading: boolean;
+  fetchAllRestaurants: () => Promise<RestaurantType[]>;
 }
 
 const RestaurantContext = createContext<RestaurantContextType | null>(null);
@@ -156,7 +159,9 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const { showNotification } = useNotificationContext()!;
   const [restaurant, setRestaurant] = useState<RestaurantType | null>(null);
+  const [allRestaurants, setAllRestaurants] = useState<RestaurantType[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [restaurantsLoading, setRestaurantsLoading] = useState<boolean>(false);
   const [registrationDraft, setRegistrationDraft] =
     useState<RestaurantRegistrationDraft>(initialRegistrationDraft);
 
@@ -564,6 +569,28 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const fetchAllRestaurants = async (): Promise<RestaurantType[]> => {
+    setRestaurantsLoading(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) return [];
+      const { data } = await axios.get(`${API_URL}/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const list = data?.restaurants || [];
+      setAllRestaurants(list);
+      return list;
+    } catch (err: any) {
+      console.log(
+        "fetchAllRestaurants error:",
+        err?.response?.data || err.message
+      );
+      return [];
+    } finally {
+      setRestaurantsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchRestaurantProfile();
   }, []);
@@ -586,6 +613,9 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         registerRestaurant,
         fetchRestaurantProfile,
         setRestaurantOnlineStatus,
+        allRestaurants,
+        restaurantsLoading,
+        fetchAllRestaurants,
       }}
     >
       {children}

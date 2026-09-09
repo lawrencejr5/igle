@@ -7,6 +7,7 @@ import {
   submit_restaurant_verification,
   get_restaurant_profile,
   set_restaurant_online_status,
+  get_all_restaurants,
 } from "../controllers/restaurant";
 import { auth } from "../middleware/auth";
 import { upload } from "../middleware/upload";
@@ -15,6 +16,7 @@ const RestaurantRouter = Router();
 
 RestaurantRouter.use(auth);
 
+RestaurantRouter.get("/all", get_all_restaurants);
 RestaurantRouter.get("/me", get_restaurant_profile);
 
 // Stage 1: Details

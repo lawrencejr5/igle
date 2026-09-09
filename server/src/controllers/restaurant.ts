@@ -491,3 +491,21 @@ export const set_restaurant_online_status = async (req: Request, res: Response) 
     return res.status(500).json({ msg: error.message || "Server error" });
   }
 };
+
+// ─── Get All Registered Restaurants (for Customers) ─────────────────────────
+// GET /api/v1/restaurants/all
+export const get_all_restaurants = async (req: Request, res: Response) => {
+  try {
+    const restaurants = await Restaurant.find({
+      is_deleted: { $ne: true },
+      is_blocked: { $ne: true },
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({ restaurants });
+  } catch (error: any) {
+    console.error("get_all_restaurants error:", error);
+    return res
+      .status(500)
+      .json({ msg: error.message || "Failed to fetch registered restaurants" });
+  }
+};

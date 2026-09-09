@@ -57,9 +57,15 @@ const SideNav: React.FC<{
   const go_to_restaurant = () => {
     closeSideNav();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (signedIn?.is_restaurant || signedIn?.restaurant_application === "approved") {
+    if (
+      signedIn?.is_restaurant ||
+      signedIn?.restaurant_application === "approved"
+    ) {
       router.replace("../(restaurant)/home");
-    } else if (signedIn?.restaurant_application === "submitted" || signedIn?.restaurant_application === "pending") {
+    } else if (
+      signedIn?.restaurant_application === "submitted" ||
+      signedIn?.restaurant_application === "pending"
+    ) {
       router.replace("../(restaurant_auth)/restaurant_verification");
     } else {
       router.push("../(restaurant_auth)/restaurant_details");
@@ -417,8 +423,8 @@ const SideNav: React.FC<{
                       restaurant?.logo
                         ? { uri: restaurant.logo }
                         : signedIn?.profile_pic
-                        ? { uri: signedIn.profile_pic }
-                        : require("../assets/images/user.png")
+                          ? { uri: signedIn.profile_pic }
+                          : require("../assets/images/user.png")
                     }
                     style={styles.user_img}
                   />
@@ -428,7 +434,8 @@ const SideNav: React.FC<{
                       {restaurant?.name || signedIn?.name || "Restaurant Store"}
                     </Text>
                     <Text style={styles.user_type} numberOfLines={1}>
-                      {restaurant?.category_tags && restaurant.category_tags.length > 0
+                      {restaurant?.category_tags &&
+                      restaurant.category_tags.length > 0
                         ? restaurant.category_tags.slice(0, 2).join(" • ")
                         : "Vendor"}
                     </Text>
@@ -458,7 +465,9 @@ const SideNav: React.FC<{
                 >
                   <View style={styles.sidenav_content_box}>
                     <Feather name="list" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Menu & Details</Text>
+                    <Text style={styles.sidenav_content_text}>
+                      Menu & Details
+                    </Text>
                   </View>
                 </TouchableOpacity>
 
@@ -470,7 +479,9 @@ const SideNav: React.FC<{
                 >
                   <View style={styles.sidenav_content_box}>
                     <Entypo name="wallet" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Payouts & Earnings</Text>
+                    <Text style={styles.sidenav_content_text}>
+                      Payouts & Earnings
+                    </Text>
                   </View>
                 </TouchableOpacity>
 
@@ -482,7 +493,9 @@ const SideNav: React.FC<{
                 >
                   <View style={styles.sidenav_content_box}>
                     <Ionicons name="star" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Store Reviews</Text>
+                    <Text style={styles.sidenav_content_text}>
+                      Store Reviews
+                    </Text>
                   </View>
                 </TouchableOpacity>
 
@@ -494,13 +507,13 @@ const SideNav: React.FC<{
                 >
                   <View style={styles.sidenav_content_box}>
                     <Feather name="settings" size={20} color="#c6c6c6" />
-                    <Text style={styles.sidenav_content_text}>Store Profile & Details</Text>
+                    <Text style={styles.sidenav_content_text}>
+                      Store Profile
+                    </Text>
                   </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={handleRateUs}
-                >
+                <TouchableOpacity onPress={handleRateUs}>
                   <View style={styles.sidenav_content_box}>
                     <FontAwesome name="star" size={20} color="#c6c6c6" />
                     <Text style={styles.sidenav_content_text}>Rate us</Text>
