@@ -441,7 +441,7 @@ const SideNav: React.FC<{
                 <TouchableOpacity
                   onPress={() => {
                     closeSideNav();
-                    router.push("/(restaurant)/home");
+                    router.push("/(restaurant)/orders" as any);
                   }}
                 >
                   <View style={styles.sidenav_content_box}>
