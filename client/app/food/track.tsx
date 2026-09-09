@@ -19,30 +19,30 @@ import { darkMapStyle } from "../../data/map.dark";
 // ─── Coordinates & Dummy Order Data ──────────────────────────────────────────
 
 const RESTAURANT_LOCATION = {
-  latitude: 6.4310,
-  longitude: 3.4210,
+  latitude: 6.431,
+  longitude: 3.421,
 };
 
 const RIDER_LOCATION = {
-  latitude: 6.4390,
-  longitude: 3.4310,
+  latitude: 6.439,
+  longitude: 3.431,
 };
 
 const USER_LOCATION = {
-  latitude: 6.4470,
-  longitude: 3.4420,
+  latitude: 6.447,
+  longitude: 3.442,
 };
 
 const ROUTE_COORDINATES = [
   RESTAURANT_LOCATION,
-  { latitude: 6.4340, longitude: 3.4250 },
+  { latitude: 6.434, longitude: 3.425 },
   RIDER_LOCATION,
-  { latitude: 6.4430, longitude: 3.4360 },
+  { latitude: 6.443, longitude: 3.436 },
   USER_LOCATION,
 ];
 
 const INITIAL_REGION = {
-  latitude: 6.4390,
+  latitude: 6.439,
   longitude: 3.4315,
   latitudeDelta: 0.032,
   longitudeDelta: 0.032,
@@ -148,9 +148,7 @@ const TrackFoodOrder = () => {
           {/* Progress Bar Timeline */}
           <View style={styles.timeline_box}>
             <View style={styles.timeline_line} />
-            <View
-              style={[styles.timeline_progress, { width: "70%" }]}
-            />
+            <View style={[styles.timeline_progress, { width: "70%" }]} />
             <View style={styles.timeline_steps}>
               <View style={[styles.step_node, styles.step_node_complete]}>
                 <Feather name="check" size={10} color="#121212" />
