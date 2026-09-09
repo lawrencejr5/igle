@@ -25,7 +25,7 @@ const RestaurantHome = () => {
     useRestaurantContext();
 
   const [isStoreOnline, setIsStoreOnline] = useState(
-    restaurant?.is_online ?? true
+    restaurant?.is_online ?? true,
   );
   const [sideNavOpen, setSideNavOpen] = useState(false);
 
@@ -65,7 +65,10 @@ const RestaurantHome = () => {
       <View
         style={[
           styles.container,
-          { paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14 },
+          {
+            paddingTop:
+              Platform.OS === "ios" ? insets.top + 10 : insets.top + 14,
+          },
         ]}
       >
         {/* ── Top Nav Bar ── */}
@@ -151,7 +154,9 @@ const RestaurantHome = () => {
                   <View style={styles.rating_badge}>
                     <Feather name="star" size={12} color="#ffc107" />
                     <Text style={styles.rating_badge_text}>
-                      {restaurant?.rating ? restaurant.rating.toFixed(1) : "5.0"}
+                      {restaurant?.rating
+                        ? restaurant.rating.toFixed(1)
+                        : "5.0"}
                     </Text>
                     <Text style={styles.reviews_count_text}>
                       ({restaurant?.num_of_reviews || 0})
@@ -161,7 +166,10 @@ const RestaurantHome = () => {
                   {restaurant?.location?.address ? (
                     <View style={styles.location_badge}>
                       <Feather name="map-pin" size={11} color="#9CA3AF" />
-                      <Text style={styles.location_badge_text} numberOfLines={1}>
+                      <Text
+                        style={styles.location_badge_text}
+                        numberOfLines={1}
+                      >
                         {restaurant.location.address}
                       </Text>
                     </View>
@@ -219,7 +227,10 @@ const RestaurantHome = () => {
               <Text style={styles.metric_sub_green}>Fast fulfillment</Text>
             </View>
 
-            <View style={styles.metric_card}>
+            <TouchableOpacity
+              style={styles.metric_card}
+              onPress={() => router.push("/(restaurant)/reviews" as any)}
+            >
               <Text style={styles.metric_label}>STORE RATING</Text>
               <Text style={styles.metric_value}>
                 {restaurant?.rating ? restaurant.rating.toFixed(1) : "5.0"} ★
@@ -227,7 +238,7 @@ const RestaurantHome = () => {
               <Text style={styles.metric_sub_gray}>
                 Based on {restaurant?.num_of_reviews || 0} reviews
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* ── Big Live Orders Route Button (Positioned Below Overview Cards) ── */}
@@ -262,9 +273,7 @@ const RestaurantHome = () => {
             <View style={styles.tools_grid}>
               <TouchableOpacity
                 style={styles.tool_card}
-                onPress={() =>
-                  router.push("/(restaurant)/menu" as any)
-                }
+                onPress={() => router.push("/(restaurant)/menu" as any)}
               >
                 <View style={styles.tool_icon_box}>
                   <Feather name="list" size={18} color="#fff" />
@@ -284,12 +293,15 @@ const RestaurantHome = () => {
                 <Text style={styles.tool_sub}>View daily earnings</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.tool_card}>
+              <TouchableOpacity
+                style={styles.tool_card}
+                onPress={() => router.push("/(restaurant)/reviews" as any)}
+              >
                 <View style={styles.tool_icon_box}>
-                  <Feather name="clock" size={18} color="#fff" />
+                  <Feather name="star" size={18} color="#fff" />
                 </View>
-                <Text style={styles.tool_title}>Store Hours</Text>
-                <Text style={styles.tool_sub}>Set opening times</Text>
+                <Text style={styles.tool_title}>Customer Reviews</Text>
+                <Text style={styles.tool_sub}>Ratings & feedback</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -299,7 +311,7 @@ const RestaurantHome = () => {
                 <View style={styles.tool_icon_box}>
                   <Feather name="user" size={18} color="#fff" />
                 </View>
-                <Text style={styles.tool_title}>Rider Mode</Text>
+                <Text style={styles.tool_title}>Customer Mode</Text>
                 <Text style={styles.tool_sub}>Return to customer app</Text>
               </TouchableOpacity>
             </View>
@@ -671,5 +683,3 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
 });
-
-

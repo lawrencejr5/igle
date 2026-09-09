@@ -477,7 +477,7 @@ const SideNav: React.FC<{
                 <TouchableOpacity
                   onPress={() => {
                     closeSideNav();
-                    showNotification("Store Reviews feature coming soon", "info");
+                    router.push("/(restaurant)/reviews" as any);
                   }}
                 >
                   <View style={styles.sidenav_content_box}>
