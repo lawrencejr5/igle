@@ -35,6 +35,7 @@ import { useLoading } from "../../../context/LoadingContext";
 import AppLoading from "../../../loadings/AppLoading";
 import { useMapContext } from "../../../context/MapContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
+import { useFoodOrderContext } from "../../../context/FoodOrderContext";
 
 const checkLocationPermission = async (
   showNotification: any,
@@ -89,6 +90,7 @@ const Home = () => {
     fetchUserActiveDelivery,
     fetchUserOngoingDeliveries,
   } = useDeliverContext();
+  const { customerOrders, fetchCustomerOrders } = useFoodOrderContext();
   const { locationLoading, getPlaceName, cityAddress, region } =
     useMapContext();
   const [refreshing, setRefreshing] = useState(false);
@@ -98,6 +100,11 @@ const Home = () => {
       setRefreshing(true);
       await Promise.all([
         getUserData(),
+        getActiveRide(),
+        getOngoingRide(),
+        fetchUserActiveDelivery(),
+        fetchUserOngoingDeliveries(),
+        fetchCustomerOrders(),
         region?.latitude && region?.longitude
           ? getPlaceName(region.latitude, region.longitude)
           : Promise.resolve(),
@@ -107,73 +114,114 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    getOngoingActivity();
-  }, [rideStatus]);
-
-  // Logic to determine ongoing activity priority
-  const getOngoingActivity = (): {
-    type: "ride" | "delivery";
+  // Logic to collect and sort ALL ongoing activities (rides, package deliveries, food orders)
+  const getAllOngoingActivities = (): {
+    id: string;
+    type: "ride" | "delivery" | "food";
+    createdAt: number;
     data: any;
-  } | null => {
-    // 1. Active ride (highest priority)
+  }[] => {
+    const activities: {
+      id: string;
+      type: "ride" | "delivery" | "food";
+      createdAt: number;
+      data: any;
+    }[] = [];
+    const addedIds = new Set<string>();
+
+    // 1. Active ride
     if (ongoingRideData) {
-      return {
-        type: "ride" as const,
+      const id = (ongoingRideData as any)._id || "active_ride";
+      addedIds.add(id);
+      const time = new Date(
+        (ongoingRideData as any).createdAt ||
+          (ongoingRideData as any).updatedAt ||
+          Date.now(),
+      ).getTime();
+      activities.push({
+        id,
+        type: "ride",
+        createdAt: time,
         data: ongoingRideData,
-      };
+      });
     }
 
-    // 2. Active delivery
+    // 2. Active package delivery
     if (ongoingDeliveryData) {
-      return {
-        type: "delivery" as const,
-        data: ongoingDeliveryData,
-      };
+      const id = (ongoingDeliveryData as any)._id || "active_delivery";
+      if (!addedIds.has(id)) {
+        addedIds.add(id);
+        const time = new Date(
+          (ongoingDeliveryData as any).createdAt ||
+            (ongoingDeliveryData as any).updatedAt ||
+            Date.now(),
+        ).getTime();
+        activities.push({
+          id,
+          type: "delivery",
+          createdAt: time,
+          data: ongoingDeliveryData,
+        });
+      }
     }
 
     // 3. Ongoing ride
     if (ongoingRide) {
-      return {
-        type: "ride" as const,
-        data: ongoingRide,
-      };
+      const id = (ongoingRide as any)._id || "ongoing_ride";
+      if (!addedIds.has(id)) {
+        addedIds.add(id);
+        const time = new Date(
+          (ongoingRide as any).createdAt ||
+            (ongoingRide as any).updatedAt ||
+            Date.now(),
+        ).getTime();
+        activities.push({
+          id,
+          type: "ride",
+          createdAt: time,
+          data: ongoingRide,
+        });
+      }
     }
 
-    // 4. Ongoing delivery (pick latest)
+    // 4. Ongoing package deliveries
     if (ongoingDeliveries && ongoingDeliveries.length > 0) {
-      // Sort by createdAt or updatedAt to get the latest
-      const latestDelivery = [...ongoingDeliveries].sort(
-        (a, b) =>
-          new Date(b.createdAt || b.updatedAt || 0).getTime() -
-          new Date(a.createdAt || a.updatedAt || 0).getTime(),
-      )[0];
-
-      return {
-        type: "delivery" as const,
-        data: latestDelivery,
-      };
+      ongoingDeliveries.forEach((d: any) => {
+        const id = d._id;
+        if (id && !addedIds.has(id)) {
+          addedIds.add(id);
+          const time = new Date(
+            d.createdAt || d.updatedAt || Date.now(),
+          ).getTime();
+          activities.push({ id, type: "delivery", createdAt: time, data: d });
+        }
+      });
     }
 
-    return null;
+    // 5. Active Food Orders
+    if (customerOrders && customerOrders.length > 0) {
+      const activeFoodOrders = customerOrders.filter((o) =>
+        ["placed", "preparing", "ready_for_pickup", "in_transit"].includes(
+          o.status,
+        ),
+      );
+      activeFoodOrders.forEach((o) => {
+        const id = o._id;
+        if (id && !addedIds.has(id)) {
+          addedIds.add(id);
+          const time = new Date(
+            o.createdAt || o.updatedAt || Date.now(),
+          ).getTime();
+          activities.push({ id, type: "food", createdAt: time, data: o });
+        }
+      });
+    }
+
+    // Sort by latest timestamp (descending)
+    return activities.sort((a, b) => b.createdAt - a.createdAt);
   };
 
-  const ongoingActivity = getOngoingActivity();
-
-  // Determine header text based on activity type
-  const getActivityHeaderText = () => {
-    // Active activities (highest priority) get "Jump back in"
-    if (ongoingRideData || ongoingDeliveryData) {
-      return "Jump back in";
-    }
-
-    // Ongoing activities get "Ongoing"
-    if (ongoingRide || (ongoingDeliveries && ongoingDeliveries.length > 0)) {
-      return "Ongoing";
-    }
-
-    return "Ongoing"; // fallback
-  };
+  const ongoingActivities = getAllOngoingActivities();
 
   const scrollRef = useRef<ScrollView | null>(null);
   const [activeIndex, setActiveIndex] = useState<number>(0);
@@ -196,6 +244,9 @@ const Home = () => {
       // Load delivery data
       fetchUserActiveDelivery();
       fetchUserOngoingDeliveries();
+
+      // Load food orders
+      fetchCustomerOrders();
     }
   }, [signedIn]);
 
@@ -464,9 +515,7 @@ const Home = () => {
                       </View>
                       <View style={{ marginTop: 12 }}>
                         <Text style={styles.serviceTitle}>Book ride</Text>
-                        <Text style={styles.serviceSubtitle}>
-                          Request ride
-                        </Text>
+                        <Text style={styles.serviceSubtitle}>Request ride</Text>
                       </View>
                     </Pressable>
 
@@ -487,9 +536,7 @@ const Home = () => {
                       </View>
                       <View style={{ marginTop: 12 }}>
                         <Text style={styles.serviceTitle}>Deliver</Text>
-                        <Text style={styles.serviceSubtitle}>
-                          Send package
-                        </Text>
+                        <Text style={styles.serviceSubtitle}>Send package</Text>
                       </View>
                     </Pressable>
 
@@ -512,16 +559,14 @@ const Home = () => {
                       </View>
                       <View style={{ marginTop: 12 }}>
                         <Text style={styles.serviceTitle}>Order food</Text>
-                        <Text style={styles.serviceSubtitle}>
-                          Tasty meals
-                        </Text>
+                        <Text style={styles.serviceSubtitle}>Tasty meals</Text>
                       </View>
                     </Pressable>
                   </View>
                 </View>
 
-                {/* Ongoing ride/package card */}
-                {ongoingActivity && (
+                {/* Ongoing ride/package/food card(s) */}
+                {ongoingActivities.length > 0 && (
                   <View style={{ marginTop: 22 }}>
                     <Text
                       style={{
@@ -531,9 +576,26 @@ const Home = () => {
                         marginBottom: 12,
                       }}
                     >
-                      {getActivityHeaderText()}
+                      Jump back in...
                     </Text>
-                    <OngoingCard activity={ongoingActivity} />
+                    {ongoingActivities.length === 1 ? (
+                      <OngoingCard activity={ongoingActivities[0]} />
+                    ) : (
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ gap: CARD_SPACING }}
+                        snapToInterval={CARD_WIDTH + CARD_SPACING}
+                        decelerationRate="fast"
+                        snapToAlignment="start"
+                      >
+                        {ongoingActivities.map((act) => (
+                          <View key={act.id} style={{ width: 300 }}>
+                            <OngoingCard activity={act} />
+                          </View>
+                        ))}
+                      </ScrollView>
+                    )}
                   </View>
                 )}
 
@@ -589,36 +651,54 @@ export default Home;
 const OngoingCard = ({
   activity,
 }: {
-  activity: { type: "ride" | "delivery"; data: any };
+  activity: { type: "ride" | "delivery" | "food"; data: any };
 }) => {
   const { showNotification } = useNotificationContext();
   const isPackage = activity.type === "delivery";
+  const isFood = activity.type === "food";
 
   // Extract data based on type
   const getActivityData = () => {
     if (activity.type === "ride") {
       const rideData = activity.data;
       return {
-        from: rideData.pickup?.address || "Pickup location",
-        to: rideData.destination?.address || "Destination",
+        title: "Ride in progress",
+        subtitle: `${rideData.pickup?.address || "Pickup"} → ${rideData.destination?.address || "Destination"}`,
         status:
           rideData.status === "expired"
             ? "timed out"
             : rideData.scheduled
               ? "scheduled"
               : rideData.status || "pending",
-        driver: rideData.driver?.user?.name || "Driver",
       };
-    } else {
+    } else if (activity.type === "delivery") {
       const deliveryData = activity.data;
       return {
-        from: deliveryData.pickup?.address || "Pickup location",
-        to: deliveryData.dropoff?.address || "Dropoff location",
+        title: "Package delivery",
+        subtitle: `${deliveryData.pickup?.address || "Pickup"} → ${deliveryData.dropoff?.address || "Dropoff"}`,
         status:
           deliveryData.status === "expired"
             ? "timed out"
             : deliveryData.status || "pending",
-        driver: deliveryData.driver?.user?.name || "Dispatch rider",
+      };
+    } else {
+      const foodData = activity.data;
+      const restaurantName =
+        typeof foodData.restaurant === "object"
+          ? foodData.restaurant.name
+          : foodData.restaurant_address?.name || "Food Order";
+
+      const itemsSummary =
+        foodData.items && foodData.items.length > 0
+          ? foodData.items
+              .map((i: any) => `${i.quantity}x ${i.name}`)
+              .join(", ")
+          : "Food order items";
+
+      return {
+        title: restaurantName,
+        subtitle: itemsSummary,
+        status: foodData.status || "placed",
       };
     }
   };
@@ -634,6 +714,8 @@ const OngoingCard = ({
       case "ongoing":
       case "in_transit":
       case "picked_up":
+      case "preparing":
+      case "ready_for_pickup":
         return { bg: "#2196f33a", text: "#2196f3" };
       case "completed":
       case "delivered":
@@ -642,6 +724,7 @@ const OngoingCard = ({
       case "failed":
       case "expired":
       case "timed out":
+      case "rejected":
         return { bg: "#f443363a", text: "#f44336" };
       default:
         return { bg: "#ff9d003a", text: "#ff9d00" };
@@ -652,14 +735,17 @@ const OngoingCard = ({
 
   const handlePress = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (!(await checkLocationPermission(showNotification))) return;
-    // Navigate to appropriate screen based on activity type
     if (activity.type === "ride") {
-      // Navigate to ride tracking or ride details
+      if (!(await checkLocationPermission(showNotification))) return;
       router.push("../(book)/book_ride");
-    } else {
-      // Navigate to delivery tracking or delivery details
-      router.push("../(book)/book_delivery"); // You might want to create a deliveries screen
+    } else if (activity.type === "delivery") {
+      if (!(await checkLocationPermission(showNotification))) return;
+      router.push("../(book)/book_delivery");
+    } else if (activity.type === "food") {
+      router.push({
+        pathname: "/food/track",
+        params: { orderId: activity.data._id },
+      });
     }
   };
 
@@ -669,16 +755,22 @@ const OngoingCard = ({
         <View style={styles.ongoingIconBox}>
           {isPackage ? (
             <Feather name="truck" size={18} color="#fff" />
+          ) : isFood ? (
+            <Image
+              source={require("../../../assets/images/icons/food-icon-fill.png")}
+              style={{ width: 18, height: 18, tintColor: "#fff" }}
+              contentFit="contain"
+            />
           ) : (
             <Feather name="navigation" size={18} color="#fff" />
           )}
         </View>
         <View style={styles.ongoingInfo}>
           <Text style={styles.ongoingTitle} numberOfLines={1}>
-            {isPackage ? "Package delivery" : "Ride in progress"}
+            {ongoing.title}
           </Text>
           <Text style={styles.ongoingSubtitle} numberOfLines={1}>
-            {ongoing.from} → {ongoing.to}
+            {ongoing.subtitle}
           </Text>
         </View>
       </View>
