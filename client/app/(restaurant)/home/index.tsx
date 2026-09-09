@@ -273,7 +273,10 @@ const RestaurantHome = () => {
                 <Text style={styles.tool_sub}>Edit items & info</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.tool_card}>
+              <TouchableOpacity
+                style={styles.tool_card}
+                onPress={() => router.push("/(restaurant)/transactions" as any)}
+              >
                 <View style={styles.tool_icon_box}>
                   <Feather name="dollar-sign" size={18} color="#fff" />
                 </View>
