@@ -57,9 +57,6 @@ const MOCK_REVIEWS: ReviewItem[] = [
     },
     food_order_id: "#IG-9402",
     createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    vendor_reply:
-      "Thank you so much Chidimma! We take huge pride in our firewood jollof. Hope to serve you again soon! 🔥",
-    vendor_reply_at: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
   },
   {
     _id: "rev_2",
@@ -88,8 +85,6 @@ const MOCK_REVIEWS: ReviewItem[] = [
     },
     food_order_id: "#IG-9340",
     createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    vendor_reply:
-      "Hi Blessing, thanks for the feedback! You can add extra meat options under our soup customizer. Glad you enjoyed the flavor!",
   },
   {
     _id: "rev_4",
