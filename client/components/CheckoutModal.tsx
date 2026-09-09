@@ -10,6 +10,9 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -112,171 +115,182 @@ const CheckoutModal: React.FC<Props> = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modal_overlay}>
-        <View
-          style={[
-            styles.modal_container,
-            { paddingBottom: Platform.OS === "ios" ? insets.bottom + 16 : 24 },
-          ]}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.header_title}>Review Order</Text>
-              <Text style={styles.header_sub}>{restaurantName}</Text>
-            </View>
-            <TouchableOpacity style={styles.close_btn} onPress={onClose}>
-              <Feather name="x" size={20} color="#fff" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scroll_content}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)" }}
+      >
+        <View style={styles.modal_overlay}>
+          <View
+            style={[
+              styles.modal_container,
+              { paddingBottom: Platform.OS === "ios" ? insets.bottom + 16 : 24 },
+            ]}
           >
-            {/* Basket Items List */}
-            <View style={styles.card}>
-              <View style={styles.card_header}>
-                <Text style={styles.card_title}>Order Summary</Text>
-                <Text style={styles.item_count}>{items.length} item(s)</Text>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.header_title}>Review Order</Text>
+                <Text style={styles.header_sub}>{restaurantName}</Text>
               </View>
+              <TouchableOpacity style={styles.close_btn} onPress={onClose}>
+                <Feather name="x" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
 
-              {items.length === 0 ? (
-                <Text style={styles.empty_text}>Your basket is empty</Text>
-              ) : (
-                items.map((item, idx) => {
-                  const menuItemObj =
-                    typeof item.menu_item === "object" ? item.menu_item : null;
-                  const name = menuItemObj?.name || "Menu Item";
-                  const image = menuItemObj?.image;
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={styles.scroll_content}
+            >
+              {/* Basket Items List */}
+              <View style={styles.card}>
+                <View style={styles.card_header}>
+                  <Text style={styles.card_title}>Order Summary</Text>
+                  <Text style={styles.item_count}>{items.length} item(s)</Text>
+                </View>
 
-                  return (
-                    <View key={item._id || idx} style={styles.item_row}>
-                      {image ? (
-                        <Image
-                          source={{ uri: image }}
-                          style={styles.item_thumb}
-                          contentFit="cover"
-                        />
-                      ) : (
-                        <View style={styles.item_thumb_placeholder}>
-                          <Feather name="coffee" size={16} color="#777" />
-                        </View>
-                      )}
+                {items.length === 0 ? (
+                  <Text style={styles.empty_text}>Your basket is empty</Text>
+                ) : (
+                  items.map((item, idx) => {
+                    const menuItemObj =
+                      typeof item.menu_item === "object" ? item.menu_item : null;
+                    const name = menuItemObj?.name || "Menu Item";
+                    const image = menuItemObj?.image;
 
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.item_name}>{name}</Text>
-                        {item.selected_options && item.selected_options.length > 0 && (
-                          <Text style={styles.item_options}>
-                            {item.selected_options
-                              .map((o) => o.option_name)
-                              .join(", ")}
-                          </Text>
-                        )}
-                        <Text style={styles.item_price}>
-                          ₦{item.item_total.toLocaleString()}
-                        </Text>
-                      </View>
-
-                      {/* Quantity Controls */}
-                      <View style={styles.qty_controls}>
-                        <TouchableOpacity
-                          style={styles.qty_btn}
-                          onPress={() => {
-                            if (item._id) {
-                              Haptics.impactAsync(
-                                Haptics.ImpactFeedbackStyle.Light
-                              );
-                              updateItemQuantity(
-                                item._id,
-                                item.quantity - 1,
-                                restaurantId
-                              );
-                            }
-                          }}
-                        >
-                          <Feather
-                            name={item.quantity === 1 ? "trash-2" : "minus"}
-                            size={13}
-                            color={item.quantity === 1 ? "#f44336" : "#fff"}
+                    return (
+                      <View key={item._id || idx} style={styles.item_row}>
+                        {image ? (
+                          <Image
+                            source={{ uri: image }}
+                            style={styles.item_thumb}
+                            contentFit="cover"
                           />
-                        </TouchableOpacity>
-                        <Text style={styles.qty_text}>{item.quantity}</Text>
-                        <TouchableOpacity
-                          style={styles.qty_btn}
-                          onPress={() => {
-                            if (item._id) {
-                              Haptics.impactAsync(
-                                Haptics.ImpactFeedbackStyle.Light
-                              );
-                              updateItemQuantity(
-                                item._id,
-                                item.quantity + 1,
-                                restaurantId
-                              );
-                            }
-                          }}
-                        >
-                          <Feather name="plus" size={13} color="#fff" />
-                        </TouchableOpacity>
+                        ) : (
+                          <View style={styles.item_thumb_placeholder}>
+                            <Feather name="coffee" size={16} color="#777" />
+                          </View>
+                        )}
+
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.item_name}>{name}</Text>
+                          {item.selected_options && item.selected_options.length > 0 && (
+                            <Text style={styles.item_options}>
+                              {item.selected_options
+                                .map((o) => o.option_name)
+                                .join(", ")}
+                            </Text>
+                          )}
+                          <Text style={styles.item_price}>
+                            ₦{item.item_total.toLocaleString()}
+                          </Text>
+                        </View>
+
+                        {/* Quantity Controls */}
+                        <View style={styles.qty_controls}>
+                          <TouchableOpacity
+                            style={styles.qty_btn}
+                            onPress={() => {
+                              if (item._id) {
+                                Haptics.impactAsync(
+                                  Haptics.ImpactFeedbackStyle.Light
+                                );
+                                updateItemQuantity(
+                                  item._id,
+                                  item.quantity - 1,
+                                  restaurantId
+                                );
+                              }
+                            }}
+                          >
+                            <Feather
+                              name={item.quantity === 1 ? "trash-2" : "minus"}
+                              size={13}
+                              color={item.quantity === 1 ? "#f44336" : "#fff"}
+                            />
+                          </TouchableOpacity>
+                          <Text style={styles.qty_text}>{item.quantity}</Text>
+                          <TouchableOpacity
+                            style={styles.qty_btn}
+                            onPress={() => {
+                              if (item._id) {
+                                Haptics.impactAsync(
+                                  Haptics.ImpactFeedbackStyle.Light
+                                );
+                                updateItemQuantity(
+                                  item._id,
+                                  item.quantity + 1,
+                                  restaurantId
+                                );
+                              }
+                            }}
+                          >
+                            <Feather name="plus" size={13} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                    </View>
-                  );
-                })
-              )}
-            </View>
-
-            {/* Delivery Address Section */}
-            <View style={styles.card}>
-              <Text style={styles.card_title}>Delivery Location</Text>
-
-              <View style={styles.input_box}>
-                <Feather name="map-pin" size={16} color="#777" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Street Address, City (e.g., 12 Marina Blvd)"
-                  placeholderTextColor="#555"
-                  value={address}
-                  onChangeText={setAddress}
-                />
+                    );
+                  })
+                )}
               </View>
 
-              <View style={styles.input_box}>
-                <Feather name="flag" size={16} color="#777" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Landmark / Flat / Apartment No."
-                  placeholderTextColor="#555"
-                  value={landmark}
-                  onChangeText={setLandmark}
-                />
-              </View>
+              {/* Delivery Address Section */}
+              <View style={styles.card}>
+                <Text style={styles.card_title}>Delivery Location</Text>
 
-              <View style={styles.row_inputs}>
-                <View style={[styles.input_box, { flex: 1 }]}>
-                  <Feather name="user" size={16} color="#777" />
+                <View style={styles.input_box}>
+                  <Feather name="map-pin" size={16} color="#777" />
                   <TextInput
                     style={styles.input}
-                    placeholder="Contact Name"
+                    placeholder="Street Address, City (e.g., 12 Marina Blvd)"
                     placeholderTextColor="#555"
-                    value={contactName}
-                    onChangeText={setContactName}
+                    value={address}
+                    onChangeText={setAddress}
+                    returnKeyType="next"
                   />
                 </View>
 
-                <View style={[styles.input_box, { flex: 1 }]}>
-                  <Feather name="phone" size={16} color="#777" />
+                <View style={styles.input_box}>
+                  <Feather name="flag" size={16} color="#777" />
                   <TextInput
                     style={styles.input}
-                    placeholder="Phone Number"
+                    placeholder="Landmark / Flat / Apartment No."
                     placeholderTextColor="#555"
-                    keyboardType="phone-pad"
-                    value={contactPhone}
-                    onChangeText={setContactPhone}
+                    value={landmark}
+                    onChangeText={setLandmark}
+                    returnKeyType="next"
                   />
                 </View>
+
+                <View style={styles.row_inputs}>
+                  <View style={[styles.input_box, { flex: 1 }]}>
+                    <Feather name="user" size={16} color="#777" />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Contact Name"
+                      placeholderTextColor="#555"
+                      value={contactName}
+                      onChangeText={setContactName}
+                      returnKeyType="next"
+                    />
+                  </View>
+
+                  <View style={[styles.input_box, { flex: 1 }]}>
+                    <Feather name="phone" size={16} color="#777" />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Phone Number"
+                      placeholderTextColor="#555"
+                      keyboardType="phone-pad"
+                      value={contactPhone}
+                      onChangeText={setContactPhone}
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
+                    />
+                  </View>
+                </View>
               </View>
-            </View>
 
             {/* Payment & Wallet Summary */}
             <View style={styles.card}>
@@ -350,8 +364,9 @@ const CheckoutModal: React.FC<Props> = ({
           </View>
         </View>
       </View>
-    </Modal>
-  );
+    </KeyboardAvoidingView>
+  </Modal>
+);
 };
 
 export default CheckoutModal;

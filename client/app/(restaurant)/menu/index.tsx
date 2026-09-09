@@ -10,6 +10,9 @@ import {
   Switch,
   Platform,
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -513,6 +516,9 @@ const RestaurantMenu = () => {
             placeholderTextColor="#666"
             value={searchQuery}
             onChangeText={setSearchQuery}
+            returnKeyType="search"
+            onSubmitEditing={Keyboard.dismiss}
+            blurOnSubmit={true}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>
@@ -659,6 +665,8 @@ const RestaurantMenu = () => {
       {/* ── Menu Items List ── */}
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={[
           styles.scroll_content,
           { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
@@ -839,57 +847,69 @@ const RestaurantMenu = () => {
         animationType="fade"
         onRequestClose={() => setCatModalVisible(false)}
       >
-        <View style={styles.modal_backdrop}>
-          <View style={styles.modal_card}>
-            <View style={styles.modal_header}>
-              <Text style={styles.modal_title}>
-                {editingCat ? "Edit Category" : "Add Menu Category"}
-              </Text>
-              <TouchableOpacity onPress={() => setCatModalVisible(false)}>
-                <Feather name="x" size={20} color="#aaa" />
-              </TouchableOpacity>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)" }}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.modal_backdrop}>
+              <TouchableWithoutFeedback onPress={() => {}} accessible={false}>
+                <View style={styles.modal_card}>
+                  <View style={styles.modal_header}>
+                    <Text style={styles.modal_title}>
+                      {editingCat ? "Edit Category" : "Add Menu Category"}
+                    </Text>
+                    <TouchableOpacity onPress={() => setCatModalVisible(false)}>
+                      <Feather name="x" size={20} color="#aaa" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.modal_body}>
+                    <Text style={styles.input_label}>CATEGORY NAME *</Text>
+                    <TextInput
+                      style={styles.text_input}
+                      placeholder="e.g. Gourmet Pizzas, Desserts"
+                      placeholderTextColor="#666"
+                      value={catNameInput}
+                      onChangeText={setCatNameInput}
+                      returnKeyType="next"
+                    />
+
+                    <Text style={styles.input_label}>DESCRIPTION (OPTIONAL)</Text>
+                    <TextInput
+                      style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
+                      placeholder="Brief category description for customers..."
+                      placeholderTextColor="#666"
+                      multiline
+                      value={catDescInput}
+                      onChangeText={setCatDescInput}
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
+                    />
+                  </View>
+
+                  <View style={styles.modal_footer}>
+                    <TouchableOpacity
+                      style={styles.modal_cancel_btn}
+                      onPress={() => setCatModalVisible(false)}
+                    >
+                      <Text style={styles.modal_cancel_text}>Cancel</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.modal_save_btn}
+                      onPress={handleSaveCategory}
+                    >
+                      <Text style={styles.modal_save_text}>
+                        {editingCat ? "Save Changes" : "Create Category"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-
-            <View style={styles.modal_body}>
-              <Text style={styles.input_label}>CATEGORY NAME *</Text>
-              <TextInput
-                style={styles.text_input}
-                placeholder="e.g. Gourmet Pizzas, Desserts"
-                placeholderTextColor="#666"
-                value={catNameInput}
-                onChangeText={setCatNameInput}
-              />
-
-              <Text style={styles.input_label}>DESCRIPTION (OPTIONAL)</Text>
-              <TextInput
-                style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
-                placeholder="Brief category description for customers..."
-                placeholderTextColor="#666"
-                multiline
-                value={catDescInput}
-                onChangeText={setCatDescInput}
-              />
-            </View>
-
-            <View style={styles.modal_footer}>
-              <TouchableOpacity
-                style={styles.modal_cancel_btn}
-                onPress={() => setCatModalVisible(false)}
-              >
-                <Text style={styles.modal_cancel_text}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modal_save_btn}
-                onPress={handleSaveCategory}
-              >
-                <Text style={styles.modal_save_text}>
-                  {editingCat ? "Save Changes" : "Create Category"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Clean Add / Edit Item Sheet (Simplified Form) ── */}
@@ -898,154 +918,166 @@ const RestaurantMenu = () => {
         animationType="slide"
         onRequestClose={() => setItemModalVisible(false)}
       >
-        <View
-          style={[
-            styles.sheet_container,
-            { paddingTop: Platform.OS === "ios" ? insets.top + 10 : 20 },
-          ]}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, backgroundColor: "#121212" }}
         >
-          <View style={styles.sheet_header}>
-            <TouchableOpacity
-              style={styles.sheet_close_btn}
-              onPress={() => setItemModalVisible(false)}
-            >
-              <Feather name="x" size={20} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.sheet_title}>
-              {editingItem ? "Edit Menu Item" : "Create New Menu Item"}
-            </Text>
-            <TouchableOpacity
-              style={styles.sheet_save_top_btn}
-              onPress={handleSaveItem}
-            >
-              <Text style={styles.sheet_save_top_text}>Save</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.sheet_scroll_content,
-              { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
+          <View
+            style={[
+              styles.sheet_container,
+              { paddingTop: Platform.OS === "ios" ? insets.top + 10 : 20 },
             ]}
           >
-            {/* Image Upload Banner */}
-            <TouchableOpacity
-              style={styles.image_picker_box}
-              activeOpacity={0.8}
-              onPress={pickItemImage}
-            >
-              {itemImage ? (
-                <Image
-                  source={{ uri: itemImage }}
-                  style={styles.image_picker_img}
-                  contentFit="cover"
-                />
-              ) : (
-                <View style={styles.image_picker_placeholder}>
-                  <Feather name="camera" size={28} color="#9CA3AF" />
-                  <Text style={styles.image_picker_text}>
-                    Tap to upload item photo
-                  </Text>
-                  <Text style={styles.image_picker_sub}>
-                    High quality JPG or PNG (Max 5MB)
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            {/* Basic Info Fields */}
-            <View style={styles.form_section}>
-              <Text style={styles.input_label}>ITEM NAME *</Text>
-              <TextInput
-                style={styles.text_input}
-                placeholder="e.g. Pepperoni Feast Pizza"
-                placeholderTextColor="#666"
-                value={itemName}
-                onChangeText={setItemName}
-              />
-
-              <Text style={styles.input_label}>CATEGORY *</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-                <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                  {categories.map((c) => (
-                    <TouchableOpacity
-                      key={c.id}
-                      style={[
-                        styles.cat_select_chip,
-                        itemCategory === c.id && styles.cat_select_chip_active,
-                      ]}
-                      onPress={() => setItemCategory(c.id)}
-                    >
-                      <Text
-                        style={[
-                          styles.cat_select_chip_text,
-                          itemCategory === c.id && styles.cat_select_chip_text_active,
-                        ]}
-                      >
-                        {c.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-
-                  <TouchableOpacity
-                    style={styles.add_cat_chip_btn}
-                    onPress={() => handleOpenCatModal()}
-                  >
-                    <Feather name="plus" size={14} color="#fff" />
-                    <Text style={styles.add_cat_chip_btn_text}>New Category</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-
-              <View style={styles.row_inputs}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.input_label}>PRICE (₦) *</Text>
-                  <TextInput
-                    style={styles.text_input}
-                    placeholder="e.g. 4500"
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    value={itemPrice}
-                    onChangeText={setItemPrice}
-                  />
-                </View>
-
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.input_label}>PREP TIME (MINS)</Text>
-                  <TextInput
-                    style={styles.text_input}
-                    placeholder="e.g. 15"
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    value={itemPrepTime}
-                    onChangeText={setItemPrepTime}
-                  />
-                </View>
-              </View>
-
-              <Text style={styles.input_label}>DESCRIPTION</Text>
-              <TextInput
-                style={[styles.text_input, { height: 90, textAlignVertical: "top" }]}
-                placeholder="Describe ingredient details, taste, portion size..."
-                placeholderTextColor="#666"
-                multiline
-                value={itemDescription}
-                onChangeText={setItemDescription}
-              />
+            <View style={styles.sheet_header}>
+              <TouchableOpacity
+                style={styles.sheet_close_btn}
+                onPress={() => setItemModalVisible(false)}
+              >
+                <Feather name="x" size={20} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.sheet_title}>
+                {editingItem ? "Edit Menu Item" : "Create New Menu Item"}
+              </Text>
+              <TouchableOpacity
+                style={styles.sheet_save_top_btn}
+                onPress={handleSaveItem}
+              >
+                <Text style={styles.sheet_save_top_text}>Save</Text>
+              </TouchableOpacity>
             </View>
 
-            {/* Bottom Save Button */}
-            <TouchableOpacity
-              style={styles.sheet_save_main_btn}
-              onPress={handleSaveItem}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={[
+                styles.sheet_scroll_content,
+                { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
+              ]}
             >
-              <Text style={styles.sheet_save_main_text}>
-                {editingItem ? "Update Menu Item" : "Create Menu Item"}
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+              {/* Image Upload Banner */}
+              <TouchableOpacity
+                style={styles.image_picker_box}
+                activeOpacity={0.8}
+                onPress={pickItemImage}
+              >
+                {itemImage ? (
+                  <Image
+                    source={{ uri: itemImage }}
+                    style={styles.image_picker_img}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View style={styles.image_picker_placeholder}>
+                    <Feather name="camera" size={28} color="#9CA3AF" />
+                    <Text style={styles.image_picker_text}>
+                      Tap to upload item photo
+                    </Text>
+                    <Text style={styles.image_picker_sub}>
+                      High quality JPG or PNG (Max 5MB)
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* Basic Info Fields */}
+              <View style={styles.form_section}>
+                <Text style={styles.input_label}>ITEM NAME *</Text>
+                <TextInput
+                  style={styles.text_input}
+                  placeholder="e.g. Pepperoni Feast Pizza"
+                  placeholderTextColor="#666"
+                  value={itemName}
+                  onChangeText={setItemName}
+                  returnKeyType="next"
+                />
+
+                <Text style={styles.input_label}>CATEGORY *</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                    {categories.map((c) => (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[
+                          styles.cat_select_chip,
+                          itemCategory === c.id && styles.cat_select_chip_active,
+                        ]}
+                        onPress={() => setItemCategory(c.id)}
+                      >
+                        <Text
+                          style={[
+                            styles.cat_select_chip_text,
+                            itemCategory === c.id && styles.cat_select_chip_text_active,
+                          ]}
+                        >
+                          {c.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+
+                    <TouchableOpacity
+                      style={styles.add_cat_chip_btn}
+                      onPress={() => handleOpenCatModal()}
+                    >
+                      <Feather name="plus" size={14} color="#fff" />
+                      <Text style={styles.add_cat_chip_btn_text}>New Category</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+
+                <View style={styles.row_inputs}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.input_label}>PRICE (₦) *</Text>
+                    <TextInput
+                      style={styles.text_input}
+                      placeholder="e.g. 4500"
+                      placeholderTextColor="#666"
+                      keyboardType="numeric"
+                      value={itemPrice}
+                      onChangeText={setItemPrice}
+                      returnKeyType="next"
+                    />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.input_label}>PREP TIME (MINS)</Text>
+                    <TextInput
+                      style={styles.text_input}
+                      placeholder="e.g. 15"
+                      placeholderTextColor="#666"
+                      keyboardType="numeric"
+                      value={itemPrepTime}
+                      onChangeText={setItemPrepTime}
+                      returnKeyType="next"
+                    />
+                  </View>
+                </View>
+
+                <Text style={styles.input_label}>DESCRIPTION</Text>
+                <TextInput
+                  style={[styles.text_input, { height: 90, textAlignVertical: "top" }]}
+                  placeholder="Describe ingredient details, taste, portion size..."
+                  placeholderTextColor="#666"
+                  multiline
+                  value={itemDescription}
+                  onChangeText={setItemDescription}
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+              </View>
+
+              {/* Bottom Save Button */}
+              <TouchableOpacity
+                style={styles.sheet_save_main_btn}
+                onPress={handleSaveItem}
+              >
+                <Text style={styles.sheet_save_main_text}>
+                  {editingItem ? "Update Menu Item" : "Create Menu Item"}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Delete Confirmation Modal ── */}

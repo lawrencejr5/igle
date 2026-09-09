@@ -8,6 +8,9 @@ import {
   TextInput,
   Modal,
   Platform,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -165,173 +168,182 @@ const ItemOptionsModal: React.FC<Props> = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modal_overlay}>
-        <View
-          style={[
-            styles.modal_container,
-            { paddingBottom: Platform.OS === "ios" ? insets.bottom + 16 : 24 },
-          ]}
-        >
-          {/* Top Bar / Header */}
-          <View style={styles.header}>
-            <Text style={styles.header_title} numberOfLines={1}>
-              {item.name}
-            </Text>
-            <TouchableOpacity style={styles.close_btn} onPress={onClose}>
-              <Feather name="x" size={20} color="#fff" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scroll_content}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)" }}
+      >
+        <View style={styles.modal_overlay}>
+          <View
+            style={[
+              styles.modal_container,
+              { paddingBottom: Platform.OS === "ios" ? insets.bottom + 16 : 24 },
+            ]}
           >
-            {/* Image & Description */}
-            <View style={styles.item_hero}>
-              <Image
-                source={item.image ? { uri: item.image } : DEFAULT_FOOD_IMAGE}
-                style={styles.item_image}
-                contentFit="cover"
-              />
-              <View style={styles.item_meta}>
-                <Text style={styles.item_name}>{item.name}</Text>
-                {item.description ? (
-                  <Text style={styles.item_desc}>{item.description}</Text>
-                ) : null}
-                <Text style={styles.item_base_price}>
-                  Base Price: ₦{item.price.toLocaleString()}
-                </Text>
-              </View>
-            </View>
-
-            {/* Option Groups */}
-            {optionGroups.map((group, idx) => {
-              const selectedInGroup = selectedOptions[group.name] || [];
-              const maxSel = group.max_selection || 1;
-
-              return (
-                <View key={idx} style={styles.option_group_box}>
-                  <View style={styles.group_header}>
-                    <Text style={styles.group_name}>{group.name}</Text>
-                    <View style={styles.group_badge}>
-                      <Text style={styles.group_badge_text}>
-                        {group.required ? "Required" : "Optional"}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.group_sub}>
-                    {maxSel === 1
-                      ? "Select 1 option"
-                      : `Select up to ${maxSel} options`}
-                  </Text>
-
-                  {group.options.map((opt, optIdx) => {
-                    const isSelected = selectedInGroup.some(
-                      (o) => o.option_name === opt.name
-                    );
-
-                    return (
-                      <TouchableOpacity
-                        key={optIdx}
-                        style={[
-                          styles.option_row,
-                          isSelected && styles.option_row_selected,
-                        ]}
-                        activeOpacity={0.8}
-                        onPress={() =>
-                          toggleOption(group, opt.name, opt.price_modifier || 0)
-                        }
-                      >
-                        <View style={styles.option_left}>
-                          <View
-                            style={[
-                              styles.checkbox,
-                              maxSel === 1 && styles.radio,
-                              isSelected && styles.checkbox_active,
-                            ]}
-                          >
-                            {isSelected && (
-                              <Feather
-                                name="check"
-                                size={12}
-                                color="#121212"
-                              />
-                            )}
-                          </View>
-                          <Text style={styles.option_name}>{opt.name}</Text>
-                        </View>
-
-                        {opt.price_modifier ? (
-                          <Text style={styles.option_price}>
-                            +₦{opt.price_modifier.toLocaleString()}
-                          </Text>
-                        ) : (
-                          <Text style={styles.option_free}>Free</Text>
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              );
-            })}
-
-            {/* Special Instructions */}
-            <View style={styles.instructions_box}>
-              <Text style={styles.instructions_label}>Special Instructions</Text>
-              <TextInput
-                style={styles.instructions_input}
-                placeholder="Any allergies or preparation requests?"
-                placeholderTextColor="#555"
-                value={specialInstructions}
-                onChangeText={setSpecialInstructions}
-                multiline={true}
-                numberOfLines={3}
-              />
-            </View>
-          </ScrollView>
-
-          {/* Bottom Bar: Quantity & Add Button */}
-          <View style={styles.bottom_bar}>
-            <View style={styles.qty_container}>
-              <TouchableOpacity
-                style={styles.qty_btn}
-                onPress={() => {
-                  if (quantity > 1) {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setQuantity((prev) => prev - 1);
-                  }
-                }}
-              >
-                <Feather name="minus" size={16} color="#fff" />
-              </TouchableOpacity>
-              <Text style={styles.qty_text}>{quantity}</Text>
-              <TouchableOpacity
-                style={styles.qty_btn}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setQuantity((prev) => prev + 1);
-                }}
-              >
-                <Feather name="plus" size={16} color="#fff" />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.add_to_cart_btn,
-                !isValidSelections && styles.btn_disabled,
-              ]}
-              disabled={!isValidSelections}
-              onPress={handleAdd}
-            >
-              <Text style={styles.add_btn_text}>
-                Add to Basket • ₦{totalPrice.toLocaleString()}
+            {/* Top Bar / Header */}
+            <View style={styles.header}>
+              <Text style={styles.header_title} numberOfLines={1}>
+                {item.name}
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.close_btn} onPress={onClose}>
+                <Feather name="x" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={styles.scroll_content}
+            >
+              {/* Image & Description */}
+              <View style={styles.item_hero}>
+                <Image
+                  source={item.image ? { uri: item.image } : DEFAULT_FOOD_IMAGE}
+                  style={styles.item_image}
+                  contentFit="cover"
+                />
+                <View style={styles.item_meta}>
+                  <Text style={styles.item_name}>{item.name}</Text>
+                  {item.description ? (
+                    <Text style={styles.item_desc}>{item.description}</Text>
+                  ) : null}
+                  <Text style={styles.item_base_price}>
+                    Base Price: ₦{item.price.toLocaleString()}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Option Groups */}
+              {optionGroups.map((group, idx) => {
+                const selectedInGroup = selectedOptions[group.name] || [];
+                const maxSel = group.max_selection || 1;
+
+                return (
+                  <View key={idx} style={styles.option_group_box}>
+                    <View style={styles.group_header}>
+                      <Text style={styles.group_name}>{group.name}</Text>
+                      <View style={styles.group_badge}>
+                        <Text style={styles.group_badge_text}>
+                          {group.required ? "Required" : "Optional"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.group_sub}>
+                      {maxSel === 1
+                        ? "Select 1 option"
+                        : `Select up to ${maxSel} options`}
+                    </Text>
+
+                    {group.options.map((opt, optIdx) => {
+                      const isSelected = selectedInGroup.some(
+                        (o) => o.option_name === opt.name
+                      );
+
+                      return (
+                        <TouchableOpacity
+                          key={optIdx}
+                          style={[
+                            styles.option_row,
+                            isSelected && styles.option_row_selected,
+                          ]}
+                          activeOpacity={0.8}
+                          onPress={() =>
+                            toggleOption(group, opt.name, opt.price_modifier || 0)
+                          }
+                        >
+                          <View style={styles.option_left}>
+                            <View
+                              style={[
+                                styles.checkbox,
+                                maxSel === 1 && styles.radio,
+                                isSelected && styles.checkbox_active,
+                              ]}
+                            >
+                              {isSelected && (
+                                <Feather
+                                  name="check"
+                                  size={12}
+                                  color="#121212"
+                                />
+                              )}
+                            </View>
+                            <Text style={styles.option_name}>{opt.name}</Text>
+                          </View>
+
+                          {opt.price_modifier ? (
+                            <Text style={styles.option_price}>
+                              +₦{opt.price_modifier.toLocaleString()}
+                            </Text>
+                          ) : (
+                            <Text style={styles.option_free}>Free</Text>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+
+              {/* Special Instructions */}
+              <View style={styles.instructions_box}>
+                <Text style={styles.instructions_label}>Special Instructions</Text>
+                <TextInput
+                  style={styles.instructions_input}
+                  placeholder="Any allergies or preparation requests?"
+                  placeholderTextColor="#555"
+                  value={specialInstructions}
+                  onChangeText={setSpecialInstructions}
+                  multiline={true}
+                  numberOfLines={3}
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+              </View>
+            </ScrollView>
+
+            {/* Bottom Bar: Quantity & Add Button */}
+            <View style={styles.bottom_bar}>
+              <View style={styles.qty_container}>
+                <TouchableOpacity
+                  style={styles.qty_btn}
+                  onPress={() => {
+                    if (quantity > 1) {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setQuantity((prev) => prev - 1);
+                    }
+                  }}
+                >
+                  <Feather name="minus" size={16} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.qty_text}>{quantity}</Text>
+                <TouchableOpacity
+                  style={styles.qty_btn}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setQuantity((prev) => prev + 1);
+                  }}
+                >
+                  <Feather name="plus" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.add_to_cart_btn,
+                  !isValidSelections && styles.btn_disabled,
+                ]}
+                disabled={!isValidSelections}
+                onPress={handleAdd}
+              >
+                <Text style={styles.add_btn_text}>
+                  Add to Basket • ₦{totalPrice.toLocaleString()}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

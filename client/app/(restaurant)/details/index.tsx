@@ -10,6 +10,9 @@ import {
   Platform,
   ActivityIndicator,
   Modal,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
@@ -228,49 +231,55 @@ const EditRestaurantDetails = () => {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14 },
-      ]}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1, backgroundColor: "#121212" }}
     >
-      {/* ── Top Nav Header ── */}
-      <View style={styles.top_header}>
-        <TouchableOpacity
-          style={styles.back_btn}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.back();
-          }}
-        >
-          <Feather name="arrow-left" size={22} color="#fff" />
-        </TouchableOpacity>
-
-        <View style={styles.header_center}>
-          <Text style={styles.header_title}>Restaurant Profile</Text>
-          <Text style={styles.header_sub}>Edit banner, name & hours</Text>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.save_header_btn, saving && styles.save_btn_disabled]}
-          disabled={saving}
-          onPress={handleSaveDetails}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color="#121212" />
-          ) : (
-            <Text style={styles.save_header_text}>Save</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scroll_content,
-          { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
+      <View
+        style={[
+          styles.container,
+          { paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14 },
         ]}
       >
+        {/* ── Top Nav Header ── */}
+        <View style={styles.top_header}>
+          <TouchableOpacity
+            style={styles.back_btn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+          >
+            <Feather name="arrow-left" size={22} color="#fff" />
+          </TouchableOpacity>
+
+          <View style={styles.header_center}>
+            <Text style={styles.header_title}>Restaurant Profile</Text>
+            <Text style={styles.header_sub}>Edit banner, name & hours</Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.save_header_btn, saving && styles.save_btn_disabled]}
+            disabled={saving}
+            onPress={handleSaveDetails}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#121212" />
+            ) : (
+              <Text style={styles.save_header_text}>Save</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={[
+            styles.scroll_content,
+            { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
+          ]}
+        >
         {/* ── Banner & Logo Upload Header ── */}
         <View style={styles.hero_card}>
           {/* Banner Container */}
@@ -627,73 +636,86 @@ const EditRestaurantDetails = () => {
         animationType="fade"
         onRequestClose={() => setTimePickerVisible(false)}
       >
-        <View style={styles.modal_overlay}>
-          <Pressable
-            style={styles.modal_backdrop}
-            onPress={() => setTimePickerVisible(false)}
-          />
-          <View style={styles.modal_content}>
-            <Text style={styles.modal_title}>
-              Set {activeTimeField === "open" ? "Opening" : "Closing"} Time
-            </Text>
-            <Text style={styles.modal_sub}>
-              Enter time in format (e.g. 08:00 AM or 10:00 PM)
-            </Text>
-
-            <TextInput
-              style={styles.time_modal_input}
-              value={tempTimeInput}
-              onChangeText={setTempTimeInput}
-              autoFocus
-              placeholder="08:00 AM"
-              placeholderTextColor="#666"
-            />
-
-            {/* Preset Time Quick Chips */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.time_presets_row}
-            >
-              {[
-                "07:00 AM",
-                "08:00 AM",
-                "09:00 AM",
-                "10:00 AM",
-                "06:00 PM",
-                "08:00 PM",
-                "10:00 PM",
-                "11:00 PM",
-              ].map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={styles.preset_chip}
-                  onPress={() => setTempTimeInput(t)}
-                >
-                  <Text style={styles.preset_chip_text}>{t}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <View style={styles.modal_actions_row}>
-              <TouchableOpacity
-                style={styles.modal_cancel_btn}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)" }}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.modal_overlay}>
+              <Pressable
+                style={styles.modal_backdrop}
                 onPress={() => setTimePickerVisible(false)}
-              >
-                <Text style={styles.modal_cancel_text}>Cancel</Text>
-              </TouchableOpacity>
+              />
+              <TouchableWithoutFeedback onPress={() => {}} accessible={false}>
+                <View style={styles.modal_content}>
+                  <Text style={styles.modal_title}>
+                    Set {activeTimeField === "open" ? "Opening" : "Closing"} Time
+                  </Text>
+                  <Text style={styles.modal_sub}>
+                    Enter time in format (e.g. 08:00 AM or 10:00 PM)
+                  </Text>
 
-              <TouchableOpacity
-                style={styles.modal_confirm_btn}
-                onPress={confirmTimePicker}
-              >
-                <Text style={styles.modal_confirm_text}>Set Time</Text>
-              </TouchableOpacity>
+                  <TextInput
+                    style={styles.time_modal_input}
+                    value={tempTimeInput}
+                    onChangeText={setTempTimeInput}
+                    autoFocus
+                    placeholder="08:00 AM"
+                    placeholderTextColor="#666"
+                    returnKeyType="done"
+                    onSubmitEditing={confirmTimePicker}
+                  />
+
+                  {/* Preset Time Quick Chips */}
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.time_presets_row}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {[
+                      "07:00 AM",
+                      "08:00 AM",
+                      "09:00 AM",
+                      "10:00 AM",
+                      "06:00 PM",
+                      "08:00 PM",
+                      "10:00 PM",
+                      "11:00 PM",
+                    ].map((t) => (
+                      <TouchableOpacity
+                        key={t}
+                        style={styles.preset_chip}
+                        onPress={() => setTempTimeInput(t)}
+                      >
+                        <Text style={styles.preset_chip_text}>{t}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+
+                  <View style={styles.modal_actions_row}>
+                    <TouchableOpacity
+                      style={styles.modal_cancel_btn}
+                      onPress={() => setTimePickerVisible(false)}
+                    >
+                      <Text style={styles.modal_cancel_text}>Cancel</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.modal_confirm_btn}
+                      onPress={confirmTimePicker}
+                    >
+                      <Text style={styles.modal_confirm_text}>Set Time</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
+    </KeyboardAvoidingView>
   );
 };
 

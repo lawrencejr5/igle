@@ -10,6 +10,9 @@ import {
   Platform,
   Alert,
   Linking,
+  Keyboard,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
@@ -780,48 +783,59 @@ const RestaurantOrders = () => {
         animationType="fade"
         onRequestClose={() => setDeclineModalVisible(false)}
       >
-        <View style={styles.modal_backdrop}>
-          <View style={styles.modal_card}>
-            <Feather
-              name="x-circle"
-              size={32}
-              color="#ef5350"
-              style={{ alignSelf: "center", marginBottom: 8 }}
-            />
-            <Text style={[styles.modal_title, { textAlign: "center" }]}>
-              Decline Food Order
-            </Text>
-            <Text style={styles.modal_subtitle}>
-              Decline order #{declineTargetOrder?.order_number}? Customer money will be automatically refunded to their wallet.
-            </Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)" }}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.modal_backdrop}>
+              <TouchableWithoutFeedback onPress={() => {}} accessible={false}>
+                <View style={styles.modal_card}>
+                  <Feather
+                    name="x-circle"
+                    size={32}
+                    color="#ef5350"
+                    style={{ alignSelf: "center", marginBottom: 8 }}
+                  />
+                  <Text style={[styles.modal_title, { textAlign: "center" }]}>
+                    Decline Food Order
+                  </Text>
+                  <Text style={styles.modal_subtitle}>
+                    Decline order #{declineTargetOrder?.order_number}? Customer money will be automatically refunded to their wallet.
+                  </Text>
 
-            <Text style={styles.input_label}>DECLINE REASON</Text>
-            <TextInput
-              style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
-              placeholder="e.g. Out of ingredients, Kitchen closed, Too busy"
-              placeholderTextColor="#666"
-              multiline
-              value={declineReason}
-              onChangeText={setDeclineReason}
-            />
+                  <Text style={styles.input_label}>DECLINE REASON</Text>
+                  <TextInput
+                    style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
+                    placeholder="e.g. Out of ingredients, Kitchen closed, Too busy"
+                    placeholderTextColor="#666"
+                    multiline
+                    value={declineReason}
+                    onChangeText={setDeclineReason}
+                    returnKeyType="done"
+                    onSubmitEditing={Keyboard.dismiss}
+                  />
 
-            <View style={styles.modal_footer}>
-              <TouchableOpacity
-                style={styles.modal_cancel_btn}
-                onPress={() => setDeclineModalVisible(false)}
-              >
-                <Text style={styles.modal_cancel_text}>Cancel</Text>
-              </TouchableOpacity>
+                  <View style={styles.modal_footer}>
+                    <TouchableOpacity
+                      style={styles.modal_cancel_btn}
+                      onPress={() => setDeclineModalVisible(false)}
+                    >
+                      <Text style={styles.modal_cancel_text}>Cancel</Text>
+                    </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.modal_delete_btn}
-                onPress={handleConfirmDecline}
-              >
-                <Text style={styles.modal_delete_btn_text}>Decline & Refund</Text>
-              </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.modal_delete_btn}
+                      onPress={handleConfirmDecline}
+                    >
+                      <Text style={styles.modal_delete_btn_text}>Decline & Refund</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Full Order Receipt & Details Modal Sheet ── */}
