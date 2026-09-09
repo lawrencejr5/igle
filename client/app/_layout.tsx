@@ -23,6 +23,9 @@ import ActivityProvider from "../context/ActivityContext";
 import RatingProvider from "../context/RatingContext";
 import TaskProvider from "../context/TaskContext";
 import { RestaurantProvider } from "../context/RestaurantContext";
+import { MenuProvider } from "../context/MenuContext";
+import { BasketProvider } from "../context/BasketContext";
+import { FoodOrderProvider } from "../context/FoodOrderContext";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import TransactionContextProvider from "../context/TransactionContext";
@@ -66,36 +69,42 @@ const RootLayout = () => {
                               <DriverAuthProvider>
                                 <AuthProvider>
                                   <RestaurantProvider>
-                                    <RideContextProvider>
-                                      <DeliverProvider>
-                                        <DriverContextPrvider>
-                                          <FeedbackProvider>
-                                            <TaskProvider>
-                                              <Stack
-                                                screenOptions={{
-                                                  headerShown: false,
-                                                  animation: "ios_from_right",
-                                                  contentStyle: { backgroundColor: "#121212" },
-                                                }}
-                                              >
-                                                <Stack.Screen
-                                                  name="index"
-                                                  options={{
-                                                    animation: "fade",
-                                                  }}
-                                                />
-                                                <Stack.Screen
-                                                  name="account/wallet"
-                                                  options={{
-                                                    presentation: "modal",
-                                                  }}
-                                                />
-                                              </Stack>
-                                            </TaskProvider>
-                                          </FeedbackProvider>
-                                        </DriverContextPrvider>
-                                      </DeliverProvider>
-                                    </RideContextProvider>
+                                    <MenuProvider>
+                                      <BasketProvider>
+                                        <FoodOrderProvider>
+                                          <RideContextProvider>
+                                            <DeliverProvider>
+                                              <DriverContextPrvider>
+                                                <FeedbackProvider>
+                                                  <TaskProvider>
+                                                    <Stack
+                                                      screenOptions={{
+                                                        headerShown: false,
+                                                        animation: "ios_from_right",
+                                                        contentStyle: { backgroundColor: "#121212" },
+                                                      }}
+                                                    >
+                                                      <Stack.Screen
+                                                        name="index"
+                                                        options={{
+                                                          animation: "fade",
+                                                        }}
+                                                      />
+                                                      <Stack.Screen
+                                                        name="account/wallet"
+                                                        options={{
+                                                          presentation: "modal",
+                                                        }}
+                                                      />
+                                                    </Stack>
+                                                  </TaskProvider>
+                                                </FeedbackProvider>
+                                              </DriverContextPrvider>
+                                            </DeliverProvider>
+                                          </RideContextProvider>
+                                        </FoodOrderProvider>
+                                      </BasketProvider>
+                                    </MenuProvider>
                                   </RestaurantProvider>
                                 </AuthProvider>
                               </DriverAuthProvider>

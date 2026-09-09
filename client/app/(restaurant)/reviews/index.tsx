@@ -21,6 +21,7 @@ import axios from "axios";
 
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
+import { useRatingContext } from "../../../context/RatingContext";
 import { API_URLS } from "../../../data/constants";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
@@ -126,6 +127,11 @@ const StoreReviewsScreen = () => {
   const insets = useSafeAreaInsets();
   const { restaurant } = useRestaurantContext();
   const { showNotification } = useNotificationContext();
+  const {
+    restaurantReviews: ctxReviews,
+    fetchRestaurantRatings,
+    ratingLoading,
+  } = useRatingContext();
 
   const [loading, setLoading] = useState(false);
   const [reviews, setReviews] = useState<ReviewItem[]>(MOCK_REVIEWS);
@@ -139,25 +145,16 @@ const StoreReviewsScreen = () => {
   const [sendingReply, setSendingReply] = useState(false);
 
   useEffect(() => {
-    fetchReviews();
+    if (restaurant?._id) {
+      fetchRestaurantRatings(restaurant._id);
+    }
   }, [restaurant?._id]);
 
-  const fetchReviews = async () => {
-    if (!restaurant?._id) return;
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${API_URLS.rating}/restaurant?restaurant_id=${restaurant._id}`
-      );
-      if (response.data?.reviews && response.data.reviews.length > 0) {
-        setReviews(response.data.reviews);
-      }
-    } catch (e) {
-      console.log("Error fetching store reviews, using mock fallback", e);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (ctxReviews && ctxReviews.length > 0) {
+      setReviews(ctxReviews as any);
     }
-  };
+  }, [ctxReviews]);
 
   // Metrics Calculations
   const metrics = useMemo(() => {

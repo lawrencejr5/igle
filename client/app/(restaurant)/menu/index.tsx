@@ -19,6 +19,7 @@ import { Feather, FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
+import { useMenuContext } from "../../../context/MenuContext";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -149,9 +150,60 @@ const INITIAL_MENU_ITEMS: MenuItemData[] = [
 const RestaurantMenu = () => {
   const insets = useSafeAreaInsets();
   const { restaurant } = useRestaurantContext();
+  const {
+    categories: ctxCategories,
+    menuItems: ctxMenuItems,
+    fetchVendorCategories,
+    fetchVendorMenuItems,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    createMenuItem,
+    updateMenuItem,
+    toggleItemAvailability,
+    deleteMenuItem,
+  } = useMenuContext();
 
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [menuItems, setMenuItems] = useState<MenuItemData[]>(INITIAL_MENU_ITEMS);
+
+  React.useEffect(() => {
+    fetchVendorCategories();
+    fetchVendorMenuItems();
+  }, []);
+
+  React.useEffect(() => {
+    if (ctxCategories && ctxCategories.length > 0) {
+      setCategories(
+        ctxCategories.map((c) => ({
+          id: c._id,
+          name: c.name,
+          description: c.description || "",
+          display_order: c.display_order || 0,
+          is_active: c.is_active ?? true,
+        }))
+      );
+    }
+  }, [ctxCategories]);
+
+  React.useEffect(() => {
+    if (ctxMenuItems && ctxMenuItems.length > 0) {
+      setMenuItems(
+        ctxMenuItems.map((it) => ({
+          id: it._id,
+          category_id:
+            typeof it.category === "object" ? it.category._id : it.category,
+          name: it.name,
+          description: it.description || "",
+          price: it.price,
+          image: it.image || "",
+          is_available: it.is_available ?? true,
+          preparation_time_mins: it.preparation_time_mins || 15,
+          display_order: it.display_order || 0,
+        }))
+      );
+    }
+  }, [ctxMenuItems]);
 
   // Filters & State
   const [selectedCatId, setSelectedCatId] = useState<string>("all");

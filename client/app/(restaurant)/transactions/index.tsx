@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
+import { useTransactionContext } from "../../../context/TransactionContext";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -144,6 +145,13 @@ type FilterType = "all" | "in" | "out";
 const RestaurantTransactions = () => {
   const insets = useSafeAreaInsets();
   const { restaurant } = useRestaurantContext();
+  const {
+    vendorTransactions: ctxVendorTxns,
+    vendorStats,
+    fetchVendorTransactions,
+    fetchVendorEarningsStats,
+    initiateVendorWithdrawal,
+  } = useTransactionContext();
 
   const [transactions, setTransactions] = useState<RestaurantTransaction[]>(INITIAL_TRANSACTIONS);
   const [filterType, setFilterType] = useState<FilterType>("all");
@@ -158,9 +166,61 @@ const RestaurantTransactions = () => {
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [selectedTxn, setSelectedTxn] = useState<RestaurantTransaction | null>(null);
 
+  React.useEffect(() => {
+    fetchVendorTransactions();
+    fetchVendorEarningsStats();
+  }, []);
+
+  React.useEffect(() => {
+    if (ctxVendorTxns && ctxVendorTxns.length > 0) {
+      const mapped: RestaurantTransaction[] = ctxVendorTxns.map((t) => {
+        const isOut = t.type === "payout" || t.type === "funding";
+        return {
+          id: t._id,
+          reference: t.reference || `TXN-${t._id.slice(-6).toUpperCase()}`,
+          type:
+            t.type === "payout"
+              ? "payout"
+              : t.type === "driver_payment"
+              ? "food_payment"
+              : "food_payment",
+          direction: isOut ? "out" : "in",
+          amount: t.amount,
+          status: t.status as "success" | "pending" | "failed",
+          channel: (t.channel as any) || "wallet",
+          title:
+            t.type === "payout"
+              ? "Bank Payout Withdrawal"
+              : `Food Payment ${t.reference || ""}`,
+          subtitle:
+            t.type === "payout"
+              ? `${restaurant?.bank?.bank_name || "Bank"} Account`
+              : "Customer Food Order Earnings",
+          date: new Date(t.createdAt).toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          timestamp: t.createdAt,
+          bank_details: restaurant?.bank
+            ? {
+                bank_name: restaurant.bank.bank_name,
+                account_number: restaurant.bank.account_number,
+                account_name: restaurant.bank.account_name,
+              }
+            : undefined,
+        };
+      });
+      setTransactions(mapped);
+    }
+  }, [ctxVendorTxns, restaurant?.bank]);
+
   // Wallet Metrics
-  const currentBalance = 142500;
-  const todayEarnings = 40500;
+  const currentBalance = vendorStats.todayEarnings - vendorStats.weekEarnings > 0
+    ? vendorStats.todayEarnings
+    : 142500;
+  const todayEarnings = vendorStats.todayEarnings || 40500;
   const todayPayouts = 35000;
 
   // ── Handlers ────────────────────────────────────────────────────────────────
@@ -176,49 +236,17 @@ const RestaurantTransactions = () => {
     setWithdrawAmount(amount.toString());
   };
 
-  const handleConfirmWithdraw = () => {
+  const handleConfirmWithdraw = async () => {
     const amountNum = Number(withdrawAmount);
-    if (!amountNum || isNaN(amountNum) || amountNum <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid withdrawal amount.");
-      return;
-    }
-    if (amountNum > currentBalance) {
-      Alert.alert("Insufficient Balance", `Your current wallet balance is ₦${currentBalance.toLocaleString()}.`);
-      return;
-    }
+    if (!amountNum || amountNum <= 0) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsSubmittingWithdraw(true);
 
-    setTimeout(() => {
-      const newTxn: RestaurantTransaction = {
-        id: `tx_${Date.now()}`,
-        reference: `TXN-WD-${Math.floor(10000 + Math.random() * 90000)}`,
-        type: "payout",
-        direction: "out",
-        amount: amountNum,
-        status: "success",
-        channel: "transfer",
-        title: "Bank Payout Withdrawal",
-        subtitle: `${restaurant?.bank?.bank_name || "GTBank"} •••• ${restaurant?.bank?.account_number?.slice(-4) || "5821"}`,
-        date: "Just now",
-        timestamp: new Date().toISOString(),
-        bank_details: {
-          bank_name: restaurant?.bank?.bank_name || "GTBank",
-          account_number: restaurant?.bank?.account_number || "0123455821",
-          account_name: restaurant?.bank?.account_name || restaurant?.name || "STORE ACCOUNT",
-        },
-      };
-
-      setTransactions((prev) => [newTxn, ...prev]);
-      setIsSubmittingWithdraw(false);
-      setWithdrawModalVisible(false);
-      setWithdrawAmount("");
-      Alert.alert(
-        "Withdrawal Successful! 💳",
-        `₦${amountNum.toLocaleString()} has been transferred to your bank account.`
-      );
-    }, 1200);
+    await initiateVendorWithdrawal(amountNum);
+    setIsSubmittingWithdraw(false);
+    setWithdrawModalVisible(false);
+    setWithdrawAmount("");
   };
 
   const handleOpenTxnDetails = (txn: RestaurantTransaction) => {

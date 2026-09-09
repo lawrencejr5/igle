@@ -14,6 +14,9 @@ export const API_URLS = {
   tasks: "http://192.168.18.7:5000/api/v1/tasks",
   user_tasks: "http://192.168.18.7:5000/api/v1/user_tasks",
   restaurants: "http://192.168.18.7:5000/api/v1/restaurants",
+  menu: "http://192.168.18.7:5000/api/v1/menu",
+  basket: "http://192.168.18.7:5000/api/v1/basket",
+  orders: "http://192.168.18.7:5000/api/v1/orders",
 };
 
 export const SOCKET_URL = "http://192.168.18.7:5000";

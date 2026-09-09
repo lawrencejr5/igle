@@ -16,6 +16,9 @@ import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import SideNav from "../../../components/SideNav";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
+import { useFoodOrderContext } from "../../../context/FoodOrderContext";
+import { useTransactionContext } from "../../../context/TransactionContext";
+import { useRatingContext } from "../../../context/RatingContext";
 
 // ─── Restaurant Dashboard Screen ──────────────────────────────────────────────
 
@@ -23,6 +26,9 @@ const RestaurantHome = () => {
   const insets = useSafeAreaInsets();
   const { restaurant, setRestaurantOnlineStatus, fetchRestaurantProfile } =
     useRestaurantContext();
+  const { vendorOrders, fetchVendorOrders } = useFoodOrderContext();
+  const { vendorStats, fetchVendorEarningsStats } = useTransactionContext();
+  const { restaurantRating, restaurantRatingCount, fetchRestaurantRatings } = useRatingContext();
 
   const [isStoreOnline, setIsStoreOnline] = useState(
     restaurant?.is_online ?? true,
@@ -31,7 +37,21 @@ const RestaurantHome = () => {
 
   React.useEffect(() => {
     fetchRestaurantProfile();
-  }, []);
+    if (restaurant?._id) {
+      fetchVendorOrders();
+      fetchVendorEarningsStats();
+      fetchRestaurantRatings(restaurant._id);
+    }
+  }, [restaurant?._id]);
+
+  const completedTodayCount = React.useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return vendorOrders.filter(
+      (o) =>
+        o.status === "delivered" &&
+        new Date(o.createdAt).toDateString() === todayStr
+    ).length;
+  }, [vendorOrders]);
 
   React.useEffect(() => {
     if (restaurant?.is_online !== undefined) {
@@ -211,20 +231,24 @@ const RestaurantHome = () => {
           <View style={styles.metrics_grid}>
             <View style={styles.metric_card}>
               <Text style={styles.metric_label}>TODAY'S REVENUE</Text>
-              <Text style={styles.metric_value}>₦48,500</Text>
-              <Text style={styles.metric_sub_green}>↑ 14% vs yesterday</Text>
+              <Text style={styles.metric_value}>
+                ₦{vendorStats.todayEarnings.toLocaleString()}
+              </Text>
+              <Text style={styles.metric_sub_green}>Realtime sales</Text>
             </View>
 
             <View style={styles.metric_card}>
               <Text style={styles.metric_label}>COMPLETED TODAY</Text>
-              <Text style={styles.metric_value}>14</Text>
+              <Text style={styles.metric_value}>{completedTodayCount}</Text>
               <Text style={styles.metric_sub_gray}>Orders delivered</Text>
             </View>
 
             <View style={styles.metric_card}>
-              <Text style={styles.metric_label}>AVERAGE PREP TIME</Text>
-              <Text style={styles.metric_value}>18 mins</Text>
-              <Text style={styles.metric_sub_green}>Fast fulfillment</Text>
+              <Text style={styles.metric_label}>ACTIVE ORDERS</Text>
+              <Text style={styles.metric_value}>
+                {vendorOrders.filter((o) => o.status !== "delivered" && o.status !== "cancelled" && o.status !== "rejected").length}
+              </Text>
+              <Text style={styles.metric_sub_green}>In kitchen & transit</Text>
             </View>
 
             <TouchableOpacity
@@ -233,10 +257,10 @@ const RestaurantHome = () => {
             >
               <Text style={styles.metric_label}>STORE RATING</Text>
               <Text style={styles.metric_value}>
-                {restaurant?.rating ? restaurant.rating.toFixed(1) : "5.0"} ★
+                {(restaurantRating || restaurant?.rating || 5.0).toFixed(1)} ★
               </Text>
               <Text style={styles.metric_sub_gray}>
-                Based on {restaurant?.num_of_reviews || 0} reviews
+                Based on {restaurantRatingCount || restaurant?.num_of_reviews || 0} reviews
               </Text>
             </TouchableOpacity>
           </View>

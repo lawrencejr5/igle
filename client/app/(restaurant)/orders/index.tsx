@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
+import { useFoodOrderContext } from "../../../context/FoodOrderContext";
 import { getUserSocket } from "../../../sockets/socketService";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -227,6 +228,13 @@ type FilterTab = "active" | "in_transit" | "completed" | "cancelled";
 const RestaurantOrders = () => {
   const insets = useSafeAreaInsets();
   const { restaurant } = useRestaurantContext();
+  const {
+    vendorOrders,
+    fetchVendorOrders,
+    acceptOrder,
+    rejectOrder,
+    markOrderReady,
+  } = useFoodOrderContext();
 
   const [orders, setOrders] = useState<VendorFoodOrder[]>(INITIAL_MOCK_ORDERS);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
@@ -240,51 +248,69 @@ const RestaurantOrders = () => {
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<VendorFoodOrder | null>(null);
 
+  // Fetch backend orders on mount
+  useEffect(() => {
+    fetchVendorOrders();
+  }, []);
+
+  // Synchronize context vendorOrders to UI state if backend returns data
+  useEffect(() => {
+    if (vendorOrders && vendorOrders.length > 0) {
+      const mapped: VendorFoodOrder[] = vendorOrders.map((o) => {
+        const custName =
+          typeof o.customer === "object" ? o.customer?.name : "Customer";
+        const custPhone =
+          typeof o.customer === "object"
+            ? o.customer?.phone || "+234 800 000 0000"
+            : "+234 800 000 0000";
+        const custPic =
+          typeof o.customer === "object" ? o.customer?.profile_pic : undefined;
+
+        return {
+          id: o._id,
+          order_number: o.order_number,
+          customer_name: custName,
+          customer_phone: custPhone,
+          customer_avatar: custPic,
+          delivery_address: o.delivery_address?.address || "Delivery Address",
+          delivery_landmark: o.delivery_address?.landmark || "",
+          items: (o.items || []).map((it) => ({
+            menu_item_id: String(it.menu_item_id),
+            name: it.name,
+            price: it.price,
+            quantity: it.quantity,
+            selected_options: it.selected_options || [],
+            special_instructions: it.special_instructions || "",
+            item_total: it.item_total,
+          })),
+          subtotal: o.pricing?.subtotal || 0,
+          delivery_fee: o.pricing?.delivery_fee || 0,
+          total: o.pricing?.total || 0,
+          status: o.status,
+          payment_method: o.payment?.method || "wallet",
+          placed_at: new Date(o.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          rejection_reason: o.cancellation?.reason,
+        };
+      });
+      setOrders(mapped);
+    }
+  }, [vendorOrders]);
+
   // Real-time socket listeners
   useEffect(() => {
     const socket = getUserSocket();
     if (socket) {
       socket.on("new_food_order", (data: any) => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Refresh or prepend new order
-        if (data?.order_id) {
-          const newOrd: VendorFoodOrder = {
-            id: data.order_id,
-            order_number: data.order_number || `IGL-${Math.floor(10000 + Math.random() * 90000)}`,
-            customer_name: data.customer_name || "Customer",
-            customer_phone: data.customer_phone || "+234 800 000 0000",
-            delivery_address: data.delivery_address || "Customer Address",
-            items: data.items || [
-              {
-                menu_item_id: "m_new",
-                name: "Customer Food Order",
-                price: data.total || 5000,
-                quantity: 1,
-                item_total: data.total || 5000,
-              },
-            ],
-            subtotal: (data.total || 5000) - 1500,
-            delivery_fee: 1500,
-            total: data.total || 5000,
-            status: "placed",
-            payment_method: "wallet",
-            placed_at: "Just now",
-          };
-          setOrders((prev) => [newOrd, ...prev]);
-        }
+        fetchVendorOrders();
       });
 
       socket.on("food_order_cancelled", (data: any) => {
-        if (data?.order_id) {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          setOrders((prev) =>
-            prev.map((o) =>
-              o.id === data.order_id
-                ? { ...o, status: "cancelled", rejection_reason: "Cancelled by customer" }
-                : o
-            )
-          );
-        }
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        fetchVendorOrders();
       });
 
       return () => {
@@ -296,36 +322,41 @@ const RestaurantOrders = () => {
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
-  const handleAcceptOrder = (orderId: string) => {
+  const handleAcceptOrder = async (orderId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId
-          ? {
-              ...o,
-              status: "preparing",
-              preparing_at: "Just now",
-            }
-          : o
-      )
-    );
-    Alert.alert("Order Accepted! 🍳", "Kitchen has started preparing this order.");
+    const updated = await acceptOrder(orderId);
+    if (!updated) {
+      // Optimistic update fallback
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? {
+                ...o,
+                status: "preparing",
+                preparing_at: "Just now",
+              }
+            : o
+        )
+      );
+    }
   };
 
-  const handleMarkReady = (orderId: string) => {
+  const handleMarkReady = async (orderId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId
-          ? {
-              ...o,
-              status: "ready_for_pickup",
-              ready_at: "Just now",
-            }
-          : o
-      )
-    );
-    Alert.alert("Order Ready! 📦", "Delivery rider has been notified for pickup.");
+    const updated = await markOrderReady(orderId);
+    if (!updated) {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? {
+                ...o,
+                status: "ready_for_pickup",
+                ready_at: "Just now",
+              }
+            : o
+        )
+      );
+    }
   };
 
   const handleOpenDeclineModal = (order: VendorFoodOrder) => {
@@ -335,10 +366,11 @@ const RestaurantOrders = () => {
     setDeclineModalVisible(true);
   };
 
-  const handleConfirmDecline = () => {
+  const handleConfirmDecline = async () => {
     if (!declineTargetOrder) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    await rejectOrder(declineTargetOrder.id, declineReason.trim());
     setOrders((prev) =>
       prev.map((o) =>
         o.id === declineTargetOrder.id
@@ -351,7 +383,6 @@ const RestaurantOrders = () => {
           : o
       )
     );
-
     setDeclineModalVisible(false);
     setDeclineTargetOrder(null);
     setDeclineReason("");
