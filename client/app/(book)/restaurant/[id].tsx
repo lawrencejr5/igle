@@ -27,6 +27,12 @@ import {
   MenuItem,
   MenuCategory,
 } from "../../../context/MenuContext";
+import {
+  useBasketContext,
+  BasketSelectedOption,
+} from "../../../context/BasketContext";
+import ItemOptionsModal from "../../../components/ItemOptionsModal";
+import CheckoutModal from "../../../components/CheckoutModal";
 
 const DEFAULT_HERO_IMAGE = require("../../../assets/images/restaurants/ivan-torres-MQUqbmszGGM-unsplash.jpg");
 
@@ -38,6 +44,12 @@ const SingleRestaurant = () => {
 
   const { fetchRestaurantById } = useRestaurantContext();
   const { fetchPublicCategories, fetchPublicMenuItems } = useMenuContext();
+  const {
+    basket,
+    fetchBasket,
+    addItemToBasket,
+    updateItemQuantity,
+  } = useBasketContext();
 
   const [restaurant, setRestaurant] = useState<RestaurantType | null>(null);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
@@ -46,8 +58,13 @@ const SingleRestaurant = () => {
 
   const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [cart, setCart] = useState<Record<string, number>>({});
   const [isFavorite, setIsFavorite] = useState(false);
+
+  // Modals state
+  const [selectedItemForOptions, setSelectedItemForOptions] =
+    useState<MenuItem | null>(null);
+  const [isOptionsModalVisible, setIsOptionsModalVisible] = useState(false);
+  const [isCheckoutModalVisible, setIsCheckoutModalVisible] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -59,6 +76,7 @@ const SingleRestaurant = () => {
           fetchRestaurantById(id),
           fetchPublicCategories(id),
           fetchPublicMenuItems(id),
+          fetchBasket(id),
         ]);
         setRestaurant(restData);
         setCategories(catsData || []);
@@ -115,35 +133,61 @@ const SingleRestaurant = () => {
   }, [menuItems, activeTab, searchQuery]);
 
   const cartTotalItems = useMemo(() => {
-    return Object.values(cart).reduce((sum, count) => sum + count, 0);
-  }, [cart]);
+    if (!basket || !basket.items) return 0;
+    return basket.items.reduce((sum, item) => sum + item.quantity, 0);
+  }, [basket]);
 
   const cartTotalPrice = useMemo(() => {
-    return Object.entries(cart).reduce((sum, [productId, count]) => {
-      const prod = menuItems.find((p) => p._id === productId);
-      return sum + (prod ? prod.price * count : 0);
-    }, 0);
-  }, [cart, menuItems]);
+    return basket?.subtotal || 0;
+  }, [basket]);
 
-  const addToCart = (productId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCart((prev) => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) + 1,
-    }));
+  const getItemCountInBasket = (productId: string) => {
+    if (!basket || !basket.items) return 0;
+    return basket.items
+      .filter((i) => {
+        const mId =
+          typeof i.menu_item === "object" ? i.menu_item._id : i.menu_item;
+        return mId === productId;
+      })
+      .reduce((sum, i) => sum + i.quantity, 0);
   };
 
-  const removeFromCart = (productId: string) => {
+  const handleAddProduct = (product: MenuItem) => {
+    if (product.options_groups && product.options_groups.length > 0) {
+      setSelectedItemForOptions(product);
+      setIsOptionsModalVisible(true);
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      addItemToBasket(id, product._id, 1);
+    }
+  };
+
+  const handleRemoveProduct = (productId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCart((prev) => {
-      const copy = { ...prev };
-      if (copy[productId] > 1) {
-        copy[productId] -= 1;
-      } else {
-        delete copy[productId];
-      }
-      return copy;
+    if (!basket || !basket.items) return;
+    const basketItem = basket.items.find((i) => {
+      const mId =
+        typeof i.menu_item === "object" ? i.menu_item._id : i.menu_item;
+      return mId === productId;
     });
+    if (basketItem && basketItem._id) {
+      updateItemQuantity(basketItem._id, basketItem.quantity - 1, id);
+    }
+  };
+
+  const handleAddToCartFromOptionsModal = (
+    item: MenuItem,
+    quantity: number,
+    selectedOptions: BasketSelectedOption[],
+    specialInstructions: string
+  ) => {
+    addItemToBasket(
+      id,
+      item._id,
+      quantity,
+      selectedOptions,
+      specialInstructions
+    );
   };
 
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -389,7 +433,7 @@ const SingleRestaurant = () => {
             </View>
           ) : (
             filteredProducts.map((product) => {
-              const count = cart[product._id] || 0;
+              const count = getItemCountInBasket(product._id);
               return (
                 <View key={product._id} style={styles.product_card}>
                   {/* Menu Item Image */}
@@ -422,7 +466,7 @@ const SingleRestaurant = () => {
                     {count === 0 ? (
                       <TouchableOpacity
                         style={styles.add_btn}
-                        onPress={() => addToCart(product._id)}
+                        onPress={() => handleAddProduct(product)}
                       >
                         <Feather name="plus" size={15} color="#121212" />
                         <Text style={styles.add_btn_text}>ADD</Text>
@@ -431,14 +475,14 @@ const SingleRestaurant = () => {
                       <View style={styles.qty_controls}>
                         <TouchableOpacity
                           style={styles.qty_btn}
-                          onPress={() => removeFromCart(product._id)}
+                          onPress={() => handleRemoveProduct(product._id)}
                         >
                           <Feather name="minus" size={14} color="#fff" />
                         </TouchableOpacity>
                         <Text style={styles.qty_text}>{count}</Text>
                         <TouchableOpacity
                           style={styles.qty_btn}
-                          onPress={() => addToCart(product._id)}
+                          onPress={() => handleAddProduct(product)}
                         >
                           <Feather name="plus" size={14} color="#fff" />
                         </TouchableOpacity>
@@ -465,6 +509,7 @@ const SingleRestaurant = () => {
             activeOpacity={0.9}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setIsCheckoutModalVisible(true);
             }}
           >
             <View style={styles.cart_badge}>
@@ -481,6 +526,28 @@ const SingleRestaurant = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* ── Item Options Customization Modal ── */}
+      <ItemOptionsModal
+        visible={isOptionsModalVisible}
+        onClose={() => {
+          setIsOptionsModalVisible(false);
+          setSelectedItemForOptions(null);
+        }}
+        item={selectedItemForOptions}
+        onAddToCart={handleAddToCartFromOptionsModal}
+      />
+
+      {/* ── Checkout & Order Review Modal ── */}
+      <CheckoutModal
+        visible={isCheckoutModalVisible}
+        onClose={() => setIsCheckoutModalVisible(false)}
+        restaurantId={id as string}
+        restaurantName={restaurantName}
+        onOrderPlacedSuccess={(orderId) => {
+          router.replace(`/food/order/${orderId}`);
+        }}
+      />
     </View>
   );
 };
