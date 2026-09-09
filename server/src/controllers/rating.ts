@@ -192,31 +192,4 @@ export const get_user_ratings = async (req: Request, res: Response) => {
   }
 };
 
-// 7. Vendor Reply to Rating
-export const reply_to_rating = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { vendor_reply } = req.body;
 
-    if (!id || !vendor_reply) {
-      return res.status(400).json({ msg: "Rating ID and reply content are required" });
-    }
-
-    const ratingItem = await Rating.findById(id);
-    if (!ratingItem) {
-      return res.status(404).json({ msg: "Rating record not found" });
-    }
-
-    ratingItem.vendor_reply = vendor_reply;
-    ratingItem.vendor_reply_at = new Date();
-    await ratingItem.save();
-
-    return res.status(200).json({
-      msg: "Response posted successfully",
-      rating: ratingItem,
-    });
-  } catch (error: any) {
-    console.error("reply_to_rating error:", error);
-    return res.status(500).json({ msg: "An error occurred replying to review" });
-  }
-};

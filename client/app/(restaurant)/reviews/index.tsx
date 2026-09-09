@@ -39,8 +39,6 @@ interface ReviewItem {
   user: ReviewUser;
   food_order_id?: string;
   createdAt: string;
-  vendor_reply?: string;
-  vendor_reply_at?: string;
 }
 
 // ─── Mock Fallback Reviews ───────────────────────────────────────────────────
@@ -130,19 +128,11 @@ const StoreReviewsScreen = () => {
   const {
     restaurantReviews: ctxReviews,
     fetchRestaurantRatings,
-    replyToRating,
     ratingLoading,
   } = useRatingContext();
 
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<number | "ALL">("ALL");
-
-  // Reply Modal State
-  const [replyModalVisible, setReplyModalVisible] = useState(false);
-  const [activeReviewForReply, setActiveReviewForReply] =
-    useState<ReviewItem | null>(null);
-  const [replyText, setReplyText] = useState("");
-  const [sendingReply, setSendingReply] = useState(false);
 
   useEffect(() => {
     if (restaurant?._id) {
@@ -201,36 +191,7 @@ const StoreReviewsScreen = () => {
     );
   }, [reviews, selectedFilter]);
 
-  const handleOpenReplyModal = (review: ReviewItem) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActiveReviewForReply(review);
-    setReplyText(review.vendor_reply || "");
-    setReplyModalVisible(true);
-  };
 
-  const handleSendReply = async () => {
-    if (!replyText.trim() || !activeReviewForReply) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSendingReply(true);
-
-    try {
-      if (restaurant?._id) {
-        await replyToRating(
-          activeReviewForReply._id,
-          replyText.trim(),
-          restaurant._id
-        );
-      }
-      setReplyModalVisible(false);
-      setActiveReviewForReply(null);
-      setReplyText("");
-    } catch (e) {
-      console.log("Failed to post vendor reply", e);
-    } finally {
-      setSendingReply(false);
-    }
-  };
 
   const formatTimeAgo = (dateStr: string) => {
     const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -476,129 +437,11 @@ const StoreReviewsScreen = () => {
                     (Rating only, no written commentary)
                   </Text>
                 )}
-
-                {/* Vendor Reply Box if already replied */}
-                {item.vendor_reply ? (
-                  <View style={styles.reply_box}>
-                    <View style={styles.reply_box_header}>
-                      <View style={styles.reply_badge}>
-                        <Feather name="corner-down-right" size={12} color="#fff" />
-                        <Text style={styles.reply_badge_text}>Your Response</Text>
-                      </View>
-                      {item.vendor_reply_at && (
-                        <Text style={styles.reply_time_text}>
-                          {formatTimeAgo(item.vendor_reply_at)}
-                        </Text>
-                      )}
-                    </View>
-                    <Text style={styles.reply_text}>{item.vendor_reply}</Text>
-
-                    <TouchableOpacity
-                      style={styles.edit_reply_btn}
-                      onPress={() => handleOpenReplyModal(item)}
-                    >
-                      <Feather name="edit-2" size={12} color="#888" />
-                      <Text style={styles.edit_reply_text}>Edit response</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  /* Reply Action Button */
-                  <TouchableOpacity
-                    style={styles.reply_btn}
-                    onPress={() => handleOpenReplyModal(item)}
-                  >
-                    <Feather name="message-square" size={13} color="#fff" />
-                    <Text style={styles.reply_btn_text}>Reply to customer</Text>
-                  </TouchableOpacity>
-                )}
               </View>
             ))}
           </View>
         )}
       </ScrollView>
-
-      {/* ── Reply Modal ── */}
-      <Modal
-        visible={replyModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setReplyModalVisible(false)}
-      >
-        <View style={styles.modal_overlay}>
-          <Pressable
-            style={styles.modal_backdrop}
-            onPress={() => setReplyModalVisible(false)}
-          />
-          <View
-            style={[
-              styles.modal_card,
-              { paddingBottom: Platform.OS === "ios" ? insets.bottom + 20 : 24 },
-            ]}
-          >
-            <View style={styles.modal_handle} />
-
-            <View style={styles.modal_header}>
-              <Text style={styles.modal_title}>
-                {activeReviewForReply?.vendor_reply
-                  ? "Edit Reply"
-                  : "Reply to Customer"}
-              </Text>
-              <TouchableOpacity
-                style={styles.close_btn}
-                onPress={() => setReplyModalVisible(false)}
-              >
-                <Feather name="x" size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
-
-            {activeReviewForReply && (
-              <View style={styles.modal_review_preview}>
-                <Text style={styles.modal_user_name}>
-                  {activeReviewForReply.user?.name}:
-                </Text>
-                <Text
-                  style={styles.modal_review_snippet}
-                  numberOfLines={2}
-                >
-                  "{activeReviewForReply.review || "Rating: " + activeReviewForReply.rating + " stars"}"
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.input_container}>
-              <Text style={styles.input_label}>YOUR RESPONSE</Text>
-              <TextInput
-                style={styles.text_input}
-                multiline
-                numberOfLines={4}
-                placeholder="Write a warm, polite response to this customer..."
-                placeholderTextColor="#666"
-                value={replyText}
-                onChangeText={setReplyText}
-                textAlignVertical="top"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.send_btn,
-                (!replyText.trim() || sendingReply) && styles.send_btn_disabled,
-              ]}
-              disabled={!replyText.trim() || sendingReply}
-              onPress={handleSendReply}
-            >
-              {sendingReply ? (
-                <ActivityIndicator size="small" color="#121212" />
-              ) : (
-                <>
-                  <Feather name="send" size={16} color="#121212" />
-                  <Text style={styles.send_btn_text}>Post Response</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };

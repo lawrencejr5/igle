@@ -26,8 +26,6 @@ export interface RatingType {
   driver?: string;
   restaurant?: string;
   food_order?: string;
-  vendor_reply?: string;
-  vendor_reply_at?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -57,11 +55,6 @@ interface RatingContextType {
     ratingScore: number,
     reviewText?: string,
     food_order_id?: string
-  ) => Promise<boolean>;
-  replyToRating: (
-    rating_id: string,
-    vendor_reply: string,
-    restaurant_id: string
   ) => Promise<boolean>;
 }
 
@@ -215,37 +208,7 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
       fetchRestaurantRatings(restaurant_id);
       return true;
     } catch (error: any) {
-      const msg = error?.response?.data?.msg || "Failed to submit restaurant review";
-      showNotification(msg, "error");
-      return false;
-    } finally {
-      setRatingLoading(false);
-    }
-  };
-
-  const replyToRating = async (
-    rating_id: string,
-    vendor_reply: string,
-    restaurant_id: string
-  ): Promise<boolean> => {
-    setRatingLoading(true);
-    try {
-      const token = await getAuthToken();
-      if (!token) throw new Error("Authentication token required");
-
-      await axios.patch(
-        `${API_URL}/${rating_id}/reply`,
-        { vendor_reply },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      showNotification("Response posted successfully!", "success");
-      if (restaurant_id) {
-        fetchRestaurantRatings(restaurant_id);
-      }
-      return true;
-    } catch (error: any) {
-      const msg = error?.response?.data?.msg || "Failed to post response";
+      const msg = error?.response?.data?.msg || "Failed to submit rating";
       showNotification(msg, "error");
       return false;
     } finally {
@@ -275,7 +238,6 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         restaurantReviews,
         fetchRestaurantRatings,
         createRestaurantRating,
-        replyToRating,
       }}
     >
       {children}
