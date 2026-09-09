@@ -58,6 +58,11 @@ interface RatingContextType {
     reviewText?: string,
     food_order_id?: string
   ) => Promise<boolean>;
+  replyToRating: (
+    rating_id: string,
+    vendor_reply: string,
+    restaurant_id: string
+  ) => Promise<boolean>;
 }
 
 const RatingContext = createContext<RatingContextType | null>(null);
@@ -218,6 +223,36 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   };
 
+  const replyToRating = async (
+    rating_id: string,
+    vendor_reply: string,
+    restaurant_id: string
+  ): Promise<boolean> => {
+    setRatingLoading(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error("Authentication token required");
+
+      await axios.patch(
+        `${API_URL}/${rating_id}/reply`,
+        { vendor_reply },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      showNotification("Response posted successfully!", "success");
+      if (restaurant_id) {
+        fetchRestaurantRatings(restaurant_id);
+      }
+      return true;
+    } catch (error: any) {
+      const msg = error?.response?.data?.msg || "Failed to post response";
+      showNotification(msg, "error");
+      return false;
+    } finally {
+      setRatingLoading(false);
+    }
+  };
+
   return (
     <RatingContext.Provider
       value={{
@@ -240,6 +275,7 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
         restaurantReviews,
         fetchRestaurantRatings,
         createRestaurantRating,
+        replyToRating,
       }}
     >
       {children}

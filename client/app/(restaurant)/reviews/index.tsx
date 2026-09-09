@@ -130,11 +130,11 @@ const StoreReviewsScreen = () => {
   const {
     restaurantReviews: ctxReviews,
     fetchRestaurantRatings,
+    replyToRating,
     ratingLoading,
   } = useRatingContext();
 
-  const [loading, setLoading] = useState(false);
-  const [reviews, setReviews] = useState<ReviewItem[]>(MOCK_REVIEWS);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<number | "ALL">("ALL");
 
   // Reply Modal State
@@ -151,7 +151,7 @@ const StoreReviewsScreen = () => {
   }, [restaurant?._id]);
 
   useEffect(() => {
-    if (ctxReviews && ctxReviews.length > 0) {
+    if (ctxReviews !== null) {
       setReviews(ctxReviews as any);
     }
   }, [ctxReviews]);
@@ -208,31 +208,28 @@ const StoreReviewsScreen = () => {
     setReplyModalVisible(true);
   };
 
-  const handleSendReply = () => {
+  const handleSendReply = async () => {
     if (!replyText.trim() || !activeReviewForReply) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSendingReply(true);
 
-    setTimeout(() => {
-      setReviews((prev) =>
-        prev.map((r) =>
-          r._id === activeReviewForReply._id
-            ? {
-                ...r,
-                vendor_reply: replyText.trim(),
-                vendor_reply_at: new Date().toISOString(),
-              }
-            : r
-        )
-      );
-
-      setSendingReply(false);
+    try {
+      if (restaurant?._id) {
+        await replyToRating(
+          activeReviewForReply._id,
+          replyText.trim(),
+          restaurant._id
+        );
+      }
       setReplyModalVisible(false);
       setActiveReviewForReply(null);
       setReplyText("");
-      showNotification("Response posted to customer review!", "success");
-    }, 600);
+    } catch (e) {
+      console.log("Failed to post vendor reply", e);
+    } finally {
+      setSendingReply(false);
+    }
   };
 
   const formatTimeAgo = (dateStr: string) => {
@@ -413,7 +410,7 @@ const StoreReviewsScreen = () => {
         </View>
 
         {/* ── Review Cards List ── */}
-        {loading ? (
+        {ratingLoading ? (
           <View style={styles.loading_container}>
             <ActivityIndicator size="large" color="#fff" />
             <Text style={styles.loading_text}>Loading customer reviews...</Text>

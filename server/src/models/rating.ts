@@ -8,6 +8,8 @@ export interface RatingSchemaType extends Document {
   driver?: Types.ObjectId;
   food_order?: Types.ObjectId;
   restaurant?: Types.ObjectId;
+  vendor_reply?: string;
+  vendor_reply_at?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +46,14 @@ const RatingSchema = new Schema<RatingSchemaType>(
     restaurant: {
       type: Schema.Types.ObjectId,
       ref: "Restaurant",
+    },
+    vendor_reply: {
+      type: String,
+      default: "",
+    },
+    vendor_reply_at: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }
