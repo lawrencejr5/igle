@@ -1,22 +1,22 @@
 export const API_URLS = {
-  users: "http://192.168.18.6:5000/api/v1/users",
-  drivers: "http://192.168.18.6:5000/api/v1/drivers",
-  wallet: "http://192.168.18.6:5000/api/v1/wallet",
-  rides: "http://192.168.18.6:5000/api/v1/rides",
-  history: "http://192.168.18.6:5000/api/v1/history",
-  saved_place: "http://192.168.18.6:5000/api/v1/saved_place",
-  activity: "http://192.168.18.6:5000/api/v1/activity",
-  rating: "http://192.168.18.6:5000/api/v1/rating",
-  transactions: "http://192.168.18.6:5000/api/v1/transactions",
-  deliveries: "http://192.168.18.6:5000/api/v1/delivery",
-  feeedback: "http://192.168.18.6:5000/api/v1/feedback",
-  report: "http://192.168.18.6:5000/api/v1/report",
-  tasks: "http://192.168.18.6:5000/api/v1/tasks",
-  user_tasks: "http://192.168.18.6:5000/api/v1/user_tasks",
-  restaurants: "http://192.168.18.6:5000/api/v1/restaurants",
+  users: "http://192.168.18.7:5000/api/v1/users",
+  drivers: "http://192.168.18.7:5000/api/v1/drivers",
+  wallet: "http://192.168.18.7:5000/api/v1/wallet",
+  rides: "http://192.168.18.7:5000/api/v1/rides",
+  history: "http://192.168.18.7:5000/api/v1/history",
+  saved_place: "http://192.168.18.7:5000/api/v1/saved_place",
+  activity: "http://192.168.18.7:5000/api/v1/activity",
+  rating: "http://192.168.18.7:5000/api/v1/rating",
+  transactions: "http://192.168.18.7:5000/api/v1/transactions",
+  deliveries: "http://192.168.18.7:5000/api/v1/delivery",
+  feeedback: "http://192.168.18.7:5000/api/v1/feedback",
+  report: "http://192.168.18.7:5000/api/v1/report",
+  tasks: "http://192.168.18.7:5000/api/v1/tasks",
+  user_tasks: "http://192.168.18.7:5000/api/v1/user_tasks",
+  restaurants: "http://192.168.18.7:5000/api/v1/restaurants",
 };
 
-export const SOCKET_URL = "http://192.168.18.6:5000";
+export const SOCKET_URL = "http://192.168.18.7:5000";
 
 // export const API_URLS = {
 //   users: "https://igleapi.onrender.com/api/v1/users",

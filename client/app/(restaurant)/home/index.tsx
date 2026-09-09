@@ -17,44 +17,6 @@ import * as Haptics from "expo-haptics";
 import SideNav from "../../../components/SideNav";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 
-// ─── Dummy Live Vendor Orders ──────────────────────────────────────────────────
-
-interface VendorOrder {
-  id: string;
-  customerName: string;
-  items: string;
-  total: string;
-  time: string;
-  status: "new" | "preparing" | "ready" | "in_transit";
-}
-
-const INITIAL_VENDOR_ORDERS: VendorOrder[] = [
-  {
-    id: "FO-98241",
-    customerName: "Alex Johnson",
-    items: "2x Pepperoni Feast Pizza, 1x Garlic Breadsticks",
-    total: "₦8,500",
-    time: "2 mins ago",
-    status: "new",
-  },
-  {
-    id: "FO-98240",
-    customerName: "Sarah Williams",
-    items: "1x Four Cheese Supreme Pizza",
-    total: "₦7,200",
-    time: "10 mins ago",
-    status: "preparing",
-  },
-  {
-    id: "FO-98238",
-    customerName: "David O. Kayode",
-    items: "1x Cheesy Meatballs & Sauce, 1x Coke",
-    total: "₦4,300",
-    time: "22 mins ago",
-    status: "in_transit",
-  },
-];
-
 // ─── Restaurant Dashboard Screen ──────────────────────────────────────────────
 
 const RestaurantHome = () => {
@@ -66,7 +28,6 @@ const RestaurantHome = () => {
     restaurant?.is_online ?? true
   );
   const [sideNavOpen, setSideNavOpen] = useState(false);
-  const [orders, setOrders] = useState<VendorOrder[]>(INITIAL_VENDOR_ORDERS);
 
   React.useEffect(() => {
     fetchRestaurantProfile();
@@ -89,16 +50,14 @@ const RestaurantHome = () => {
     }
   };
 
-  const handleUpdateOrderStatus = (orderId: string, nextStatus: VendorOrder["status"]) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setOrders((prev) =>
-      prev.map((ord) => (ord.id === orderId ? { ...ord, status: nextStatus } : ord))
-    );
-  };
-
   const handleSwitchToRiderMode = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.replace("/(tabs)/home");
+  };
+
+  const handleGoToLiveOrders = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push("/(restaurant)/orders" as any);
   };
 
   return (
@@ -119,12 +78,7 @@ const RestaurantHome = () => {
           </TouchableOpacity>
 
           <View style={styles.header_center}>
-            <Text style={styles.store_title}>
-              {restaurant?.name || "Restaurant Dashboard"}
-            </Text>
-            <Text style={styles.store_subtitle}>
-              {restaurant?.category_tags?.slice(0, 2).join(" • ") || "Vendor Dashboard"}
-            </Text>
+            <Text style={styles.header_title}>Restaurant Dashboard</Text>
           </View>
 
           <TouchableOpacity
@@ -143,29 +97,96 @@ const RestaurantHome = () => {
             { paddingBottom: Platform.OS === "ios" ? insets.bottom + 30 : 40 },
           ]}
         >
-          {/* ── Store Online Status Card ── */}
+          {/* ── Banner & Logo Header (First on Page) ── */}
+          <View style={styles.hero_container}>
+            {/* Banner Image */}
+            <View style={styles.banner_wrapper}>
+              {restaurant?.banner ? (
+                <Image
+                  source={{ uri: restaurant.banner }}
+                  style={styles.banner_image}
+                  contentFit="cover"
+                  transition={300}
+                />
+              ) : (
+                <View style={styles.banner_placeholder}>
+                  <Feather name="image" size={32} color="#ffffff44" />
+                  <Text style={styles.banner_placeholder_text}>
+                    No Banner Set
+                  </Text>
+                </View>
+              )}
+              <View style={styles.banner_overlay} />
+            </View>
+
+            {/* Logo (Halfway on top of banner) & Meta Information */}
+            <View style={styles.restaurant_meta_card}>
+              <View style={styles.logo_wrapper}>
+                {restaurant?.logo ? (
+                  <Image
+                    source={{ uri: restaurant.logo }}
+                    style={styles.logo_image}
+                    contentFit="cover"
+                    transition={300}
+                  />
+                ) : (
+                  <View style={styles.logo_placeholder}>
+                    <FontAwesome5 name="store" size={24} color="#fff" />
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.restaurant_details}>
+                <Text style={styles.restaurant_name_text} numberOfLines={1}>
+                  {restaurant?.name || "My Restaurant"}
+                </Text>
+
+                <Text style={styles.restaurant_tags_text} numberOfLines={1}>
+                  {restaurant?.category_tags?.length
+                    ? restaurant.category_tags.join(" • ")
+                    : "Food & Dining"}
+                </Text>
+
+                <View style={styles.rating_location_row}>
+                  <View style={styles.rating_badge}>
+                    <Feather name="star" size={12} color="#ffc107" />
+                    <Text style={styles.rating_badge_text}>
+                      {restaurant?.rating ? restaurant.rating.toFixed(1) : "5.0"}
+                    </Text>
+                    <Text style={styles.reviews_count_text}>
+                      ({restaurant?.num_of_reviews || 0})
+                    </Text>
+                  </View>
+
+                  {restaurant?.location?.address ? (
+                    <View style={styles.location_badge}>
+                      <Feather name="map-pin" size={11} color="#9CA3AF" />
+                      <Text style={styles.location_badge_text} numberOfLines={1}>
+                        {restaurant.location.address}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* ── Store Online Status Card (Compact Sleek Bar) ── */}
           <View
             style={[
               styles.status_banner,
               isStoreOnline ? styles.status_online : styles.status_offline,
             ]}
           >
-            <View style={{ flex: 1 }}>
-              <View style={styles.status_title_row}>
-                <View
-                  style={[
-                    styles.status_dot,
-                    { backgroundColor: isStoreOnline ? "#4caf50" : "#9CA3AF" },
-                  ]}
-                />
-                <Text style={styles.status_title_text}>
-                  {isStoreOnline ? "Store is Online" : "Store is Offline"}
-                </Text>
-              </View>
-              <Text style={styles.status_desc_text}>
-                {isStoreOnline
-                  ? "Accepting incoming customer food orders"
-                  : "Paused — customers cannot place new orders"}
+            <View style={styles.status_title_row}>
+              <View
+                style={[
+                  styles.status_dot,
+                  { backgroundColor: isStoreOnline ? "#4caf50" : "#9CA3AF" },
+                ]}
+              />
+              <Text style={styles.status_title_text}>
+                {isStoreOnline ? "Store Online" : "Store Offline"}
               </Text>
             </View>
 
@@ -174,10 +195,11 @@ const RestaurantHome = () => {
               onValueChange={toggleOnlineStatus}
               trackColor={{ false: "#333", true: "#4caf5055" }}
               thumbColor={isStoreOnline ? "#4caf50" : "#9CA3AF"}
+              style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
             />
           </View>
 
-          {/* ── Metrics Summary Grid ── */}
+          {/* ── Overview Analysis Cards (Metrics Summary Grid) ── */}
           <View style={styles.metrics_grid}>
             <View style={styles.metric_card}>
               <Text style={styles.metric_label}>TODAY'S REVENUE</Text>
@@ -186,15 +208,15 @@ const RestaurantHome = () => {
             </View>
 
             <View style={styles.metric_card}>
-              <Text style={styles.metric_label}>ACTIVE ORDERS</Text>
-              <Text style={styles.metric_value}>{orders.length}</Text>
-              <Text style={styles.metric_sub_gray}>In queue</Text>
+              <Text style={styles.metric_label}>COMPLETED TODAY</Text>
+              <Text style={styles.metric_value}>14</Text>
+              <Text style={styles.metric_sub_gray}>Orders delivered</Text>
             </View>
 
             <View style={styles.metric_card}>
-              <Text style={styles.metric_label}>COMPLETED</Text>
-              <Text style={styles.metric_value}>14</Text>
-              <Text style={styles.metric_sub_gray}>Orders today</Text>
+              <Text style={styles.metric_label}>AVERAGE PREP TIME</Text>
+              <Text style={styles.metric_value}>18 mins</Text>
+              <Text style={styles.metric_sub_green}>Fast fulfillment</Text>
             </View>
 
             <View style={styles.metric_card}>
@@ -208,77 +230,47 @@ const RestaurantHome = () => {
             </View>
           </View>
 
-          {/* ── Live Orders Section ── */}
-          <View style={styles.section}>
-            <View style={styles.section_header}>
-              <Text style={styles.section_title}>Live Orders</Text>
-              <View style={styles.badge_count}>
-                <Text style={styles.badge_count_text}>{orders.length}</Text>
+          {/* ── Big Live Orders Route Button (Positioned Below Overview Cards) ── */}
+          <TouchableOpacity
+            style={styles.big_orders_btn}
+            activeOpacity={0.88}
+            onPress={handleGoToLiveOrders}
+          >
+            <View style={styles.big_orders_btn_left}>
+              <View style={styles.big_orders_icon_box}>
+                <Feather name="shopping-bag" size={24} color="#121212" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.big_orders_title_row}>
+                  <Text style={styles.big_orders_btn_title}>Live Orders</Text>
+                  {isStoreOnline && <View style={styles.live_pulse_dot} />}
+                </View>
+                <Text style={styles.big_orders_btn_sub}>
+                  Tap to view & manage active incoming orders
+                </Text>
               </View>
             </View>
-
-            {orders.map((order) => {
-              return (
-                <View key={order.id} style={styles.order_card}>
-                  <View style={styles.order_header_row}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.order_id_text}>{order.id}</Text>
-                      <Text style={styles.customer_name}>{order.customerName}</Text>
-                    </View>
-                    <Text style={styles.order_price_text}>{order.total}</Text>
-                  </View>
-
-                  <Text style={styles.order_items_text}>{order.items}</Text>
-
-                  <View style={styles.order_footer_row}>
-                    <Text style={styles.order_time_text}>⏱ {order.time}</Text>
-
-                    {/* Dynamic Action Button based on Order Status */}
-                    {order.status === "new" && (
-                      <View style={styles.action_btn_group}>
-                        <TouchableOpacity
-                          style={styles.accept_btn}
-                          onPress={() => handleUpdateOrderStatus(order.id, "preparing")}
-                        >
-                          <Feather name="check" size={14} color="#121212" />
-                          <Text style={styles.accept_btn_text}>Accept</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-
-                    {order.status === "preparing" && (
-                      <TouchableOpacity
-                        style={styles.ready_btn}
-                        onPress={() => handleUpdateOrderStatus(order.id, "in_transit")}
-                      >
-                        <Feather name="package" size={14} color="#fff" />
-                        <Text style={styles.ready_btn_text}>Mark Ready</Text>
-                      </TouchableOpacity>
-                    )}
-
-                    {order.status === "in_transit" && (
-                      <View style={styles.transit_tag}>
-                        <Feather name="truck" size={12} color="#2196f3" />
-                        <Text style={styles.transit_tag_text}>Dispatched</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
+            <View style={styles.big_orders_arrow_box}>
+              <Feather name="chevron-right" size={22} color="#fff" />
+            </View>
+          </TouchableOpacity>
 
           {/* ── Quick Vendor Tools ── */}
           <View style={styles.section}>
             <Text style={styles.section_title}>Vendor Management</Text>
 
             <View style={styles.tools_grid}>
-              <TouchableOpacity style={styles.tool_card}>
+              <TouchableOpacity
+                style={styles.tool_card}
+                onPress={() =>
+                  router.push("/(restaurant_auth)/restaurant_details?mode=edit")
+                }
+              >
                 <View style={styles.tool_icon_box}>
                   <Feather name="list" size={18} color="#fff" />
                 </View>
-                <Text style={styles.tool_title}>Menu Catalog</Text>
-                <Text style={styles.tool_sub}>Edit items & prices</Text>
+                <Text style={styles.tool_title}>Menu & Details</Text>
+                <Text style={styles.tool_sub}>Edit items & info</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.tool_card}>
@@ -297,7 +289,10 @@ const RestaurantHome = () => {
                 <Text style={styles.tool_sub}>Set opening times</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.tool_card} onPress={handleSwitchToRiderMode}>
+              <TouchableOpacity
+                style={styles.tool_card}
+                onPress={handleSwitchToRiderMode}
+              >
                 <View style={styles.tool_icon_box}>
                   <Feather name="user" size={18} color="#fff" />
                 </View>
@@ -349,15 +344,10 @@ const styles = StyleSheet.create({
   header_center: {
     alignItems: "center",
   },
-  store_title: {
+  header_title: {
     color: "#fff",
     fontFamily: "raleway-bold",
-    fontSize: 18,
-  },
-  store_subtitle: {
-    color: "#9CA3AF",
-    fontFamily: "raleway-semibold",
-    fontSize: 11,
+    fontSize: 16,
   },
   switch_rider_btn: {
     width: 42,
@@ -371,17 +361,143 @@ const styles = StyleSheet.create({
   },
   scroll_content: {
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 8,
     gap: 16,
   },
-  // Status banner
+
+  // ── Hero Banner & Overlapping Logo Header ──
+  hero_container: {
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#1a1a1a",
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  banner_wrapper: {
+    height: 140,
+    width: "100%",
+    backgroundColor: "#222",
+    position: "relative",
+  },
+  banner_image: {
+    width: "100%",
+    height: "100%",
+  },
+  banner_placeholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#1f1f1f",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  banner_placeholder_text: {
+    color: "#777",
+    fontFamily: "raleway-semibold",
+    fontSize: 12,
+  },
+  banner_overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  restaurant_meta_card: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    marginTop: -40, // 50% overlap on top of 80px banner edge
+    gap: 14,
+  },
+  logo_wrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: "#1a1a1a",
+    borderWidth: 3.5,
+    borderColor: "#121212",
+    overflow: "hidden",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
+  },
+  logo_image: {
+    width: "100%",
+    height: "100%",
+  },
+  logo_placeholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#333",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  restaurant_details: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingTop: 10,
+  },
+  restaurant_name_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 18,
+    marginBottom: 2,
+  },
+  restaurant_tags_text: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-medium",
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  rating_location_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  rating_badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffc1071e",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "#ffc10744",
+  },
+  rating_badge_text: {
+    color: "#ffc107",
+    fontFamily: "raleway-bold",
+    fontSize: 11,
+  },
+  reviews_count_text: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-regular",
+    fontSize: 10,
+  },
+  location_badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    maxWidth: "55%",
+  },
+  location_badge_text: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-regular",
+    fontSize: 11,
+  },
+
+  // ── Compact Store Online Bar ──
   status_banner: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 18,
-    padding: 16,
+    justifyContent: "space-between",
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderWidth: 1,
-    gap: 12,
   },
   status_online: {
     backgroundColor: "#4caf5015",
@@ -395,7 +511,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 4,
   },
   status_dot: {
     width: 8,
@@ -405,13 +520,71 @@ const styles = StyleSheet.create({
   status_title_text: {
     color: "#fff",
     fontFamily: "raleway-bold",
-    fontSize: 15,
+    fontSize: 13,
   },
-  status_desc_text: {
+
+  // ── Big Live Orders Button ──
+  big_orders_btn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "#ffffff18",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  big_orders_btn_left: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    flex: 1,
+  },
+  big_orders_icon_box: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  big_orders_title_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  big_orders_btn_title: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 18,
+  },
+  live_pulse_dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#4caf50",
+  },
+  big_orders_btn_sub: {
     color: "#9CA3AF",
     fontFamily: "raleway-regular",
     fontSize: 12,
+    marginTop: 2,
   },
+  big_orders_arrow_box: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "#2a2a2a",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 10,
+  },
+
   // Metrics Grid
   metrics_grid: {
     flexDirection: "row",
@@ -449,126 +622,17 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-regular",
     fontSize: 11,
   },
+
   // Section
   section: {
     gap: 12,
-  },
-  section_header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
   },
   section_title: {
     color: "#fff",
     fontFamily: "raleway-bold",
     fontSize: 18,
   },
-  badge_count: {
-    backgroundColor: "#2a2a2a",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  badge_count_text: {
-    color: "#fff",
-    fontFamily: "raleway-bold",
-    fontSize: 12,
-  },
-  // Live order card
-  order_card: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#2a2a2a",
-    gap: 10,
-  },
-  order_header_row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  order_id_text: {
-    color: "#777",
-    fontFamily: "raleway-semibold",
-    fontSize: 12,
-  },
-  customer_name: {
-    color: "#fff",
-    fontFamily: "raleway-bold",
-    fontSize: 15,
-  },
-  order_price_text: {
-    color: "#fff",
-    fontFamily: "raleway-bold",
-    fontSize: 16,
-  },
-  order_items_text: {
-    color: "#9CA3AF",
-    fontFamily: "raleway-regular",
-    fontSize: 13,
-  },
-  order_footer_row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: "#2a2a2a",
-  },
-  order_time_text: {
-    color: "#777",
-    fontFamily: "raleway-regular",
-    fontSize: 12,
-  },
-  action_btn_group: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  accept_btn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#fff",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  accept_btn_text: {
-    color: "#121212",
-    fontFamily: "raleway-bold",
-    fontSize: 12,
-  },
-  ready_btn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#2a2a2a",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  ready_btn_text: {
-    color: "#fff",
-    fontFamily: "raleway-bold",
-    fontSize: 12,
-  },
-  transit_tag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#2196f31f",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#2196f344",
-  },
-  transit_tag_text: {
-    color: "#2196f3",
-    fontFamily: "raleway-bold",
-    fontSize: 11,
-  },
+
   // Vendor Tools
   tools_grid: {
     flexDirection: "row",
@@ -604,3 +668,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
 });
+
+
