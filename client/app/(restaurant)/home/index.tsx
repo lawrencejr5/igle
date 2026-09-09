@@ -28,7 +28,8 @@ const RestaurantHome = () => {
     useRestaurantContext();
   const { vendorOrders, fetchVendorOrders } = useFoodOrderContext();
   const { vendorStats, fetchVendorEarningsStats } = useTransactionContext();
-  const { restaurantRating, restaurantRatingCount, fetchRestaurantRatings } = useRatingContext();
+  const { restaurantRating, restaurantRatingCount, fetchRestaurantRatings } =
+    useRatingContext();
 
   const [isStoreOnline, setIsStoreOnline] = useState(
     restaurant?.is_online ?? true,
@@ -49,7 +50,7 @@ const RestaurantHome = () => {
     return vendorOrders.filter(
       (o) =>
         o.status === "delivered" &&
-        new Date(o.createdAt).toDateString() === todayStr
+        new Date(o.createdAt).toDateString() === todayStr,
     ).length;
   }, [vendorOrders]);
 
@@ -121,7 +122,11 @@ const RestaurantHome = () => {
           ]}
         >
           {/* ── Banner & Logo Header (First on Page) ── */}
-          <View style={styles.hero_container}>
+          <TouchableOpacity
+            style={styles.hero_container}
+            activeOpacity={0.92}
+            onPress={() => router.push("/(restaurant)/details" as any)}
+          >
             {/* Banner Image */}
             <View style={styles.banner_wrapper}>
               {restaurant?.banner ? (
@@ -139,7 +144,12 @@ const RestaurantHome = () => {
                   </Text>
                 </View>
               )}
-              <View style={styles.banner_overlay} />
+              <View style={styles.banner_overlay}>
+                <View style={styles.edit_badge}>
+                  <Feather name="edit-2" size={12} color="#fff" />
+                  <Text style={styles.edit_badge_text}>Edit Details</Text>
+                </View>
+              </View>
             </View>
 
             {/* Logo (Halfway on top of banner) & Meta Information */}
@@ -197,7 +207,7 @@ const RestaurantHome = () => {
                 </View>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* ── Store Online Status Card (Compact Sleek Bar) ── */}
           <View
@@ -246,7 +256,14 @@ const RestaurantHome = () => {
             <View style={styles.metric_card}>
               <Text style={styles.metric_label}>ACTIVE ORDERS</Text>
               <Text style={styles.metric_value}>
-                {vendorOrders.filter((o) => o.status !== "delivered" && o.status !== "cancelled" && o.status !== "rejected").length}
+                {
+                  vendorOrders.filter(
+                    (o) =>
+                      o.status !== "delivered" &&
+                      o.status !== "cancelled" &&
+                      o.status !== "rejected",
+                  ).length
+                }
               </Text>
               <Text style={styles.metric_sub_green}>In kitchen & transit</Text>
             </View>
@@ -260,7 +277,9 @@ const RestaurantHome = () => {
                 {(restaurantRating || restaurant?.rating || 5.0).toFixed(1)} ★
               </Text>
               <Text style={styles.metric_sub_gray}>
-                Based on {restaurantRatingCount || restaurant?.num_of_reviews || 0} reviews
+                Based on{" "}
+                {restaurantRatingCount || restaurant?.num_of_reviews || 0}{" "}
+                reviews
               </Text>
             </TouchableOpacity>
           </View>
@@ -330,13 +349,13 @@ const RestaurantHome = () => {
 
               <TouchableOpacity
                 style={styles.tool_card}
-                onPress={handleSwitchToRiderMode}
+                onPress={() => router.push("/(restaurant)/details" as any)}
               >
                 <View style={styles.tool_icon_box}>
-                  <Feather name="user" size={18} color="#fff" />
+                  <Feather name="settings" size={18} color="#fff" />
                 </View>
-                <Text style={styles.tool_title}>Customer Mode</Text>
-                <Text style={styles.tool_sub}>Return to customer app</Text>
+                <Text style={styles.tool_title}>Store Profile</Text>
+                <Text style={styles.tool_sub}>Edit banner, info & times</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -437,7 +456,26 @@ const styles = StyleSheet.create({
   },
   banner_overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    alignItems: "flex-end",
+    justifyContent: "flex-start",
+    padding: 10,
+  },
+  edit_badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#00000088",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ffffff33",
+  },
+  edit_badge_text: {
+    color: "#fff",
+    fontFamily: "raleway-semibold",
+    fontSize: 10,
   },
   restaurant_meta_card: {
     flexDirection: "row",

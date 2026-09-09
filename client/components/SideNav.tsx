@@ -487,6 +487,18 @@ const SideNav: React.FC<{
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  onPress={() => {
+                    closeSideNav();
+                    router.push("/(restaurant)/details" as any);
+                  }}
+                >
+                  <View style={styles.sidenav_content_box}>
+                    <Feather name="settings" size={20} color="#c6c6c6" />
+                    <Text style={styles.sidenav_content_text}>Store Profile & Details</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   onPress={handleRateUs}
                 >
                   <View style={styles.sidenav_content_box}>
