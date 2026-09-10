@@ -69,6 +69,12 @@ const UserSchema = new mongoose_1.Schema({
         default: "none",
     },
     is_driver: { type: Boolean, default: false },
+    restaurant_application: {
+        type: String,
+        enum: ["none", "submitted", "rejected", "approved"],
+        default: "none",
+    },
+    is_restaurant: { type: Boolean, default: false },
     is_verified: { type: Boolean, default: false },
     // soft delete fields
     is_deleted: { type: Boolean, default: false },

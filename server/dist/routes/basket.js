@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const basket_1 = require("../controllers/basket");
+const auth_1 = require("../middleware/auth");
+const BasketRouter = (0, express_1.Router)();
+BasketRouter.use(auth_1.auth);
+BasketRouter.get("/", basket_1.get_user_basket);
+BasketRouter.post("/add", basket_1.add_item_to_basket);
+BasketRouter.patch("/items/:itemId", basket_1.update_basket_item_quantity);
+BasketRouter.delete("/items/:itemId", basket_1.remove_item_from_basket);
+BasketRouter.delete("/", basket_1.clear_basket);
+exports.default = BasketRouter;

@@ -18,10 +18,12 @@ const driver_1 = __importDefault(require("../models/driver"));
 const ride_1 = require("./ride");
 const user_2 = require("./user");
 const location_1 = require("./location");
+const food_1 = require("./food");
 const handle_socket_events = (io, socket) => {
     (0, user_2.user_socket_events)(io, socket);
     (0, ride_1.ride_socket_events)(io, socket);
     (0, location_1.location_socket_events)(io, socket);
+    (0, food_1.food_socket_events)(io, socket);
     socket.on("disconnect", () => __awaiter(void 0, void 0, void 0, function* () {
         yield user_1.default.findOneAndUpdate({ socket_id: socket.id }, { socket_id: null, is_online: false });
         yield driver_1.default.findOneAndUpdate({ socket_id: socket.id }, { socket_id: null, is_online: false });

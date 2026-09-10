@@ -406,17 +406,45 @@ const update_vehicle_info = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.update_vehicle_info = update_vehicle_info;
 // Update driver license information
 const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         // extract individual driver licence fields from body
-        const { number, expiry_date, front_image, back_image, selfie_with_licence, } = req.body;
-        if (!number || !expiry_date) {
-            res
-                .status(400)
-                .json({ msg: "Driver licence number and expiry date are required." });
+        const { number, expiry_date, front_image, back_image, selfie_with_licence, identification_type, } = req.body;
+        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        // Fetch driver so we can validate against their vehicle_type
+        const driver = yield driver_1.default.findById(driver_id);
+        if (!driver) {
+            res.status(404).json({ msg: "Driver not found." });
             return;
         }
-        const driver_id = yield (0, get_id_1.get_driver_id)((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        const vehicleType = driver.vehicle_type;
+        // Determine which ID types are allowed for this vehicle type
+        const allowedTypes = {
+            bike: ["driver_licence", "passport", "national_id"],
+            keke: ["driver_licence", "passport", "national_id"],
+            cab: ["driver_licence"],
+            suv: ["driver_licence"],
+            van: ["driver_licence"],
+            truck: ["driver_licence"],
+        };
+        const allowed = (_b = allowedTypes[vehicleType]) !== null && _b !== void 0 ? _b : ["driver_licence"];
+        const chosenType = identification_type || allowed[0];
+        if (!allowed.includes(chosenType)) {
+            res.status(400).json({
+                msg: `${vehicleType} drivers cannot use "${chosenType}" as identification. Allowed: ${allowed.join(", ")}.`,
+            });
+            return;
+        }
+        // Validate required fields
+        if (!number) {
+            res.status(400).json({ msg: "ID number is required." });
+            return;
+        }
+        // Expiry date is optional for national_id (NINs don't expire)
+        if (chosenType !== "national_id" && !expiry_date) {
+            res.status(400).json({ msg: "Expiry date is required for this ID type." });
+            return;
+        }
         const files = req.files || {};
         // start with provided values (may be null)
         let front_image_url = front_image || null;
@@ -463,22 +491,24 @@ const update_driver_license = (req, res) => __awaiter(void 0, void 0, void 0, fu
                 yield safeUnlink(filePath);
             }
         }
-        const driver = yield driver_1.default.findByIdAndUpdate(driver_id, {
+        const updatedDriver = yield driver_1.default.findByIdAndUpdate(driver_id, {
+            identification_type: chosenType,
             driver_licence: {
                 number,
-                expiry_date,
+                expiry_date: expiry_date || null,
                 front_image: front_image_url,
                 back_image: back_image_url,
                 selfie_with_licence: selfie_image_url,
             },
         }, { new: true });
-        if (!driver) {
+        if (!updatedDriver) {
             res.status(404).json({ msg: "Driver not found." });
             return;
         }
         res.status(200).json({
-            msg: "Driver license information updated successfully",
-            driver_licence: driver.driver_licence,
+            msg: "Driver identification information updated successfully",
+            identification_type: updatedDriver.identification_type,
+            driver_licence: updatedDriver.driver_licence,
         });
     }
     catch (err) {

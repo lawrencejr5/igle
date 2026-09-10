@@ -50,7 +50,9 @@ const TransactionSchema = new mongoose_1.Schema({
             "funding",
             "ride_payment",
             "delivery_payment",
+            "food_payment",
             "driver_payment",
+            "restaurant_refund",
             "payout",
         ],
         required: true,
@@ -72,6 +74,13 @@ const TransactionSchema = new mongoose_1.Schema({
         ref: "Delivery",
         required: function () {
             return this.type === "delivery_payment";
+        },
+    },
+    food_order_id: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "FoodOrder",
+        required: function () {
+            return this.type === "food_payment";
         },
     },
     amount: { type: Number, required: true },

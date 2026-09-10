@@ -7,6 +7,8 @@ RatingRouter.use(auth_1.auth);
 const rating_1 = require("../controllers/rating");
 RatingRouter.post("/", rating_1.create_rating);
 RatingRouter.get("/ride", rating_1.get_ride_ratings);
+RatingRouter.get("/order", rating_1.get_food_order_ratings);
 RatingRouter.get("/driver", rating_1.get_driver_ratings);
+RatingRouter.get("/restaurant", rating_1.get_restaurant_ratings);
 RatingRouter.get("/user", rating_1.get_user_ratings);
 exports.default = RatingRouter;

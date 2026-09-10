@@ -89,7 +89,7 @@ const notifyUserOfCredit = (transaction) => __awaiter(void 0, void 0, void 0, fu
         console.error("Failed to send wallet credit notification:", e);
     }
 });
-const debit_wallet = (_a, ext_session_1) => __awaiter(void 0, [_a, ext_session_1], void 0, function* ({ wallet_id, ride_id, delivery_id, type, amount, reference, status = "success", metadata, }, ext_session) {
+const debit_wallet = (_a, ext_session_1) => __awaiter(void 0, [_a, ext_session_1], void 0, function* ({ wallet_id, ride_id, delivery_id, food_order_id, type, amount, reference, status = "success", metadata, }, ext_session) {
     //  Determine ownership
     const isLocalSession = !ext_session;
     const session = ext_session || (yield mongoose_1.default.startSession());
@@ -124,6 +124,7 @@ const debit_wallet = (_a, ext_session_1) => __awaiter(void 0, [_a, ext_session_1
                     channel: "wallet",
                     ride_id: ride_id && ride_id,
                     delivery_id: delivery_id && delivery_id,
+                    food_order_id: food_order_id && food_order_id,
                     reference,
                     metadata,
                 },

@@ -57,6 +57,11 @@ const DriverSchema = new mongoose_1.Schema({
         year: { type: String },
         plate_number: { type: String },
     },
+    identification_type: {
+        type: String,
+        enum: ["driver_licence", "passport", "national_id"],
+        default: "driver_licence",
+    },
     driver_licence: {
         number: { type: String },
         expiry_date: { type: String },

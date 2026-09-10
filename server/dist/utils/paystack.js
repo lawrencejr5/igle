@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verify_paystack_transaction = exports.initialize_paystack_transaction = void 0;
+exports.resolve_bank_account = exports.verify_paystack_transaction = exports.initialize_paystack_transaction = void 0;
 const axios_1 = __importDefault(require("axios"));
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const paystack_api = axios_1.default.create({
@@ -37,3 +37,8 @@ const verify_paystack_transaction = (reference) => __awaiter(void 0, void 0, voi
     return data.data; // contains status, customer, amount, etc.
 });
 exports.verify_paystack_transaction = verify_paystack_transaction;
+const resolve_bank_account = (account_number, bank_code) => __awaiter(void 0, void 0, void 0, function* () {
+    const { data } = yield paystack_api.get(`/bank/resolve?account_number=${account_number}&bank_code=${bank_code}`);
+    return data.data; // contains account_number, account_name, bank_id
+});
+exports.resolve_bank_account = resolve_bank_account;

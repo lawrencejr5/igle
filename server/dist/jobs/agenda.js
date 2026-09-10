@@ -17,8 +17,13 @@ const agenda_1 = __importDefault(require("agenda"));
 const mongoConnectionString = process.env.MONGO_URI;
 const ride_1 = __importDefault(require("../models/ride"));
 const driver_1 = __importDefault(require("../models/driver"));
+const foodOrder_1 = __importDefault(require("../models/foodOrder"));
+const restaurant_1 = __importDefault(require("../models/restaurant"));
+const wallet_1 = __importDefault(require("../models/wallet"));
+const transaction_1 = __importDefault(require("../models/transaction"));
 const expo_push_1 = require("../utils/expo_push");
 const get_id_1 = require("../utils/get_id");
+const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const ride_2 = require("../controllers/ride");
 const server_1 = require("../server");
 // Connect to Mongo and specify the collection "agendaJobs"
@@ -117,5 +122,72 @@ exports.agenda.define("enable_scheduled_ride", (job) => __awaiter(void 0, void 0
             yield (0, expo_push_1.sendNotification)([user], "Scheduled ride is now active!", `Your ride from ${ride.pickup.address} to ${ride.destination.address} is now active, the driver should be on his way.`, { type: "ride_booking" });
             yield (0, expo_push_1.sendNotification)([driver], "Scheduled ride is now active!", `Your ride to ${ride.destination.address} is now active, start heading to from ${ride.pickup.address}.`, { type: "ride_booking", role: "driver" });
         }
+    }
+}));
+// 3. FOOD ORDER 3-MINUTE ACCEPTANCE TIMEOUT JOB
+exports.agenda.define("check_food_order_timeout", (job) => __awaiter(void 0, void 0, void 0, function* () {
+    const { order_id } = job.attrs.data;
+    if (!order_id)
+        return;
+    const order = yield foodOrder_1.default.findById(order_id);
+    // If order is still "placed" after 3 minutes (not accepted, preparing, or cancelled)
+    if (order && order.status === "placed") {
+        console.log(`Food order ${order_id} timed out after 3 minutes.`);
+        order.status = "rejected";
+        order.cancellation = {
+            cancelled_by: "system",
+            reason: "Restaurant did not accept order within 3 minutes timeout",
+        };
+        order.status_timestamps.cancelled_at = new Date();
+        yield order.save();
+        // Refund customer's money back to in-app wallet
+        const customerWallet = yield wallet_1.default.findOne({ owner_id: order.customer });
+        if (customerWallet) {
+            customerWallet.balance += order.pricing.total;
+            yield customerWallet.save();
+            yield transaction_1.default.create({
+                wallet_id: customerWallet._id,
+                type: "payout",
+                amount: order.pricing.total,
+                status: "success",
+                channel: "wallet",
+                reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                food_order_id: order._id,
+                metadata: {
+                    order_id: order._id,
+                    order_number: order.order_number,
+                    reason: "3-minute vendor response timeout refund",
+                },
+            });
+        }
+        // Socket notification to customer
+        const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);
+        if (customerSocket) {
+            server_1.io.to(customerSocket).emit("food_order_timeout", {
+                order_id: order._id,
+                order_number: order.order_number,
+                msg: "The restaurant did not accept your order in time. Your payment has been refunded to your wallet.",
+            });
+        }
+        // Notify room tracking
+        server_1.io.to(`food_order_${order._id}`).emit("food_order_updated", {
+            order_id: order._id,
+            status: "rejected",
+            msg: "Order timed out and was cancelled.",
+        });
+        // Socket notification to vendor
+        const restaurant = yield restaurant_1.default.findById(order.restaurant);
+        if (restaurant === null || restaurant === void 0 ? void 0 : restaurant.user) {
+            const vendorSocket = yield (0, get_id_1.get_user_socket_id)(restaurant.user);
+            if (vendorSocket) {
+                server_1.io.to(vendorSocket).emit("food_order_expired", {
+                    order_id: order._id,
+                    order_number: order.order_number,
+                    msg: "Order timed out due to no response in 3 minutes.",
+                });
+            }
+        }
+        // Push notification to customer
+        yield (0, expo_push_1.sendNotification)([order.customer.toString()], "Order Refunded 💳", `Restaurant did not respond in 3 mins. NGN ${order.pricing.total.toLocaleString()} has been refunded to your wallet.`, { type: "food_order_timeout", order_id: String(order._id) });
     }
 }));
