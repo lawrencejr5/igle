@@ -71,7 +71,9 @@ export const save_restaurant_details = async (req: Request, res: Response) => {
       if (parsedTags) restaurant.category_tags = parsedTags;
       if (parsedHours) restaurant.operating_hours = parsedHours;
       if (logo_url) restaurant.logo = logo_url;
-      if (banner_url) restaurant.banner = banner_url;
+      if (!restaurant.verification?.government_id && restaurant.application !== "approved") {
+        restaurant.application = "pending";
+      }
 
       await restaurant.save();
     } else {

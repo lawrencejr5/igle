@@ -103,14 +103,13 @@ const RestaurantDetails = () => {
 
   // Automatically navigate to dashboard or verification screen if application is already submitted/approved
   React.useEffect(() => {
-    if (
-      params.mode !== "edit" &&
-      restaurant?.application &&
-      restaurant.application !== "none"
-    ) {
+    if (params.mode !== "edit" && restaurant?.application) {
       if (restaurant.application === "approved" || restaurant.is_verified) {
         router.replace("/(restaurant)/home");
-      } else {
+      } else if (
+        restaurant.application === "submitted" &&
+        restaurant.verification?.government_id
+      ) {
         router.replace("/(restaurant_auth)/restaurant_verification");
       }
     }

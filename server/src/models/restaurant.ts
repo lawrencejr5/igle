@@ -110,7 +110,7 @@ const RestaurantSchema = new Schema<RestaurantType>(
     application: {
       type: String,
       enum: ["none", "pending", "rejected", "submitted", "approved"],
-      default: "submitted",
+      default: "pending",
     },
     rating: { type: Number, default: 5.0 },
     num_of_reviews: { type: Number, default: 0 },

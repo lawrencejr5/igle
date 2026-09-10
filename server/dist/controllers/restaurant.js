@@ -25,7 +25,7 @@ const uploadToCloudinary = (filePath_1, ...args_1) => __awaiter(void 0, [filePat
 // ─── Stage 1: Save Restaurant Details ───────────────────────────────────────
 // POST /api/v1/restaurants/save-details
 const save_restaurant_details = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!user_id) {
@@ -75,8 +75,9 @@ const save_restaurant_details = (req, res) => __awaiter(void 0, void 0, void 0, 
                 restaurant.operating_hours = parsedHours;
             if (logo_url)
                 restaurant.logo = logo_url;
-            if (banner_url)
-                restaurant.banner = banner_url;
+            if (!((_d = restaurant.verification) === null || _d === void 0 ? void 0 : _d.government_id) && restaurant.application !== "approved") {
+                restaurant.application = "pending";
+            }
             yield restaurant.save();
         }
         else {

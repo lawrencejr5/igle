@@ -140,7 +140,9 @@ const RestaurantVerification = () => {
 
   const isAlreadySubmitted =
     submitted ||
-    (restaurant?.application && restaurant.application !== "none");
+    (restaurant?.application === "submitted" &&
+      !!restaurant?.verification?.government_id) ||
+    restaurant?.application === "approved";
 
   // ── Success / Submitted Screen ──────────────────────────────────────────────
 
