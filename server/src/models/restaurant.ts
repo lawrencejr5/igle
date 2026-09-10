@@ -77,7 +77,7 @@ const RestaurantSchema = new Schema<RestaurantType>(
       },
     ],
     location: {
-      address: { type: String, required: true },
+      address: { type: String, default: "" },
       landmark: { type: String, default: "" },
       coordinates: {
         type: {

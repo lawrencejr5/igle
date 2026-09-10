@@ -18,9 +18,9 @@ export interface UserType extends Document {
     type: string;
     coordinates: [number, number];
   };
-  driver_application: "none" | "rejected" | "submitted" | "approved";
+  driver_application: "none" | "pending" | "submitted" | "rejected" | "approved";
   is_driver: boolean;
-  restaurant_application?: "none" | "rejected" | "submitted" | "approved";
+  restaurant_application?: "none" | "pending" | "submitted" | "rejected" | "approved";
   is_restaurant?: boolean;
   is_verified: boolean;
   is_deleted?: boolean;
@@ -65,13 +65,13 @@ const UserSchema = new Schema<UserType>(
     },
     driver_application: {
       type: String,
-      enum: ["none", "submitted", "rejected", "approved"],
+      enum: ["none", "pending", "submitted", "rejected", "approved"],
       default: "none",
     },
     is_driver: { type: Boolean, default: false },
     restaurant_application: {
       type: String,
-      enum: ["none", "submitted", "rejected", "approved"],
+      enum: ["none", "pending", "submitted", "rejected", "approved"],
       default: "none",
     },
     is_restaurant: { type: Boolean, default: false },

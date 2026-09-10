@@ -65,13 +65,13 @@ const UserSchema = new mongoose_1.Schema({
     },
     driver_application: {
         type: String,
-        enum: ["none", "submitted", "rejected", "approved"],
+        enum: ["none", "pending", "submitted", "rejected", "approved"],
         default: "none",
     },
     is_driver: { type: Boolean, default: false },
     restaurant_application: {
         type: String,
-        enum: ["none", "submitted", "rejected", "approved"],
+        enum: ["none", "pending", "submitted", "rejected", "approved"],
         default: "none",
     },
     is_restaurant: { type: Boolean, default: false },

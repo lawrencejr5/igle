@@ -95,7 +95,7 @@ const save_restaurant_details = (req, res) => __awaiter(void 0, void 0, void 0, 
                     landmark: "",
                     coordinates: {
                         type: "Point",
-                        coordinates: [6.6959, 6.2059],
+                        coordinates: [3.3792, 6.5244],
                     },
                     delivery_radius_km: 5,
                 },
