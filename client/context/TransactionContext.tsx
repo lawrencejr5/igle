@@ -180,11 +180,13 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
 
   // ─── Vendor / Restaurant Transaction Extensions ───
 
+  // ─── Vendor / Restaurant Transaction Extensions ───
+
   const fetchVendorTransactions = async (type?: string, status?: string) => {
     try {
       setLoading(true);
       const token = await getAuthToken();
-      let url = `${API_URLS.transactions}/user?limit=30&skip=0`;
+      let url = `${API_URLS.transactions}/vendor?limit=50&skip=0`;
       if (type) url += `&type=${type}`;
       if (status) url += `&status=${status}`;
 
@@ -194,6 +196,12 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
 
       if (data?.transactions) {
         setVendorTransactions(data.transactions);
+      }
+      if (typeof data?.wallet_balance === "number") {
+        setVendorStats((prev) => ({
+          ...prev,
+          todayEarnings: data.wallet_balance,
+        }));
       }
     } catch (error: any) {
       console.error("fetchVendorTransactions error:", error?.response?.data || error.message);
@@ -208,12 +216,12 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       const token = await getAuthToken();
 
       const { data } = await axios.post(
-        `${API_URLS.wallet}/withdraw`,
+        `${API_URLS.wallet}/vendor/withdraw`,
         { amount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      showNotification("Vendor withdrawal request submitted", "success");
+      showNotification("Vendor withdrawal request submitted successfully", "success");
       fetchVendorTransactions();
       return data;
     } catch (error: any) {
@@ -229,12 +237,22 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
     try {
       const token = await getAuthToken();
       if (!token) return;
-      const { data } = await axios.get(
+
+      // 1. Fetch restaurant wallet balance from dedicated restaurant wallet endpoint
+      const { data: wData } = await axios.get(
+        `${API_URLS.wallet}/balance?owner_type=Restaurant`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // 2. Fetch vendor orders to calculate accepted sales
+      const { data: orderData } = await axios.get(
         `${API_URLS.orders}/vendor`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (data?.orders && Array.isArray(data.orders)) {
+      let walletBalance = wData?.wallet?.balance || 0;
+
+      if (orderData?.orders && Array.isArray(orderData.orders)) {
         const now = new Date();
         const startOfToday = new Date(
           now.getFullYear(),
@@ -258,8 +276,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
           "delivered",
         ];
 
-        data.orders.forEach((o: any) => {
-          // EXCLUDE "placed" (unaccepted), "rejected", and "cancelled" orders
+        orderData.orders.forEach((o: any) => {
           if (acceptedStatuses.includes(o.status)) {
             acceptedCount++;
             const time = new Date(o.createdAt).getTime();
@@ -272,7 +289,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
 
         setVendorStats({
           totalOrders: acceptedCount,
-          todayEarnings: todaySum,
+          todayEarnings: walletBalance > 0 ? walletBalance : todaySum,
           weekEarnings: weekSum,
         });
       }

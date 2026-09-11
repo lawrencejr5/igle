@@ -2,7 +2,7 @@ import { Schema, model, Types, Document } from "mongoose";
 
 export interface WalletType extends Document {
   owner_id: Types.ObjectId;
-  owner_type: "User" | "Driver";
+  owner_type: "User" | "Driver" | "Restaurant";
   balance: number;
 }
 
@@ -16,7 +16,7 @@ const WalletSchema = new Schema<WalletType>(
     },
     owner_type: {
       type: String,
-      enum: ["User", "Driver"],
+      enum: ["User", "Driver", "Restaurant"],
     },
     balance: { type: Number, default: 0 },
   },

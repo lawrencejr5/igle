@@ -6,6 +6,7 @@ import {
   create_wallet,
   fund_wallet,
   get_wallet_balance,
+  initiate_vendor_withdrawal,
   paystack_redirect,
   paystack_webhook,
   request_withdrawal,
@@ -20,5 +21,6 @@ WalletRouter.post("/fund", auth, fund_wallet);
 WalletRouter.post("/verify", auth, verify_payment);
 WalletRouter.post("/create", auth, create_wallet);
 WalletRouter.post("/withdraw", auth, request_withdrawal);
+WalletRouter.post("/vendor/withdraw", auth, initiate_vendor_withdrawal);
 
 export default WalletRouter;

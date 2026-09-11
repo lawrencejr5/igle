@@ -209,21 +209,42 @@ export const request_withdrawal = async (req: any, res: any) => {
   }
 };
 
+import { getVendorRestaurant } from "../utils/get_vendor_restaurant";
+import { getOrCreateVendorWallet } from "../utils/get_vendor_wallet";
+
 export const get_wallet_balance = async (req: any, res: any) => {
   try {
     const { owner_type } = req.query;
 
     let owner_id;
+    let targetOwnerType = owner_type;
+
     if (owner_type === "User") {
       owner_id = req.user?.id;
     } else if (owner_type === "Driver") {
       owner_id = await get_driver_id(req.user?.id!);
+    } else if (owner_type === "Restaurant" || owner_type === "Vendor") {
+      const restaurant = await getVendorRestaurant(req, res);
+      if (!restaurant) return;
+      owner_id = restaurant._id;
+      targetOwnerType = "Restaurant";
     } else {
       res.status(400).json({ msg: "Owner type is invalid" });
       return;
     }
 
-    const wallet = await Wallet.findOne({ owner_id });
+    let wallet = await Wallet.findOne({
+      owner_id,
+      owner_type: "Restaurant",
+    });
+
+    if (!wallet && (owner_type === "Restaurant" || owner_type === "Vendor")) {
+      wallet = await Wallet.create({
+        owner_id,
+        owner_type: "Restaurant",
+        balance: 0,
+      });
+    }
 
     if (!wallet) {
       return res.status(404).json({ message: "Wallet not found" });
@@ -232,6 +253,48 @@ export const get_wallet_balance = async (req: any, res: any) => {
     res.status(200).json({ msg: "success", wallet });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", err });
+  }
+};
+
+export const initiate_vendor_withdrawal = async (req: any, res: any) => {
+  try {
+    const amount = Number(req.body.amount);
+    const restaurant = await getVendorRestaurant(req, res);
+    if (!restaurant) return;
+
+    const wallet = await getOrCreateVendorWallet(restaurant._id as any);
+
+    if (amount <= 0 || wallet.balance < amount) {
+      return res.status(400).json({
+        msg: `Insufficient restaurant wallet balance. Available: ₦${wallet.balance.toLocaleString()}`,
+      });
+    }
+
+    wallet.balance -= amount;
+    await wallet.save();
+
+    const transaction = await Transaction.create({
+      wallet_id: wallet._id,
+      type: "payout",
+      status: "success",
+      amount,
+      channel: "bank",
+      reference: `WD-V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      metadata: {
+        restaurant_id: restaurant._id,
+        restaurant_name: restaurant.name,
+        type: "vendor_withdrawal",
+      },
+    });
+
+    return res.status(200).json({
+      msg: "Restaurant withdrawal successful",
+      transaction,
+      wallet_balance: wallet.balance,
+    });
+  } catch (err: any) {
+    console.error("initiate_vendor_withdrawal error:", err);
+    res.status(500).json({ msg: err.message || "Withdrawal failed" });
   }
 };
 
@@ -248,19 +311,29 @@ export const create_wallet = async (
     }
 
     let owner_id;
+    let finalOwnerType = owner_type;
     if (owner_type === "User") {
       owner_id = req.user?.id;
     } else if (owner_type === "Driver") {
       owner_id = await get_driver_id(req.user?.id!);
+    } else if (owner_type === "Restaurant" || owner_type === "Vendor") {
+      const restaurant = await getVendorRestaurant(req, res);
+      if (!restaurant) return;
+      owner_id = restaurant._id;
+      finalOwnerType = "Restaurant";
     } else {
       res.status(400).json({ msg: "Owner type is invalid" });
       return;
     }
 
-    const wallet = await Wallet.create({ owner_id, owner_type, balance: 0 });
+    const wallet = await Wallet.create({
+      owner_id,
+      owner_type: finalOwnerType as any,
+      balance: 0,
+    });
     res
       .status(201)
-      .json({ msg: `${owner_type} wallet created successfully`, wallet });
+      .json({ msg: `${finalOwnerType} wallet created successfully`, wallet });
   } catch (err) {
     res.status(500).json({ msg: "Server error.", err });
   }

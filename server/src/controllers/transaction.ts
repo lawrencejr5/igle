@@ -4,6 +4,8 @@ import Transaction from "../models/transaction";
 import { get_driver_id } from "../utils/get_id";
 import Driver from "../models/driver";
 import axios from "axios";
+import { getVendorRestaurant } from "../utils/get_vendor_restaurant";
+import { getOrCreateVendorWallet } from "../utils/get_vendor_wallet";
 
 // Helper function to get start of day/week in UTC
 const getDateRanges = () => {
@@ -63,6 +65,47 @@ export const get_user_transactions = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Could not fetch transactions", error });
+  }
+};
+
+export const get_vendor_transactions = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const restaurant = await getVendorRestaurant(req, res);
+    if (!restaurant) return;
+
+    const wallet = await getOrCreateVendorWallet(restaurant._id as any);
+
+    const { limit = 30, skip = 0, type, status } = req.query;
+
+    const query: any = { wallet_id: wallet._id };
+    if (type) query.type = type;
+    if (status) query.status = status;
+
+    const transactions = await Transaction.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(skip))
+      .populate("food_order_id");
+
+    const total = await Transaction.countDocuments(query);
+
+    res.status(200).json({
+      msg: "success",
+      wallet_balance: wallet.balance,
+      transactions,
+      pagination: {
+        total,
+        limit: Number(limit),
+        skip: Number(skip),
+        hasMore: total > Number(skip) + Number(limit),
+      },
+    });
+  } catch (error) {
+    console.error("get_vendor_transactions error:", error);
+    res.status(500).json({ msg: "Could not fetch vendor transactions", error });
   }
 };
 

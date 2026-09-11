@@ -111,6 +111,20 @@ export const admin_approve_restaurant = async (req: Request, res: Response) => {
       is_restaurant: true,
     });
 
+    // Ensure specialized Restaurant Wallet exists for this restaurant
+    const existingVendorWallet = await Wallet.findOne({
+      owner_id: restaurant._id,
+      owner_type: "Restaurant",
+    });
+
+    if (!existingVendorWallet) {
+      await Wallet.create({
+        owner_id: restaurant._id,
+        owner_type: "Restaurant",
+        balance: 0,
+      });
+    }
+
     return res.status(200).json({
       msg: "Restaurant approved successfully",
       restaurant,

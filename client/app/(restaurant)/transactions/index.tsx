@@ -75,30 +75,51 @@ const RestaurantTransactions = () => {
   }, []);
 
   React.useEffect(() => {
-    if (ctxVendorTxns) {
-      const mapped: RestaurantTransaction[] = ctxVendorTxns.map((t) => {
-        const isOut = t.type === "payout" || t.type === "funding";
+    if (ctxVendorTxns && Array.isArray(ctxVendorTxns)) {
+      // Only display transactions that belong to the vendor wallet (vendor earnings & vendor payouts)
+      const vendorTxns = ctxVendorTxns.filter((t: any) => {
+        const isEarnings =
+          t.type === "vendor_earnings" ||
+          t.metadata?.type === "food_order_earnings" ||
+          t.metadata?.restaurant_id;
+
+        const isVendorPayout =
+          t.type === "payout" ||
+          t.type === "withdrawal" ||
+          t.metadata?.type === "vendor_withdrawal";
+
+        const isCustomerSpending =
+          t.type === "food_payment" &&
+          t.metadata?.type !== "food_order_earnings" &&
+          !t.metadata?.restaurant_id;
+
+        return (isEarnings || isVendorPayout) && !isCustomerSpending;
+      });
+
+      const mapped: RestaurantTransaction[] = vendorTxns.map((t: any) => {
+        const isPayout =
+          t.type === "payout" ||
+          t.type === "withdrawal" ||
+          t.metadata?.type === "vendor_withdrawal";
+
+        const orderNum =
+          t.metadata?.order_number ||
+          (t.food_order_id ? `IGL-${t._id.slice(-5).toUpperCase()}` : undefined);
+
         return {
           id: t._id,
           reference: t.reference || `TXN-${t._id.slice(-6).toUpperCase()}`,
-          type:
-            t.type === "payout"
-              ? "payout"
-              : t.type === "driver_payment"
-              ? "food_payment"
-              : "food_payment",
-          direction: isOut ? "out" : "in",
+          type: isPayout ? "payout" : "food_payment",
+          direction: isPayout ? "out" : "in",
           amount: t.amount,
           status: t.status as "success" | "pending" | "failed",
           channel: (t.channel as any) || "wallet",
-          title:
-            t.type === "payout"
-              ? "Bank Payout Withdrawal"
-              : `Food Payment ${t.reference || ""}`,
-          subtitle:
-            t.type === "payout"
-              ? `${restaurant?.bank?.bank_name || "Bank"} Account`
-              : "Customer Food Order Earnings",
+          title: isPayout
+            ? "Bank Payout Withdrawal"
+            : `Food Order Sales ${orderNum ? `#${orderNum}` : ""}`,
+          subtitle: isPayout
+            ? `${restaurant?.bank?.bank_name || "Bank"} Account`
+            : "Customer Order Earnings",
           date: new Date(t.createdAt).toLocaleString([], {
             month: "short",
             day: "numeric",
@@ -106,6 +127,7 @@ const RestaurantTransactions = () => {
             minute: "2-digit",
           }),
           timestamp: t.createdAt,
+          order_number: orderNum,
           bank_details: restaurant?.bank
             ? {
                 bank_name: restaurant.bank.bank_name,
@@ -115,6 +137,7 @@ const RestaurantTransactions = () => {
             : undefined,
         };
       });
+
       setTransactions(mapped);
     }
   }, [ctxVendorTxns, restaurant?.bank]);

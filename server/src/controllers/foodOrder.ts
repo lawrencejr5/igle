@@ -12,6 +12,8 @@ import { sendNotification } from "../utils/expo_push";
 import { io } from "../server";
 import { agenda } from "../jobs/agenda";
 
+import { getOrCreateVendorWallet } from "../utils/get_vendor_wallet";
+
 const FLAT_DELIVERY_FEE = 1500; // Flat rate 1500 NGN delivery fee per user requirement
 
 // 1. Place Food Order (Customer)
@@ -271,16 +273,9 @@ export const accept_food_order = async (req: Request, res: Response) => {
     order.status_timestamps.preparing_at = new Date();
     await order.save();
 
-    // Credit Vendor Wallet upon order acceptance
+    // Credit Specialized Vendor Wallet upon order acceptance
     try {
-      let vendorWallet = await Wallet.findOne({ owner_id: restaurant.user });
-      if (!vendorWallet) {
-        vendorWallet = await Wallet.create({
-          owner_id: restaurant.user,
-          owner_type: "User",
-          balance: 0,
-        });
-      }
+      const vendorWallet = await getOrCreateVendorWallet(restaurant._id as any);
 
       const earningsAmount =
         order.pricing?.restaurant_earnings || order.pricing?.subtotal || 0;
@@ -291,7 +286,7 @@ export const accept_food_order = async (req: Request, res: Response) => {
 
         await Transaction.create({
           wallet_id: vendorWallet._id,
-          type: "payout",
+          type: "vendor_earnings",
           amount: earningsAmount,
           status: "success",
           channel: "wallet",
