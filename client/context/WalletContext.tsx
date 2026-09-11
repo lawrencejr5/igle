@@ -48,12 +48,13 @@ const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
         owner_type === "User"
           ? setUserWalletBal(data.wallet.balance)
           : setDriverWalletBal(data.wallet.balance);
-      } else {
-        throw new Error("Failed to fetch wallet balance");
       }
     } catch (error: any) {
-      const errMsg = error.response.data.msg;
-      throw new Error(errMsg);
+      const errMsg =
+        error.response?.data?.msg ||
+        error.response?.data?.message ||
+        error.message;
+      console.log(`Failed to fetch ${owner_type} wallet balance:`, errMsg);
     }
   };
 

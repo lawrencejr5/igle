@@ -24,6 +24,8 @@ const get_id_1 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const axios_1 = __importDefault(require("axios"));
 const paystack_1 = require("../utils/paystack");
+const get_vendor_restaurant_1 = require("../utils/get_vendor_restaurant");
+const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -200,12 +202,14 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.request_withdrawal = request_withdrawal;
-const get_vendor_restaurant_1 = require("../utils/get_vendor_restaurant");
-const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 const get_wallet_balance = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
         const { owner_type } = req.query;
+        if (!owner_type) {
+            res.status(400).json({ msg: "Owner type is empty" });
+            return;
+        }
         let owner_id;
         let targetOwnerType = owner_type;
         if (owner_type === "User") {
@@ -225,24 +229,27 @@ const get_wallet_balance = (req, res) => __awaiter(void 0, void 0, void 0, funct
             res.status(400).json({ msg: "Owner type is invalid" });
             return;
         }
+        if (!owner_id) {
+            res.status(404).json({ msg: "Owner account not found" });
+            return;
+        }
         let wallet = yield wallet_1.default.findOne({
             owner_id,
-            owner_type: "Restaurant",
+            owner_type: targetOwnerType,
         });
-        if (!wallet && (owner_type === "Restaurant" || owner_type === "Vendor")) {
+        if (!wallet) {
             wallet = yield wallet_1.default.create({
                 owner_id,
-                owner_type: "Restaurant",
+                owner_type: targetOwnerType,
                 balance: 0,
+                pending_balance: 0,
             });
-        }
-        if (!wallet) {
-            return res.status(404).json({ message: "Wallet not found" });
         }
         res.status(200).json({ msg: "success", wallet });
     }
     catch (err) {
-        res.status(500).json({ message: "Something went wrong", err });
+        console.error("get_wallet_balance error:", err);
+        res.status(500).json({ msg: err.message || "Something went wrong", err });
     }
 });
 exports.get_wallet_balance = get_wallet_balance;

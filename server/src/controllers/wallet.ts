@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
-
 import { Request, Response } from "express";
 
 import Wallet from "../models/wallet";
@@ -18,6 +17,8 @@ import {
   initialize_paystack_transaction,
   verify_paystack_transaction,
 } from "../utils/paystack";
+import { getVendorRestaurant } from "../utils/get_vendor_restaurant";
+import { getOrCreateVendorWallet } from "../utils/get_vendor_wallet";
 
 export const fund_wallet = async (req: Request, res: Response) => {
   try {
@@ -209,15 +210,20 @@ export const request_withdrawal = async (req: any, res: any) => {
   }
 };
 
-import { getVendorRestaurant } from "../utils/get_vendor_restaurant";
-import { getOrCreateVendorWallet } from "../utils/get_vendor_wallet";
-
-export const get_wallet_balance = async (req: any, res: any) => {
+export const get_wallet_balance = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { owner_type } = req.query;
 
+    if (!owner_type) {
+      res.status(400).json({ msg: "Owner type is empty" });
+      return;
+    }
+
     let owner_id;
-    let targetOwnerType = owner_type;
+    let targetOwnerType = owner_type as string;
 
     if (owner_type === "User") {
       owner_id = req.user?.id;
@@ -233,30 +239,36 @@ export const get_wallet_balance = async (req: any, res: any) => {
       return;
     }
 
+    if (!owner_id) {
+      res.status(404).json({ msg: "Owner account not found" });
+      return;
+    }
+
     let wallet = await Wallet.findOne({
       owner_id,
-      owner_type: "Restaurant",
+      owner_type: targetOwnerType as any,
     });
 
-    if (!wallet && (owner_type === "Restaurant" || owner_type === "Vendor")) {
+    if (!wallet) {
       wallet = await Wallet.create({
         owner_id,
-        owner_type: "Restaurant",
+        owner_type: targetOwnerType as any,
         balance: 0,
+        pending_balance: 0,
       });
     }
 
-    if (!wallet) {
-      return res.status(404).json({ message: "Wallet not found" });
-    }
-
     res.status(200).json({ msg: "success", wallet });
-  } catch (err) {
-    res.status(500).json({ message: "Something went wrong", err });
+  } catch (err: any) {
+    console.error("get_wallet_balance error:", err);
+    res.status(500).json({ msg: err.message || "Something went wrong", err });
   }
 };
 
-export const initiate_vendor_withdrawal = async (req: any, res: any) => {
+export const initiate_vendor_withdrawal = async (
+  req: any,
+  res: any,
+): Promise<void> => {
   try {
     const amount = Number(req.body.amount);
     const restaurant = await getVendorRestaurant(req, res);
