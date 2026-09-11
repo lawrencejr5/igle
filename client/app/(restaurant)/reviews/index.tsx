@@ -41,78 +41,7 @@ interface ReviewItem {
   createdAt: string;
 }
 
-// ─── Mock Fallback Reviews ───────────────────────────────────────────────────
 
-const MOCK_REVIEWS: ReviewItem[] = [
-  {
-    _id: "rev_1",
-    rating: 5,
-    review:
-      "The Smoky Jollof with grilled chicken was absolutely out of this world! Piping hot, perfectly spiced, and arrived way earlier than expected.",
-    user: {
-      _id: "u1",
-      name: "Chidimma Nwosu",
-      profile_pic:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-    },
-    food_order_id: "#IG-9402",
-    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-  },
-  {
-    _id: "rev_2",
-    rating: 5,
-    review:
-      "Generous portion sizes and super neat packaging. The fried plantains were ripe and delicious. 10/10 recommend!",
-    user: {
-      _id: "u2",
-      name: "Adebayo Tunde",
-      profile_pic:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
-    },
-    food_order_id: "#IG-9388",
-    createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-  },
-  {
-    _id: "rev_3",
-    rating: 4,
-    review:
-      "Egusi soup was rich and spicy! Just wished there was an extra piece of beef, but overall amazing flavor.",
-    user: {
-      _id: "u3",
-      name: "Blessing Okon",
-      profile_pic:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
-    },
-    food_order_id: "#IG-9340",
-    createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-  },
-  {
-    _id: "rev_4",
-    rating: 3,
-    review:
-      "Food was good but the delivery rider took longer than usual. Food was slightly warm instead of hot.",
-    user: {
-      _id: "u4",
-      name: "Emeka Johnson",
-    },
-    food_order_id: "#IG-9290",
-    createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-  },
-  {
-    _id: "rev_5",
-    rating: 5,
-    review:
-      "Best Suya Platter in town! Perfectly seasoned with heavy kuli-kuli powder. Ordering again tonight!",
-    user: {
-      _id: "u5",
-      name: "Fatima Aliyu",
-      profile_pic:
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80",
-    },
-    food_order_id: "#IG-9211",
-    createdAt: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
-  },
-];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 

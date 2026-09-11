@@ -157,13 +157,12 @@ const RestaurantMenu = () => {
   };
 
   // Toggle item availability
-  const handleToggleAvailability = (id: string) => {
+  const handleToggleAvailability = async (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setMenuItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, is_available: !item.is_available } : item,
-      ),
-    );
+    const success = await toggleItemAvailability(id);
+    if (success) {
+      await fetchVendorMenuItems();
+    }
   };
 
   // Move Category Up / Down
@@ -210,7 +209,7 @@ const RestaurantMenu = () => {
   };
 
   // Save Category
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!catNameInput.trim()) {
       Alert.alert("Required", "Please enter a category name");
       return;
@@ -219,27 +218,23 @@ const RestaurantMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (editingCat) {
-      setCategories((prev) =>
-        prev.map((c) =>
-          c.id === editingCat.id
-            ? {
-                ...c,
-                name: catNameInput.trim(),
-                description: catDescInput.trim(),
-              }
-            : c,
-        ),
-      );
+      const updated = await updateCategory(editingCat.id, {
+        name: catNameInput.trim(),
+        description: catDescInput.trim(),
+      });
+      if (updated) {
+        await fetchVendorCategories();
+      }
     } else {
-      const newCat: Category = {
-        id: `cat_${Date.now()}`,
+      const created = await createCategory({
         name: catNameInput.trim(),
         description: catDescInput.trim(),
         display_order: categories.length + 1,
-        is_active: true,
-      };
-      setCategories((prev) => [...prev, newCat]);
-      setSelectedCatId(newCat.id);
+      });
+      if (created) {
+        await fetchVendorCategories();
+        setSelectedCatId(created._id);
+      }
     }
 
     setCatModalVisible(false);
@@ -292,7 +287,7 @@ const RestaurantMenu = () => {
   };
 
   // Save Item
-  const handleSaveItem = () => {
+  const handleSaveItem = async () => {
     if (!itemName.trim()) {
       Alert.alert("Required", "Please enter a menu item name");
       return;
@@ -308,56 +303,53 @@ const RestaurantMenu = () => {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    const formData = new FormData();
+    formData.append("category_id", itemCategory);
+    formData.append("name", itemName.trim());
+    formData.append("description", itemDescription.trim());
+    formData.append("price", itemPrice.trim());
+    formData.append("preparation_time_mins", itemPrepTime.trim() || "15");
+    formData.append("is_available", String(itemAvailable));
+
+    if (itemImage && !itemImage.startsWith("http")) {
+      const filename = itemImage.split("/").pop() || "item.jpg";
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      formData.append("image", { uri: itemImage, name: filename, type } as any);
+    }
+
     if (editingItem) {
-      setMenuItems((prev) =>
-        prev.map((it) =>
-          it.id === editingItem.id
-            ? {
-                ...it,
-                name: itemName.trim(),
-                category_id: itemCategory,
-                description: itemDescription.trim(),
-                price: Number(itemPrice),
-                preparation_time_mins: Number(itemPrepTime) || 15,
-                image: itemImage,
-                is_available: itemAvailable,
-              }
-            : it,
-        ),
-      );
+      const updated = await updateMenuItem(editingItem.id, formData);
+      if (updated) {
+        await fetchVendorMenuItems();
+      }
     } else {
-      const newItem: MenuItemData = {
-        id: `item_${Date.now()}`,
-        category_id: itemCategory,
-        name: itemName.trim(),
-        description: itemDescription.trim(),
-        price: Number(itemPrice),
-        preparation_time_mins: Number(itemPrepTime) || 15,
-        image:
-          itemImage ||
-          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=60",
-        is_available: itemAvailable,
-        display_order: menuItems.length + 1,
-      };
-      setMenuItems((prev) => [newItem, ...prev]);
+      const created = await createMenuItem(formData);
+      if (created) {
+        await fetchVendorMenuItems();
+      }
     }
 
     setItemModalVisible(false);
   };
 
   // Delete Action
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (deleteTarget.type === "cat") {
-      setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-      setMenuItems((prev) =>
-        prev.filter((i) => i.category_id !== deleteTarget.id),
-      );
-      if (selectedCatId === deleteTarget.id) setSelectedCatId("all");
+      const success = await deleteCategory(deleteTarget.id);
+      if (success) {
+        await fetchVendorCategories();
+        await fetchVendorMenuItems();
+        if (selectedCatId === deleteTarget.id) setSelectedCatId("all");
+      }
     } else {
-      setMenuItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+      const success = await deleteMenuItem(deleteTarget.id);
+      if (success) {
+        await fetchVendorMenuItems();
+      }
     }
     setDeleteTarget(null);
   };
