@@ -230,30 +230,48 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       const token = await getAuthToken();
       if (!token) return;
       const { data } = await axios.get(
-        `${API_URLS.transactions}/user?limit=50`,
+        `${API_URLS.orders}/vendor`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (data?.transactions) {
-        const txns: Transaction[] = data.transactions;
+      if (data?.orders && Array.isArray(data.orders)) {
         const now = new Date();
-        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).getTime();
+        const startOfToday = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        ).getTime();
+
+        const startOfWeekDate = new Date(now);
+        startOfWeekDate.setDate(now.getDate() - now.getDay());
+        startOfWeekDate.setHours(0, 0, 0, 0);
+        const startOfWeek = startOfWeekDate.getTime();
 
         let todaySum = 0;
         let weekSum = 0;
-        let totalCount = txns.length;
+        let acceptedCount = 0;
 
-        txns.forEach((t) => {
-          const time = new Date(t.createdAt).getTime();
-          if (t.status === "success" || t.status === "pending") {
-            if (time >= startOfToday) todaySum += t.amount;
-            if (time >= startOfWeek) weekSum += t.amount;
+        const acceptedStatuses = [
+          "preparing",
+          "ready_for_pickup",
+          "in_transit",
+          "delivered",
+        ];
+
+        data.orders.forEach((o: any) => {
+          // EXCLUDE "placed" (unaccepted), "rejected", and "cancelled" orders
+          if (acceptedStatuses.includes(o.status)) {
+            acceptedCount++;
+            const time = new Date(o.createdAt).getTime();
+            const earnings =
+              o.pricing?.restaurant_earnings || o.pricing?.subtotal || 0;
+            if (time >= startOfToday) todaySum += earnings;
+            if (time >= startOfWeek) weekSum += earnings;
           }
         });
 
         setVendorStats({
-          totalOrders: totalCount,
+          totalOrders: acceptedCount,
           todayEarnings: todaySum,
           weekEarnings: weekSum,
         });

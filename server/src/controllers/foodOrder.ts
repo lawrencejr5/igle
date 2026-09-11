@@ -271,6 +271,45 @@ export const accept_food_order = async (req: Request, res: Response) => {
     order.status_timestamps.preparing_at = new Date();
     await order.save();
 
+    // Credit Vendor Wallet upon order acceptance
+    try {
+      let vendorWallet = await Wallet.findOne({ owner_id: restaurant.user });
+      if (!vendorWallet) {
+        vendorWallet = await Wallet.create({
+          owner_id: restaurant.user,
+          owner_type: "User",
+          balance: 0,
+        });
+      }
+
+      const earningsAmount =
+        order.pricing?.restaurant_earnings || order.pricing?.subtotal || 0;
+
+      if (earningsAmount > 0) {
+        vendorWallet.balance += earningsAmount;
+        await vendorWallet.save();
+
+        await Transaction.create({
+          wallet_id: vendorWallet._id,
+          type: "payout",
+          amount: earningsAmount,
+          status: "success",
+          channel: "wallet",
+          reference: generate_unique_reference(),
+          food_order_id: order._id,
+          metadata: {
+            order_id: order._id,
+            order_number: order.order_number,
+            restaurant_id: restaurant._id,
+            type: "food_order_earnings",
+            description: `Earnings for accepted order #${order.order_number}`,
+          },
+        });
+      }
+    } catch (wErr) {
+      console.error("Error crediting vendor wallet on order accept:", wErr);
+    }
+
     // Socket Notification to Customer
     const customerSocket = await get_user_socket_id(order.customer);
     if (customerSocket) {
@@ -492,10 +531,17 @@ export const cancel_food_order = async (req: Request, res: Response) => {
       return res.status(404).json({ msg: "Food order not found" });
     }
 
-    const nonCancellableStatuses = ["in_transit", "delivered", "cancelled", "rejected"];
+    const nonCancellableStatuses = [
+      "preparing",
+      "ready_for_pickup",
+      "in_transit",
+      "delivered",
+      "cancelled",
+      "rejected",
+    ];
     if (nonCancellableStatuses.includes(order.status)) {
       return res.status(400).json({
-        msg: `Order cannot be cancelled once it is in transit, delivered, or already closed (current status: ${order.status}).`,
+        msg: `Order cannot be cancelled once it has been accepted by the restaurant (current status: ${order.status}).`,
       });
     }
 

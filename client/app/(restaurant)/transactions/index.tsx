@@ -120,11 +120,9 @@ const RestaurantTransactions = () => {
   }, [ctxVendorTxns, restaurant?.bank]);
 
   // Wallet Metrics
-  const currentBalance = vendorStats.todayEarnings - vendorStats.weekEarnings > 0
-    ? vendorStats.todayEarnings
-    : 142500;
-  const todayEarnings = vendorStats.todayEarnings || 40500;
-  const todayPayouts = 35000;
+  const currentBalance = vendorStats.todayEarnings || 0;
+  const todayEarnings = vendorStats.todayEarnings || 0;
+  const todayPayouts = 0;
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

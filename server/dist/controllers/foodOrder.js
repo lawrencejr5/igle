@@ -226,6 +226,7 @@ exports.place_food_order = place_food_order;
 // 2. Accept Food Order (Vendor)
 // POST /api/v1/orders/:id/accept
 const accept_food_order = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
         if (!restaurant)
@@ -248,6 +249,41 @@ const accept_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
         order.status = "preparing";
         order.status_timestamps.preparing_at = new Date();
         yield order.save();
+        // Credit Vendor Wallet upon order acceptance
+        try {
+            let vendorWallet = yield wallet_1.default.findOne({ owner_id: restaurant.user });
+            if (!vendorWallet) {
+                vendorWallet = yield wallet_1.default.create({
+                    owner_id: restaurant.user,
+                    owner_type: "User",
+                    balance: 0,
+                });
+            }
+            const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.restaurant_earnings) || ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0;
+            if (earningsAmount > 0) {
+                vendorWallet.balance += earningsAmount;
+                yield vendorWallet.save();
+                yield transaction_1.default.create({
+                    wallet_id: vendorWallet._id,
+                    type: "payout",
+                    amount: earningsAmount,
+                    status: "success",
+                    channel: "wallet",
+                    reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                    food_order_id: order._id,
+                    metadata: {
+                        order_id: order._id,
+                        order_number: order.order_number,
+                        restaurant_id: restaurant._id,
+                        type: "food_order_earnings",
+                        description: `Earnings for accepted order #${order.order_number}`,
+                    },
+                });
+            }
+        }
+        catch (wErr) {
+            console.error("Error crediting vendor wallet on order accept:", wErr);
+        }
         // Socket Notification to Customer
         const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);
         if (customerSocket) {
@@ -439,10 +475,17 @@ const cancel_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (!order) {
             return res.status(404).json({ msg: "Food order not found" });
         }
-        const nonCancellableStatuses = ["in_transit", "delivered", "cancelled", "rejected"];
+        const nonCancellableStatuses = [
+            "preparing",
+            "ready_for_pickup",
+            "in_transit",
+            "delivered",
+            "cancelled",
+            "rejected",
+        ];
         if (nonCancellableStatuses.includes(order.status)) {
             return res.status(400).json({
-                msg: `Order cannot be cancelled once it is in transit, delivered, or already closed (current status: ${order.status}).`,
+                msg: `Order cannot be cancelled once it has been accepted by the restaurant (current status: ${order.status}).`,
             });
         }
         order.status = "cancelled";
