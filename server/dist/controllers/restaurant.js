@@ -75,6 +75,8 @@ const save_restaurant_details = (req, res) => __awaiter(void 0, void 0, void 0, 
                 restaurant.operating_hours = parsedHours;
             if (logo_url)
                 restaurant.logo = logo_url;
+            if (banner_url)
+                restaurant.banner = banner_url;
             if (!((_d = restaurant.verification) === null || _d === void 0 ? void 0 : _d.government_id) && restaurant.application !== "approved") {
                 restaurant.application = "pending";
             }
