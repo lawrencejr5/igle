@@ -473,6 +473,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         phone,
         driver_application,
         is_driver,
+        is_restaurant,
+        restaurant_application,
       } = data.user;
 
       setSignedIn({
@@ -483,6 +485,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         phone,
         driver_application,
         is_driver,
+        is_restaurant,
+        restaurant_application,
       });
       await getWalletBalance("User");
     } catch (err) {

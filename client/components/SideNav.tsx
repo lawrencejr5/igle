@@ -59,12 +59,15 @@ const SideNav: React.FC<{
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (
       signedIn?.is_restaurant ||
-      signedIn?.restaurant_application === "approved"
+      signedIn?.restaurant_application === "approved" ||
+      restaurant?.application === "approved"
     ) {
       router.replace("../(restaurant)/home");
     } else if (
       signedIn?.restaurant_application === "submitted" ||
-      signedIn?.restaurant_application === "pending"
+      signedIn?.restaurant_application === "pending" ||
+      restaurant?.application === "submitted" ||
+      restaurant?.application === "pending"
     ) {
       router.replace("../(restaurant_auth)/restaurant_verification");
     } else {
@@ -247,7 +250,12 @@ const SideNav: React.FC<{
                   <View style={styles.switch_btn}>
                     <FontAwesome name="car" size={16} color="#121212" />
                     <Text style={styles.switch_btn_text}>
-                      {signedIn?.is_driver ? "Driver mode" : "Become a driver"}
+                      {signedIn?.is_driver || driver?.driver_id
+                        ? "Driver mode"
+                        : signedIn?.driver_application === "submitted" ||
+                            signedIn?.driver_application === "pending"
+                          ? "Driver in review"
+                          : "Become a driver"}
                     </Text>
                   </View>
                 </TouchableWithoutFeedback>
@@ -262,11 +270,15 @@ const SideNav: React.FC<{
                     />
                     <Text style={styles.switch_btn_restaurant_text}>
                       {signedIn?.is_restaurant ||
-                      (signedIn?.restaurant_application &&
-                        signedIn.restaurant_application !== "none") ||
-                      restaurant?._id
+                      signedIn?.restaurant_application === "approved" ||
+                      restaurant?.application === "approved"
                         ? "My restaurant"
-                        : "Partner as a restaurant"}
+                        : signedIn?.restaurant_application === "submitted" ||
+                            signedIn?.restaurant_application === "pending" ||
+                            restaurant?.application === "submitted" ||
+                            restaurant?.application === "pending"
+                          ? "Restaurant in review"
+                          : "Partner as a restaurant"}
                     </Text>
                   </View>
                 </TouchableWithoutFeedback>
@@ -377,11 +389,13 @@ const SideNav: React.FC<{
                 <Pressable
                   style={styles.switch_btn}
                   onPress={() => {
+                    closeSideNav();
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     router.replace("/(tabs)/home");
                   }}
                 >
-                  <Text style={styles.switch_btn_text}>Rider mode</Text>
+                  <Feather name="arrow-left" size={16} color="#121212" />
+                  <Text style={styles.switch_btn_text}>Back to user</Text>
                 </Pressable>
               </View>
             </Animated.View>

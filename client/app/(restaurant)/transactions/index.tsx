@@ -41,103 +41,6 @@ export interface RestaurantTransaction {
   };
 }
 
-// ─── Initial Mock Data ────────────────────────────────────────────────────────
-
-const INITIAL_TRANSACTIONS: RestaurantTransaction[] = [
-  {
-    id: "tx_101",
-    reference: "TXN-FD-98241",
-    type: "food_payment",
-    direction: "in",
-    amount: 29600,
-    status: "success",
-    channel: "wallet",
-    title: "Food Order Payment #IGL-98241",
-    subtitle: "2x Pepperoni Feast Pizza, 1x Cheesy Breadsticks",
-    date: "Today, 02:45 PM",
-    timestamp: "2026-09-09T14:45:00Z",
-    order_number: "IGL-98241",
-  },
-  {
-    id: "tx_102",
-    reference: "TXN-WD-78192",
-    type: "payout",
-    direction: "out",
-    amount: 35000,
-    status: "success",
-    channel: "transfer",
-    title: "Bank Payout Withdrawal",
-    subtitle: "GTBank •••• 5821 (Restaurant Account)",
-    date: "Today, 11:30 AM",
-    timestamp: "2026-09-09T11:30:00Z",
-    bank_details: {
-      bank_name: "GTBank",
-      account_number: "0123455821",
-      account_name: "CHICKEN REPUBLIC LEKKI LTD",
-    },
-  },
-  {
-    id: "tx_103",
-    reference: "TXN-FD-98240",
-    type: "food_payment",
-    direction: "in",
-    amount: 10900,
-    status: "success",
-    channel: "wallet",
-    title: "Food Order Payment #IGL-98240",
-    subtitle: "1x Four Cheese Supreme, 2x Coca-Cola Zero",
-    date: "Today, 10:15 AM",
-    timestamp: "2026-09-09T10:15:00Z",
-    order_number: "IGL-98240",
-  },
-  {
-    id: "tx_104",
-    reference: "TXN-RF-98230",
-    type: "restaurant_refund",
-    direction: "out",
-    amount: 4500,
-    status: "success",
-    channel: "wallet",
-    title: "Order Rejection Refund #IGL-98230",
-    subtitle: "Refunded customer for declined order (Out of stock)",
-    date: "Yesterday, 08:20 PM",
-    timestamp: "2026-09-08T20:20:00Z",
-    order_number: "IGL-98230",
-  },
-  {
-    id: "tx_105",
-    reference: "TXN-FD-98228",
-    type: "food_payment",
-    direction: "in",
-    amount: 18500,
-    status: "success",
-    channel: "wallet",
-    title: "Food Order Payment #IGL-98228",
-    subtitle: "3x BBQ Glazed Wings, 2x Garlic Breadsticks",
-    date: "Yesterday, 06:10 PM",
-    timestamp: "2026-09-08T18:10:00Z",
-    order_number: "IGL-98228",
-  },
-  {
-    id: "tx_106",
-    reference: "TXN-WD-78100",
-    type: "payout",
-    direction: "out",
-    amount: 50000,
-    status: "success",
-    channel: "transfer",
-    title: "Bank Payout Withdrawal",
-    subtitle: "GTBank •••• 5821 (Restaurant Account)",
-    date: "Sep 7, 2026, 04:00 PM",
-    timestamp: "2026-09-07T16:00:00Z",
-    bank_details: {
-      bank_name: "GTBank",
-      account_number: "0123455821",
-      account_name: "CHICKEN REPUBLIC LEKKI LTD",
-    },
-  },
-];
-
 type FilterType = "all" | "in" | "out";
 
 // ─── Restaurant Transactions Screen ───────────────────────────────────────────
@@ -153,7 +56,7 @@ const RestaurantTransactions = () => {
     initiateVendorWithdrawal,
   } = useTransactionContext();
 
-  const [transactions, setTransactions] = useState<RestaurantTransaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<RestaurantTransaction[]>([]);
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -172,7 +75,7 @@ const RestaurantTransactions = () => {
   }, []);
 
   React.useEffect(() => {
-    if (ctxVendorTxns && ctxVendorTxns.length > 0) {
+    if (ctxVendorTxns) {
       const mapped: RestaurantTransaction[] = ctxVendorTxns.map((t) => {
         const isOut = t.type === "payout" || t.type === "funding";
         return {

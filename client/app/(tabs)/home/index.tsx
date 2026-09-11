@@ -36,6 +36,8 @@ import AppLoading from "../../../loadings/AppLoading";
 import { useMapContext } from "../../../context/MapContext";
 import { useNotificationContext } from "../../../context/NotificationContext";
 import { useFoodOrderContext } from "../../../context/FoodOrderContext";
+import { useRestaurantContext } from "../../../context/RestaurantContext";
+import { useDriverAuthContext } from "../../../context/DriverAuthContext";
 
 const checkLocationPermission = async (
   showNotification: any,
@@ -91,6 +93,8 @@ const Home = () => {
     fetchUserOngoingDeliveries,
   } = useDeliverContext();
   const { customerOrders, fetchCustomerOrders } = useFoodOrderContext();
+  const { fetchRestaurantProfile } = useRestaurantContext();
+  const { getDriverProfile } = useDriverAuthContext();
   const { locationLoading, getPlaceName, cityAddress, region } =
     useMapContext();
   const [refreshing, setRefreshing] = useState(false);
@@ -100,6 +104,8 @@ const Home = () => {
       setRefreshing(true);
       await Promise.all([
         getUserData(),
+        getDriverProfile().catch(() => {}),
+        fetchRestaurantProfile().catch(() => {}),
         getActiveRide(),
         getOngoingRide(),
         fetchUserActiveDelivery(),

@@ -463,6 +463,7 @@ const get_all_restaurants = (req, res) => __awaiter(void 0, void 0, void 0, func
         const restaurants = yield restaurant_1.default.find({
             is_deleted: { $ne: true },
             is_blocked: { $ne: true },
+            application: "approved",
         }).sort({ createdAt: -1 });
         return res.status(200).json({ restaurants });
     }

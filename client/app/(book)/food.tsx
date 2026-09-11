@@ -71,18 +71,22 @@ const OrderFood = () => {
     fetchAllRestaurants();
   }, []);
 
+  const approvedRestaurants = useMemo(() => {
+    return allRestaurants.filter((r) => r.application === "approved");
+  }, [allRestaurants]);
+
   const categories = useMemo(() => {
     const extracted = Array.from(
-      new Set(allRestaurants.flatMap((r) => r.category_tags || []))
+      new Set(approvedRestaurants.flatMap((r) => r.category_tags || []))
     ).filter(Boolean);
     return extracted.length > 0
       ? ["All", ...extracted]
       : ["All", "Fast Food", "African", "Pizza", "Burgers", "Drinks"];
-  }, [allRestaurants]);
+  }, [approvedRestaurants]);
 
   const mappedRestaurants = useMemo(() => {
-    return allRestaurants.map(mapRestaurantToCard);
-  }, [allRestaurants]);
+    return approvedRestaurants.map(mapRestaurantToCard);
+  }, [approvedRestaurants]);
 
   const filtered = useMemo(() => {
     return mappedRestaurants.filter((r) => {

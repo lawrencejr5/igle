@@ -167,8 +167,13 @@ const RatingProvider: FC<{ children: ReactNode }> = ({ children }) => {
     if (!restaurant_id) return;
     setRatingLoading(true);
     try {
+      const token = await getAuthToken();
+      if (!token) return;
       const { data } = await axios.get(
-        `${API_URL}/restaurant?restaurant_id=${restaurant_id}`
+        `${API_URL}/restaurant?restaurant_id=${restaurant_id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       if (data) {
         setRestaurantRating(data.average_rating ?? 5.0);

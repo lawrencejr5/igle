@@ -65,6 +65,7 @@ const feedback_1 = __importDefault(require("../models/feedback"));
 const history_1 = __importDefault(require("../models/history"));
 const rating_1 = __importDefault(require("../models/rating"));
 const userTask_1 = __importDefault(require("../models/userTask"));
+const restaurant_1 = __importDefault(require("../models/restaurant"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const upload_1 = require("../middleware/upload");
 const axios_1 = __importDefault(require("axios"));
@@ -356,6 +357,20 @@ const get_user_data = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const user = yield user_1.default.findById(id).select("-password");
+        if (user) {
+            const restaurant = yield restaurant_1.default.findOne({ user: id });
+            if (restaurant) {
+                if (restaurant.application === "approved") {
+                    user.is_restaurant = true;
+                    user.restaurant_application = "approved";
+                }
+                else if (restaurant.application === "submitted" ||
+                    restaurant.application === "pending") {
+                    user.restaurant_application = restaurant.application;
+                }
+                yield user.save();
+            }
+        }
         res.status(200).json({ msg: "success", user });
     }
     catch (err) {

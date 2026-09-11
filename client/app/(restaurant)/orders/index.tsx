@@ -72,158 +72,6 @@ export interface VendorFoodOrder {
   rejection_reason?: string;
 }
 
-// ─── Mock Initial Orders Data ─────────────────────────────────────────────────
-
-const INITIAL_MOCK_ORDERS: VendorFoodOrder[] = [
-  {
-    id: "ord_101",
-    order_number: "IGL-98241",
-    customer_name: "Alex Johnson",
-    customer_phone: "+234 812 345 6789",
-    customer_avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
-    delivery_address: "14 Admiralty Way, Lekki Phase 1, Lagos",
-    delivery_landmark: "Near Ebeano Supermarket",
-    items: [
-      {
-        menu_item_id: "m1",
-        name: "Pepperoni Feast Pizza",
-        price: 8500,
-        quantity: 2,
-        selected_options: [
-          { group_name: "Size", option_name: "Large (12 inch)", price_modifier: 2500 },
-          { group_name: "Crust", option_name: "Cheese Burst", price_modifier: 1200 },
-        ],
-        special_instructions: "Please add extra chilli flakes and dip on the side.",
-        item_total: 24400,
-      },
-      {
-        menu_item_id: "m2",
-        name: "Cheesy Garlic Breadsticks",
-        price: 3200,
-        quantity: 1,
-        selected_options: [
-          { group_name: "Dipping Sauce", option_name: "Marinara Dip", price_modifier: 500 },
-        ],
-        item_total: 3700,
-      },
-    ],
-    subtotal: 28100,
-    delivery_fee: 1500,
-    total: 29600,
-    status: "placed",
-    payment_method: "wallet",
-    placed_at: "2 mins ago",
-  },
-  {
-    id: "ord_102",
-    order_number: "IGL-98240",
-    customer_name: "Sarah Williams",
-    customer_phone: "+234 803 987 6543",
-    customer_avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80",
-    delivery_address: "Apartment 4B, Chevron Drive, Lekki",
-    delivery_landmark: "Opposite Conservation Centre",
-    items: [
-      {
-        menu_item_id: "m3",
-        name: "Four Cheese Supreme Pizza",
-        price: 7800,
-        quantity: 1,
-        selected_options: [],
-        special_instructions: "Cut into 8 slices please.",
-        item_total: 7800,
-      },
-      {
-        menu_item_id: "m4",
-        name: "Chilled Coca-Cola Zero (50cl)",
-        price: 800,
-        quantity: 2,
-        item_total: 1600,
-      },
-    ],
-    subtotal: 9400,
-    delivery_fee: 1500,
-    total: 10900,
-    status: "preparing",
-    payment_method: "wallet",
-    placed_at: "12 mins ago",
-    preparing_at: "10 mins ago",
-  },
-  {
-    id: "ord_103",
-    order_number: "IGL-98239",
-    customer_name: "David O. Kayode",
-    customer_phone: "+234 701 234 5678",
-    customer_avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
-    delivery_address: "Plot 8, Victoria Island Extension, Lagos",
-    delivery_landmark: "Next to Zenith Bank HQ",
-    items: [
-      {
-        menu_item_id: "m5",
-        name: "BBQ Glazed Wings (6pcs)",
-        price: 4500,
-        quantity: 2,
-        item_total: 9000,
-      },
-    ],
-    subtotal: 9000,
-    delivery_fee: 1500,
-    total: 10500,
-    status: "ready_for_pickup",
-    payment_method: "wallet",
-    placed_at: "25 mins ago",
-    preparing_at: "22 mins ago",
-    ready_at: "5 mins ago",
-  },
-  {
-    id: "ord_104",
-    order_number: "IGL-98238",
-    customer_name: "Chinedu Ezekiel",
-    customer_phone: "+234 818 111 2233",
-    delivery_address: "Block 12, Freedom Way, Lekki Phase 1",
-    items: [
-      {
-        menu_item_id: "m1",
-        name: "Pepperoni Feast Pizza",
-        price: 8500,
-        quantity: 1,
-        item_total: 8500,
-      },
-    ],
-    subtotal: 8500,
-    delivery_fee: 1500,
-    total: 10000,
-    status: "in_transit",
-    payment_method: "wallet",
-    placed_at: "40 mins ago",
-    preparing_at: "35 mins ago",
-    ready_at: "20 mins ago",
-    in_transit_at: "12 mins ago",
-  },
-  {
-    id: "ord_105",
-    order_number: "IGL-98235",
-    customer_name: "Grace Blessing",
-    customer_phone: "+234 902 444 5566",
-    delivery_address: "5 Ikoyi Crescent, Ikoyi, Lagos",
-    items: [
-      {
-        menu_item_id: "m6",
-        name: "Chocolate Fudge Lava Cake",
-        price: 3800,
-        quantity: 2,
-        item_total: 7600,
-      },
-    ],
-    subtotal: 7600,
-    delivery_fee: 1500,
-    total: 9100,
-    status: "delivered",
-    payment_method: "wallet",
-    placed_at: "1 hour ago",
-    delivered_at: "15 mins ago",
-  },
-];
-
 type FilterTab = "active" | "in_transit" | "completed" | "cancelled";
 
 // ─── Live Orders Screen ───────────────────────────────────────────────────────
@@ -239,7 +87,7 @@ const RestaurantOrders = () => {
     markOrderReady,
   } = useFoodOrderContext();
 
-  const [orders, setOrders] = useState<VendorFoodOrder[]>(INITIAL_MOCK_ORDERS);
+  const [orders, setOrders] = useState<VendorFoodOrder[]>([]);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
 
   // Decline Modal State
@@ -256,9 +104,9 @@ const RestaurantOrders = () => {
     fetchVendorOrders();
   }, []);
 
-  // Synchronize context vendorOrders to UI state if backend returns data
+  // Synchronize context vendorOrders to UI state
   useEffect(() => {
-    if (vendorOrders && vendorOrders.length > 0) {
+    if (vendorOrders) {
       const mapped: VendorFoodOrder[] = vendorOrders.map((o) => {
         const custName =
           typeof o.customer === "object" ? o.customer?.name : "Customer";

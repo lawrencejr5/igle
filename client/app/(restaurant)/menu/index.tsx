@@ -46,108 +46,6 @@ export interface MenuItemData {
   display_order: number;
 }
 
-// ─── Initial Mock Data ────────────────────────────────────────────────────────
-
-const INITIAL_CATEGORIES: Category[] = [
-  {
-    id: "cat_1",
-    name: "Gourmet Pizzas",
-    description: "Stone-baked artisan pizzas with fresh toppings",
-    display_order: 1,
-    is_active: true,
-  },
-  {
-    id: "cat_2",
-    name: "Sides & Bites",
-    description: "Delicious starters, wings, and garlic bread",
-    display_order: 2,
-    is_active: true,
-  },
-  {
-    id: "cat_3",
-    name: "Cold Beverages",
-    description: "Refreshing sodas, fresh juices, and ice teas",
-    display_order: 3,
-    is_active: true,
-  },
-  {
-    id: "cat_4",
-    name: "Sweet Desserts",
-    description: "Handcrafted cakes, ice creams, and treats",
-    display_order: 4,
-    is_active: true,
-  },
-];
-
-const INITIAL_MENU_ITEMS: MenuItemData[] = [
-  {
-    id: "item_1",
-    category_id: "cat_1",
-    name: "Pepperoni Feast Pizza",
-    description: "Double pepperoni, mozzarella cheese, and rich tomato sauce on crispy crust",
-    price: 8500,
-    image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=800&auto=format&fit=crop&q=60",
-    is_available: true,
-    preparation_time_mins: 20,
-    display_order: 1,
-  },
-  {
-    id: "item_2",
-    category_id: "cat_1",
-    name: "Four Cheese Supreme",
-    description: "Blend of Mozzarella, Cheddar, Parmesan, and Gorgonzola with herbs",
-    price: 7800,
-    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=60",
-    is_available: true,
-    preparation_time_mins: 18,
-    display_order: 2,
-  },
-  {
-    id: "item_3",
-    category_id: "cat_2",
-    name: "Cheesy Garlic Breadsticks",
-    description: "Oven-baked breadsticks brushed with garlic butter and melted mozzarella",
-    price: 3200,
-    image: "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=800&auto=format&fit=crop&q=60",
-    is_available: true,
-    preparation_time_mins: 12,
-    display_order: 1,
-  },
-  {
-    id: "item_4",
-    category_id: "cat_2",
-    name: "BBQ Glazed Wings (6pcs)",
-    description: "Crispy chicken wings tossed in smoky honey BBQ sauce with dip",
-    price: 4500,
-    image: "https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=800&auto=format&fit=crop&q=60",
-    is_available: false,
-    preparation_time_mins: 15,
-    display_order: 2,
-  },
-  {
-    id: "item_5",
-    category_id: "cat_3",
-    name: "Chilled Coca-Cola Zero (50cl)",
-    description: "Refreshing ice-cold zero sugar cola bottle",
-    price: 800,
-    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=800&auto=format&fit=crop&q=60",
-    is_available: true,
-    preparation_time_mins: 2,
-    display_order: 1,
-  },
-  {
-    id: "item_6",
-    category_id: "cat_4",
-    name: "Chocolate Fudge Lava Cake",
-    description: "Warm chocolate cake with molten chocolate core served with vanilla ice cream",
-    price: 3800,
-    image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&auto=format&fit=crop&q=60",
-    is_available: true,
-    preparation_time_mins: 10,
-    display_order: 1,
-  },
-];
-
 // ─── Menu Catalog Screen ──────────────────────────────────────────────────────
 
 const RestaurantMenu = () => {
@@ -167,8 +65,8 @@ const RestaurantMenu = () => {
     deleteMenuItem,
   } = useMenuContext();
 
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [menuItems, setMenuItems] = useState<MenuItemData[]>(INITIAL_MENU_ITEMS);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItemData[]>([]);
 
   React.useEffect(() => {
     fetchVendorCategories();
@@ -176,7 +74,7 @@ const RestaurantMenu = () => {
   }, []);
 
   React.useEffect(() => {
-    if (ctxCategories && ctxCategories.length > 0) {
+    if (ctxCategories) {
       setCategories(
         ctxCategories.map((c) => ({
           id: c._id,
@@ -184,13 +82,13 @@ const RestaurantMenu = () => {
           description: c.description || "",
           display_order: c.display_order || 0,
           is_active: c.is_active ?? true,
-        }))
+        })),
       );
     }
   }, [ctxCategories]);
 
   React.useEffect(() => {
-    if (ctxMenuItems && ctxMenuItems.length > 0) {
+    if (ctxMenuItems) {
       setMenuItems(
         ctxMenuItems.map((it) => ({
           id: it._id,
@@ -203,7 +101,7 @@ const RestaurantMenu = () => {
           is_available: it.is_available ?? true,
           preparation_time_mins: it.preparation_time_mins || 15,
           display_order: it.display_order || 0,
-        }))
+        })),
       );
     }
   }, [ctxMenuItems]);
@@ -211,7 +109,9 @@ const RestaurantMenu = () => {
   // Filters & State
   const [selectedCatId, setSelectedCatId] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"order" | "price_low" | "price_high" | "name" | "available">("order");
+  const [sortBy, setSortBy] = useState<
+    "order" | "price_low" | "price_high" | "name" | "available"
+  >("order");
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
 
   // Category Modal
@@ -234,7 +134,11 @@ const RestaurantMenu = () => {
   const [itemAvailable, setItemAvailable] = useState(true);
 
   // Delete Confirm
-  const [deleteTarget, setDeleteTarget] = useState<{ type: "cat" | "item"; id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "cat" | "item";
+    id: string;
+    name: string;
+  } | null>(null);
 
   // ── Helpers & Handlers ──────────────────────────────────────────────────────
 
@@ -257,8 +161,8 @@ const RestaurantMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setMenuItems((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, is_available: !item.is_available } : item
-      )
+        item.id === id ? { ...item, is_available: !item.is_available } : item,
+      ),
     );
   };
 
@@ -273,7 +177,10 @@ const RestaurantMenu = () => {
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
 
-    const reordered = updated.map((cat, idx) => ({ ...cat, display_order: idx + 1 }));
+    const reordered = updated.map((cat, idx) => ({
+      ...cat,
+      display_order: idx + 1,
+    }));
     setCategories(reordered);
   };
 
@@ -288,7 +195,7 @@ const RestaurantMenu = () => {
     if (targetIndex < 0 || targetIndex >= currentList.length) return;
 
     const targetItem = currentList[targetIndex];
-    
+
     setMenuItems((prev) => {
       return prev.map((item) => {
         if (item.id === itemId) {
@@ -315,9 +222,13 @@ const RestaurantMenu = () => {
       setCategories((prev) =>
         prev.map((c) =>
           c.id === editingCat.id
-            ? { ...c, name: catNameInput.trim(), description: catDescInput.trim() }
-            : c
-        )
+            ? {
+                ...c,
+                name: catNameInput.trim(),
+                description: catDescInput.trim(),
+              }
+            : c,
+        ),
       );
     } else {
       const newCat: Category = {
@@ -368,7 +279,9 @@ const RestaurantMenu = () => {
     } else {
       setEditingItem(null);
       setItemName("");
-      setItemCategory(selectedCatId !== "all" ? selectedCatId : categories[0]?.id || "");
+      setItemCategory(
+        selectedCatId !== "all" ? selectedCatId : categories[0]?.id || "",
+      );
       setItemDescription("");
       setItemPrice("");
       setItemPrepTime("15");
@@ -409,8 +322,8 @@ const RestaurantMenu = () => {
                 image: itemImage,
                 is_available: itemAvailable,
               }
-            : it
-        )
+            : it,
+        ),
       );
     } else {
       const newItem: MenuItemData = {
@@ -420,7 +333,9 @@ const RestaurantMenu = () => {
         description: itemDescription.trim(),
         price: Number(itemPrice),
         preparation_time_mins: Number(itemPrepTime) || 15,
-        image: itemImage || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=60",
+        image:
+          itemImage ||
+          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=60",
         is_available: itemAvailable,
         display_order: menuItems.length + 1,
       };
@@ -437,7 +352,9 @@ const RestaurantMenu = () => {
 
     if (deleteTarget.type === "cat") {
       setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-      setMenuItems((prev) => prev.filter((i) => i.category_id !== deleteTarget.id));
+      setMenuItems((prev) =>
+        prev.filter((i) => i.category_id !== deleteTarget.id),
+      );
       if (selectedCatId === deleteTarget.id) setSelectedCatId("all");
     } else {
       setMenuItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
@@ -459,7 +376,7 @@ const RestaurantMenu = () => {
       result = result.filter(
         (item) =>
           item.name.toLowerCase().includes(q) ||
-          item.description.toLowerCase().includes(q)
+          item.description.toLowerCase().includes(q),
       );
     }
 
@@ -470,7 +387,9 @@ const RestaurantMenu = () => {
     } else if (sortBy === "name") {
       result.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === "available") {
-      result.sort((a, b) => (b.is_available === a.is_available ? 0 : b.is_available ? 1 : -1));
+      result.sort((a, b) =>
+        b.is_available === a.is_available ? 0 : b.is_available ? 1 : -1,
+      );
     } else {
       result.sort((a, b) => a.display_order - b.display_order);
     }
@@ -484,7 +403,9 @@ const RestaurantMenu = () => {
     <View
       style={[
         styles.container,
-        { paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14 },
+        {
+          paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14,
+        },
       ]}
     >
       {/* ── Top Bar (Only Back Button) ── */}
@@ -560,7 +481,7 @@ const RestaurantMenu = () => {
           onPress={() => handleOpenCatModal()}
         >
           <Feather name="folder-plus" size={16} color="#fff" />
-          <Text style={styles.add_category_btn_text}>+ Add Category</Text>
+          <Text style={styles.add_category_btn_text}>Add Category</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -601,7 +522,7 @@ const RestaurantMenu = () => {
 
           {categories.map((cat, idx) => {
             const count = menuItems.filter(
-              (item) => item.category_id === cat.id
+              (item) => item.category_id === cat.id,
             ).length;
 
             return (
@@ -687,7 +608,7 @@ const RestaurantMenu = () => {
               style={styles.cat_header_edit_btn}
               onPress={() =>
                 handleOpenCatModal(
-                  categories.find((c) => c.id === selectedCatId)
+                  categories.find((c) => c.id === selectedCatId),
                 )
               }
             >
@@ -803,7 +724,9 @@ const RestaurantMenu = () => {
                         onPress={() => handleMoveItem(item.id, "down")}
                         style={[
                           styles.sort_arrow_btn,
-                          index === filteredItems.length - 1 && { opacity: 0.3 },
+                          index === filteredItems.length - 1 && {
+                            opacity: 0.3,
+                          },
                         ]}
                       >
                         <Feather name="chevron-down" size={16} color="#fff" />
@@ -851,7 +774,10 @@ const RestaurantMenu = () => {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)" }}
         >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <TouchableWithoutFeedback
+            onPress={Keyboard.dismiss}
+            accessible={false}
+          >
             <View style={styles.modal_backdrop}>
               <TouchableWithoutFeedback onPress={() => {}} accessible={false}>
                 <View style={styles.modal_card}>
@@ -875,9 +801,14 @@ const RestaurantMenu = () => {
                       returnKeyType="next"
                     />
 
-                    <Text style={styles.input_label}>DESCRIPTION (OPTIONAL)</Text>
+                    <Text style={styles.input_label}>
+                      DESCRIPTION (OPTIONAL)
+                    </Text>
                     <TextInput
-                      style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
+                      style={[
+                        styles.text_input,
+                        { height: 80, textAlignVertical: "top" },
+                      ]}
                       placeholder="Brief category description for customers..."
                       placeholderTextColor="#666"
                       multiline
@@ -952,7 +883,10 @@ const RestaurantMenu = () => {
               keyboardDismissMode="on-drag"
               contentContainerStyle={[
                 styles.sheet_scroll_content,
-                { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
+                {
+                  paddingBottom:
+                    Platform.OS === "ios" ? insets.bottom + 40 : 50,
+                },
               ]}
             >
               {/* Image Upload Banner */}
@@ -993,21 +927,33 @@ const RestaurantMenu = () => {
                 />
 
                 <Text style={styles.input_label}>CATEGORY *</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginBottom: 12 }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 8,
+                      alignItems: "center",
+                    }}
+                  >
                     {categories.map((c) => (
                       <TouchableOpacity
                         key={c.id}
                         style={[
                           styles.cat_select_chip,
-                          itemCategory === c.id && styles.cat_select_chip_active,
+                          itemCategory === c.id &&
+                            styles.cat_select_chip_active,
                         ]}
                         onPress={() => setItemCategory(c.id)}
                       >
                         <Text
                           style={[
                             styles.cat_select_chip_text,
-                            itemCategory === c.id && styles.cat_select_chip_text_active,
+                            itemCategory === c.id &&
+                              styles.cat_select_chip_text_active,
                           ]}
                         >
                           {c.name}
@@ -1020,7 +966,9 @@ const RestaurantMenu = () => {
                       onPress={() => handleOpenCatModal()}
                     >
                       <Feather name="plus" size={14} color="#fff" />
-                      <Text style={styles.add_cat_chip_btn_text}>New Category</Text>
+                      <Text style={styles.add_cat_chip_btn_text}>
+                        New Category
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </ScrollView>
@@ -1055,7 +1003,10 @@ const RestaurantMenu = () => {
 
                 <Text style={styles.input_label}>DESCRIPTION</Text>
                 <TextInput
-                  style={[styles.text_input, { height: 90, textAlignVertical: "top" }]}
+                  style={[
+                    styles.text_input,
+                    { height: 90, textAlignVertical: "top" },
+                  ]}
                   placeholder="Describe ingredient details, taste, portion size..."
                   placeholderTextColor="#666"
                   multiline
@@ -1089,13 +1040,19 @@ const RestaurantMenu = () => {
       >
         <View style={styles.modal_backdrop}>
           <View style={styles.modal_card}>
-            <Feather name="alert-triangle" size={32} color="#ef5350" style={{ alignSelf: "center", marginBottom: 10 }} />
+            <Feather
+              name="alert-triangle"
+              size={32}
+              color="#ef5350"
+              style={{ alignSelf: "center", marginBottom: 10 }}
+            />
             <Text style={[styles.modal_title, { textAlign: "center" }]}>
               Confirm Delete
             </Text>
             <Text style={styles.delete_confirm_text}>
               Are you sure you want to delete "{deleteTarget?.name}"?
-              {deleteTarget?.type === "cat" && " All items in this category will also be removed."}
+              {deleteTarget?.type === "cat" &&
+                " All items in this category will also be removed."}
             </Text>
 
             <View style={styles.modal_footer}>

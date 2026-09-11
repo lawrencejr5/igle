@@ -502,6 +502,7 @@ export const get_all_restaurants = async (req: Request, res: Response) => {
     const restaurants = await Restaurant.find({
       is_deleted: { $ne: true },
       is_blocked: { $ne: true },
+      application: "approved",
     }).sort({ createdAt: -1 });
 
     return res.status(200).json({ restaurants });

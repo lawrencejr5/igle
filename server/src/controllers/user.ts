@@ -22,6 +22,7 @@ import Feedback from "../models/feedback";
 import History from "../models/history";
 import Rating from "../models/rating";
 import UserTask from "../models/userTask";
+import Restaurant from "../models/restaurant";
 import mongoose from "mongoose";
 
 import { cloudinary } from "../middleware/upload";
@@ -339,6 +340,21 @@ export const get_user_data = async (req: Request, res: Response) => {
   try {
     const id = req.user?.id;
     const user = await User.findById(id).select("-password");
+    if (user) {
+      const restaurant = await Restaurant.findOne({ user: id });
+      if (restaurant) {
+        if (restaurant.application === "approved") {
+          user.is_restaurant = true;
+          user.restaurant_application = "approved";
+        } else if (
+          restaurant.application === "submitted" ||
+          restaurant.application === "pending"
+        ) {
+          user.restaurant_application = restaurant.application;
+        }
+        await user.save();
+      }
+    }
     res.status(200).json({ msg: "success", user });
   } catch (err) {
     res.status(500).json({ msg: "Server error." });
