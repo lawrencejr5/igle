@@ -13,6 +13,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -140,6 +141,11 @@ const RestaurantMenu = () => {
     name: string;
   } | null>(null);
 
+  // Form Loading States
+  const [savingCategory, setSavingCategory] = useState(false);
+  const [savingItem, setSavingItem] = useState(false);
+  const [deletingTarget, setDeletingTarget] = useState(false);
+
   // ── Helpers & Handlers ──────────────────────────────────────────────────────
 
   const pickItemImage = async () => {
@@ -216,31 +222,36 @@ const RestaurantMenu = () => {
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSavingCategory(true);
 
-    if (editingCat) {
-      const updated = await updateCategory(editingCat.id, {
-        name: catNameInput.trim(),
-        description: catDescInput.trim(),
-      });
-      if (updated) {
-        await fetchVendorCategories();
+    try {
+      if (editingCat) {
+        const updated = await updateCategory(editingCat.id, {
+          name: catNameInput.trim(),
+          description: catDescInput.trim(),
+        });
+        if (updated) {
+          await fetchVendorCategories();
+        }
+      } else {
+        const created = await createCategory({
+          name: catNameInput.trim(),
+          description: catDescInput.trim(),
+          display_order: categories.length + 1,
+        });
+        if (created) {
+          await fetchVendorCategories();
+          setSelectedCatId(created._id);
+        }
       }
-    } else {
-      const created = await createCategory({
-        name: catNameInput.trim(),
-        description: catDescInput.trim(),
-        display_order: categories.length + 1,
-      });
-      if (created) {
-        await fetchVendorCategories();
-        setSelectedCatId(created._id);
-      }
+
+      setCatModalVisible(false);
+      setEditingCat(null);
+      setCatNameInput("");
+      setCatDescInput("");
+    } finally {
+      setSavingCategory(false);
     }
-
-    setCatModalVisible(false);
-    setEditingCat(null);
-    setCatNameInput("");
-    setCatDescInput("");
   };
 
   // Open Category Modal
@@ -302,56 +313,66 @@ const RestaurantMenu = () => {
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSavingItem(true);
 
-    const formData = new FormData();
-    formData.append("category_id", itemCategory);
-    formData.append("name", itemName.trim());
-    formData.append("description", itemDescription.trim());
-    formData.append("price", itemPrice.trim());
-    formData.append("preparation_time_mins", itemPrepTime.trim() || "15");
-    formData.append("is_available", String(itemAvailable));
+    try {
+      const formData = new FormData();
+      formData.append("category_id", itemCategory);
+      formData.append("name", itemName.trim());
+      formData.append("description", itemDescription.trim());
+      formData.append("price", itemPrice.trim());
+      formData.append("preparation_time_mins", itemPrepTime.trim() || "15");
+      formData.append("is_available", String(itemAvailable));
 
-    if (itemImage && !itemImage.startsWith("http")) {
-      const filename = itemImage.split("/").pop() || "item.jpg";
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : `image/jpeg`;
-      formData.append("image", { uri: itemImage, name: filename, type } as any);
-    }
-
-    if (editingItem) {
-      const updated = await updateMenuItem(editingItem.id, formData);
-      if (updated) {
-        await fetchVendorMenuItems();
+      if (itemImage && !itemImage.startsWith("http")) {
+        const filename = itemImage.split("/").pop() || "item.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
+        formData.append("image", { uri: itemImage, name: filename, type } as any);
       }
-    } else {
-      const created = await createMenuItem(formData);
-      if (created) {
-        await fetchVendorMenuItems();
-      }
-    }
 
-    setItemModalVisible(false);
+      if (editingItem) {
+        const updated = await updateMenuItem(editingItem.id, formData);
+        if (updated) {
+          await fetchVendorMenuItems();
+        }
+      } else {
+        const created = await createMenuItem(formData);
+        if (created) {
+          await fetchVendorMenuItems();
+        }
+      }
+
+      setItemModalVisible(false);
+    } finally {
+      setSavingItem(false);
+    }
   };
 
   // Delete Action
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setDeletingTarget(true);
 
-    if (deleteTarget.type === "cat") {
-      const success = await deleteCategory(deleteTarget.id);
-      if (success) {
-        await fetchVendorCategories();
-        await fetchVendorMenuItems();
-        if (selectedCatId === deleteTarget.id) setSelectedCatId("all");
+    try {
+      if (deleteTarget.type === "cat") {
+        const success = await deleteCategory(deleteTarget.id);
+        if (success) {
+          await fetchVendorCategories();
+          await fetchVendorMenuItems();
+          if (selectedCatId === deleteTarget.id) setSelectedCatId("all");
+        }
+      } else {
+        const success = await deleteMenuItem(deleteTarget.id);
+        if (success) {
+          await fetchVendorMenuItems();
+        }
       }
-    } else {
-      const success = await deleteMenuItem(deleteTarget.id);
-      if (success) {
-        await fetchVendorMenuItems();
-      }
+      setDeleteTarget(null);
+    } finally {
+      setDeletingTarget(false);
     }
-    setDeleteTarget(null);
   };
 
   // ── Filter & Sort Items ─────────────────────────────────────────────────────
@@ -815,17 +836,26 @@ const RestaurantMenu = () => {
                     <TouchableOpacity
                       style={styles.modal_cancel_btn}
                       onPress={() => setCatModalVisible(false)}
+                      disabled={savingCategory}
                     >
                       <Text style={styles.modal_cancel_text}>Cancel</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={styles.modal_save_btn}
+                      style={[
+                        styles.modal_save_btn,
+                        savingCategory && { opacity: 0.6 },
+                      ]}
                       onPress={handleSaveCategory}
+                      disabled={savingCategory}
                     >
-                      <Text style={styles.modal_save_text}>
-                        {editingCat ? "Save Changes" : "Create Category"}
-                      </Text>
+                      {savingCategory ? (
+                        <ActivityIndicator size="small" color="#121212" />
+                      ) : (
+                        <Text style={styles.modal_save_text}>
+                          {editingCat ? "Save Changes" : "Create Category"}
+                        </Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -855,6 +885,7 @@ const RestaurantMenu = () => {
               <TouchableOpacity
                 style={styles.sheet_close_btn}
                 onPress={() => setItemModalVisible(false)}
+                disabled={savingItem}
               >
                 <Feather name="x" size={20} color="#fff" />
               </TouchableOpacity>
@@ -862,10 +893,18 @@ const RestaurantMenu = () => {
                 {editingItem ? "Edit Menu Item" : "Create New Menu Item"}
               </Text>
               <TouchableOpacity
-                style={styles.sheet_save_top_btn}
+                style={[
+                  styles.sheet_save_top_btn,
+                  savingItem && { opacity: 0.6 },
+                ]}
                 onPress={handleSaveItem}
+                disabled={savingItem}
               >
-                <Text style={styles.sheet_save_top_text}>Save</Text>
+                {savingItem ? (
+                  <ActivityIndicator size="small" color="#121212" />
+                ) : (
+                  <Text style={styles.sheet_save_top_text}>Save</Text>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -886,6 +925,7 @@ const RestaurantMenu = () => {
                 style={styles.image_picker_box}
                 activeOpacity={0.8}
                 onPress={pickItemImage}
+                disabled={savingItem}
               >
                 {itemImage ? (
                   <Image
@@ -916,6 +956,7 @@ const RestaurantMenu = () => {
                   value={itemName}
                   onChangeText={setItemName}
                   returnKeyType="next"
+                  editable={!savingItem}
                 />
 
                 <Text style={styles.input_label}>CATEGORY *</Text>
@@ -940,6 +981,7 @@ const RestaurantMenu = () => {
                             styles.cat_select_chip_active,
                         ]}
                         onPress={() => setItemCategory(c.id)}
+                        disabled={savingItem}
                       >
                         <Text
                           style={[
@@ -956,6 +998,7 @@ const RestaurantMenu = () => {
                     <TouchableOpacity
                       style={styles.add_cat_chip_btn}
                       onPress={() => handleOpenCatModal()}
+                      disabled={savingItem}
                     >
                       <Feather name="plus" size={14} color="#fff" />
                       <Text style={styles.add_cat_chip_btn_text}>
@@ -976,6 +1019,7 @@ const RestaurantMenu = () => {
                       value={itemPrice}
                       onChangeText={setItemPrice}
                       returnKeyType="next"
+                      editable={!savingItem}
                     />
                   </View>
 
@@ -989,6 +1033,7 @@ const RestaurantMenu = () => {
                       value={itemPrepTime}
                       onChangeText={setItemPrepTime}
                       returnKeyType="next"
+                      editable={!savingItem}
                     />
                   </View>
                 </View>
@@ -1006,17 +1051,26 @@ const RestaurantMenu = () => {
                   onChangeText={setItemDescription}
                   returnKeyType="done"
                   onSubmitEditing={Keyboard.dismiss}
+                  editable={!savingItem}
                 />
               </View>
 
               {/* Bottom Save Button */}
               <TouchableOpacity
-                style={styles.sheet_save_main_btn}
+                style={[
+                  styles.sheet_save_main_btn,
+                  savingItem && { opacity: 0.6 },
+                ]}
                 onPress={handleSaveItem}
+                disabled={savingItem}
               >
-                <Text style={styles.sheet_save_main_text}>
-                  {editingItem ? "Update Menu Item" : "Create Menu Item"}
-                </Text>
+                {savingItem ? (
+                  <ActivityIndicator size="small" color="#121212" />
+                ) : (
+                  <Text style={styles.sheet_save_main_text}>
+                    {editingItem ? "Update Menu Item" : "Create Menu Item"}
+                  </Text>
+                )}
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -1051,15 +1105,24 @@ const RestaurantMenu = () => {
               <TouchableOpacity
                 style={styles.modal_cancel_btn}
                 onPress={() => setDeleteTarget(null)}
+                disabled={deletingTarget}
               >
                 <Text style={styles.modal_cancel_text}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.modal_delete_btn}
+                style={[
+                  styles.modal_delete_btn,
+                  deletingTarget && { opacity: 0.6 },
+                ]}
                 onPress={confirmDelete}
+                disabled={deletingTarget}
               >
-                <Text style={styles.modal_delete_btn_text}>Delete</Text>
+                {deletingTarget ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modal_delete_btn_text}>Delete</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
