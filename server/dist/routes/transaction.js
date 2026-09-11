@@ -7,6 +7,8 @@ const transaction_1 = require("../controllers/transaction");
 TransactionRouter.use(auth_1.auth);
 // User transactions
 TransactionRouter.get("/user", transaction_1.get_user_transactions);
+// Vendor transactions
+TransactionRouter.get("/vendor", transaction_1.get_vendor_transactions);
 // Driver transactions
 TransactionRouter.get("/driver", transaction_1.get_driver_transactions);
 TransactionRouter.post("/driver/withdraw", transaction_1.initiate_driver_withdrawal);

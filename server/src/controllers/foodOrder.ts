@@ -273,7 +273,7 @@ export const accept_food_order = async (req: Request, res: Response) => {
     order.status_timestamps.preparing_at = new Date();
     await order.save();
 
-    // Credit Specialized Vendor Wallet upon order acceptance
+    // Add to Specialized Restaurant Pending Balance upon order acceptance
     try {
       const vendorWallet = await getOrCreateVendorWallet(restaurant._id as any);
 
@@ -281,14 +281,14 @@ export const accept_food_order = async (req: Request, res: Response) => {
         order.pricing?.restaurant_earnings || order.pricing?.subtotal || 0;
 
       if (earningsAmount > 0) {
-        vendorWallet.balance += earningsAmount;
+        vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + earningsAmount;
         await vendorWallet.save();
 
         await Transaction.create({
           wallet_id: vendorWallet._id,
           type: "vendor_earnings",
           amount: earningsAmount,
-          status: "success",
+          status: "pending",
           channel: "wallet",
           reference: generate_unique_reference(),
           food_order_id: order._id,
@@ -297,12 +297,13 @@ export const accept_food_order = async (req: Request, res: Response) => {
             order_number: order.order_number,
             restaurant_id: restaurant._id,
             type: "food_order_earnings",
-            description: `Earnings for accepted order #${order.order_number}`,
+            status: "pending",
+            description: `Pending earnings for order #${order.order_number}`,
           },
         });
       }
     } catch (wErr) {
-      console.error("Error crediting vendor wallet on order accept:", wErr);
+      console.error("Error updating vendor pending balance on order accept:", wErr);
     }
 
     // Socket Notification to Customer

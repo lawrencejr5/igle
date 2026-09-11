@@ -45,6 +45,8 @@ type TransactionContextType = {
     totalOrders: number;
     todayEarnings: number;
     weekEarnings: number;
+    withdrawableBalance: number;
+    pendingBalance: number;
   };
   fetchVendorTransactions: (type?: string, status?: string) => Promise<void>;
   initiateVendorWithdrawal: (amount: number) => Promise<any>;
@@ -75,6 +77,8 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
     totalOrders: 0,
     todayEarnings: 0,
     weekEarnings: 0,
+    withdrawableBalance: 0,
+    pendingBalance: 0,
   });
 
   const getAuthToken = async () => {
@@ -197,12 +201,21 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       if (data?.transactions) {
         setVendorTransactions(data.transactions);
       }
-      if (typeof data?.wallet_balance === "number") {
-        setVendorStats((prev) => ({
-          ...prev,
-          todayEarnings: data.wallet_balance,
-        }));
-      }
+      setVendorStats((prev) => ({
+        ...prev,
+        withdrawableBalance:
+          typeof data?.wallet_balance === "number"
+            ? data.wallet_balance
+            : prev.withdrawableBalance,
+        todayEarnings:
+          typeof data?.wallet_balance === "number"
+            ? data.wallet_balance
+            : prev.todayEarnings,
+        pendingBalance:
+          typeof data?.pending_balance === "number"
+            ? data.pending_balance
+            : prev.pendingBalance,
+      }));
     } catch (error: any) {
       console.error("fetchVendorTransactions error:", error?.response?.data || error.message);
     } finally {
@@ -251,6 +264,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       );
 
       let walletBalance = wData?.wallet?.balance || 0;
+      let pendingBalance = wData?.wallet?.pending_balance || 0;
 
       if (orderData?.orders && Array.isArray(orderData.orders)) {
         const now = new Date();
@@ -291,6 +305,8 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
           totalOrders: acceptedCount,
           todayEarnings: walletBalance > 0 ? walletBalance : todaySum,
           weekEarnings: weekSum,
+          withdrawableBalance: walletBalance,
+          pendingBalance: pendingBalance,
         });
       }
     } catch (error: any) {

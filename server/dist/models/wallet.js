@@ -10,8 +10,9 @@ const WalletSchema = new mongoose_1.Schema({
     },
     owner_type: {
         type: String,
-        enum: ["User", "Driver"],
+        enum: ["User", "Driver", "Restaurant"],
     },
     balance: { type: Number, default: 0 },
+    pending_balance: { type: Number, default: 0 },
 }, { timestamps: true });
 exports.default = (0, mongoose_1.model)("Wallet", WalletSchema);

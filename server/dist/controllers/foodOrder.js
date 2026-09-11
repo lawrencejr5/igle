@@ -25,6 +25,7 @@ const get_id_1 = require("../utils/get_id");
 const expo_push_1 = require("../utils/expo_push");
 const server_1 = require("../server");
 const agenda_1 = require("../jobs/agenda");
+const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 const FLAT_DELIVERY_FEE = 1500; // Flat rate 1500 NGN delivery fee per user requirement
 // 1. Place Food Order (Customer)
 // POST /api/v1/orders/place
@@ -249,25 +250,18 @@ const accept_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
         order.status = "preparing";
         order.status_timestamps.preparing_at = new Date();
         yield order.save();
-        // Credit Vendor Wallet upon order acceptance
+        // Add to Specialized Restaurant Pending Balance upon order acceptance
         try {
-            let vendorWallet = yield wallet_1.default.findOne({ owner_id: restaurant.user });
-            if (!vendorWallet) {
-                vendorWallet = yield wallet_1.default.create({
-                    owner_id: restaurant.user,
-                    owner_type: "User",
-                    balance: 0,
-                });
-            }
+            const vendorWallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
             const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.restaurant_earnings) || ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0;
             if (earningsAmount > 0) {
-                vendorWallet.balance += earningsAmount;
+                vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + earningsAmount;
                 yield vendorWallet.save();
                 yield transaction_1.default.create({
                     wallet_id: vendorWallet._id,
-                    type: "payout",
+                    type: "vendor_earnings",
                     amount: earningsAmount,
-                    status: "success",
+                    status: "pending",
                     channel: "wallet",
                     reference: (0, gen_unique_ref_1.generate_unique_reference)(),
                     food_order_id: order._id,
@@ -276,13 +270,14 @@ const accept_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
                         order_number: order.order_number,
                         restaurant_id: restaurant._id,
                         type: "food_order_earnings",
-                        description: `Earnings for accepted order #${order.order_number}`,
+                        status: "pending",
+                        description: `Pending earnings for order #${order.order_number}`,
                     },
                 });
             }
         }
         catch (wErr) {
-            console.error("Error crediting vendor wallet on order accept:", wErr);
+            console.error("Error updating vendor pending balance on order accept:", wErr);
         }
         // Socket Notification to Customer
         const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);

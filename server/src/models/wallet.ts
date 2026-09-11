@@ -4,6 +4,7 @@ export interface WalletType extends Document {
   owner_id: Types.ObjectId;
   owner_type: "User" | "Driver" | "Restaurant";
   balance: number;
+  pending_balance: number;
 }
 
 const WalletSchema = new Schema<WalletType>(
@@ -19,6 +20,7 @@ const WalletSchema = new Schema<WalletType>(
       enum: ["User", "Driver", "Restaurant"],
     },
     balance: { type: Number, default: 0 },
+    pending_balance: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

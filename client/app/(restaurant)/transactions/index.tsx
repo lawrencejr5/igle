@@ -143,9 +143,10 @@ const RestaurantTransactions = () => {
   }, [ctxVendorTxns, restaurant?.bank]);
 
   // Wallet Metrics
-  const currentBalance = vendorStats.todayEarnings || 0;
+  const withdrawableBalance =
+    vendorStats.withdrawableBalance ?? vendorStats.todayEarnings ?? 0;
+  const pendingBalance = vendorStats.pendingBalance ?? 0;
   const todayEarnings = vendorStats.todayEarnings || 0;
-  const todayPayouts = 0;
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -239,33 +240,35 @@ const RestaurantTransactions = () => {
           { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
         ]}
       >
-        {/* ── Balance Hero Card ── */}
+        {/* ── Withdrawable Balance Hero Card ── */}
         <View style={styles.balance_card}>
           <View style={styles.balance_header}>
             <View style={styles.balance_label_row}>
               <Ionicons name="wallet-outline" size={18} color="#9CA3AF" />
-              <Text style={styles.balance_label_text}>AVAILABLE WALLET BALANCE</Text>
+              <Text style={styles.balance_label_text}>WITHDRAWABLE BALANCE</Text>
             </View>
             <View style={styles.live_status_pill}>
-              <Text style={styles.live_status_text}>Active</Text>
+              <Text style={styles.live_status_text}>Ready to Withdraw</Text>
             </View>
           </View>
 
           <Text style={styles.balance_amount_text}>
-            ₦{currentBalance.toLocaleString()}
+            ₦{withdrawableBalance.toLocaleString()}
             <Text style={styles.kobo_text}>.00</Text>
           </Text>
 
           {/* Quick Stats Grid */}
           <View style={styles.stats_row}>
             <View style={styles.stat_item}>
-              <Text style={styles.stat_label}>TODAY'S EARNINGS</Text>
-              <Text style={styles.stat_value_green}>+₦{todayEarnings.toLocaleString()}</Text>
+              <Text style={styles.stat_label}>TOTAL ORDERS</Text>
+              <Text style={styles.stat_value_green}>{vendorStats.totalOrders}</Text>
             </View>
             <View style={styles.stat_divider} />
             <View style={styles.stat_item}>
-              <Text style={styles.stat_label}>TODAY'S PAYOUTS</Text>
-              <Text style={styles.stat_value_red}>-₦{todayPayouts.toLocaleString()}</Text>
+              <Text style={styles.stat_label}>PENDING ORDERS SALES</Text>
+              <Text style={{ color: "#ffb74d", fontFamily: "raleway-bold", fontSize: 15 }}>
+                ₦{pendingBalance.toLocaleString()}
+              </Text>
             </View>
           </View>
 
@@ -278,6 +281,47 @@ const RestaurantTransactions = () => {
             <Feather name="arrow-up-right" size={18} color="#121212" />
             <Text style={styles.withdraw_btn_text}>Withdraw to Bank</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* ── Pending Balance Escrow Card ── */}
+        <View
+          style={[
+            styles.balance_card,
+            { backgroundColor: "#1e1b18", borderColor: "#ff980044", marginTop: -6 },
+          ]}
+        >
+          <View style={styles.balance_header}>
+            <View style={styles.balance_label_row}>
+              <Feather name="clock" size={16} color="#ffb74d" />
+              <Text style={[styles.balance_label_text, { color: "#ffb74d" }]}>
+                PENDING WALLET BALANCE
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.live_status_pill,
+                { backgroundColor: "#ff980022", borderColor: "#ff980066" },
+              ]}
+            >
+              <Text style={[styles.live_status_text, { color: "#ffb74d" }]}>In Escrow</Text>
+            </View>
+          </View>
+
+          <Text style={[styles.balance_amount_text, { color: "#ffb74d" }]}>
+            ₦{pendingBalance.toLocaleString()}
+            <Text style={[styles.kobo_text, { color: "#ffb74daa" }]}>.00</Text>
+          </Text>
+
+          <Text
+            style={{
+              color: "#9CA3AF",
+              fontFamily: "raleway-medium",
+              fontSize: 12,
+              marginTop: 4,
+            }}
+          >
+            Funds automatically transfer to withdrawable balance when orders are delivered.
+          </Text>
         </View>
 
         {/* ── Search & Filter Controls ── */}
@@ -494,7 +538,7 @@ const RestaurantTransactions = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.quick_chip}
-                onPress={() => handleQuickAmount(currentBalance)}
+                onPress={() => handleQuickAmount(withdrawableBalance)}
               >
                 <Text style={styles.quick_chip_text}>Max</Text>
               </TouchableOpacity>

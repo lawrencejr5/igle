@@ -7,6 +7,10 @@ import User from "../models/user";
 import Wallet from "../models/wallet";
 import Transaction from "../models/transaction";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
+import {
+  settleVendorOrderEarnings,
+  cancelVendorOrderPendingEarnings,
+} from "../utils/get_vendor_wallet";
 
 // ─── RESTAURANT ADMIN ────────────────────────────────────────────────────────
 
@@ -336,9 +340,12 @@ export const admin_update_food_order_status = async (req: Request, res: Response
     if (status === "preparing") order.status_timestamps.preparing_at = now;
     else if (status === "ready_for_pickup") order.status_timestamps.ready_at = now;
     else if (status === "in_transit") order.status_timestamps.in_transit_at = now;
-    else if (status === "delivered") order.status_timestamps.delivered_at = now;
-    else if (status === "cancelled" || status === "rejected") {
+    else if (status === "delivered") {
+      order.status_timestamps.delivered_at = now;
+      await settleVendorOrderEarnings(order);
+    } else if (status === "cancelled" || status === "rejected") {
       order.status_timestamps.cancelled_at = now;
+      await cancelVendorOrderPendingEarnings(order);
     }
 
     await order.save();
@@ -378,6 +385,9 @@ export const admin_cancel_food_order = async (req: Request, res: Response) => {
     };
     order.status_timestamps.cancelled_at = new Date();
     await order.save();
+
+    // Cancel pending vendor earnings if order was accepted
+    await cancelVendorOrderPendingEarnings(order);
 
     // Refund customer wallet
     const customerWallet = await Wallet.findOne({ owner_id: order.customer });

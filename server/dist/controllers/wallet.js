@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.create_wallet = exports.get_wallet_balance = exports.request_withdrawal = exports.verify_payment = exports.paystack_redirect = exports.paystack_webhook = exports.fund_wallet = void 0;
+exports.create_wallet = exports.initiate_vendor_withdrawal = exports.get_wallet_balance = exports.request_withdrawal = exports.verify_payment = exports.paystack_redirect = exports.paystack_webhook = exports.fund_wallet = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const crypto_1 = __importDefault(require("crypto"));
 const wallet_1 = __importDefault(require("../models/wallet"));
@@ -200,22 +200,42 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.request_withdrawal = request_withdrawal;
+const get_vendor_restaurant_1 = require("../utils/get_vendor_restaurant");
+const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 const get_wallet_balance = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
         const { owner_type } = req.query;
         let owner_id;
+        let targetOwnerType = owner_type;
         if (owner_type === "User") {
             owner_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         }
         else if (owner_type === "Driver") {
             owner_id = yield (0, get_id_1.get_driver_id)((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
         }
+        else if (owner_type === "Restaurant" || owner_type === "Vendor") {
+            const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
+            if (!restaurant)
+                return;
+            owner_id = restaurant._id;
+            targetOwnerType = "Restaurant";
+        }
         else {
             res.status(400).json({ msg: "Owner type is invalid" });
             return;
         }
-        const wallet = yield wallet_1.default.findOne({ owner_id });
+        let wallet = yield wallet_1.default.findOne({
+            owner_id,
+            owner_type: "Restaurant",
+        });
+        if (!wallet && (owner_type === "Restaurant" || owner_type === "Vendor")) {
+            wallet = yield wallet_1.default.create({
+                owner_id,
+                owner_type: "Restaurant",
+                balance: 0,
+            });
+        }
         if (!wallet) {
             return res.status(404).json({ message: "Wallet not found" });
         }
@@ -226,6 +246,45 @@ const get_wallet_balance = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.get_wallet_balance = get_wallet_balance;
+const initiate_vendor_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const amount = Number(req.body.amount);
+        const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
+        if (!restaurant)
+            return;
+        const wallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
+        if (amount <= 0 || wallet.balance < amount) {
+            return res.status(400).json({
+                msg: `Insufficient restaurant wallet balance. Available: ₦${wallet.balance.toLocaleString()}`,
+            });
+        }
+        wallet.balance -= amount;
+        yield wallet.save();
+        const transaction = yield transaction_1.default.create({
+            wallet_id: wallet._id,
+            type: "payout",
+            status: "success",
+            amount,
+            channel: "bank",
+            reference: `WD-V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            metadata: {
+                restaurant_id: restaurant._id,
+                restaurant_name: restaurant.name,
+                type: "vendor_withdrawal",
+            },
+        });
+        return res.status(200).json({
+            msg: "Restaurant withdrawal successful",
+            transaction,
+            wallet_balance: wallet.balance,
+        });
+    }
+    catch (err) {
+        console.error("initiate_vendor_withdrawal error:", err);
+        res.status(500).json({ msg: err.message || "Withdrawal failed" });
+    }
+});
+exports.initiate_vendor_withdrawal = initiate_vendor_withdrawal;
 const create_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     try {
@@ -235,20 +294,32 @@ const create_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             return;
         }
         let owner_id;
+        let finalOwnerType = owner_type;
         if (owner_type === "User") {
             owner_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         }
         else if (owner_type === "Driver") {
             owner_id = yield (0, get_id_1.get_driver_id)((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
         }
+        else if (owner_type === "Restaurant" || owner_type === "Vendor") {
+            const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
+            if (!restaurant)
+                return;
+            owner_id = restaurant._id;
+            finalOwnerType = "Restaurant";
+        }
         else {
             res.status(400).json({ msg: "Owner type is invalid" });
             return;
         }
-        const wallet = yield wallet_1.default.create({ owner_id, owner_type, balance: 0 });
+        const wallet = yield wallet_1.default.create({
+            owner_id,
+            owner_type: finalOwnerType,
+            balance: 0,
+        });
         res
             .status(201)
-            .json({ msg: `${owner_type} wallet created successfully`, wallet });
+            .json({ msg: `${finalOwnerType} wallet created successfully`, wallet });
     }
     catch (err) {
         res.status(500).json({ msg: "Server error.", err });

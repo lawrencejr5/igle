@@ -21,6 +21,7 @@ const user_1 = __importDefault(require("../models/user"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
+const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 // ─── RESTAURANT ADMIN ────────────────────────────────────────────────────────
 // GET /admin/restaurants
 const admin_get_all_restaurants = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -102,6 +103,18 @@ const admin_approve_restaurant = (req, res) => __awaiter(void 0, void 0, void 0,
             restaurant_application: "approved",
             is_restaurant: true,
         });
+        // Ensure specialized Restaurant Wallet exists for this restaurant
+        const existingVendorWallet = yield wallet_1.default.findOne({
+            owner_id: restaurant._id,
+            owner_type: "Restaurant",
+        });
+        if (!existingVendorWallet) {
+            yield wallet_1.default.create({
+                owner_id: restaurant._id,
+                owner_type: "Restaurant",
+                balance: 0,
+            });
+        }
         return res.status(200).json({
             msg: "Restaurant approved successfully",
             restaurant,
@@ -292,10 +305,13 @@ const admin_update_food_order_status = (req, res) => __awaiter(void 0, void 0, v
             order.status_timestamps.ready_at = now;
         else if (status === "in_transit")
             order.status_timestamps.in_transit_at = now;
-        else if (status === "delivered")
+        else if (status === "delivered") {
             order.status_timestamps.delivered_at = now;
+            yield (0, get_vendor_wallet_1.settleVendorOrderEarnings)(order);
+        }
         else if (status === "cancelled" || status === "rejected") {
             order.status_timestamps.cancelled_at = now;
+            yield (0, get_vendor_wallet_1.cancelVendorOrderPendingEarnings)(order);
         }
         yield order.save();
         return res.status(200).json({
@@ -331,6 +347,8 @@ const admin_cancel_food_order = (req, res) => __awaiter(void 0, void 0, void 0, 
         };
         order.status_timestamps.cancelled_at = new Date();
         yield order.save();
+        // Cancel pending vendor earnings if order was accepted
+        yield (0, get_vendor_wallet_1.cancelVendorOrderPendingEarnings)(order);
         // Refund customer wallet
         const customerWallet = yield wallet_1.default.findOne({ owner_id: order.customer });
         if (customerWallet) {

@@ -95,6 +95,7 @@ export const get_vendor_transactions = async (
     res.status(200).json({
       msg: "success",
       wallet_balance: wallet.balance,
+      pending_balance: wallet.pending_balance || 0,
       transactions,
       pagination: {
         total,

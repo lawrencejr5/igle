@@ -12,4 +12,5 @@ WalletRouter.post("/fund", auth_1.auth, wallet_1.fund_wallet);
 WalletRouter.post("/verify", auth_1.auth, wallet_1.verify_payment);
 WalletRouter.post("/create", auth_1.auth, wallet_1.create_wallet);
 WalletRouter.post("/withdraw", auth_1.auth, wallet_1.request_withdrawal);
+WalletRouter.post("/vendor/withdraw", auth_1.auth, wallet_1.initiate_vendor_withdrawal);
 exports.default = WalletRouter;

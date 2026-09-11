@@ -12,12 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.admin_get_transaction = exports.admin_get_transactions = exports.get_driver_earnings_stats = exports.initiate_driver_withdrawal = exports.get_driver_transactions = exports.get_user_transactions = void 0;
+exports.admin_get_transaction = exports.admin_get_transactions = exports.get_driver_earnings_stats = exports.initiate_driver_withdrawal = exports.get_driver_transactions = exports.get_vendor_transactions = exports.get_user_transactions = void 0;
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const get_id_1 = require("../utils/get_id");
 const driver_1 = __importDefault(require("../models/driver"));
 const axios_1 = __importDefault(require("axios"));
+const get_vendor_restaurant_1 = require("../utils/get_vendor_restaurant");
+const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 // Helper function to get start of day/week in UTC
 const getDateRanges = () => {
     const now = new Date();
@@ -68,6 +70,43 @@ const get_user_transactions = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.get_user_transactions = get_user_transactions;
+const get_vendor_transactions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
+        if (!restaurant)
+            return;
+        const wallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
+        const { limit = 30, skip = 0, type, status } = req.query;
+        const query = { wallet_id: wallet._id };
+        if (type)
+            query.type = type;
+        if (status)
+            query.status = status;
+        const transactions = yield transaction_1.default.find(query)
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .skip(Number(skip))
+            .populate("food_order_id");
+        const total = yield transaction_1.default.countDocuments(query);
+        res.status(200).json({
+            msg: "success",
+            wallet_balance: wallet.balance,
+            pending_balance: wallet.pending_balance || 0,
+            transactions,
+            pagination: {
+                total,
+                limit: Number(limit),
+                skip: Number(skip),
+                hasMore: total > Number(skip) + Number(limit),
+            },
+        });
+    }
+    catch (error) {
+        console.error("get_vendor_transactions error:", error);
+        res.status(500).json({ msg: "Could not fetch vendor transactions", error });
+    }
+});
+exports.get_vendor_transactions = get_vendor_transactions;
 const get_driver_transactions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
