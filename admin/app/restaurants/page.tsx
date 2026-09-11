@@ -58,12 +58,12 @@ const RestaurantsPage = () => {
     else if (filters.sortBy === "date-desc")
       result.sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     else if (filters.sortBy === "date-asc")
       result.sort(
         (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
     return result;
   }, [restaurants, filters.sortBy]);

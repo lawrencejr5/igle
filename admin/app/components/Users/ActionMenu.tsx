@@ -53,12 +53,23 @@ const ActionMenu = ({
   useEffect(() => {
     if (isOpen && menuRef.current) {
       const rect = menuRef.current.getBoundingClientRect();
-      const dropdownHeight = 200; // Approximate height of dropdown
+      const dropdownHeight = dropdownRef.current
+        ? dropdownRef.current.offsetHeight
+        : 220;
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
 
-      // If not enough space below and more space above, open upward
-      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+      const tableContainer = menuRef.current.closest(".table-container");
+      let containerSpaceBelow = spaceBelow;
+      if (tableContainer) {
+        const containerRect = tableContainer.getBoundingClientRect();
+        containerSpaceBelow = containerRect.bottom - rect.bottom;
+      }
+
+      if (
+        (spaceBelow < dropdownHeight || containerSpaceBelow < dropdownHeight) &&
+        spaceAbove > spaceBelow
+      ) {
         setOpenUpward(true);
       } else {
         setOpenUpward(false);

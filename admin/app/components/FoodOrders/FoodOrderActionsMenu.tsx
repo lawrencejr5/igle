@@ -5,36 +5,34 @@ import { FiMoreVertical } from "react-icons/fi";
 import {
   IoEyeOutline,
   IoTrashOutline,
-  IoBanOutline,
-  IoCheckmarkCircleOutline,
+  IoCreateOutline,
   IoCloseCircleOutline,
 } from "react-icons/io5";
+import { FoodOrder } from "../../context/FoodOrderContext";
 
-interface RestaurantActionsMenuProps {
-  restaurantId: string;
-  applicationStatus: string;
-  isBlocked?: boolean;
-  onViewDetails: (id: string) => void;
-  onApprove?: (id: string) => void;
-  onReject?: (id: string) => void;
-  onBlock: (id: string) => void;
-  onDelete: (id: string) => void;
+interface FoodOrderActionsMenuProps {
+  order: FoodOrder;
+  onViewDetails: (order: FoodOrder) => void;
+  onUpdateStatus: (order: FoodOrder) => void;
+  onCancel?: (order: FoodOrder) => void;
+  onDelete: (order: FoodOrder) => void;
 }
 
-const RestaurantActionsMenu = ({
-  restaurantId,
-  applicationStatus,
-  isBlocked = false,
+const FoodOrderActionsMenu = ({
+  order,
   onViewDetails,
-  onApprove,
-  onReject,
-  onBlock,
+  onUpdateStatus,
+  onCancel,
   onDelete,
-}: RestaurantActionsMenuProps) => {
+}: FoodOrderActionsMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isCancellable = !["delivered", "cancelled", "rejected"].includes(
+    order.status
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,7 +55,7 @@ const RestaurantActionsMenu = ({
       const rect = menuRef.current.getBoundingClientRect();
       const dropdownHeight = dropdownRef.current
         ? dropdownRef.current.offsetHeight
-        : 260;
+        : 200;
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
 
@@ -107,47 +105,33 @@ const RestaurantActionsMenu = ({
         >
           <button
             className="action-menu__item"
-            onClick={() => handleAction(() => onViewDetails(restaurantId))}
+            onClick={() => handleAction(() => onViewDetails(order))}
           >
             <IoEyeOutline />
             <span>View Details</span>
           </button>
 
-          {applicationStatus === "submitted" && (
-            <>
-              {onApprove && (
-                <button
-                  className="action-menu__item"
-                  style={{ color: "#10b981" }}
-                  onClick={() => handleAction(() => onApprove(restaurantId))}
-                >
-                  <IoCheckmarkCircleOutline />
-                  <span>Approve Application</span>
-                </button>
-              )}
-              {onReject && (
-                <button
-                  className="action-menu__item action-menu__item--danger"
-                  onClick={() => handleAction(() => onReject(restaurantId))}
-                >
-                  <IoCloseCircleOutline />
-                  <span>Reject Application</span>
-                </button>
-              )}
-            </>
+          <button
+            className="action-menu__item action-menu__item--warning"
+            onClick={() => handleAction(() => onUpdateStatus(order))}
+          >
+            <IoCreateOutline />
+            <span>Update Status</span>
+          </button>
+
+          {isCancellable && onCancel && (
+            <button
+              className="action-menu__item action-menu__item--danger"
+              onClick={() => handleAction(() => onCancel(order))}
+            >
+              <IoCloseCircleOutline />
+              <span>Cancel Order</span>
+            </button>
           )}
 
           <button
-            className="action-menu__item action-menu__item--warning"
-            onClick={() => handleAction(() => onBlock(restaurantId))}
-          >
-            <IoBanOutline />
-            <span>{isBlocked ? "Unblock" : "Block"}</span>
-          </button>
-
-          <button
             className="action-menu__item action-menu__item--danger"
-            onClick={() => handleAction(() => onDelete(restaurantId))}
+            onClick={() => handleAction(() => onDelete(order))}
           >
             <IoTrashOutline />
             <span>Delete</span>
@@ -158,4 +142,4 @@ const RestaurantActionsMenu = ({
   );
 };
 
-export default RestaurantActionsMenu;
+export default FoodOrderActionsMenu;

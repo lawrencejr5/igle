@@ -2,12 +2,7 @@
 
 import { FoodOrder } from "../../context/FoodOrderContext";
 import Pagination from "../Pagination";
-import {
-  MdVisibility,
-  MdEdit,
-  MdCancel,
-  MdDelete,
-} from "react-icons/md";
+import FoodOrderActionsMenu from "./FoodOrderActionsMenu";
 
 interface FoodOrdersTableProps {
   orders: FoodOrder[];
@@ -65,9 +60,6 @@ const FoodOrdersTable = ({
       year: "numeric",
     });
 
-  const isCancellable = (status: string) =>
-    !["delivered", "cancelled", "rejected"].includes(status);
-
   return (
     <>
       <div className="table-container">
@@ -97,11 +89,13 @@ const FoodOrdersTable = ({
                 <tr key={order._id}>
                   <td>
                     <span
+                      onClick={() => onView(order)}
                       style={{
                         fontWeight: 700,
                         fontFamily: "monospace",
                         fontSize: "0.85rem",
-                        color: "var(--color-secondary)",
+                        color: "var(--color-primary)",
+                        cursor: "pointer",
                       }}
                     >
                       {order.order_number}
@@ -124,20 +118,24 @@ const FoodOrdersTable = ({
                   </td>
                   <td>
                     <div className="user-cell">
-                      {order.restaurant?.logo && (
+                      {order.restaurant?.logo ? (
                         <img
                           src={order.restaurant.logo}
                           alt={order.restaurant.name}
                           className="user-cell__avatar"
                           style={{ borderRadius: 6, objectFit: "cover" }}
                         />
+                      ) : (
+                        <div className="user-cell__avatar">
+                          {order.restaurant?.name?.charAt(0)?.toUpperCase() || "R"}
+                        </div>
                       )}
                       <span className="user-cell__name">{order.restaurant?.name || "—"}</span>
                     </div>
                   </td>
                   <td style={{ textAlign: "center" }}>{order.items?.length ?? 0}</td>
                   <td>
-                    <span style={{ fontWeight: 700, color: "var(--color-secondary)" }}>
+                    <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>
                       ₦{order.pricing?.total?.toLocaleString() ?? "—"}
                     </span>
                   </td>
@@ -153,41 +151,13 @@ const FoodOrdersTable = ({
                     {formatDate(order.createdAt)}
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
-                      <button
-                        className="action-button"
-                        title="View details"
-                        onClick={() => onView(order)}
-                      >
-                        <MdVisibility />
-                      </button>
-                      <button
-                        className="action-button"
-                        title="Edit status"
-                        onClick={() => onEdit(order)}
-                        style={{ color: "#f59e0b" }}
-                      >
-                        <MdEdit />
-                      </button>
-                      {isCancellable(order.status) && (
-                        <button
-                          className="action-button"
-                          title="Cancel order"
-                          onClick={() => onCancel(order)}
-                          style={{ color: "#ef4444" }}
-                        >
-                          <MdCancel />
-                        </button>
-                      )}
-                      <button
-                        className="action-button"
-                        title="Delete order"
-                        onClick={() => onDelete(order)}
-                        style={{ color: "#ef4444" }}
-                      >
-                        <MdDelete />
-                      </button>
-                    </div>
+                    <FoodOrderActionsMenu
+                      order={order}
+                      onViewDetails={onView}
+                      onUpdateStatus={onEdit}
+                      onCancel={onCancel}
+                      onDelete={onDelete}
+                    />
                   </td>
                 </tr>
               ))
