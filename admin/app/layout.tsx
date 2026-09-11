@@ -14,6 +14,9 @@ import { TaskProvider } from "./context/TaskContext";
 import { ReportProvider } from "./context/ReportContext";
 import { FeedbackProvider } from "./context/FeedbackContext";
 import { SystemSettingsProvider } from "./context/SystemSettingsContext";
+import { RestaurantProvider } from "./context/RestaurantContext";
+import { FoodOrderProvider } from "./context/FoodOrderContext";
+import { MenuProvider } from "./context/MenuContext";
 
 export const metadata: Metadata = {
   title: "Igle ride admin",
@@ -43,7 +46,13 @@ export default function RootLayout({
                           <ReportProvider>
                             <FeedbackProvider>
                               <SystemSettingsProvider>
-                                <ProtectedRoute>{children}</ProtectedRoute>
+                                <RestaurantProvider>
+                                  <FoodOrderProvider>
+                                    <MenuProvider>
+                                      <ProtectedRoute>{children}</ProtectedRoute>
+                                    </MenuProvider>
+                                  </FoodOrderProvider>
+                                </RestaurantProvider>
                               </SystemSettingsProvider>
                             </FeedbackProvider>
                           </ReportProvider>

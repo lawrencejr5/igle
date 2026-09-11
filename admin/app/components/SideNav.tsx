@@ -11,6 +11,8 @@ import {
   MdDescription,
   MdEmojiEvents,
   MdSettings,
+  MdStorefront,
+  MdFastfood,
 } from "react-icons/md";
 import { FiSidebar } from "react-icons/fi";
 
@@ -27,6 +29,8 @@ const SideNav = ({ isCollapsed, onToggle }: SideNavProps) => {
     { name: "Users", path: "/users", icon: MdPeople },
     { name: "Rides", path: "/rides", icon: MdDirectionsCar },
     { name: "Deliveries", path: "/deliveries", icon: MdLocalShipping },
+    { name: "Restaurants", path: "/restaurants", icon: MdStorefront },
+    { name: "Food Orders", path: "/food-orders", icon: MdFastfood },
     { name: "Transactions", path: "/transactions", icon: MdPayment },
     { name: "Tasks", path: "/tasks", icon: MdEmojiEvents },
     { name: "Report and Feedbacks", path: "/logs", icon: MdDescription },
