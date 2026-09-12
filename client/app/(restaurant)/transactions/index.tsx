@@ -404,6 +404,8 @@ const RestaurantTransactions = () => {
           ) : (
             filteredTransactions.map((txn) => {
               const isIncome = txn.direction === "in";
+              const isPending = txn.status === "pending";
+              const isFailed = txn.status === "failed";
 
               return (
                 <TouchableOpacity
@@ -417,15 +419,29 @@ const RestaurantTransactions = () => {
                     <View
                       style={[
                         styles.icon_circle,
-                        isIncome
-                          ? styles.icon_circle_in
-                          : styles.icon_circle_out,
+                        isPending
+                          ? styles.icon_circle_pending
+                          : isIncome
+                            ? styles.icon_circle_in
+                            : styles.icon_circle_out,
                       ]}
                     >
                       <Feather
-                        name={isIncome ? "arrow-down-left" : "arrow-up-right"}
+                        name={
+                          isPending
+                            ? "clock"
+                            : isIncome
+                              ? "arrow-down-left"
+                              : "arrow-up-right"
+                        }
                         size={18}
-                        color={isIncome ? "#4caf50" : "#ef5350"}
+                        color={
+                          isPending
+                            ? "#ffb74d"
+                            : isIncome
+                              ? "#4caf50"
+                              : "#ef5350"
+                        }
                       />
                     </View>
 
@@ -444,13 +460,23 @@ const RestaurantTransactions = () => {
                     <Text
                       style={[
                         styles.txn_amount_text,
-                        isIncome ? styles.amount_green : styles.amount_red,
+                        isPending
+                          ? styles.amount_warning
+                          : isIncome
+                            ? styles.amount_green
+                            : styles.amount_red,
                       ]}
                     >
                       {isIncome ? "+" : "-"}₦{txn.amount.toLocaleString()}
                     </Text>
-                    <View style={styles.txn_status_badge}>
-                      <Text style={styles.txn_status_text}>Successful</Text>
+                    <View style={[styles.txn_status_badge]}>
+                      <Text style={[styles.txn_status_text]}>
+                        {isPending
+                          ? "Pending"
+                          : isFailed
+                            ? "Failed"
+                            : "Successful"}
+                      </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -594,29 +620,54 @@ const RestaurantTransactions = () => {
                 <View
                   style={[
                     styles.receipt_icon_box,
-                    selectedTxn.direction === "in"
-                      ? styles.icon_circle_in
-                      : styles.icon_circle_out,
+                    selectedTxn.status === "pending"
+                      ? styles.icon_circle_pending
+                      : selectedTxn.direction === "in"
+                        ? styles.icon_circle_in
+                        : styles.icon_circle_out,
                   ]}
                 >
                   <Feather
                     name={
-                      selectedTxn.direction === "in"
-                        ? "arrow-down-left"
-                        : "arrow-up-right"
+                      selectedTxn.status === "pending"
+                        ? "clock"
+                        : selectedTxn.direction === "in"
+                          ? "arrow-down-left"
+                          : "arrow-up-right"
                     }
                     size={28}
                     color={
-                      selectedTxn.direction === "in" ? "#4caf50" : "#ef5350"
+                      selectedTxn.status === "pending"
+                        ? "#ffb74d"
+                        : selectedTxn.direction === "in"
+                          ? "#4caf50"
+                          : "#ef5350"
                     }
                   />
                 </View>
-                <Text style={styles.receipt_amount}>
+                <Text
+                  style={[
+                    styles.receipt_amount,
+                    selectedTxn.status === "pending" && { color: "#ffb74d" },
+                  ]}
+                >
                   {selectedTxn.direction === "in" ? "+" : "-"}₦
                   {selectedTxn.amount.toLocaleString()}
                 </Text>
-                <Text style={styles.receipt_status_tag}>
-                  Successful Transaction
+                <Text
+                  style={[
+                    styles.receipt_status_tag,
+                    selectedTxn.status === "pending" && {
+                      color: "#ffb74d",
+                      borderColor: "#ff980044",
+                    },
+                  ]}
+                >
+                  {selectedTxn.status === "pending"
+                    ? "Pending Earnings (In Escrow)"
+                    : selectedTxn.status === "failed"
+                      ? "Failed Transaction"
+                      : "Successful Transaction"}
                 </Text>
               </View>
 
@@ -946,6 +997,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ef535044",
   },
+  icon_circle_pending: {
+    backgroundColor: "#ff98001f",
+    borderWidth: 1,
+    borderColor: "#ff980044",
+  },
   txn_title: {
     color: "#fff",
     fontFamily: "raleway-bold",
@@ -977,6 +1033,9 @@ const styles = StyleSheet.create({
   },
   amount_red: {
     color: "#ef5350",
+  },
+  amount_warning: {
+    color: "#ffb74d",
   },
   txn_status_badge: {
     backgroundColor: "#262626",

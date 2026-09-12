@@ -8,6 +8,7 @@ export interface TransactionType extends Document {
     | "delivery_payment"
     | "food_payment"
     | "driver_payment"
+    | "vendor_earnings"
     | "restaurant_refund"
     | "payout";
   amount: number;
@@ -32,11 +33,13 @@ const TransactionSchema = new Schema<TransactionType>(
         "delivery_payment",
         "food_payment",
         "driver_payment",
+        "vendor_earnings",
         "restaurant_refund",
         "payout",
       ],
       required: true,
     },
+
 
     wallet_id: {
       type: Schema.Types.ObjectId,

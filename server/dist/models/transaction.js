@@ -52,6 +52,7 @@ const TransactionSchema = new mongoose_1.Schema({
             "delivery_payment",
             "food_payment",
             "driver_payment",
+            "vendor_earnings",
             "restaurant_refund",
             "payout",
         ],
