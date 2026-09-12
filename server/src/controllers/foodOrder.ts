@@ -12,7 +12,10 @@ import { sendNotification } from "../utils/expo_push";
 import { io } from "../server";
 import { agenda } from "../jobs/agenda";
 
-import { getOrCreateVendorWallet } from "../utils/get_vendor_wallet";
+import {
+  getOrCreateVendorWallet,
+  settleVendorOrderEarnings,
+} from "../utils/get_vendor_wallet";
 
 const FLAT_DELIVERY_FEE = 1500; // Flat rate 1500 NGN delivery fee per user requirement
 
@@ -505,6 +508,63 @@ export const mark_order_ready = async (req: Request, res: Response) => {
       });
   }
 };
+
+// 4b. Mark Food Order as Delivered (Vendor or Driver)
+// POST /api/v1/orders/:id/deliver
+export const mark_order_delivered = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const order = await FoodOrder.findById(id);
+    if (!order) {
+      return res.status(404).json({ msg: "Food order not found" });
+    }
+
+    if (["delivered", "cancelled", "rejected"].includes(order.status)) {
+      return res.status(400).json({
+        msg: `Order cannot be marked delivered because its status is currently "${order.status}".`,
+      });
+    }
+
+    order.status = "delivered";
+    order.status_timestamps.delivered_at = new Date();
+    await order.save();
+
+    // Settle vendor earnings: moves pending to withdrawable balance & records/updates transaction
+    await settleVendorOrderEarnings(order);
+
+    // Socket notification to Customer
+    const customerSocket = await get_user_socket_id(order.customer);
+    if (customerSocket) {
+      io.to(customerSocket).emit("food_order_updated", {
+        order_id: order._id,
+        order_number: order.order_number,
+        status: "delivered",
+        msg: "Your food order has been delivered! Enjoy your meal 🍔",
+      });
+    }
+
+    io.to(`food_order_${order._id}`).emit("food_order_updated", {
+      order_id: order._id,
+      status: "delivered",
+      msg: "Order delivered successfully",
+    });
+
+    return res.status(200).json({
+      msg: "Food order marked as delivered and vendor wallet credited",
+      order,
+    });
+  } catch (error: any) {
+    console.error("mark_order_delivered error:", error);
+    return res
+      .status(500)
+      .json({
+        msg: "Server error marking order delivered",
+        error: error.message,
+      });
+  }
+};
+
 
 // 5. Cancel Food Order (Customer)
 // POST /api/v1/orders/:id/cancel

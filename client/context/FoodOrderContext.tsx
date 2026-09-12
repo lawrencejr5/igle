@@ -117,6 +117,7 @@ interface FoodOrderContextType {
   acceptOrder: (orderId: string) => Promise<FoodOrderType | null>;
   rejectOrder: (orderId: string, reason?: string) => Promise<FoodOrderType | null>;
   markOrderReady: (orderId: string) => Promise<FoodOrderType | null>;
+  markOrderDelivered: (orderId: string) => Promise<FoodOrderType | null>;
 
   // Customer Functions
   placeFoodOrder: (orderPayload: {
@@ -281,6 +282,40 @@ export const FoodOrderProvider: FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const markOrderDelivered = async (
+    orderId: string
+  ): Promise<FoodOrderType | null> => {
+    setLoading(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error("Auth token missing");
+
+      const { data } = await axios.post(
+        `${API_URLS.orders}/${orderId}/deliver`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data?.order) {
+        setVendorOrders((prev) =>
+          prev.map((o) => (o._id === orderId ? data.order : o))
+        );
+        showNotification("Order marked as Delivered! Vendor wallet credited.", "success");
+        return data.order;
+      }
+      return null;
+    } catch (err: any) {
+      const msg = err?.response?.data?.msg || err?.message || "Failed to mark order as delivered";
+      showNotification(msg, "error");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   // ─── Customer Operations ────────────────────────────────────────────────────
 
   const placeFoodOrder = async (orderPayload: {
@@ -413,6 +448,7 @@ export const FoodOrderProvider: FC<{ children: ReactNode }> = ({ children }) => 
         acceptOrder,
         rejectOrder,
         markOrderReady,
+        markOrderDelivered,
         placeFoodOrder,
         fetchCustomerOrders,
         cancelFoodOrder,

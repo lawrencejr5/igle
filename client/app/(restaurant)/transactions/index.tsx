@@ -14,7 +14,12 @@ import { Image } from "expo-image";
 import React, { useState } from "react";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import {
+  Feather,
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 import { useTransactionContext } from "../../../context/TransactionContext";
@@ -67,7 +72,9 @@ const RestaurantTransactions = () => {
 
   // Transaction Details Modal State
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
-  const [selectedTxn, setSelectedTxn] = useState<RestaurantTransaction | null>(null);
+  const [selectedTxn, setSelectedTxn] = useState<RestaurantTransaction | null>(
+    null,
+  );
 
   React.useEffect(() => {
     fetchVendorTransactions();
@@ -104,7 +111,9 @@ const RestaurantTransactions = () => {
 
         const orderNum =
           t.metadata?.order_number ||
-          (t.food_order_id ? `IGL-${t._id.slice(-5).toUpperCase()}` : undefined);
+          (t.food_order_id
+            ? `IGL-${t._id.slice(-5).toUpperCase()}`
+            : undefined);
 
         return {
           id: t._id,
@@ -198,7 +207,7 @@ const RestaurantTransactions = () => {
           t.title.toLowerCase().includes(q) ||
           t.reference.toLowerCase().includes(q) ||
           (t.order_number && t.order_number.toLowerCase().includes(q)) ||
-          t.subtitle.toLowerCase().includes(q)
+          t.subtitle.toLowerCase().includes(q),
       );
     }
 
@@ -211,7 +220,9 @@ const RestaurantTransactions = () => {
     <View
       style={[
         styles.container,
-        { paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14 },
+        {
+          paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14,
+        },
       ]}
     >
       {/* ── Top Nav Bar ── */}
@@ -245,7 +256,9 @@ const RestaurantTransactions = () => {
           <View style={styles.balance_header}>
             <View style={styles.balance_label_row}>
               <Ionicons name="wallet-outline" size={18} color="#9CA3AF" />
-              <Text style={styles.balance_label_text}>WITHDRAWABLE BALANCE</Text>
+              <Text style={styles.balance_label_text}>
+                WITHDRAWABLE BALANCE
+              </Text>
             </View>
             <View style={styles.live_status_pill}>
               <Text style={styles.live_status_text}>Ready to Withdraw</Text>
@@ -261,12 +274,20 @@ const RestaurantTransactions = () => {
           <View style={styles.stats_row}>
             <View style={styles.stat_item}>
               <Text style={styles.stat_label}>TOTAL ORDERS</Text>
-              <Text style={styles.stat_value_green}>{vendorStats.totalOrders}</Text>
+              <Text style={styles.stat_value_green}>
+                {vendorStats.totalOrders}
+              </Text>
             </View>
             <View style={styles.stat_divider} />
             <View style={styles.stat_item}>
               <Text style={styles.stat_label}>PENDING ORDERS SALES</Text>
-              <Text style={{ color: "#ffb74d", fontFamily: "raleway-bold", fontSize: 15 }}>
+              <Text
+                style={{
+                  color: "#ffb74d",
+                  fontFamily: "raleway-bold",
+                  fontSize: 15,
+                }}
+              >
                 ₦{pendingBalance.toLocaleString()}
               </Text>
             </View>
@@ -281,47 +302,6 @@ const RestaurantTransactions = () => {
             <Feather name="arrow-up-right" size={18} color="#121212" />
             <Text style={styles.withdraw_btn_text}>Withdraw to Bank</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* ── Pending Balance Escrow Card ── */}
-        <View
-          style={[
-            styles.balance_card,
-            { backgroundColor: "#1e1b18", borderColor: "#ff980044", marginTop: -6 },
-          ]}
-        >
-          <View style={styles.balance_header}>
-            <View style={styles.balance_label_row}>
-              <Feather name="clock" size={16} color="#ffb74d" />
-              <Text style={[styles.balance_label_text, { color: "#ffb74d" }]}>
-                PENDING WALLET BALANCE
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.live_status_pill,
-                { backgroundColor: "#ff980022", borderColor: "#ff980066" },
-              ]}
-            >
-              <Text style={[styles.live_status_text, { color: "#ffb74d" }]}>In Escrow</Text>
-            </View>
-          </View>
-
-          <Text style={[styles.balance_amount_text, { color: "#ffb74d" }]}>
-            ₦{pendingBalance.toLocaleString()}
-            <Text style={[styles.kobo_text, { color: "#ffb74daa" }]}>.00</Text>
-          </Text>
-
-          <Text
-            style={{
-              color: "#9CA3AF",
-              fontFamily: "raleway-medium",
-              fontSize: 12,
-              marginTop: 4,
-            }}
-          >
-            Funds automatically transfer to withdrawable balance when orders are delivered.
-          </Text>
         </View>
 
         {/* ── Search & Filter Controls ── */}
@@ -379,7 +359,8 @@ const RestaurantTransactions = () => {
                   filterType === "in" && styles.filter_chip_text_active,
                 ]}
               >
-                Money In 🟢 ({transactions.filter((t) => t.direction === "in").length})
+                Money In 🟢 (
+                {transactions.filter((t) => t.direction === "in").length})
               </Text>
             </TouchableOpacity>
 
@@ -399,7 +380,8 @@ const RestaurantTransactions = () => {
                   filterType === "out" && styles.filter_chip_text_active,
                 ]}
               >
-                Money Out 🔴 ({transactions.filter((t) => t.direction === "out").length})
+                Money Out 🔴 (
+                {transactions.filter((t) => t.direction === "out").length})
               </Text>
             </TouchableOpacity>
           </View>
@@ -435,7 +417,9 @@ const RestaurantTransactions = () => {
                     <View
                       style={[
                         styles.icon_circle,
-                        isIncome ? styles.icon_circle_in : styles.icon_circle_out,
+                        isIncome
+                          ? styles.icon_circle_in
+                          : styles.icon_circle_out,
                       ]}
                     >
                       <Feather
@@ -500,7 +484,10 @@ const RestaurantTransactions = () => {
                   {restaurant?.bank?.bank_name || "GTBank"}
                 </Text>
                 <Text style={styles.bank_acc_text}>
-                  {restaurant?.bank?.account_number || "0123455821"} • {restaurant?.bank?.account_name || restaurant?.name || "STORE ACCOUNT"}
+                  {restaurant?.bank?.account_number || "0123455821"} •{" "}
+                  {restaurant?.bank?.account_name ||
+                    restaurant?.name ||
+                    "STORE ACCOUNT"}
                 </Text>
               </View>
             </View>
@@ -597,7 +584,10 @@ const RestaurantTransactions = () => {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={[
                 styles.sheet_scroll_content,
-                { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
+                {
+                  paddingBottom:
+                    Platform.OS === "ios" ? insets.bottom + 40 : 50,
+                },
               ]}
             >
               <View style={styles.receipt_header}>
@@ -610,15 +600,24 @@ const RestaurantTransactions = () => {
                   ]}
                 >
                   <Feather
-                    name={selectedTxn.direction === "in" ? "arrow-down-left" : "arrow-up-right"}
+                    name={
+                      selectedTxn.direction === "in"
+                        ? "arrow-down-left"
+                        : "arrow-up-right"
+                    }
                     size={28}
-                    color={selectedTxn.direction === "in" ? "#4caf50" : "#ef5350"}
+                    color={
+                      selectedTxn.direction === "in" ? "#4caf50" : "#ef5350"
+                    }
                   />
                 </View>
                 <Text style={styles.receipt_amount}>
-                  {selectedTxn.direction === "in" ? "+" : "-"}₦{selectedTxn.amount.toLocaleString()}
+                  {selectedTxn.direction === "in" ? "+" : "-"}₦
+                  {selectedTxn.amount.toLocaleString()}
                 </Text>
-                <Text style={styles.receipt_status_tag}>Successful Transaction</Text>
+                <Text style={styles.receipt_status_tag}>
+                  Successful Transaction
+                </Text>
               </View>
 
               <View style={styles.receipt_box}>
@@ -631,19 +630,25 @@ const RestaurantTransactions = () => {
 
                 <View style={styles.receipt_row}>
                   <Text style={styles.receipt_label}>Reference</Text>
-                  <Text style={styles.receipt_value_code}>{selectedTxn.reference}</Text>
+                  <Text style={styles.receipt_value_code}>
+                    {selectedTxn.reference}
+                  </Text>
                 </View>
 
                 {selectedTxn.order_number && (
                   <View style={styles.receipt_row}>
                     <Text style={styles.receipt_label}>Food Order #</Text>
-                    <Text style={styles.receipt_value_bold}>{selectedTxn.order_number}</Text>
+                    <Text style={styles.receipt_value_bold}>
+                      {selectedTxn.order_number}
+                    </Text>
                   </View>
                 )}
 
                 <View style={styles.receipt_row}>
                   <Text style={styles.receipt_label}>Payment Channel</Text>
-                  <Text style={styles.receipt_value}>{selectedTxn.channel.toUpperCase()}</Text>
+                  <Text style={styles.receipt_value}>
+                    {selectedTxn.channel.toUpperCase()}
+                  </Text>
                 </View>
 
                 <View style={styles.receipt_row}>
@@ -654,19 +659,27 @@ const RestaurantTransactions = () => {
                 {selectedTxn.bank_details && (
                   <>
                     <View style={styles.receipt_divider} />
-                    <Text style={styles.receipt_section_title}>BANK PAYOUT DESTINATION</Text>
+                    <Text style={styles.receipt_section_title}>
+                      BANK PAYOUT DESTINATION
+                    </Text>
 
                     <View style={styles.receipt_row}>
                       <Text style={styles.receipt_label}>Bank Name</Text>
-                      <Text style={styles.receipt_value}>{selectedTxn.bank_details.bank_name}</Text>
+                      <Text style={styles.receipt_value}>
+                        {selectedTxn.bank_details.bank_name}
+                      </Text>
                     </View>
                     <View style={styles.receipt_row}>
                       <Text style={styles.receipt_label}>Account Number</Text>
-                      <Text style={styles.receipt_value}>{selectedTxn.bank_details.account_number}</Text>
+                      <Text style={styles.receipt_value}>
+                        {selectedTxn.bank_details.account_number}
+                      </Text>
                     </View>
                     <View style={styles.receipt_row}>
                       <Text style={styles.receipt_label}>Account Name</Text>
-                      <Text style={styles.receipt_value}>{selectedTxn.bank_details.account_name}</Text>
+                      <Text style={styles.receipt_value}>
+                        {selectedTxn.bank_details.account_name}
+                      </Text>
                     </View>
                   </>
                 )}

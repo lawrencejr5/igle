@@ -1,6 +1,8 @@
 import { Types } from "mongoose";
 import Wallet, { WalletType } from "../models/wallet";
 import Transaction from "../models/transaction";
+import Restaurant from "../models/restaurant";
+import { generate_unique_reference } from "./gen_unique_ref";
 
 /**
  * Helper to get or create a specialized Vendor Wallet for a restaurant.
@@ -30,7 +32,7 @@ export const getOrCreateVendorWallet = async (
 
 /**
  * Settles a delivered food order: moves earnings from pending_balance to withdrawable balance,
- * and updates transaction status to "success".
+ * and updates transaction status to "success". If no transaction exists, creates a new one.
  */
 export const settleVendorOrderEarnings = async (order: any): Promise<boolean> => {
   try {
@@ -46,17 +48,63 @@ export const settleVendorOrderEarnings = async (order: any): Promise<boolean> =>
     wallet.balance = (wallet.balance || 0) + earningsAmount;
     await wallet.save();
 
-    // Mark pending transaction as success
-    await Transaction.findOneAndUpdate(
+    // Try finding existing pending transaction for this food order & vendor wallet
+    let txn = await Transaction.findOneAndUpdate(
       {
-        food_order_id: order._id,
+        food_order_id: new Types.ObjectId(order._id as string),
         wallet_id: wallet._id,
       },
       {
-        status: "success",
-        "metadata.status": "delivered",
-      }
+        $set: {
+          status: "success",
+          type: "vendor_earnings",
+          "metadata.status": "delivered",
+          "metadata.description": `Earnings for delivered order #${order.order_number}`,
+        },
+      },
+      { new: true }
     );
+
+    if (!txn) {
+      txn = await Transaction.findOneAndUpdate(
+        {
+          food_order_id: order._id,
+          wallet_id: wallet._id,
+        },
+        {
+          $set: {
+            status: "success",
+            type: "vendor_earnings",
+            "metadata.status": "delivered",
+            "metadata.description": `Earnings for delivered order #${order.order_number}`,
+          },
+        },
+        { new: true }
+      );
+    }
+
+    // If no existing transaction was found, create a new success transaction record for vendor wallet
+    if (!txn) {
+      const restaurant = await Restaurant.findById(order.restaurant);
+      await Transaction.create({
+        wallet_id: wallet._id,
+        type: "vendor_earnings",
+        amount: earningsAmount,
+        status: "success",
+        channel: "wallet",
+        reference: generate_unique_reference(),
+        food_order_id: order._id,
+        metadata: {
+          order_id: order._id,
+          order_number: order.order_number,
+          restaurant_id: order.restaurant,
+          restaurant_name: restaurant?.name || "Restaurant",
+          type: "food_order_earnings",
+          status: "delivered",
+          description: `Earnings for delivered order #${order.order_number}`,
+        },
+      });
+    }
 
     return true;
   } catch (err) {
@@ -83,14 +131,16 @@ export const cancelVendorOrderPendingEarnings = async (order: any): Promise<bool
     await wallet.save();
 
     // Mark transaction as failed/cancelled
-    await Transaction.findOneAndUpdate(
+    await Transaction.updateMany(
       {
         food_order_id: order._id,
         wallet_id: wallet._id,
       },
       {
-        status: "failed",
-        "metadata.status": "cancelled",
+        $set: {
+          status: "failed",
+          "metadata.status": "cancelled",
+        },
       }
     );
 

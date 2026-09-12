@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_order_by_id = exports.get_vendor_orders = exports.get_customer_orders = exports.cancel_food_order = exports.mark_order_ready = exports.reject_food_order = exports.accept_food_order = exports.place_food_order = void 0;
+exports.get_order_by_id = exports.get_vendor_orders = exports.get_customer_orders = exports.cancel_food_order = exports.mark_order_delivered = exports.mark_order_ready = exports.reject_food_order = exports.accept_food_order = exports.place_food_order = void 0;
 const foodOrder_1 = __importDefault(require("../models/foodOrder"));
 const basket_1 = __importDefault(require("../models/basket"));
 const restaurant_1 = __importDefault(require("../models/restaurant"));
@@ -452,6 +452,56 @@ const mark_order_ready = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.mark_order_ready = mark_order_ready;
+// 4b. Mark Food Order as Delivered (Vendor or Driver)
+// POST /api/v1/orders/:id/deliver
+const mark_order_delivered = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const order = yield foodOrder_1.default.findById(id);
+        if (!order) {
+            return res.status(404).json({ msg: "Food order not found" });
+        }
+        if (["delivered", "cancelled", "rejected"].includes(order.status)) {
+            return res.status(400).json({
+                msg: `Order cannot be marked delivered because its status is currently "${order.status}".`,
+            });
+        }
+        order.status = "delivered";
+        order.status_timestamps.delivered_at = new Date();
+        yield order.save();
+        // Settle vendor earnings: moves pending to withdrawable balance & records/updates transaction
+        yield (0, get_vendor_wallet_1.settleVendorOrderEarnings)(order);
+        // Socket notification to Customer
+        const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);
+        if (customerSocket) {
+            server_1.io.to(customerSocket).emit("food_order_updated", {
+                order_id: order._id,
+                order_number: order.order_number,
+                status: "delivered",
+                msg: "Your food order has been delivered! Enjoy your meal 🍔",
+            });
+        }
+        server_1.io.to(`food_order_${order._id}`).emit("food_order_updated", {
+            order_id: order._id,
+            status: "delivered",
+            msg: "Order delivered successfully",
+        });
+        return res.status(200).json({
+            msg: "Food order marked as delivered and vendor wallet credited",
+            order,
+        });
+    }
+    catch (error) {
+        console.error("mark_order_delivered error:", error);
+        return res
+            .status(500)
+            .json({
+            msg: "Server error marking order delivered",
+            error: error.message,
+        });
+    }
+});
+exports.mark_order_delivered = mark_order_delivered;
 // 5. Cancel Food Order (Customer)
 // POST /api/v1/orders/:id/cancel
 const cancel_food_order = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

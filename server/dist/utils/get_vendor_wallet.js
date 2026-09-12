@@ -16,6 +16,8 @@ exports.cancelVendorOrderPendingEarnings = exports.settleVendorOrderEarnings = e
 const mongoose_1 = require("mongoose");
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
+const restaurant_1 = __importDefault(require("../models/restaurant"));
+const gen_unique_ref_1 = require("./gen_unique_ref");
 /**
  * Helper to get or create a specialized Vendor Wallet for a restaurant.
  * Specialized Vendor Wallet uses owner_id: restaurant._id and owner_type: "Restaurant".
@@ -39,7 +41,7 @@ const getOrCreateVendorWallet = (restaurantId) => __awaiter(void 0, void 0, void
 exports.getOrCreateVendorWallet = getOrCreateVendorWallet;
 /**
  * Settles a delivered food order: moves earnings from pending_balance to withdrawable balance,
- * and updates transaction status to "success".
+ * and updates transaction status to "success". If no transaction exists, creates a new one.
  */
 const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -54,14 +56,53 @@ const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, f
         wallet.pending_balance = Math.max(0, (wallet.pending_balance || 0) - earningsAmount);
         wallet.balance = (wallet.balance || 0) + earningsAmount;
         yield wallet.save();
-        // Mark pending transaction as success
-        yield transaction_1.default.findOneAndUpdate({
-            food_order_id: order._id,
+        // Try finding existing pending transaction for this food order & vendor wallet
+        let txn = yield transaction_1.default.findOneAndUpdate({
+            food_order_id: new mongoose_1.Types.ObjectId(order._id),
             wallet_id: wallet._id,
         }, {
-            status: "success",
-            "metadata.status": "delivered",
-        });
+            $set: {
+                status: "success",
+                type: "vendor_earnings",
+                "metadata.status": "delivered",
+                "metadata.description": `Earnings for delivered order #${order.order_number}`,
+            },
+        }, { new: true });
+        if (!txn) {
+            txn = yield transaction_1.default.findOneAndUpdate({
+                food_order_id: order._id,
+                wallet_id: wallet._id,
+            }, {
+                $set: {
+                    status: "success",
+                    type: "vendor_earnings",
+                    "metadata.status": "delivered",
+                    "metadata.description": `Earnings for delivered order #${order.order_number}`,
+                },
+            }, { new: true });
+        }
+        // If no existing transaction was found, create a new success transaction record for vendor wallet
+        if (!txn) {
+            const restaurant = yield restaurant_1.default.findById(order.restaurant);
+            yield transaction_1.default.create({
+                wallet_id: wallet._id,
+                type: "vendor_earnings",
+                amount: earningsAmount,
+                status: "success",
+                channel: "wallet",
+                reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                food_order_id: order._id,
+                metadata: {
+                    order_id: order._id,
+                    order_number: order.order_number,
+                    restaurant_id: order.restaurant,
+                    restaurant_name: (restaurant === null || restaurant === void 0 ? void 0 : restaurant.name) || "Restaurant",
+                    type: "food_order_earnings",
+                    status: "delivered",
+                    description: `Earnings for delivered order #${order.order_number}`,
+                },
+            });
+        }
         return true;
     }
     catch (err) {
@@ -87,12 +128,14 @@ const cancelVendorOrderPendingEarnings = (order) => __awaiter(void 0, void 0, vo
         wallet.pending_balance = Math.max(0, (wallet.pending_balance || 0) - earningsAmount);
         yield wallet.save();
         // Mark transaction as failed/cancelled
-        yield transaction_1.default.findOneAndUpdate({
+        yield transaction_1.default.updateMany({
             food_order_id: order._id,
             wallet_id: wallet._id,
         }, {
-            status: "failed",
-            "metadata.status": "cancelled",
+            $set: {
+                status: "failed",
+                "metadata.status": "cancelled",
+            },
         });
         return true;
     }
