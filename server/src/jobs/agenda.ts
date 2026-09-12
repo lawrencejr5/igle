@@ -13,6 +13,7 @@ import { get_driver_socket_id, get_user_socket_id } from "../utils/get_id";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
 
 import { expire_ride } from "../controllers/ride";
+import { cancelVendorOrderPendingEarnings } from "../utils/get_vendor_wallet";
 
 import { io } from "../server";
 
@@ -183,7 +184,11 @@ agenda.define("check_food_order_timeout", async (job: Job) => {
     order.status_timestamps.cancelled_at = new Date();
     await order.save();
 
+    // Cancel vendor pending earnings for this order
+    await cancelVendorOrderPendingEarnings(order);
+
     // Refund customer's money back to in-app wallet
+
     const customerWallet = await Wallet.findOne({ owner_id: order.customer });
     if (customerWallet) {
       customerWallet.balance += order.pricing.total;

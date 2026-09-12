@@ -167,7 +167,7 @@ const place_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functio
             },
         });
         yield order.save();
-        // Create Transaction Record linked to FoodOrder
+        // 1. Transaction Record for Customer (Money Out / Paid)
         yield transaction_1.default.create({
             wallet_id: customerWallet._id,
             type: "food_payment",
@@ -182,6 +182,32 @@ const place_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 order_number: order.order_number,
             },
         });
+        // 2. Transaction Record for Restaurant (Pending Earnings including menu price + delivery fee)
+        try {
+            const vendorWallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
+            vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + total;
+            yield vendorWallet.save();
+            yield transaction_1.default.create({
+                wallet_id: vendorWallet._id,
+                type: "vendor_earnings",
+                amount: total,
+                status: "pending",
+                channel: "wallet",
+                reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                food_order_id: order._id,
+                metadata: {
+                    order_id: order._id,
+                    order_number: order.order_number,
+                    restaurant_id: restaurant._id,
+                    type: "food_order_earnings",
+                    status: "pending",
+                    description: `Pending earnings for order #${order.order_number}`,
+                },
+            });
+        }
+        catch (vErr) {
+            console.error("Error creating restaurant pending wallet balance on place order:", vErr);
+        }
         // Clear ONLY this restaurant's Basket after order placement
         yield basket_1.default.findOneAndDelete({ user: user_id, restaurant: restaurant_id });
         // Schedule 3-Minute Vendor Response Timeout Job
@@ -227,7 +253,7 @@ exports.place_food_order = place_food_order;
 // 2. Accept Food Order (Vendor)
 // POST /api/v1/orders/:id/accept
 const accept_food_order = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     try {
         const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
         if (!restaurant)
@@ -250,34 +276,40 @@ const accept_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
         order.status = "preparing";
         order.status_timestamps.preparing_at = new Date();
         yield order.save();
-        // Add to Specialized Restaurant Pending Balance upon order acceptance
+        // Verify vendor pending wallet balance exists for this order
         try {
             const vendorWallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
-            const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.restaurant_earnings) || ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0;
-            if (earningsAmount > 0) {
-                vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + earningsAmount;
-                yield vendorWallet.save();
-                yield transaction_1.default.create({
-                    wallet_id: vendorWallet._id,
-                    type: "vendor_earnings",
-                    amount: earningsAmount,
-                    status: "pending",
-                    channel: "wallet",
-                    reference: (0, gen_unique_ref_1.generate_unique_reference)(),
-                    food_order_id: order._id,
-                    metadata: {
-                        order_id: order._id,
-                        order_number: order.order_number,
-                        restaurant_id: restaurant._id,
-                        type: "food_order_earnings",
+            const existingTxn = yield transaction_1.default.findOne({
+                wallet_id: vendorWallet._id,
+                food_order_id: order._id,
+            });
+            if (!existingTxn) {
+                const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.total) || 0;
+                if (earningsAmount > 0) {
+                    vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + earningsAmount;
+                    yield vendorWallet.save();
+                    yield transaction_1.default.create({
+                        wallet_id: vendorWallet._id,
+                        type: "vendor_earnings",
+                        amount: earningsAmount,
                         status: "pending",
-                        description: `Pending earnings for order #${order.order_number}`,
-                    },
-                });
+                        channel: "wallet",
+                        reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                        food_order_id: order._id,
+                        metadata: {
+                            order_id: order._id,
+                            order_number: order.order_number,
+                            restaurant_id: restaurant._id,
+                            type: "food_order_earnings",
+                            status: "pending",
+                            description: `Pending earnings for order #${order.order_number}`,
+                        },
+                    });
+                }
             }
         }
         catch (wErr) {
-            console.error("Error updating vendor pending balance on order accept:", wErr);
+            console.error("Error checking vendor pending balance on order accept:", wErr);
         }
         // Socket Notification to Customer
         const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);
@@ -343,6 +375,8 @@ const reject_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
         };
         order.status_timestamps.cancelled_at = new Date();
         yield order.save();
+        // Cancel pending vendor earnings for this order
+        yield (0, get_vendor_wallet_1.cancelVendorOrderPendingEarnings)(order);
         // Refund customer's in-app wallet
         const customerWallet = yield wallet_1.default.findOne({ owner_id: order.customer });
         if (customerWallet) {
@@ -540,6 +574,8 @@ const cancel_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
         };
         order.status_timestamps.cancelled_at = new Date();
         yield order.save();
+        // Cancel vendor pending earnings for this order
+        yield (0, get_vendor_wallet_1.cancelVendorOrderPendingEarnings)(order);
         // Refund customer's in-app wallet balance
         const customerWallet = yield wallet_1.default.findOne({ owner_id: user_id });
         if (customerWallet) {

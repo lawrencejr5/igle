@@ -15,7 +15,9 @@ import { agenda } from "../jobs/agenda";
 import {
   getOrCreateVendorWallet,
   settleVendorOrderEarnings,
+  cancelVendorOrderPendingEarnings,
 } from "../utils/get_vendor_wallet";
+
 
 const FLAT_DELIVERY_FEE = 1500; // Flat rate 1500 NGN delivery fee per user requirement
 
@@ -179,7 +181,7 @@ export const place_food_order = async (req: Request, res: Response) => {
 
     await order.save();
 
-    // Create Transaction Record linked to FoodOrder
+    // 1. Transaction Record for Customer (Money Out / Paid)
     await Transaction.create({
       wallet_id: customerWallet._id,
       type: "food_payment",
@@ -194,6 +196,34 @@ export const place_food_order = async (req: Request, res: Response) => {
         order_number: order.order_number,
       },
     });
+
+    // 2. Transaction Record for Restaurant (Pending Earnings including menu price + delivery fee)
+    try {
+      const vendorWallet = await getOrCreateVendorWallet(restaurant._id as any);
+      vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + total;
+      await vendorWallet.save();
+
+      await Transaction.create({
+        wallet_id: vendorWallet._id,
+        type: "vendor_earnings",
+        amount: total,
+        status: "pending",
+        channel: "wallet",
+        reference: generate_unique_reference(),
+        food_order_id: order._id,
+        metadata: {
+          order_id: order._id,
+          order_number: order.order_number,
+          restaurant_id: restaurant._id,
+          type: "food_order_earnings",
+          status: "pending",
+          description: `Pending earnings for order #${order.order_number}`,
+        },
+      });
+    } catch (vErr) {
+      console.error("Error creating restaurant pending wallet balance on place order:", vErr);
+    }
+
 
     // Clear ONLY this restaurant's Basket after order placement
     await Basket.findOneAndDelete({ user: user_id, restaurant: restaurant_id });
@@ -276,37 +306,41 @@ export const accept_food_order = async (req: Request, res: Response) => {
     order.status_timestamps.preparing_at = new Date();
     await order.save();
 
-    // Add to Specialized Restaurant Pending Balance upon order acceptance
+    // Verify vendor pending wallet balance exists for this order
     try {
       const vendorWallet = await getOrCreateVendorWallet(restaurant._id as any);
+      const existingTxn = await Transaction.findOne({
+        wallet_id: vendorWallet._id,
+        food_order_id: order._id,
+      });
 
-      const earningsAmount =
-        order.pricing?.restaurant_earnings || order.pricing?.subtotal || 0;
+      if (!existingTxn) {
+        const earningsAmount = order.pricing?.total || 0;
+        if (earningsAmount > 0) {
+          vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + earningsAmount;
+          await vendorWallet.save();
 
-      if (earningsAmount > 0) {
-        vendorWallet.pending_balance = (vendorWallet.pending_balance || 0) + earningsAmount;
-        await vendorWallet.save();
-
-        await Transaction.create({
-          wallet_id: vendorWallet._id,
-          type: "vendor_earnings",
-          amount: earningsAmount,
-          status: "pending",
-          channel: "wallet",
-          reference: generate_unique_reference(),
-          food_order_id: order._id,
-          metadata: {
-            order_id: order._id,
-            order_number: order.order_number,
-            restaurant_id: restaurant._id,
-            type: "food_order_earnings",
+          await Transaction.create({
+            wallet_id: vendorWallet._id,
+            type: "vendor_earnings",
+            amount: earningsAmount,
             status: "pending",
-            description: `Pending earnings for order #${order.order_number}`,
-          },
-        });
+            channel: "wallet",
+            reference: generate_unique_reference(),
+            food_order_id: order._id,
+            metadata: {
+              order_id: order._id,
+              order_number: order.order_number,
+              restaurant_id: restaurant._id,
+              type: "food_order_earnings",
+              status: "pending",
+              description: `Pending earnings for order #${order.order_number}`,
+            },
+          });
+        }
       }
     } catch (wErr) {
-      console.error("Error updating vendor pending balance on order accept:", wErr);
+      console.error("Error checking vendor pending balance on order accept:", wErr);
     }
 
     // Socket Notification to Customer
@@ -385,7 +419,11 @@ export const reject_food_order = async (req: Request, res: Response) => {
     order.status_timestamps.cancelled_at = new Date();
     await order.save();
 
+    // Cancel pending vendor earnings for this order
+    await cancelVendorOrderPendingEarnings(order);
+
     // Refund customer's in-app wallet
+
     const customerWallet = await Wallet.findOne({ owner_id: order.customer });
     if (customerWallet) {
       customerWallet.balance += order.pricing.total;
@@ -609,7 +647,11 @@ export const cancel_food_order = async (req: Request, res: Response) => {
     order.status_timestamps.cancelled_at = new Date();
     await order.save();
 
+    // Cancel vendor pending earnings for this order
+    await cancelVendorOrderPendingEarnings(order);
+
     // Refund customer's in-app wallet balance
+
     const customerWallet = await Wallet.findOne({ owner_id: user_id });
     if (customerWallet) {
       customerWallet.balance += order.pricing.total;

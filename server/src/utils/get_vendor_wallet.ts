@@ -31,24 +31,26 @@ export const getOrCreateVendorWallet = async (
 };
 
 /**
- * Settles a delivered food order: moves earnings from pending_balance to withdrawable balance,
- * and updates transaction status to "success". If no transaction exists, creates a new one.
+ * Settles a delivered food order: moves earnings (subtotal + delivery_fee = total)
+ * from pending_balance to withdrawable balance, and updates transaction status to "success".
+ * If no transaction exists, creates a new one.
  */
 export const settleVendorOrderEarnings = async (order: any): Promise<boolean> => {
   try {
     if (!order || !order.restaurant) return false;
     const earningsAmount =
-      order.pricing?.restaurant_earnings || order.pricing?.subtotal || 0;
+      order.pricing?.total ||
+      (order.pricing?.subtotal || 0) + (order.pricing?.delivery_fee || 0);
     if (earningsAmount <= 0) return true;
 
     const wallet = await getOrCreateVendorWallet(order.restaurant);
 
-    // Deduct from pending, add to withdrawable balance
+    // Deduct from pending balance, add to withdrawable balance
     wallet.pending_balance = Math.max(0, (wallet.pending_balance || 0) - earningsAmount);
     wallet.balance = (wallet.balance || 0) + earningsAmount;
     await wallet.save();
 
-    // Try finding existing pending transaction for this food order & vendor wallet
+    // Try updating existing transaction linked to this order & vendor wallet to "success"
     let txn = await Transaction.findOneAndUpdate(
       {
         food_order_id: new Types.ObjectId(order._id as string),
@@ -57,6 +59,7 @@ export const settleVendorOrderEarnings = async (order: any): Promise<boolean> =>
       {
         $set: {
           status: "success",
+          amount: earningsAmount,
           type: "vendor_earnings",
           "metadata.status": "delivered",
           "metadata.description": `Earnings for delivered order #${order.order_number}`,
@@ -74,6 +77,7 @@ export const settleVendorOrderEarnings = async (order: any): Promise<boolean> =>
         {
           $set: {
             status: "success",
+            amount: earningsAmount,
             type: "vendor_earnings",
             "metadata.status": "delivered",
             "metadata.description": `Earnings for delivered order #${order.order_number}`,
@@ -83,7 +87,7 @@ export const settleVendorOrderEarnings = async (order: any): Promise<boolean> =>
       );
     }
 
-    // If no existing transaction was found, create a new success transaction record for vendor wallet
+    // Fallback: If no existing transaction was found, create a new success transaction
     if (!txn) {
       const restaurant = await Restaurant.findById(order.restaurant);
       await Transaction.create({
@@ -121,7 +125,8 @@ export const cancelVendorOrderPendingEarnings = async (order: any): Promise<bool
   try {
     if (!order || !order.restaurant) return false;
     const earningsAmount =
-      order.pricing?.restaurant_earnings || order.pricing?.subtotal || 0;
+      order.pricing?.total ||
+      (order.pricing?.subtotal || 0) + (order.pricing?.delivery_fee || 0);
     if (earningsAmount <= 0) return true;
 
     const wallet = await getOrCreateVendorWallet(order.restaurant);
@@ -130,7 +135,7 @@ export const cancelVendorOrderPendingEarnings = async (order: any): Promise<bool
     wallet.pending_balance = Math.max(0, (wallet.pending_balance || 0) - earningsAmount);
     await wallet.save();
 
-    // Mark transaction as failed/cancelled
+    // Mark pending transaction as failed
     await Transaction.updateMany(
       {
         food_order_id: order._id,

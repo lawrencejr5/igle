@@ -25,6 +25,7 @@ const expo_push_1 = require("../utils/expo_push");
 const get_id_1 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const ride_2 = require("../controllers/ride");
+const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 const server_1 = require("../server");
 // Connect to Mongo and specify the collection "agendaJobs"
 exports.agenda = new agenda_1.default({
@@ -140,6 +141,8 @@ exports.agenda.define("check_food_order_timeout", (job) => __awaiter(void 0, voi
         };
         order.status_timestamps.cancelled_at = new Date();
         yield order.save();
+        // Cancel vendor pending earnings for this order
+        yield (0, get_vendor_wallet_1.cancelVendorOrderPendingEarnings)(order);
         // Refund customer's money back to in-app wallet
         const customerWallet = yield wallet_1.default.findOne({ owner_id: order.customer });
         if (customerWallet) {

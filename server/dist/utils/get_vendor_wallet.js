@@ -40,29 +40,32 @@ const getOrCreateVendorWallet = (restaurantId) => __awaiter(void 0, void 0, void
 });
 exports.getOrCreateVendorWallet = getOrCreateVendorWallet;
 /**
- * Settles a delivered food order: moves earnings from pending_balance to withdrawable balance,
- * and updates transaction status to "success". If no transaction exists, creates a new one.
+ * Settles a delivered food order: moves earnings (subtotal + delivery_fee = total)
+ * from pending_balance to withdrawable balance, and updates transaction status to "success".
+ * If no transaction exists, creates a new one.
  */
 const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     try {
         if (!order || !order.restaurant)
             return false;
-        const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.restaurant_earnings) || ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0;
+        const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.total) ||
+            (((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0) + (((_c = order.pricing) === null || _c === void 0 ? void 0 : _c.delivery_fee) || 0);
         if (earningsAmount <= 0)
             return true;
         const wallet = yield (0, exports.getOrCreateVendorWallet)(order.restaurant);
-        // Deduct from pending, add to withdrawable balance
+        // Deduct from pending balance, add to withdrawable balance
         wallet.pending_balance = Math.max(0, (wallet.pending_balance || 0) - earningsAmount);
         wallet.balance = (wallet.balance || 0) + earningsAmount;
         yield wallet.save();
-        // Try finding existing pending transaction for this food order & vendor wallet
+        // Try updating existing transaction linked to this order & vendor wallet to "success"
         let txn = yield transaction_1.default.findOneAndUpdate({
             food_order_id: new mongoose_1.Types.ObjectId(order._id),
             wallet_id: wallet._id,
         }, {
             $set: {
                 status: "success",
+                amount: earningsAmount,
                 type: "vendor_earnings",
                 "metadata.status": "delivered",
                 "metadata.description": `Earnings for delivered order #${order.order_number}`,
@@ -75,13 +78,14 @@ const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, f
             }, {
                 $set: {
                     status: "success",
+                    amount: earningsAmount,
                     type: "vendor_earnings",
                     "metadata.status": "delivered",
                     "metadata.description": `Earnings for delivered order #${order.order_number}`,
                 },
             }, { new: true });
         }
-        // If no existing transaction was found, create a new success transaction record for vendor wallet
+        // Fallback: If no existing transaction was found, create a new success transaction
         if (!txn) {
             const restaurant = yield restaurant_1.default.findById(order.restaurant);
             yield transaction_1.default.create({
@@ -116,18 +120,19 @@ exports.settleVendorOrderEarnings = settleVendorOrderEarnings;
  * removes funds from pending_balance and marks transaction status to "failed".
  */
 const cancelVendorOrderPendingEarnings = (order) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     try {
         if (!order || !order.restaurant)
             return false;
-        const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.restaurant_earnings) || ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0;
+        const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.total) ||
+            (((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0) + (((_c = order.pricing) === null || _c === void 0 ? void 0 : _c.delivery_fee) || 0);
         if (earningsAmount <= 0)
             return true;
         const wallet = yield (0, exports.getOrCreateVendorWallet)(order.restaurant);
         // Deduct from pending
         wallet.pending_balance = Math.max(0, (wallet.pending_balance || 0) - earningsAmount);
         yield wallet.save();
-        // Mark transaction as failed/cancelled
+        // Mark pending transaction as failed
         yield transaction_1.default.updateMany({
             food_order_id: order._id,
             wallet_id: wallet._id,
