@@ -9,7 +9,7 @@ import { Image } from "expo-image";
 
 import React, { useState, useEffect, FC } from "react";
 
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 
 import AppLoading from "../../loadings/AppLoading";
 
@@ -29,12 +29,15 @@ import { useLoading } from "../../context/LoadingContext";
 import { useNotificationContext } from "../../context/NotificationContext";
 
 const RideDetails = () => {
-  const { mapRef } = useMapContext();
+  const { mapRef, getRoute } = useMapContext();
   const { rideData, fetchRideDetails } = useRideContext();
   const { rideDetailsLoading } = useLoading();
   const { notification } = useNotificationContext();
 
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [routeCoords, setRouteCoords] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [pickupMarker, setPickupMarker] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [destinationMarker, setDestinationMarker] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const { ride_id } = useLocalSearchParams();
 
@@ -43,16 +46,42 @@ const RideDetails = () => {
   }, [ride_id]);
 
   useEffect(() => {
-    if (rideData?.destination?.coordinates && mapRef.current)
-      mapRef.current.animateToRegion(
-        {
-          latitude: rideData.destination.coordinates[0],
-          longitude: rideData.destination.coordinates[1],
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        },
-        1000,
-      );
+    const loadRoute = async () => {
+      if (
+        rideData?.pickup?.coordinates?.length === 2 &&
+        rideData?.destination?.coordinates?.length === 2
+      ) {
+        const pickup: [number, number] = [
+          rideData.pickup.coordinates[0],
+          rideData.pickup.coordinates[1],
+        ];
+        const destination: [number, number] = [
+          rideData.destination.coordinates[0],
+          rideData.destination.coordinates[1],
+        ];
+
+        const res = await getRoute(pickup, destination);
+        if (res && res.coords && res.coords.length > 0) {
+          setRouteCoords(res.coords);
+          setPickupMarker(res.pickupOnRoad || res.coords[0]);
+          setDestinationMarker(res.destinationOnRoad || res.coords[res.coords.length - 1]);
+
+          setTimeout(() => {
+            if (mapRef.current) {
+              mapRef.current.fitToCoordinates(res.coords, {
+                edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+                animated: true,
+              });
+            }
+          }, 300);
+        } else {
+          setPickupMarker({ latitude: pickup[0], longitude: pickup[1] });
+          setDestinationMarker({ latitude: destination[0], longitude: destination[1] });
+        }
+      }
+    };
+
+    loadRoute();
   }, [rideData]);
 
   return (
@@ -93,36 +122,71 @@ const RideDetails = () => {
               style={{ height: "33%" }}
               provider={PROVIDER_GOOGLE}
               initialRegion={{
-                latitude: rideData.destination.coordinates[0],
-                longitude: rideData.destination.coordinates[1],
+                latitude: rideData.pickup?.coordinates?.[0] || rideData.destination.coordinates[0],
+                longitude: rideData.pickup?.coordinates?.[1] || rideData.destination.coordinates[1],
                 latitudeDelta: 0.02,
                 longitudeDelta: 0.02,
               }}
               customMapStyle={darkMapStyle}
             >
-              <Marker
-                coordinate={{
-                  latitude: rideData.destination.coordinates[0],
-                  longitude: rideData.destination.coordinates[1],
-                }}
-                title={rideData.destination.address}
-              >
-                <View
-                  style={{
-                    backgroundColor: "white",
-                    padding: 5,
-                    borderRadius: 50,
-                  }}
+              {/* Route Polyline - render ONLY when routeCoords are available (eliminating default route flash) */}
+              {routeCoords.length > 0 && (
+                <Polyline
+                  coordinates={routeCoords}
+                  strokeColor="#ffffff"
+                  strokeWidth={3}
+                />
+              )}
+
+              {/* Pickup Marker (at exact start tip of polyline) */}
+              {pickupMarker && (
+                <Marker
+                  coordinate={pickupMarker}
+                  title={rideData.pickup?.address || "Pickup"}
+                  anchor={{ x: 0.5, y: 0.5 }}
                 >
                   <View
                     style={{
-                      backgroundColor: "black",
+                      backgroundColor: "white",
                       padding: 5,
                       borderRadius: 50,
                     }}
-                  />
-                </View>
-              </Marker>
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 5,
+                        borderRadius: 50,
+                      }}
+                    />
+                  </View>
+                </Marker>
+              )}
+
+              {/* Destination Marker (at exact end tip of polyline) */}
+              {destinationMarker && (
+                <Marker
+                  coordinate={destinationMarker}
+                  title={rideData.destination?.address || "Destination"}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 4,
+                      borderRadius: 2,
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 4,
+                        borderRadius: 2,
+                      }}
+                    />
+                  </View>
+                </Marker>
+              )}
             </MapView>
 
             {/* Ride details */}

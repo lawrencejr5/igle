@@ -26,7 +26,10 @@ const BookDelivery = () => {
     const verifyPermission = async () => {
       const { status } = await Location.getForegroundPermissionsAsync();
       if (status !== "granted") {
-        showNotification("Location permission is required for rides and deliveries", "error");
+        showNotification(
+          "Location permission is required for rides and deliveries",
+          "error",
+        );
         router.replace("/(tabs)/home");
       }
     };
@@ -64,7 +67,11 @@ const BookDelivery = () => {
     if (!region) return;
 
     const timer = setTimeout(() => {
-      if (mapRef.current && deliveryStatus !== "track_driver" && deliveryStatus !== "track_delivery") {
+      if (
+        mapRef.current &&
+        deliveryStatus !== "track_driver" &&
+        deliveryStatus !== "track_delivery"
+      ) {
         mapRef.current.animateToRegion(region, 1000);
       }
     }, 500);
@@ -75,7 +82,8 @@ const BookDelivery = () => {
   // Continuously track driver or delivery when in tracking state
   useEffect(() => {
     if (
-      (deliveryStatus === "track_driver" || deliveryStatus === "track_delivery") &&
+      (deliveryStatus === "track_driver" ||
+        deliveryStatus === "track_delivery") &&
       ongoingDeliveryData &&
       ongoingDeliveryData.driver?.current_location?.coordinates &&
       ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
@@ -89,10 +97,13 @@ const BookDelivery = () => {
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         },
-        1000
+        1000,
       );
     }
-  }, [ongoingDeliveryData?.driver?.current_location?.coordinates, deliveryStatus]);
+  }, [
+    ongoingDeliveryData?.driver?.current_location?.coordinates,
+    deliveryStatus,
+  ]);
   return (
     <>
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
@@ -215,14 +226,18 @@ const BookDelivery = () => {
               )}
 
             {/* Driver marker - show when tracking driver or delivery progress */}
-            {(deliveryStatus === "track_driver" || deliveryStatus === "track_delivery") &&
+            {(deliveryStatus === "track_driver" ||
+              deliveryStatus === "track_delivery") &&
               ongoingDeliveryData &&
-              (ongoingDeliveryData.driver?.current_location?.coordinates || ongoingDeliveryData.pickup?.coordinates) && (
+              (ongoingDeliveryData.driver?.current_location?.coordinates ||
+                ongoingDeliveryData.pickup?.coordinates) && (
                 <Marker
                   coordinate={
                     ongoingDeliveryData.driver?.current_location?.coordinates &&
-                    ongoingDeliveryData.driver.current_location.coordinates[0] !== 0 &&
-                    ongoingDeliveryData.driver.current_location.coordinates[1] !== 0
+                    ongoingDeliveryData.driver.current_location
+                      .coordinates[0] !== 0 &&
+                    ongoingDeliveryData.driver.current_location
+                      .coordinates[1] !== 0
                       ? {
                           latitude:
                             ongoingDeliveryData.driver.current_location
@@ -232,13 +247,15 @@ const BookDelivery = () => {
                               .coordinates[1],
                         }
                       : {
-                          latitude:
-                            ongoingDeliveryData.pickup.coordinates[0],
-                          longitude:
-                            ongoingDeliveryData.pickup.coordinates[1],
+                          latitude: ongoingDeliveryData.pickup.coordinates[0],
+                          longitude: ongoingDeliveryData.pickup.coordinates[1],
                         }
                   }
-                  title={deliveryStatus === "track_driver" ? "Your dispatch rider is here!" : "Your package is on the move"}
+                  title={
+                    deliveryStatus === "track_driver"
+                      ? "Your dispatch rider is here!"
+                      : "Your package is on the move"
+                  }
                   anchor={{ x: 0.2, y: 0.2 }}
                 >
                   <Image

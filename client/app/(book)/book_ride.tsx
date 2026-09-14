@@ -29,7 +29,10 @@ const BookRide = () => {
     const verifyPermission = async () => {
       const { status } = await Location.getForegroundPermissionsAsync();
       if (status !== "granted") {
-        showNotification("Location permission is required for rides and deliveries", "error");
+        showNotification(
+          "Location permission is required for rides and deliveries",
+          "error",
+        );
         router.replace("/(tabs)/home");
       }
     };

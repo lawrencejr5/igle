@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { router, useLocalSearchParams } from "expo-router";
@@ -28,11 +28,14 @@ import RideRoute from "../../components/RideRoute";
 import ReportDriverModal from "../../components/ReportDriverModal";
 
 const DeliveryDetails = () => {
-  const { mapRef } = useMapContext() as any;
+  const { mapRef, getRoute } = useMapContext() as any;
   const { deliveryDetailsLoading } = useLoading() as any; // optional loading flag if available
   const { fetchDeliveryData, ongoingDeliveryData } = useDeliverContext();
 
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [routeCoords, setRouteCoords] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [pickupMarker, setPickupMarker] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [dropoffMarker, setDropoffMarker] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const { delivery_id } = useLocalSearchParams();
 
@@ -41,18 +44,33 @@ const DeliveryDetails = () => {
   }, [delivery_id]);
 
   useEffect(() => {
-    const drop = ongoingDeliveryData?.dropoff?.coordinates;
-    if (drop && mapRef?.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: drop[0],
-          longitude: drop[1],
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        },
-        1000,
-      );
-    }
+    const loadRoute = async () => {
+      const pickup = ongoingDeliveryData?.pickup?.coordinates;
+      const drop = ongoingDeliveryData?.dropoff?.coordinates;
+
+      if (pickup?.length === 2 && drop?.length === 2) {
+        const res = await getRoute([pickup[0], pickup[1]], [drop[0], drop[1]]);
+        if (res && res.coords && res.coords.length > 0) {
+          setRouteCoords(res.coords);
+          setPickupMarker(res.pickupOnRoad || res.coords[0]);
+          setDropoffMarker(res.destinationOnRoad || res.coords[res.coords.length - 1]);
+
+          setTimeout(() => {
+            if (mapRef?.current) {
+              mapRef.current.fitToCoordinates(res.coords, {
+                edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
+                animated: true,
+              });
+            }
+          }, 300);
+        } else {
+          setPickupMarker({ latitude: pickup[0], longitude: pickup[1] });
+          setDropoffMarker({ latitude: drop[0], longitude: drop[1] });
+        }
+      }
+    };
+
+    loadRoute();
   }, [ongoingDeliveryData]);
 
   const d = ongoingDeliveryData;
@@ -142,20 +160,28 @@ const DeliveryDetails = () => {
               style={{ height: "33%" }}
               provider={PROVIDER_GOOGLE}
               initialRegion={{
-                latitude: d?.dropoff?.coordinates?.[0] ?? 6.5244,
-                longitude: d?.dropoff?.coordinates?.[1] ?? 3.3792,
+                latitude: d?.pickup?.coordinates?.[0] ?? d?.dropoff?.coordinates?.[0] ?? 6.5244,
+                longitude: d?.pickup?.coordinates?.[1] ?? d?.dropoff?.coordinates?.[1] ?? 3.3792,
                 latitudeDelta: 0.02,
                 longitudeDelta: 0.02,
               }}
               customMapStyle={darkMapStyle}
             >
-              {d?.dropoff?.coordinates && (
+              {/* Route Polyline - render ONLY when routeCoords exist */}
+              {routeCoords.length > 0 && (
+                <Polyline
+                  coordinates={routeCoords}
+                  strokeColor="#ffffff"
+                  strokeWidth={3}
+                />
+              )}
+
+              {/* Pickup Marker at exact start tip of polyline */}
+              {pickupMarker && (
                 <Marker
-                  coordinate={{
-                    latitude: d.dropoff.coordinates[0],
-                    longitude: d.dropoff.coordinates[1],
-                  }}
-                  title={d.dropoff.address}
+                  coordinate={pickupMarker}
+                  title={d?.pickup?.address || "Pickup"}
+                  anchor={{ x: 0.5, y: 0.5 }}
                 >
                   <View
                     style={{
@@ -169,6 +195,31 @@ const DeliveryDetails = () => {
                         backgroundColor: "black",
                         padding: 5,
                         borderRadius: 50,
+                      }}
+                    />
+                  </View>
+                </Marker>
+              )}
+
+              {/* Dropoff Marker at exact end tip of polyline */}
+              {dropoffMarker && (
+                <Marker
+                  coordinate={dropoffMarker}
+                  title={d?.dropoff?.address || "Dropoff"}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "white",
+                      padding: 4,
+                      borderRadius: 2,
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "black",
+                        padding: 4,
+                        borderRadius: 2,
                       }}
                     />
                   </View>
