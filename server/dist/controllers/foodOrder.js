@@ -12,19 +12,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get_order_by_id = exports.get_vendor_orders = exports.get_customer_orders = exports.cancel_food_order = exports.mark_order_delivered = exports.mark_order_ready = exports.reject_food_order = exports.accept_food_order = exports.place_food_order = void 0;
+exports.get_food_order_delivery_status = exports.get_order_by_id = exports.get_vendor_orders = exports.get_customer_orders = exports.cancel_food_order = exports.mark_order_delivered = exports.mark_order_ready = exports.reject_food_order = exports.accept_food_order = exports.place_food_order = void 0;
 const foodOrder_1 = __importDefault(require("../models/foodOrder"));
 const basket_1 = __importDefault(require("../models/basket"));
 const restaurant_1 = __importDefault(require("../models/restaurant"));
 const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const user_1 = __importDefault(require("../models/user"));
+const delivery_1 = __importDefault(require("../models/delivery"));
+const driver_1 = __importDefault(require("../models/driver"));
+const calc_commision_1 = require("../utils/calc_commision");
 const get_vendor_restaurant_1 = require("../utils/get_vendor_restaurant");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const get_id_1 = require("../utils/get_id");
 const expo_push_1 = require("../utils/expo_push");
 const server_1 = require("../server");
 const agenda_1 = require("../jobs/agenda");
+const complete_delivery_1 = require("../utils/complete_delivery");
 const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 const FLAT_DELIVERY_FEE = 1500; // Flat rate 1500 NGN delivery fee per user requirement
 // 1. Place Food Order (Customer)
@@ -430,7 +434,7 @@ const reject_food_order = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.reject_food_order = reject_food_order;
-// 4. Mark Food Ready for Pickup (Vendor)
+// 4. Mark Food Ready for Pickup (Vendor) — dispatches a bike rider delivery
 // POST /api/v1/orders/:id/ready
 const mark_order_ready = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -455,6 +459,86 @@ const mark_order_ready = (req, res) => __awaiter(void 0, void 0, void 0, functio
         order.status = "ready_for_pickup";
         order.status_timestamps.ready_at = new Date();
         yield order.save();
+        // ─── Dispatch a bike rider delivery ───
+        try {
+            const commission = (0, calc_commision_1.calculate_commission)(FLAT_DELIVERY_FEE);
+            const driver_earnings = FLAT_DELIVERY_FEE - commission;
+            // Restaurant location is the pickup; customer address is the dropoff
+            const [restLat, restLng] = order.restaurant_address.coordinates;
+            const [custLat, custLng] = order.delivery_address.coordinates;
+            const new_delivery = yield delivery_1.default.create({
+                // sender is the restaurant's owner user (keeps Delivery.sender as User ref)
+                sender: restaurant.user,
+                pickup: {
+                    address: order.restaurant_address.address,
+                    coordinates: [restLat, restLng],
+                },
+                dropoff: {
+                    address: order.delivery_address.address,
+                    coordinates: [custLat, custLng],
+                },
+                to: {
+                    name: order.delivery_address.contact_name,
+                    phone: order.delivery_address.contact_phone,
+                },
+                package: {
+                    description: `Food delivery — Order #${order.order_number}`,
+                    type: "food",
+                    fragile: false,
+                },
+                vehicle: "bike",
+                fare: FLAT_DELIVERY_FEE,
+                driver_earnings,
+                commission,
+                distance_km: 0, // rider uses in-app navigation
+                duration_mins: 0,
+                // Auto-paid: customer already paid at order placement
+                payment_status: "paid",
+                payment_method: "wallet",
+                status: "pending",
+                food_order_id: order._id,
+            });
+            // Save delivery reference on the food order
+            order.delivery_id = new_delivery._id;
+            yield order.save();
+            // Notify all online bike riders via socket
+            const bikeDrivers = yield driver_1.default.find({
+                vehicle_type: "bike",
+                is_online: true,
+                is_busy: false,
+            });
+            yield Promise.all(bikeDrivers.map((d) => __awaiter(void 0, void 0, void 0, function* () {
+                try {
+                    const driverSocket = yield (0, get_id_1.get_driver_socket_id)(String(d._id));
+                    if (driverSocket) {
+                        server_1.io.to(driverSocket).emit("delivery_request", {
+                            delivery_id: new_delivery._id,
+                        });
+                    }
+                }
+                catch (e) {
+                    console.error("Failed to notify bike rider", d._id, e);
+                }
+            })));
+            // Expiry timer (30s) — same as normal delivery
+            setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
+                const d = yield delivery_1.default.findById(new_delivery._id);
+                if (d && d.status === "pending") {
+                    d.status = "expired";
+                    yield d.save();
+                    server_1.io.emit("delivery_request_expired", {
+                        delivery_id: new_delivery._id,
+                        msg: "Food delivery request expired — no rider accepted in time",
+                    });
+                }
+            }), 30000);
+            console.log(`Food delivery dispatched: ${new_delivery._id} for order ${order.order_number}`);
+        }
+        catch (dispatchErr) {
+            // Non-fatal: log but don't fail the whole request
+            console.error("Failed to dispatch bike delivery for food order:", dispatchErr);
+        }
+        // ─── End dispatch ───
         // Socket notification to customer
         const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);
         if (customerSocket) {
@@ -468,10 +552,10 @@ const mark_order_ready = (req, res) => __awaiter(void 0, void 0, void 0, functio
         server_1.io.to(`food_order_${order._id}`).emit("food_order_updated", {
             order_id: order._id,
             status: "ready_for_pickup",
-            msg: "Order is ready for pickup",
+            msg: "Order is ready for pickup — dispatch rider notified",
         });
         return res.status(200).json({
-            msg: "Food order marked as ready for pickup",
+            msg: "Food order marked as ready for pickup. Dispatch rider notified.",
             order,
         });
     }
@@ -503,8 +587,23 @@ const mark_order_delivered = (req, res) => __awaiter(void 0, void 0, void 0, fun
         order.status = "delivered";
         order.status_timestamps.delivered_at = new Date();
         yield order.save();
-        // Settle vendor earnings: moves pending to withdrawable balance & records/updates transaction
+        // Settle vendor earnings: credits restaurant with subtotal only (delivery_fee goes to rider)
         yield (0, get_vendor_wallet_1.settleVendorOrderEarnings)(order);
+        // Complete linked delivery (credit bike rider wallet) if one was dispatched
+        if (order.delivery_id) {
+            try {
+                const linkedDelivery = yield delivery_1.default.findById(order.delivery_id);
+                if (linkedDelivery && linkedDelivery.status === "in_transit") {
+                    const result = yield (0, complete_delivery_1.complete_delivery)(linkedDelivery);
+                    if (!result.success) {
+                        console.error("Failed to complete linked delivery for food order:", result.message);
+                    }
+                }
+            }
+            catch (deliveryErr) {
+                console.error("Error completing linked delivery:", deliveryErr);
+            }
+        }
         // Socket notification to Customer
         const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);
         if (customerSocket) {
@@ -696,3 +795,37 @@ const get_order_by_id = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.get_order_by_id = get_order_by_id;
+// 9. Get Linked Delivery Status for a Food Order
+// GET /api/v1/orders/:id/delivery
+const get_food_order_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const order = yield foodOrder_1.default.findById(id).select("delivery_id customer");
+        if (!order) {
+            return res.status(404).json({ msg: "Food order not found" });
+        }
+        if (!order.delivery_id) {
+            return res
+                .status(404)
+                .json({ msg: "No dispatch delivery linked to this food order yet" });
+        }
+        const delivery = yield delivery_1.default.findById(order.delivery_id)
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+            populate: {
+                path: "user",
+                select: "name phone profile_pic",
+            },
+        });
+        return res.status(200).json({ msg: "success", delivery });
+    }
+    catch (error) {
+        console.error("get_food_order_delivery_status error:", error);
+        return res.status(500).json({
+            msg: "Server error fetching delivery status",
+            error: error.message,
+        });
+    }
+});
+exports.get_food_order_delivery_status = get_food_order_delivery_status;

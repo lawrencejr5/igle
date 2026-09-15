@@ -55,6 +55,11 @@ const FoodOrderSchema = new mongoose_1.Schema({
         ref: "Driver",
         default: null,
     },
+    delivery_id: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Delivery",
+        default: null,
+    },
     items: [
         {
             menu_item_id: {

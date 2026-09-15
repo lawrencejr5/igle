@@ -45,12 +45,15 @@ exports.getOrCreateVendorWallet = getOrCreateVendorWallet;
  * If no transaction exists, creates a new one.
  */
 const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b;
     try {
         if (!order || !order.restaurant)
             return false;
-        const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.total) ||
-            (((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0) + (((_c = order.pricing) === null || _c === void 0 ? void 0 : _c.delivery_fee) || 0);
+        // Settle only the restaurant's food earnings (subtotal), NOT the delivery_fee.
+        // The delivery_fee (₦1500) is credited to the bike rider via complete_delivery.
+        const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.restaurant_earnings) ||
+            ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) ||
+            0;
         if (earningsAmount <= 0)
             return true;
         const wallet = yield (0, exports.getOrCreateVendorWallet)(order.restaurant);

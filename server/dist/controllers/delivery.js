@@ -48,6 +48,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.admin_delete_delivery = exports.admin_cancel_delivery = exports.admin_get_delivery = exports.admin_get_deliveries = exports.get_driver_active_delivery = exports.pay_for_delivery = exports.update_delivery_status = exports.cancel_delivery = exports.accept_delivery = exports.get_user_active_delivery = exports.get_user_delivered_deliveries = exports.get_user_cancelled_deliveries = exports.get_user_in_transit_deliveries = exports.get_user_deliveries = exports.get_delivery_data = exports.get_available_deliveries = exports.rebook_delivery = exports.retry_delivery = exports.request_delivery = void 0;
 const delivery_1 = __importDefault(require("../models/delivery"));
 const driver_1 = __importDefault(require("../models/driver"));
+const foodOrder_1 = __importDefault(require("../models/foodOrder"));
 const calc_commision_1 = require("../utils/calc_commision");
 const server_1 = require("../server");
 const get_id_1 = require("../utils/get_id");
@@ -492,6 +493,36 @@ const accept_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function
         server_1.io.emit("delivery_taken", { delivery_id });
         delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { accepted_at: new Date() });
         yield delivery.save();
+        // If this delivery is linked to a food order, update the food order's driver field
+        if (delivery.food_order_id) {
+            try {
+                const foodOrder = yield foodOrder_1.default.findById(delivery.food_order_id);
+                if (foodOrder) {
+                    foodOrder.driver = driver_id;
+                    yield foodOrder.save();
+                    // Notify customer via food order tracking room
+                    const customerSocket = yield (0, get_id_1.get_user_socket_id)(foodOrder.customer.toString());
+                    if (customerSocket) {
+                        server_1.io.to(customerSocket).emit("food_order_updated", {
+                            order_id: foodOrder._id,
+                            order_number: foodOrder.order_number,
+                            status: "in_transit",
+                            msg: "A delivery rider has picked up your order and is on the way! 🏍️",
+                            driver_id,
+                        });
+                    }
+                    server_1.io.to(`food_order_${foodOrder._id}`).emit("food_order_updated", {
+                        order_id: foodOrder._id,
+                        status: "in_transit",
+                        msg: "Rider accepted — food is on its way",
+                        driver_id,
+                    });
+                }
+            }
+            catch (foErr) {
+                console.error("Failed to update food order on delivery accept:", foErr);
+            }
+        }
         res.status(200).json({ msg: "Delivery accepted successfully", delivery });
     }
     catch (err) {
@@ -626,6 +657,33 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { in_transit_at: new Date() });
                 if (sender_socket)
                     server_1.io.to(sender_socket).emit("delivery_in_transit", { delivery_id });
+                // Cross-update linked food order to in_transit
+                if (delivery.food_order_id) {
+                    try {
+                        const foodOrder = yield foodOrder_1.default.findById(delivery.food_order_id);
+                        if (foodOrder && !["delivered", "cancelled"].includes(foodOrder.status)) {
+                            foodOrder.status = "in_transit";
+                            foodOrder.status_timestamps.in_transit_at = new Date();
+                            yield foodOrder.save();
+                            const customerSocket = yield (0, get_id_1.get_user_socket_id)(foodOrder.customer.toString());
+                            if (customerSocket) {
+                                server_1.io.to(customerSocket).emit("food_order_updated", {
+                                    order_id: foodOrder._id,
+                                    order_number: foodOrder.order_number,
+                                    status: "in_transit",
+                                    msg: "Your food is on the way! 🏍️",
+                                });
+                            }
+                            server_1.io.to(`food_order_${foodOrder._id}`).emit("food_order_updated", {
+                                order_id: foodOrder._id,
+                                status: "in_transit",
+                            });
+                        }
+                    }
+                    catch (foErr) {
+                        console.error("Failed to update food order status (in_transit):", foErr);
+                    }
+                }
                 break;
             case "delivered":
                 // Only allow delivered when currently in transit
@@ -658,6 +716,36 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                         message: `Your delivery to ${delivery.dropoff.address} has been delivered`,
                         metadata: { delivery_id: delivery._id, driver_id: delivery.driver },
                     });
+                }
+                // Cross-update linked food order to delivered and settle vendor earnings
+                if (delivery.food_order_id) {
+                    try {
+                        const { settleVendorOrderEarnings } = yield Promise.resolve().then(() => __importStar(require("../utils/get_vendor_wallet")));
+                        const foodOrder = yield foodOrder_1.default.findById(delivery.food_order_id);
+                        if (foodOrder && foodOrder.status !== "delivered") {
+                            foodOrder.status = "delivered";
+                            foodOrder.status_timestamps.delivered_at = new Date();
+                            yield foodOrder.save();
+                            // Settle restaurant earnings (subtotal only; rider already credited above)
+                            yield settleVendorOrderEarnings(foodOrder);
+                            const customerSocket = yield (0, get_id_1.get_user_socket_id)(foodOrder.customer.toString());
+                            if (customerSocket) {
+                                server_1.io.to(customerSocket).emit("food_order_updated", {
+                                    order_id: foodOrder._id,
+                                    order_number: foodOrder.order_number,
+                                    status: "delivered",
+                                    msg: "Your food has been delivered! Enjoy your meal 🍔",
+                                });
+                            }
+                            server_1.io.to(`food_order_${foodOrder._id}`).emit("food_order_updated", {
+                                order_id: foodOrder._id,
+                                status: "delivered",
+                            });
+                        }
+                    }
+                    catch (foErr) {
+                        console.error("Failed to update food order status (delivered):", foErr);
+                    }
                 }
                 break;
             default:

@@ -20,6 +20,7 @@ export interface FoodOrderType extends Document {
   customer: mongoose.Types.ObjectId;
   restaurant: mongoose.Types.ObjectId;
   driver?: mongoose.Types.ObjectId;
+  delivery_id?: mongoose.Types.ObjectId;
   items: FoodOrderItemSnapshot[];
   delivery_address: {
     address: string;
@@ -93,6 +94,11 @@ const FoodOrderSchema = new Schema<FoodOrderType>(
     driver: {
       type: Schema.Types.ObjectId,
       ref: "Driver",
+      default: null,
+    },
+    delivery_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Delivery",
       default: null,
     },
     items: [

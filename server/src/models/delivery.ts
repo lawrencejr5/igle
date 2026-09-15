@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface DeliveryType extends Document {
   sender: mongoose.Types.ObjectId;
+  food_order_id?: mongoose.Types.ObjectId;
   driver?: mongoose.Types.ObjectId;
   pickup: {
     address: string;
@@ -140,6 +141,7 @@ const DeliverySchema = new Schema<DeliveryType>(
     commission: { type: Number, default: 0 },
     scheduled: { type: Boolean, default: false },
     scheduled_time: { type: Date, default: null },
+    food_order_id: { type: Schema.Types.ObjectId, ref: "FoodOrder", default: null },
   },
   { timestamps: true }
 );

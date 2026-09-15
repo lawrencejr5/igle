@@ -5,12 +5,20 @@ import Restaurant from "../models/restaurant";
 import Wallet from "../models/wallet";
 import Transaction from "../models/transaction";
 import User from "../models/user";
+import Delivery from "../models/delivery";
+import Driver from "../models/driver";
+import { calculate_commission } from "../utils/calc_commision";
 import { getVendorRestaurant } from "../utils/get_vendor_restaurant";
 import { generate_unique_reference } from "../utils/gen_unique_ref";
-import { get_user_socket_id, get_user_push_tokens } from "../utils/get_id";
+import {
+  get_user_socket_id,
+  get_user_push_tokens,
+  get_driver_socket_id,
+} from "../utils/get_id";
 import { sendNotification } from "../utils/expo_push";
 import { io } from "../server";
 import { agenda } from "../jobs/agenda";
+import { complete_delivery } from "../utils/complete_delivery";
 
 import {
   getOrCreateVendorWallet,
@@ -485,7 +493,7 @@ export const reject_food_order = async (req: Request, res: Response) => {
   }
 };
 
-// 4. Mark Food Ready for Pickup (Vendor)
+// 4. Mark Food Ready for Pickup (Vendor) — dispatches a bike rider delivery
 // POST /api/v1/orders/:id/ready
 export const mark_order_ready = async (req: Request, res: Response) => {
   try {
@@ -515,6 +523,96 @@ export const mark_order_ready = async (req: Request, res: Response) => {
     order.status_timestamps.ready_at = new Date();
     await order.save();
 
+    // ─── Dispatch a bike rider delivery ───
+    try {
+      const commission = calculate_commission(FLAT_DELIVERY_FEE);
+      const driver_earnings = FLAT_DELIVERY_FEE - commission;
+
+      // Restaurant location is the pickup; customer address is the dropoff
+      const [restLat, restLng] = order.restaurant_address.coordinates;
+      const [custLat, custLng] = order.delivery_address.coordinates;
+
+      const new_delivery = await Delivery.create({
+        // sender is the restaurant's owner user (keeps Delivery.sender as User ref)
+        sender: restaurant.user,
+        pickup: {
+          address: order.restaurant_address.address,
+          coordinates: [restLat, restLng],
+        },
+        dropoff: {
+          address: order.delivery_address.address,
+          coordinates: [custLat, custLng],
+        },
+        to: {
+          name: order.delivery_address.contact_name,
+          phone: order.delivery_address.contact_phone,
+        },
+        package: {
+          description: `Food delivery — Order #${order.order_number}`,
+          type: "food",
+          fragile: false,
+        },
+        vehicle: "bike",
+        fare: FLAT_DELIVERY_FEE,
+        driver_earnings,
+        commission,
+        distance_km: 0,   // rider uses in-app navigation
+        duration_mins: 0,
+        // Auto-paid: customer already paid at order placement
+        payment_status: "paid",
+        payment_method: "wallet",
+        status: "pending",
+        food_order_id: order._id,
+      });
+
+      // Save delivery reference on the food order
+      (order as any).delivery_id = new_delivery._id;
+      await order.save();
+
+      // Notify all online bike riders via socket
+      const bikeDrivers = await Driver.find({
+        vehicle_type: "bike",
+        is_online: true,
+        is_busy: false,
+      });
+
+      await Promise.all(
+        bikeDrivers.map(async (d: any) => {
+          try {
+            const driverSocket = await get_driver_socket_id(String(d._id));
+            if (driverSocket) {
+              io.to(driverSocket).emit("delivery_request", {
+                delivery_id: new_delivery._id,
+              });
+            }
+          } catch (e) {
+            console.error("Failed to notify bike rider", d._id, e);
+          }
+        })
+      );
+
+      // Expiry timer (30s) — same as normal delivery
+      setTimeout(async () => {
+        const d = await Delivery.findById(new_delivery._id);
+        if (d && d.status === "pending") {
+          d.status = "expired" as any;
+          await d.save();
+          io.emit("delivery_request_expired", {
+            delivery_id: new_delivery._id,
+            msg: "Food delivery request expired — no rider accepted in time",
+          });
+        }
+      }, 30000);
+
+      console.log(
+        `Food delivery dispatched: ${new_delivery._id} for order ${order.order_number}`
+      );
+    } catch (dispatchErr) {
+      // Non-fatal: log but don't fail the whole request
+      console.error("Failed to dispatch bike delivery for food order:", dispatchErr);
+    }
+    // ─── End dispatch ───
+
     // Socket notification to customer
     const customerSocket = await get_user_socket_id(order.customer);
     if (customerSocket) {
@@ -529,11 +627,11 @@ export const mark_order_ready = async (req: Request, res: Response) => {
     io.to(`food_order_${order._id}`).emit("food_order_updated", {
       order_id: order._id,
       status: "ready_for_pickup",
-      msg: "Order is ready for pickup",
+      msg: "Order is ready for pickup — dispatch rider notified",
     });
 
     return res.status(200).json({
-      msg: "Food order marked as ready for pickup",
+      msg: "Food order marked as ready for pickup. Dispatch rider notified.",
       order,
     });
   } catch (error: any) {
@@ -568,8 +666,26 @@ export const mark_order_delivered = async (req: Request, res: Response) => {
     order.status_timestamps.delivered_at = new Date();
     await order.save();
 
-    // Settle vendor earnings: moves pending to withdrawable balance & records/updates transaction
+    // Settle vendor earnings: credits restaurant with subtotal only (delivery_fee goes to rider)
     await settleVendorOrderEarnings(order);
+
+    // Complete linked delivery (credit bike rider wallet) if one was dispatched
+    if ((order as any).delivery_id) {
+      try {
+        const linkedDelivery = await Delivery.findById((order as any).delivery_id);
+        if (linkedDelivery && linkedDelivery.status === "in_transit") {
+          const result = await complete_delivery(linkedDelivery as any);
+          if (!result.success) {
+            console.error(
+              "Failed to complete linked delivery for food order:",
+              result.message
+            );
+          }
+        }
+      } catch (deliveryErr) {
+        console.error("Error completing linked delivery:", deliveryErr);
+      }
+    }
 
     // Socket notification to Customer
     const customerSocket = await get_user_socket_id(order.customer);
@@ -774,3 +890,45 @@ export const get_order_by_id = async (req: Request, res: Response) => {
       });
   }
 };
+
+// 9. Get Linked Delivery Status for a Food Order
+// GET /api/v1/orders/:id/delivery
+export const get_food_order_delivery_status = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+
+    const order = await FoodOrder.findById(id).select("delivery_id customer");
+    if (!order) {
+      return res.status(404).json({ msg: "Food order not found" });
+    }
+
+    if (!(order as any).delivery_id) {
+      return res
+        .status(404)
+        .json({ msg: "No dispatch delivery linked to this food order yet" });
+    }
+
+    const delivery = await Delivery.findById((order as any).delivery_id)
+      .populate({
+        path: "driver",
+        select:
+          "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name phone profile_pic",
+        },
+      });
+
+    return res.status(200).json({ msg: "success", delivery });
+  } catch (error: any) {
+    console.error("get_food_order_delivery_status error:", error);
+    return res.status(500).json({
+      msg: "Server error fetching delivery status",
+      error: error.message,
+    });
+  }
+};
+

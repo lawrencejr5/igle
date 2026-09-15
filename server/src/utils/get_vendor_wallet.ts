@@ -38,10 +38,14 @@ export const getOrCreateVendorWallet = async (
 export const settleVendorOrderEarnings = async (order: any): Promise<boolean> => {
   try {
     if (!order || !order.restaurant) return false;
+    // Settle only the restaurant's food earnings (subtotal), NOT the delivery_fee.
+    // The delivery_fee (₦1500) is credited to the bike rider via complete_delivery.
     const earningsAmount =
-      order.pricing?.total ||
-      (order.pricing?.subtotal || 0) + (order.pricing?.delivery_fee || 0);
+      order.pricing?.restaurant_earnings ||
+      order.pricing?.subtotal ||
+      0;
     if (earningsAmount <= 0) return true;
+
 
     const wallet = await getOrCreateVendorWallet(order.restaurant);
 

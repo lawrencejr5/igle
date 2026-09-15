@@ -114,5 +114,6 @@ const DeliverySchema = new mongoose_1.Schema({
     commission: { type: Number, default: 0 },
     scheduled: { type: Boolean, default: false },
     scheduled_time: { type: Date, default: null },
+    food_order_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "FoodOrder", default: null },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model("Delivery", DeliverySchema);

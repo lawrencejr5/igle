@@ -9,6 +9,7 @@ import {
   get_customer_orders,
   get_vendor_orders,
   get_order_by_id,
+  get_food_order_delivery_status,
 } from "../controllers/foodOrder";
 import { auth } from "../middleware/auth";
 
@@ -28,8 +29,10 @@ FoodOrderRouter.post("/:id/reject", reject_food_order);
 FoodOrderRouter.post("/:id/ready", mark_order_ready);
 FoodOrderRouter.post("/:id/deliver", mark_order_delivered);
 
-// Order Details
+// Order Details & Delivery Tracking
+FoodOrderRouter.get("/:id/delivery", get_food_order_delivery_status);
 FoodOrderRouter.get("/:id", get_order_by_id);
 
 
 export default FoodOrderRouter;
+

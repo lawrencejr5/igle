@@ -15,6 +15,7 @@ FoodOrderRouter.post("/:id/accept", foodOrder_1.accept_food_order);
 FoodOrderRouter.post("/:id/reject", foodOrder_1.reject_food_order);
 FoodOrderRouter.post("/:id/ready", foodOrder_1.mark_order_ready);
 FoodOrderRouter.post("/:id/deliver", foodOrder_1.mark_order_delivered);
-// Order Details
+// Order Details & Delivery Tracking
+FoodOrderRouter.get("/:id/delivery", foodOrder_1.get_food_order_delivery_status);
 FoodOrderRouter.get("/:id", foodOrder_1.get_order_by_id);
 exports.default = FoodOrderRouter;
