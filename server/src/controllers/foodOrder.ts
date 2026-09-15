@@ -558,8 +558,8 @@ export const mark_order_ready = async (req: Request, res: Response) => {
         commission,
         distance_km: 0,   // rider uses in-app navigation
         duration_mins: 0,
-        // Auto-paid: customer already paid delivery fee at order placement
-        payment_status: "paid",
+        // Payment unpaid until restaurant confirms rider arrival and pays
+        payment_status: "unpaid",
         payment_method: "wallet",
         status: "pending",
         food_order_id: order._id,
@@ -1012,34 +1012,7 @@ export const pay_food_delivery = async (req: Request, res: Response) => {
       return res.status(400).json({ msg: "Dispatch rider has not arrived yet" });
     }
 
-    // Debit restaurant vendor's wallet
-    const vendorWallet = await getOrCreateVendorWallet(restaurant._id as any);
-    if ((vendorWallet.balance || 0) < delivery.fare) {
-      return res.status(400).json({
-        msg: `Insufficient vendor wallet balance (₦${(vendorWallet.balance || 0).toLocaleString()}) to pay delivery fee of ₦${delivery.fare.toLocaleString()}`,
-      });
-    }
-
-    vendorWallet.balance -= delivery.fare;
-    await vendorWallet.save();
-
-    await Transaction.create({
-      wallet_id: vendorWallet._id,
-      type: "payout",
-      amount: delivery.fare,
-      status: "success",
-      channel: "wallet",
-      reference: generate_unique_reference(),
-      food_order_id: order._id,
-      metadata: {
-        order_id: order._id,
-        order_number: order.order_number,
-        delivery_id: delivery._id,
-        type: "rider_delivery_payment",
-        description: `Paid ₦${delivery.fare} for rider dispatch on order #${order.order_number}`,
-      },
-    });
-
+    // Note: Escrow holds total payment; delivery fee is released to driver on completion.
     delivery.payment_status = "paid";
     await delivery.save();
 

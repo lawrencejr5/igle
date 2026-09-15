@@ -737,12 +737,12 @@ const RestaurantOrders = () => {
 
                     <View style={styles.driver_info_col}>
                       <View style={styles.driver_name_row}>
-                        <Text style={styles.driver_name_text}>
+                        <Text style={styles.driver_name_text} numberOfLines={1}>
                           {deliveriesMap[order.id].driver.user?.name ||
                             "Dispatch Rider"}
                         </Text>
                         <View style={styles.driver_rating_badge}>
-                          <Feather name="star" size={11} color="#ffc107" />
+                          <Feather name="star" size={10} color="#ffc107" />
                           <Text style={styles.driver_rating_text}>
                             {(
                               deliveriesMap[order.id].driver.rating || 5.0
@@ -751,7 +751,7 @@ const RestaurantOrders = () => {
                         </View>
                       </View>
 
-                      <Text style={styles.driver_sub_text}>
+                      <Text style={styles.driver_sub_text} numberOfLines={1}>
                         {(
                           deliveriesMap[order.id].driver.vehicle_type || "BIKE"
                         ).toUpperCase()}{" "}
@@ -762,12 +762,24 @@ const RestaurantOrders = () => {
 
                       <Text style={styles.driver_notice_text}>
                         {deliveriesMap[order.id].status === "arrived"
-                          ? "📍 Rider has arrived at your restaurant!"
+                          ? "Rider has arrived at your restaurant!"
                           : deliveriesMap[order.id].status === "in_transit"
-                            ? "🚀 Rider is delivering order to customer"
-                            : "🏍️ Rider is on the way to pick up the order"}
+                            ? "Rider is delivering order to customer"
+                            : "Rider on the way"}
                       </Text>
                     </View>
+
+                    {/* Dedicated 1-Tap Driver Call Button */}
+                    <TouchableOpacity
+                      style={styles.driver_call_btn}
+                      onPress={() =>
+                        handleCallCustomer(
+                          deliveriesMap[order.id].driver.user?.phone || "",
+                        )
+                      }
+                    >
+                      <Feather name="phone-call" size={15} color="#fff" />
+                    </TouchableOpacity>
                   </View>
                 )}
 
@@ -828,22 +840,35 @@ const RestaurantOrders = () => {
                     </TouchableOpacity>
                   )}
 
-                  {order.status === "ready_for_pickup" && (
-                    <>
-                      {deliveriesMap[order.id]?.status === "expired" ? (
-                        <TouchableOpacity
-                          style={styles.search_driver_btn}
-                          disabled={searchingMap[order.id]}
-                          onPress={() => handleRetryDriverSearch(order.id)}
-                        >
-                          {searchingMap[order.id] ? (
+                  {(order.status === "ready_for_pickup" ||
+                    order.status === "in_transit") &&
+                    (() => {
+                      const delivery = deliveriesMap[order.id];
+                      const isSearching = searchingMap[order.id];
+                      const isPaying = payingMap[order.id];
+
+                      if (isSearching) {
+                        return (
+                          <TouchableOpacity
+                            style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                            disabled
+                          >
                             <View style={styles.btn_loading_row}>
                               <ActivityIndicator size="small" color="#121212" />
                               <Text style={styles.search_driver_btn_text}>
                                 Searching...
                               </Text>
                             </View>
-                          ) : (
+                          </TouchableOpacity>
+                        );
+                      }
+
+                      if (delivery?.status === "expired") {
+                        return (
+                          <TouchableOpacity
+                            style={styles.search_driver_btn}
+                            onPress={() => handleRetryDriverSearch(order.id)}
+                          >
                             <View style={styles.btn_loading_row}>
                               <Feather
                                 name="refresh-cw"
@@ -854,38 +879,100 @@ const RestaurantOrders = () => {
                                 Retry Driver Search
                               </Text>
                             </View>
-                          )}
-                        </TouchableOpacity>
-                      ) : (
-                        <View style={styles.awaiting_rider_tag}>
-                          <ActivityIndicator
-                            size="small"
-                            color="#2196f3"
-                            style={{ marginRight: 4 }}
-                          />
-                          <Text style={styles.awaiting_rider_text}>
-                            {deliveriesMap[order.id]?.driver
-                              ? "Driver Assigned"
-                              : "Searching for Driver..."}
-                          </Text>
-                        </View>
-                      )}
-                    </>
-                  )}
+                          </TouchableOpacity>
+                        );
+                      }
 
-                  {order.status === "in_transit" && (
-                    <View style={styles.awaiting_rider_tag}>
-                      <Feather name="truck" size={13} color="#9c27b0" />
-                      <Text
-                        style={[
-                          styles.awaiting_rider_text,
-                          { color: "#9c27b0" },
-                        ]}
-                      >
-                        Dispatched
-                      </Text>
-                    </View>
-                  )}
+                      if (!delivery || delivery.status === "pending") {
+                        return (
+                          <TouchableOpacity
+                            style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                            disabled
+                          >
+                            <View style={styles.btn_loading_row}>
+                              <ActivityIndicator size="small" color="#121212" />
+                              <Text style={styles.search_driver_btn_text}>
+                                Searching for Driver...
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      }
+
+                      if (delivery.driver) {
+                        if (
+                          delivery.status === "arrived" &&
+                          delivery.payment_status !== "paid"
+                        ) {
+                          return (
+                            <TouchableOpacity
+                              style={styles.search_driver_btn}
+                              disabled={isPaying}
+                              onPress={() => handlePayRider(order.id)}
+                            >
+                              {isPaying ? (
+                                <View style={styles.btn_loading_row}>
+                                  <ActivityIndicator
+                                    size="small"
+                                    color="#121212"
+                                  />
+                                  <Text style={styles.search_driver_btn_text}>
+                                    Paying Rider...
+                                  </Text>
+                                </View>
+                              ) : (
+                                <View style={styles.btn_loading_row}>
+                                  <Feather
+                                    name="credit-card"
+                                    size={14}
+                                    color="#121212"
+                                  />
+                                  <Text style={styles.search_driver_btn_text}>
+                                    Pay Rider (₦1,500)
+                                  </Text>
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        }
+
+                        if (delivery.payment_status === "paid") {
+                          return (
+                            <TouchableOpacity
+                              style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                              disabled
+                            >
+                              <View style={styles.btn_loading_row}>
+                                <Feather
+                                  name="check-circle"
+                                  size={14}
+                                  color="#121212"
+                                />
+                                <Text style={styles.search_driver_btn_text}>
+                                  Rider Paid (₦1,500)
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        }
+
+                        return (
+                          <TouchableOpacity
+                            style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                            disabled
+                          >
+                            <View style={styles.btn_loading_row}>
+                              <ActivityIndicator size="small" color="#121212" />
+                              <Text style={styles.search_driver_btn_text}>
+                                Rider En Route...
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      }
+
+                      return null;
+                    })()}
                 </View>
               </TouchableOpacity>
             );
@@ -1002,18 +1089,29 @@ const RestaurantOrders = () => {
             >
               {/* Receipt Summary Box */}
               <View style={styles.receipt_card}>
-                <Text style={styles.receipt_section_title}>
-                  CUSTOMER DETAILS
-                </Text>
-                <Text style={styles.receipt_customer_name}>
-                  {selectedOrder.customer_name}
-                </Text>
-                <Text style={styles.receipt_customer_phone}>
-                  {selectedOrder.customer_phone}
-                </Text>
-                <Text style={styles.receipt_address}>
-                  {selectedOrder.delivery_address}
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <View style={{ flex: 1, marginRight: 10 }}>
+                    <Text style={styles.receipt_section_title}>
+                      CUSTOMER DETAILS
+                    </Text>
+                    <Text style={styles.receipt_customer_name}>
+                      {selectedOrder.customer_name}
+                    </Text>
+                    <Text style={styles.receipt_customer_phone}>
+                      {selectedOrder.customer_phone}
+                    </Text>
+                    <Text style={styles.receipt_address}>
+                      {selectedOrder.delivery_address}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.driver_call_btn}
+                    onPress={() => handleCallCustomer(selectedOrder.customer_phone)}
+                  >
+                    <Feather name="phone-call" size={15} color="#fff" />
+                  </TouchableOpacity>
+                </View>
 
                 <View style={styles.receipt_divider} />
 
@@ -1068,6 +1166,81 @@ const RestaurantOrders = () => {
                   </Text>
                 </View>
               </View>
+
+              {/* Driver Details Card in Modal Sheet */}
+              {deliveriesMap[selectedOrder.id]?.driver && (
+                <View style={styles.driver_card}>
+                  <View style={styles.driver_avatar_wrapper}>
+                    {deliveriesMap[selectedOrder.id].driver.user?.profile_pic ? (
+                      <Image
+                        source={{
+                          uri: deliveriesMap[selectedOrder.id].driver.user
+                            .profile_pic,
+                        }}
+                        style={styles.driver_avatar}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <View style={styles.driver_avatar_placeholder}>
+                        <FontAwesome5
+                          name="motorcycle"
+                          size={16}
+                          color="#4caf50"
+                        />
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.driver_info_col}>
+                    <View style={styles.driver_name_row}>
+                      <Text style={styles.driver_name_text} numberOfLines={1}>
+                        {deliveriesMap[selectedOrder.id].driver.user?.name ||
+                          "Dispatch Rider"}
+                      </Text>
+                      <View style={styles.driver_rating_badge}>
+                        <Feather name="star" size={10} color="#ffc107" />
+                        <Text style={styles.driver_rating_text}>
+                          {(
+                            deliveriesMap[selectedOrder.id].driver.rating || 5.0
+                          ).toFixed(1)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.driver_sub_text} numberOfLines={1}>
+                      {(
+                        deliveriesMap[selectedOrder.id].driver.vehicle_type ||
+                        "BIKE"
+                      ).toUpperCase()}{" "}
+                      DISPATCH •{" "}
+                      {deliveriesMap[selectedOrder.id].driver.user?.phone ||
+                        "+234 800 000 0000"}
+                    </Text>
+
+                    <Text style={styles.driver_notice_text}>
+                      {deliveriesMap[selectedOrder.id].status === "arrived"
+                        ? "Rider has arrived at your restaurant!"
+                        : deliveriesMap[selectedOrder.id].status ===
+                            "in_transit"
+                          ? "Rider is delivering order to customer"
+                          : "Rider on the way"}
+                    </Text>
+                  </View>
+
+                  {/* 1-Tap Driver Call Button */}
+                  <TouchableOpacity
+                    style={styles.driver_call_btn}
+                    onPress={() =>
+                      handleCallCustomer(
+                        deliveriesMap[selectedOrder.id].driver.user?.phone ||
+                          "",
+                      )
+                    }
+                  >
+                    <Feather name="phone-call" size={15} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {/* Status Timeline */}
               <View style={styles.timeline_card}>
@@ -1740,7 +1913,7 @@ const styles = StyleSheet.create({
   // Driver Card & Rider Payment styles
   driver_card: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     backgroundColor: "#1f1f1f",
     borderRadius: 14,
     padding: 12,
@@ -1773,12 +1946,13 @@ const styles = StyleSheet.create({
   driver_name_row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 6,
   },
   driver_name_text: {
     color: "#fff",
     fontFamily: "raleway-bold",
     fontSize: 14,
+    maxWidth: "70%",
   },
   driver_rating_badge: {
     flexDirection: "row",
@@ -1804,6 +1978,16 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-semibold",
     fontSize: 11,
     marginTop: 2,
+  },
+  driver_call_btn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#ffffff1f",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#ffffff33",
   },
   pay_rider_btn: {
     flexDirection: "row",

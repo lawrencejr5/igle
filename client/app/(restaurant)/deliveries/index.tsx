@@ -7,6 +7,7 @@ import {
   RefreshControl,
   Platform,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
@@ -65,7 +66,14 @@ const RestaurantDeliveries = () => {
   const filteredDeliveries = React.useMemo(() => {
     return deliveries.filter((d) => {
       if (activeTab === "active") {
-        return ["pending", "scheduled", "accepted", "arrived", "picked_up", "in_transit"].includes(d.status);
+        return [
+          "pending",
+          "scheduled",
+          "accepted",
+          "arrived",
+          "picked_up",
+          "in_transit",
+        ].includes(d.status);
       }
       if (activeTab === "delivered") {
         return d.status === "delivered";
@@ -78,19 +86,30 @@ const RestaurantDeliveries = () => {
   }, [deliveries, activeTab]);
 
   const activeCount = deliveries.filter((d) =>
-    ["pending", "scheduled", "accepted", "arrived", "picked_up", "in_transit"].includes(d.status)
+    [
+      "pending",
+      "scheduled",
+      "accepted",
+      "arrived",
+      "picked_up",
+      "in_transit",
+    ].includes(d.status),
   ).length;
 
-  const deliveredCount = deliveries.filter((d) => d.status === "delivered").length;
+  const deliveredCount = deliveries.filter(
+    (d) => d.status === "delivered",
+  ).length;
   const cancelledCount = deliveries.filter((d) =>
-    ["cancelled", "expired", "failed"].includes(d.status)
+    ["cancelled", "expired", "failed"].includes(d.status),
   ).length;
 
   return (
     <View
       style={[
         styles.container,
-        { paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14 },
+        {
+          paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14,
+        },
       ]}
     >
       {/* ── Top Header Bar ── */}
@@ -107,7 +126,9 @@ const RestaurantDeliveries = () => {
 
         <View style={styles.header_title_box}>
           <Text style={styles.header_title}>Restaurant Deliveries</Text>
-          <Text style={styles.header_sub}>Manage dispatch riders & tracking</Text>
+          <Text style={styles.header_sub}>
+            Manage dispatch riders & tracking
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -124,37 +145,61 @@ const RestaurantDeliveries = () => {
       {/* ── Filter Tabs ── */}
       <View style={styles.tabs_row}>
         <TouchableOpacity
-          style={[styles.tab_chip, activeTab === "active" && styles.tab_chip_active]}
+          style={[
+            styles.tab_chip,
+            activeTab === "active" && styles.tab_chip_active,
+          ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setActiveTab("active");
           }}
         >
-          <Text style={[styles.tab_chip_text, activeTab === "active" && styles.tab_chip_text_active]}>
+          <Text
+            style={[
+              styles.tab_chip_text,
+              activeTab === "active" && styles.tab_chip_text_active,
+            ]}
+          >
             Active ({activeCount})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab_chip, activeTab === "delivered" && styles.tab_chip_active]}
+          style={[
+            styles.tab_chip,
+            activeTab === "delivered" && styles.tab_chip_active,
+          ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setActiveTab("delivered");
           }}
         >
-          <Text style={[styles.tab_chip_text, activeTab === "delivered" && styles.tab_chip_text_active]}>
+          <Text
+            style={[
+              styles.tab_chip_text,
+              activeTab === "delivered" && styles.tab_chip_text_active,
+            ]}
+          >
             Delivered ({deliveredCount})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab_chip, activeTab === "cancelled" && styles.tab_chip_active]}
+          style={[
+            styles.tab_chip,
+            activeTab === "cancelled" && styles.tab_chip_active,
+          ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setActiveTab("cancelled");
           }}
         >
-          <Text style={[styles.tab_chip_text, activeTab === "cancelled" && styles.tab_chip_text_active]}>
+          <Text
+            style={[
+              styles.tab_chip_text,
+              activeTab === "cancelled" && styles.tab_chip_text_active,
+            ]}
+          >
             Cancelled ({cancelledCount})
           </Text>
         </TouchableOpacity>
@@ -178,7 +223,9 @@ const RestaurantDeliveries = () => {
         {loading ? (
           <View style={styles.center_box}>
             <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loading_text}>Loading restaurant deliveries...</Text>
+            <Text style={styles.loading_text}>
+              Loading restaurant deliveries...
+            </Text>
           </View>
         ) : filteredDeliveries.length === 0 ? (
           <View style={styles.empty_box}>
@@ -205,7 +252,9 @@ const RestaurantDeliveries = () => {
                   <View style={styles.order_number_box}>
                     <FontAwesome5 name="receipt" size={14} color="#9CA3AF" />
                     <Text style={styles.order_number_text}>
-                      Order #{foodOrder?.order_number || delivery._id.slice(-6).toUpperCase()}
+                      Order #
+                      {foodOrder?.order_number ||
+                        delivery._id.slice(-6).toUpperCase()}
                     </Text>
                   </View>
 
@@ -215,12 +264,12 @@ const RestaurantDeliveries = () => {
                       delivery.status === "delivered"
                         ? styles.badge_green
                         : delivery.status === "arrived"
-                        ? styles.badge_amber
-                        : delivery.status === "in_transit"
-                        ? styles.badge_purple
-                        : ["cancelled", "expired"].includes(delivery.status)
-                        ? styles.badge_red
-                        : styles.badge_blue,
+                          ? styles.badge_amber
+                          : delivery.status === "in_transit"
+                            ? styles.badge_purple
+                            : ["cancelled", "expired"].includes(delivery.status)
+                              ? styles.badge_red
+                              : styles.badge_blue,
                     ]}
                   >
                     <Text
@@ -229,12 +278,14 @@ const RestaurantDeliveries = () => {
                         delivery.status === "delivered"
                           ? { color: "#4caf50" }
                           : delivery.status === "arrived"
-                          ? { color: "#ffc107" }
-                          : delivery.status === "in_transit"
-                          ? { color: "#ab47bc" }
-                          : ["cancelled", "expired"].includes(delivery.status)
-                          ? { color: "#ef5350" }
-                          : { color: "#2196f3" },
+                            ? { color: "#ffc107" }
+                            : delivery.status === "in_transit"
+                              ? { color: "#ab47bc" }
+                              : ["cancelled", "expired"].includes(
+                                    delivery.status,
+                                  )
+                                ? { color: "#ef5350" }
+                                : { color: "#2196f3" },
                       ]}
                     >
                       {delivery.status.replace("_", " ").toUpperCase()}
@@ -254,7 +305,11 @@ const RestaurantDeliveries = () => {
                         />
                       ) : (
                         <View style={styles.avatar_placeholder}>
-                          <FontAwesome5 name="motorcycle" size={16} color="#fff" />
+                          <FontAwesome5
+                            name="motorcycle"
+                            size={16}
+                            color="#fff"
+                          />
                         </View>
                       )}
                     </View>
@@ -272,14 +327,33 @@ const RestaurantDeliveries = () => {
                         </View>
                       </View>
                       <Text style={styles.driver_meta_text}>
-                        {(driverObj.vehicle_type || "bike").toUpperCase()} • {driverUser?.phone || "No Phone"}
+                        {(driverObj.vehicle_type || "bike").toUpperCase()} •{" "}
+                        {driverUser?.phone || "No Phone"}
                       </Text>
                     </View>
+
+                    {driverUser?.phone ? (
+                      <TouchableOpacity
+                        style={styles.call_btn}
+                        onPress={() => {
+                          Haptics.impactAsync(
+                            Haptics.ImpactFeedbackStyle.Light,
+                          );
+                          Linking.openURL(
+                            `tel:${driverUser.phone.replace(/\s+/g, "")}`,
+                          );
+                        }}
+                      >
+                        <Feather name="phone-call" size={14} color="#fff" />
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
                 ) : (
                   <View style={styles.searching_box}>
                     <ActivityIndicator size="small" color="#ff9800" />
-                    <Text style={styles.searching_text}>Searching for nearby bike rider...</Text>
+                    <Text style={styles.searching_text}>
+                      Searching for nearby bike rider...
+                    </Text>
                   </View>
                 )}
 
@@ -310,12 +384,48 @@ const RestaurantDeliveries = () => {
                     </Text>
                   </View>
 
-                  <View style={styles.paid_badge}>
-                    <Feather name="check" size={12} color="#4caf50" />
-                    <Text style={styles.paid_text}>
-                      {delivery.payment_status === "paid" ? "Paid" : "Auto-Paid"}
-                    </Text>
-                  </View>
+                  {delivery.status === "arrived" &&
+                  delivery.payment_status !== "paid" ? (
+                    <TouchableOpacity
+                      style={styles.pay_btn}
+                      disabled={
+                        payingMap[
+                          typeof foodOrder === "object"
+                            ? foodOrder?._id
+                            : delivery.food_order_id
+                        ]
+                      }
+                      onPress={() =>
+                        handlePayRider(
+                          typeof foodOrder === "object"
+                            ? foodOrder?._id
+                            : delivery.food_order_id,
+                        )
+                      }
+                    >
+                      {payingMap[
+                        typeof foodOrder === "object"
+                          ? foodOrder?._id
+                          : delivery.food_order_id
+                      ] ? (
+                        <ActivityIndicator size="small" color="#121212" />
+                      ) : (
+                        <Feather name="credit-card" size={13} color="#121212" />
+                      )}
+                      <Text style={styles.pay_btn_text}>
+                        Pay Rider (₦1,500)
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.paid_badge}>
+                      <Feather name="check" size={12} color="#4caf50" />
+                      <Text style={styles.paid_text}>
+                        {delivery.payment_status === "paid"
+                          ? "Rider Paid"
+                          : "Auto-Paid"}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
             );
@@ -535,7 +645,7 @@ const styles = StyleSheet.create({
   driver_title_row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 6,
   },
   driver_name: {
     color: "#fff",
@@ -561,6 +671,16 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-medium",
     fontSize: 11,
     marginTop: 2,
+  },
+  call_btn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#ffffff1f",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#ffffff33",
   },
   searching_box: {
     flexDirection: "row",
@@ -626,13 +746,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#4caf50",
+    backgroundColor: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
   pay_btn_text: {
-    color: "#fff",
+    color: "#121212",
     fontFamily: "raleway-bold",
     fontSize: 12,
   },
