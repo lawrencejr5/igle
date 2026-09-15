@@ -118,6 +118,10 @@ interface FoodOrderContextType {
   rejectOrder: (orderId: string, reason?: string) => Promise<FoodOrderType | null>;
   markOrderReady: (orderId: string) => Promise<FoodOrderType | null>;
   markOrderDelivered: (orderId: string) => Promise<FoodOrderType | null>;
+  payDeliveryRider: (orderId: string) => Promise<boolean>;
+  retryDeliveryRider: (orderId: string) => Promise<boolean>;
+  fetchRestaurantDeliveries: () => Promise<any[]>;
+  getFoodOrderDelivery: (orderId: string) => Promise<any | null>;
 
   // Customer Functions
   placeFoodOrder: (orderPayload: {
@@ -315,6 +319,97 @@ export const FoodOrderProvider: FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const payDeliveryRider = async (orderId: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error("Auth token missing");
+
+      const { data } = await axios.post(
+        `${API_URLS.orders}/${orderId}/pay-delivery`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data?.delivery) {
+        showNotification("Delivery fee paid to rider successfully! 🏍️", "success");
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      const msg = err?.response?.data?.msg || err?.message || "Failed to pay delivery rider";
+      showNotification(msg, "error");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const retryDeliveryRider = async (orderId: string): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error("Auth token missing");
+
+      const { data } = await axios.post(
+        `${API_URLS.orders}/${orderId}/retry-delivery`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data?.delivery) {
+        showNotification("Searching for nearby bike rider again... 🏍️", "info");
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      const msg = err?.response?.data?.msg || err?.message || "Failed to retry driver search";
+      showNotification(msg, "error");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRestaurantDeliveries = async (): Promise<any[]> => {
+    setLoading(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) return [];
+
+      const { data } = await axios.get(`${API_URLS.orders}/vendor/deliveries`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return data?.deliveries || [];
+    } catch (err: any) {
+      console.log("fetchRestaurantDeliveries error:", err?.response?.data || err.message);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFoodOrderDelivery = async (orderId: string): Promise<any | null> => {
+    try {
+      const token = await getAuthToken();
+      if (!token) return null;
+
+      const { data } = await axios.get(`${API_URLS.orders}/${orderId}/delivery`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      return data?.delivery || null;
+    } catch (err: any) {
+      console.log("getFoodOrderDelivery error:", err?.response?.data || err.message);
+      return null;
+    }
+  };
+
 
   // ─── Customer Operations ────────────────────────────────────────────────────
 
@@ -449,6 +544,10 @@ export const FoodOrderProvider: FC<{ children: ReactNode }> = ({ children }) => 
         rejectOrder,
         markOrderReady,
         markOrderDelivered,
+        payDeliveryRider,
+        retryDeliveryRider,
+        fetchRestaurantDeliveries,
+        getFoodOrderDelivery,
         placeFoodOrder,
         fetchCustomerOrders,
         cancelFoodOrder,

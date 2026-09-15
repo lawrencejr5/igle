@@ -13,12 +13,18 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import {
+  Feather,
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 import { useFoodOrderContext } from "../../../context/FoodOrderContext";
@@ -85,19 +91,51 @@ const RestaurantOrders = () => {
     acceptOrder,
     rejectOrder,
     markOrderReady,
+    payDeliveryRider,
+    retryDeliveryRider,
+    getFoodOrderDelivery,
   } = useFoodOrderContext();
 
   const [orders, setOrders] = useState<VendorFoodOrder[]>([]);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
 
+  const [deliveriesMap, setDeliveriesMap] = useState<Record<string, any>>({});
+  const [searchingMap, setSearchingMap] = useState<Record<string, boolean>>({});
+  const [payingMap, setPayingMap] = useState<Record<string, boolean>>({});
+
   // Decline Modal State
   const [declineModalVisible, setDeclineModalVisible] = useState(false);
-  const [declineTargetOrder, setDeclineTargetOrder] = useState<VendorFoodOrder | null>(null);
+  const [declineTargetOrder, setDeclineTargetOrder] =
+    useState<VendorFoodOrder | null>(null);
   const [declineReason, setDeclineReason] = useState("");
 
   // Order Details Modal State
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<VendorFoodOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<VendorFoodOrder | null>(
+    null,
+  );
+
+  // Load delivery details for active orders
+  const loadDeliveries = async (ordersList: VendorFoodOrder[]) => {
+    const activeWithDelivery = ordersList.filter(
+      (o) =>
+        o.status === "ready_for_pickup" ||
+        o.status === "in_transit" ||
+        o.status === "preparing",
+    );
+    const updatedMap: Record<string, any> = {};
+    await Promise.all(
+      activeWithDelivery.map(async (o) => {
+        try {
+          const del = await getFoodOrderDelivery(o.id);
+          if (del) {
+            updatedMap[o.id] = del;
+          }
+        } catch (e) {}
+      }),
+    );
+    setDeliveriesMap((prev) => ({ ...prev, ...updatedMap }));
+  };
 
   // Fetch backend orders on mount
   useEffect(() => {
@@ -147,6 +185,7 @@ const RestaurantOrders = () => {
         };
       });
       setOrders(mapped);
+      loadDeliveries(mapped);
     }
   }, [vendorOrders]);
 
@@ -164,9 +203,50 @@ const RestaurantOrders = () => {
         fetchVendorOrders();
       });
 
+      socket.on("food_order_updated", (data: any) => {
+        fetchVendorOrders();
+      });
+
+      socket.on("delivery_accepted", (data: any) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        fetchVendorOrders();
+      });
+
+      socket.on("delivery_arrived", (data: any) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        fetchVendorOrders();
+      });
+
+      socket.on("delivery_paid", (data: any) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        fetchVendorOrders();
+      });
+
+      socket.on("delivery_request_expired", (data: any) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        if (data?.food_order_id || data?.delivery_id) {
+          setDeliveriesMap((prev) => {
+            const copy = { ...prev };
+            const targetId =
+              data.food_order_id ||
+              Object.keys(copy).find((k) => copy[k]?._id === data.delivery_id);
+            if (targetId && copy[targetId]) {
+              copy[targetId] = { ...copy[targetId], status: "expired" };
+            }
+            return copy;
+          });
+        }
+        fetchVendorOrders();
+      });
+
       return () => {
         socket.off("new_food_order");
         socket.off("food_order_cancelled");
+        socket.off("food_order_updated");
+        socket.off("delivery_accepted");
+        socket.off("delivery_arrived");
+        socket.off("delivery_paid");
+        socket.off("delivery_request_expired");
       };
     }
   }, []);
@@ -177,7 +257,6 @@ const RestaurantOrders = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const updated = await acceptOrder(orderId);
     if (!updated) {
-      // Optimistic update fallback
       setOrders((prev) =>
         prev.map((o) =>
           o.id === orderId
@@ -186,27 +265,57 @@ const RestaurantOrders = () => {
                 status: "preparing",
                 preparing_at: "Just now",
               }
-            : o
-        )
+            : o,
+        ),
       );
     }
   };
 
-  const handleMarkReady = async (orderId: string) => {
+  const handleSearchForDriver = async (orderId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const updated = await markOrderReady(orderId);
-    if (!updated) {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === orderId
-            ? {
-                ...o,
-                status: "ready_for_pickup",
-                ready_at: "Just now",
-              }
-            : o
-        )
-      );
+    setSearchingMap((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const updated = await markOrderReady(orderId);
+      if (updated) {
+        const del = await getFoodOrderDelivery(orderId);
+        if (del) {
+          setDeliveriesMap((prev) => ({ ...prev, [orderId]: del }));
+        }
+      }
+    } finally {
+      setSearchingMap((prev) => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const handleRetryDriverSearch = async (orderId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSearchingMap((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const success = await retryDeliveryRider(orderId);
+      if (success) {
+        const del = await getFoodOrderDelivery(orderId);
+        if (del) {
+          setDeliveriesMap((prev) => ({ ...prev, [orderId]: del }));
+        }
+      }
+    } finally {
+      setSearchingMap((prev) => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const handlePayRider = async (orderId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setPayingMap((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const success = await payDeliveryRider(orderId);
+      if (success) {
+        const del = await getFoodOrderDelivery(orderId);
+        if (del) {
+          setDeliveriesMap((prev) => ({ ...prev, [orderId]: del }));
+        }
+      }
+    } finally {
+      setPayingMap((prev) => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -231,8 +340,8 @@ const RestaurantOrders = () => {
               rejection_reason: declineReason.trim() || "Declined by vendor",
               cancelled_at: "Just now",
             }
-          : o
-      )
+          : o,
+      ),
     );
     setDeclineModalVisible(false);
     setDeclineTargetOrder(null);
@@ -256,7 +365,7 @@ const RestaurantOrders = () => {
   const getFilteredOrders = (): VendorFoodOrder[] => {
     if (activeTab === "active") {
       return orders.filter((o) =>
-        ["placed", "preparing", "ready_for_pickup"].includes(o.status)
+        ["placed", "preparing", "ready_for_pickup"].includes(o.status),
       );
     } else if (activeTab === "in_transit") {
       return orders.filter((o) => o.status === "in_transit");
@@ -275,7 +384,9 @@ const RestaurantOrders = () => {
     <View
       style={[
         styles.container,
-        { paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14 },
+        {
+          paddingTop: Platform.OS === "ios" ? insets.top + 10 : insets.top + 14,
+        },
       ]}
     >
       {/* ── Top Bar (Only Back Button) ── */}
@@ -290,7 +401,12 @@ const RestaurantOrders = () => {
         <View style={styles.header_center}>
           <Text style={styles.header_title}>Live Orders</Text>
           <Text style={styles.header_sub}>
-            {restaurant?.name || "Vendor Dashboard"} • {orders.filter(o => ["placed", "preparing"].includes(o.status)).length} Active
+            {restaurant?.name || "Vendor Dashboard"} •{" "}
+            {
+              orders.filter((o) => ["placed", "preparing"].includes(o.status))
+                .length
+            }{" "}
+            Active
           </Text>
         </View>
 
@@ -324,9 +440,13 @@ const RestaurantOrders = () => {
               ]}
             >
               Kitchen & Active (
-              {orders.filter((o) =>
-                ["placed", "preparing", "ready_for_pickup"].includes(o.status)
-              ).length}
+              {
+                orders.filter((o) =>
+                  ["placed", "preparing", "ready_for_pickup"].includes(
+                    o.status,
+                  ),
+                ).length
+              }
               )
             </Text>
           </TouchableOpacity>
@@ -347,7 +467,8 @@ const RestaurantOrders = () => {
                 activeTab === "in_transit" && styles.tab_chip_text_active,
               ]}
             >
-              In Transit ({orders.filter((o) => o.status === "in_transit").length})
+              In Transit (
+              {orders.filter((o) => o.status === "in_transit").length})
             </Text>
           </TouchableOpacity>
 
@@ -367,7 +488,8 @@ const RestaurantOrders = () => {
                 activeTab === "completed" && styles.tab_chip_text_active,
               ]}
             >
-              Completed ({orders.filter((o) => o.status === "delivered").length})
+              Completed ({orders.filter((o) => o.status === "delivered").length}
+              )
             </Text>
           </TouchableOpacity>
 
@@ -388,9 +510,11 @@ const RestaurantOrders = () => {
               ]}
             >
               Declined (
-              {orders.filter((o) =>
-                ["cancelled", "rejected"].includes(o.status)
-              ).length}
+              {
+                orders.filter((o) =>
+                  ["cancelled", "rejected"].includes(o.status),
+                ).length
+              }
               )
             </Text>
           </TouchableOpacity>
@@ -443,17 +567,30 @@ const RestaurantOrders = () => {
                 <View style={styles.card_header}>
                   <View>
                     <View style={styles.order_num_row}>
-                      <Text style={styles.order_num_text}>{order.order_number}</Text>
-                      <Text style={styles.time_ago_text}>• {order.placed_at}</Text>
+                      <Text style={styles.order_num_text}>
+                        {order.order_number}
+                      </Text>
+                      <Text style={styles.time_ago_text}>
+                        • {order.placed_at}
+                      </Text>
                     </View>
-                    <Text style={styles.customer_name}>{order.customer_name}</Text>
+                    <Text style={styles.customer_name}>
+                      {order.customer_name}
+                    </Text>
                   </View>
 
                   {/* Status Badge */}
                   {order.status === "placed" && (
                     <View style={[styles.status_chip, styles.chip_placed]}>
-                      <View style={[styles.status_dot_small, { backgroundColor: "#ffc107" }]} />
-                      <Text style={[styles.status_chip_text, { color: "#ffc107" }]}>
+                      <View
+                        style={[
+                          styles.status_dot_small,
+                          { backgroundColor: "#ffc107" },
+                        ]}
+                      />
+                      <Text
+                        style={[styles.status_chip_text, { color: "#ffc107" }]}
+                      >
                         NEW ORDER
                       </Text>
                     </View>
@@ -461,7 +598,9 @@ const RestaurantOrders = () => {
 
                   {order.status === "preparing" && (
                     <View style={[styles.status_chip, styles.chip_preparing]}>
-                      <Text style={[styles.status_chip_text, { color: "#ff9800" }]}>
+                      <Text
+                        style={[styles.status_chip_text, { color: "#ff9800" }]}
+                      >
                         🍳 PREPARING
                       </Text>
                     </View>
@@ -469,7 +608,9 @@ const RestaurantOrders = () => {
 
                   {order.status === "ready_for_pickup" && (
                     <View style={[styles.status_chip, styles.chip_ready]}>
-                      <Text style={[styles.status_chip_text, { color: "#2196f3" }]}>
+                      <Text
+                        style={[styles.status_chip_text, { color: "#2196f3" }]}
+                      >
                         📦 READY FOR PICKUP
                       </Text>
                     </View>
@@ -477,7 +618,9 @@ const RestaurantOrders = () => {
 
                   {order.status === "in_transit" && (
                     <View style={[styles.status_chip, styles.chip_transit]}>
-                      <Text style={[styles.status_chip_text, { color: "#9c27b0" }]}>
+                      <Text
+                        style={[styles.status_chip_text, { color: "#9c27b0" }]}
+                      >
                         🚚 IN TRANSIT
                       </Text>
                     </View>
@@ -485,16 +628,22 @@ const RestaurantOrders = () => {
 
                   {order.status === "delivered" && (
                     <View style={[styles.status_chip, styles.chip_delivered]}>
-                      <Text style={[styles.status_chip_text, { color: "#4caf50" }]}>
+                      <Text
+                        style={[styles.status_chip_text, { color: "#4caf50" }]}
+                      >
                         ✅ DELIVERED
                       </Text>
                     </View>
                   )}
 
-                  {(order.status === "cancelled" || order.status === "rejected") && (
+                  {(order.status === "cancelled" ||
+                    order.status === "rejected") && (
                     <View style={[styles.status_chip, styles.chip_cancelled]}>
-                      <Text style={[styles.status_chip_text, { color: "#ef5350" }]}>
-                        ❌ {order.status === "rejected" ? "DECLINED" : "CANCELLED"}
+                      <Text
+                        style={[styles.status_chip_text, { color: "#ef5350" }]}
+                      >
+                        ❌{" "}
+                        {order.status === "rejected" ? "DECLINED" : "CANCELLED"}
                       </Text>
                     </View>
                   )}
@@ -511,13 +660,14 @@ const RestaurantOrders = () => {
                         </Text>
 
                         {/* Selected Options */}
-                        {item.selected_options && item.selected_options.length > 0 && (
-                          <Text style={styles.item_options_text}>
-                            {item.selected_options
-                              .map((o) => `${o.group_name}: ${o.option_name}`)
-                              .join(" • ")}
-                          </Text>
-                        )}
+                        {item.selected_options &&
+                          item.selected_options.length > 0 && (
+                            <Text style={styles.item_options_text}>
+                              {item.selected_options
+                                .map((o) => `${o.group_name}: ${o.option_name}`)
+                                .join(" • ")}
+                            </Text>
+                          )}
 
                         {/* Special instructions */}
                         {item.special_instructions ? (
@@ -561,6 +711,66 @@ const RestaurantOrders = () => {
                   </TouchableOpacity>
                 </View>
 
+                {/* Driver Details & Rider Payment Section */}
+                {deliveriesMap[order.id]?.driver && (
+                  <View style={styles.driver_card}>
+                    <View style={styles.driver_avatar_wrapper}>
+                      {deliveriesMap[order.id].driver.user?.profile_pic ? (
+                        <Image
+                          source={{
+                            uri: deliveriesMap[order.id].driver.user
+                              .profile_pic,
+                          }}
+                          style={styles.driver_avatar}
+                          contentFit="cover"
+                        />
+                      ) : (
+                        <View style={styles.driver_avatar_placeholder}>
+                          <FontAwesome5
+                            name="motorcycle"
+                            size={16}
+                            color="#4caf50"
+                          />
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.driver_info_col}>
+                      <View style={styles.driver_name_row}>
+                        <Text style={styles.driver_name_text}>
+                          {deliveriesMap[order.id].driver.user?.name ||
+                            "Dispatch Rider"}
+                        </Text>
+                        <View style={styles.driver_rating_badge}>
+                          <Feather name="star" size={11} color="#ffc107" />
+                          <Text style={styles.driver_rating_text}>
+                            {(
+                              deliveriesMap[order.id].driver.rating || 5.0
+                            ).toFixed(1)}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <Text style={styles.driver_sub_text}>
+                        {(
+                          deliveriesMap[order.id].driver.vehicle_type || "BIKE"
+                        ).toUpperCase()}{" "}
+                        DISPATCH •{" "}
+                        {deliveriesMap[order.id].driver.user?.phone ||
+                          "+234 800 000 0000"}
+                      </Text>
+
+                      <Text style={styles.driver_notice_text}>
+                        {deliveriesMap[order.id].status === "arrived"
+                          ? "📍 Rider has arrived at your restaurant!"
+                          : deliveriesMap[order.id].status === "in_transit"
+                            ? "🚀 Rider is delivering order to customer"
+                            : "🏍️ Rider is on the way to pick up the order"}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
                 {/* Price & Action Row */}
                 <View style={styles.pricing_footer}>
                   <View>
@@ -592,27 +802,86 @@ const RestaurantOrders = () => {
 
                   {order.status === "preparing" && (
                     <TouchableOpacity
-                      style={styles.ready_action_btn}
-                      onPress={() => handleMarkReady(order.id)}
+                      style={styles.search_driver_btn}
+                      disabled={searchingMap[order.id]}
+                      onPress={() => handleSearchForDriver(order.id)}
                     >
-                      <Feather name="package" size={16} color="#fff" />
-                      <Text style={styles.ready_action_text}>Mark Ready</Text>
+                      {searchingMap[order.id] ? (
+                        <View style={styles.btn_loading_row}>
+                          <ActivityIndicator size="small" color="#121212" />
+                          <Text style={styles.search_driver_btn_text}>
+                            Searching...
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={styles.btn_loading_row}>
+                          <FontAwesome5
+                            name="search-location"
+                            size={13}
+                            color="#121212"
+                          />
+                          <Text style={styles.search_driver_btn_text}>
+                            Search for Driver
+                          </Text>
+                        </View>
+                      )}
                     </TouchableOpacity>
                   )}
 
                   {order.status === "ready_for_pickup" && (
-                    <View style={styles.awaiting_rider_tag}>
-                      <Feather name="clock" size={13} color="#2196f3" />
-                      <Text style={styles.awaiting_rider_text}>
-                        Waiting for rider
-                      </Text>
-                    </View>
+                    <>
+                      {deliveriesMap[order.id]?.status === "expired" ? (
+                        <TouchableOpacity
+                          style={styles.search_driver_btn}
+                          disabled={searchingMap[order.id]}
+                          onPress={() => handleRetryDriverSearch(order.id)}
+                        >
+                          {searchingMap[order.id] ? (
+                            <View style={styles.btn_loading_row}>
+                              <ActivityIndicator size="small" color="#121212" />
+                              <Text style={styles.search_driver_btn_text}>
+                                Searching...
+                              </Text>
+                            </View>
+                          ) : (
+                            <View style={styles.btn_loading_row}>
+                              <Feather
+                                name="refresh-cw"
+                                size={13}
+                                color="#121212"
+                              />
+                              <Text style={styles.search_driver_btn_text}>
+                                Retry Driver Search
+                              </Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      ) : (
+                        <View style={styles.awaiting_rider_tag}>
+                          <ActivityIndicator
+                            size="small"
+                            color="#2196f3"
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text style={styles.awaiting_rider_text}>
+                            {deliveriesMap[order.id]?.driver
+                              ? "Driver Assigned"
+                              : "Searching for Driver..."}
+                          </Text>
+                        </View>
+                      )}
+                    </>
                   )}
 
                   {order.status === "in_transit" && (
                     <View style={styles.awaiting_rider_tag}>
                       <Feather name="truck" size={13} color="#9c27b0" />
-                      <Text style={[styles.awaiting_rider_text, { color: "#9c27b0" }]}>
+                      <Text
+                        style={[
+                          styles.awaiting_rider_text,
+                          { color: "#9c27b0" },
+                        ]}
+                      >
                         Dispatched
                       </Text>
                     </View>
@@ -635,7 +904,10 @@ const RestaurantOrders = () => {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1, backgroundColor: "rgba(0, 0, 0, 0.75)" }}
         >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <TouchableWithoutFeedback
+            onPress={Keyboard.dismiss}
+            accessible={false}
+          >
             <View style={styles.modal_backdrop}>
               <TouchableWithoutFeedback onPress={() => {}} accessible={false}>
                 <View style={styles.modal_card}>
@@ -649,12 +921,16 @@ const RestaurantOrders = () => {
                     Decline Food Order
                   </Text>
                   <Text style={styles.modal_subtitle}>
-                    Decline order #{declineTargetOrder?.order_number}? Customer money will be automatically refunded to their wallet.
+                    Decline order #{declineTargetOrder?.order_number}? Customer
+                    money will be automatically refunded to their wallet.
                   </Text>
 
                   <Text style={styles.input_label}>DECLINE REASON</Text>
                   <TextInput
-                    style={[styles.text_input, { height: 80, textAlignVertical: "top" }]}
+                    style={[
+                      styles.text_input,
+                      { height: 80, textAlignVertical: "top" },
+                    ]}
                     placeholder="e.g. Out of ingredients, Kitchen closed, Too busy"
                     placeholderTextColor="#666"
                     multiline
@@ -676,7 +952,9 @@ const RestaurantOrders = () => {
                       style={styles.modal_delete_btn}
                       onPress={handleConfirmDecline}
                     >
-                      <Text style={styles.modal_delete_btn_text}>Decline & Refund</Text>
+                      <Text style={styles.modal_delete_btn_text}>
+                        Decline & Refund
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -716,15 +994,26 @@ const RestaurantOrders = () => {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={[
                 styles.sheet_scroll_content,
-                { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
+                {
+                  paddingBottom:
+                    Platform.OS === "ios" ? insets.bottom + 40 : 50,
+                },
               ]}
             >
               {/* Receipt Summary Box */}
               <View style={styles.receipt_card}>
-                <Text style={styles.receipt_section_title}>CUSTOMER DETAILS</Text>
-                <Text style={styles.receipt_customer_name}>{selectedOrder.customer_name}</Text>
-                <Text style={styles.receipt_customer_phone}>{selectedOrder.customer_phone}</Text>
-                <Text style={styles.receipt_address}>{selectedOrder.delivery_address}</Text>
+                <Text style={styles.receipt_section_title}>
+                  CUSTOMER DETAILS
+                </Text>
+                <Text style={styles.receipt_customer_name}>
+                  {selectedOrder.customer_name}
+                </Text>
+                <Text style={styles.receipt_customer_phone}>
+                  {selectedOrder.customer_phone}
+                </Text>
+                <Text style={styles.receipt_address}>
+                  {selectedOrder.delivery_address}
+                </Text>
 
                 <View style={styles.receipt_divider} />
 
@@ -737,7 +1026,8 @@ const RestaurantOrders = () => {
                       </Text>
                       {it.selected_options?.map((o, oIdx) => (
                         <Text key={oIdx} style={styles.receipt_option_text}>
-                          + {o.group_name}: {o.option_name} (+₦{o.price_modifier})
+                          + {o.group_name}: {o.option_name} (+₦
+                          {o.price_modifier})
                         </Text>
                       ))}
                       {it.special_instructions ? (
@@ -754,18 +1044,28 @@ const RestaurantOrders = () => {
 
                 <View style={styles.receipt_divider} />
 
-                <Text style={styles.receipt_section_title}>PAYMENT SUMMARY</Text>
+                <Text style={styles.receipt_section_title}>
+                  PAYMENT SUMMARY
+                </Text>
                 <View style={styles.receipt_calc_row}>
                   <Text style={styles.calc_label}>Subtotal</Text>
-                  <Text style={styles.calc_val}>₦{selectedOrder.subtotal.toLocaleString()}</Text>
+                  <Text style={styles.calc_val}>
+                    ₦{selectedOrder.subtotal.toLocaleString()}
+                  </Text>
                 </View>
                 <View style={styles.receipt_calc_row}>
                   <Text style={styles.calc_label}>Flat Delivery Fee</Text>
-                  <Text style={styles.calc_val}>₦{selectedOrder.delivery_fee.toLocaleString()}</Text>
+                  <Text style={styles.calc_val}>
+                    ₦{selectedOrder.delivery_fee.toLocaleString()}
+                  </Text>
                 </View>
                 <View style={styles.receipt_calc_row_total}>
-                  <Text style={styles.calc_label_total}>Total Paid (Wallet)</Text>
-                  <Text style={styles.calc_val_total}>₦{selectedOrder.total.toLocaleString()}</Text>
+                  <Text style={styles.calc_label_total}>
+                    Total Paid (Wallet)
+                  </Text>
+                  <Text style={styles.calc_val_total}>
+                    ₦{selectedOrder.total.toLocaleString()}
+                  </Text>
                 </View>
               </View>
 
@@ -774,30 +1074,40 @@ const RestaurantOrders = () => {
                 <Text style={styles.receipt_section_title}>ORDER TIMELINE</Text>
                 <View style={styles.timeline_item}>
                   <View style={styles.timeline_dot_active} />
-                  <Text style={styles.timeline_text}>Placed at {selectedOrder.placed_at}</Text>
+                  <Text style={styles.timeline_text}>
+                    Placed at {selectedOrder.placed_at}
+                  </Text>
                 </View>
                 {selectedOrder.preparing_at && (
                   <View style={styles.timeline_item}>
                     <View style={styles.timeline_dot_active} />
-                    <Text style={styles.timeline_text}>Preparing started at {selectedOrder.preparing_at}</Text>
+                    <Text style={styles.timeline_text}>
+                      Preparing started at {selectedOrder.preparing_at}
+                    </Text>
                   </View>
                 )}
                 {selectedOrder.ready_at && (
                   <View style={styles.timeline_item}>
                     <View style={styles.timeline_dot_active} />
-                    <Text style={styles.timeline_text}>Ready for pickup at {selectedOrder.ready_at}</Text>
+                    <Text style={styles.timeline_text}>
+                      Ready for pickup at {selectedOrder.ready_at}
+                    </Text>
                   </View>
                 )}
                 {selectedOrder.in_transit_at && (
                   <View style={styles.timeline_item}>
                     <View style={styles.timeline_dot_active} />
-                    <Text style={styles.timeline_text}>Dispatched at {selectedOrder.in_transit_at}</Text>
+                    <Text style={styles.timeline_text}>
+                      Dispatched at {selectedOrder.in_transit_at}
+                    </Text>
                   </View>
                 )}
                 {selectedOrder.delivered_at && (
                   <View style={styles.timeline_item}>
                     <View style={styles.timeline_dot_active} />
-                    <Text style={styles.timeline_text}>Delivered at {selectedOrder.delivered_at}</Text>
+                    <Text style={styles.timeline_text}>
+                      Delivered at {selectedOrder.delivered_at}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -1425,5 +1735,124 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     fontFamily: "raleway-medium",
     fontSize: 12,
+  },
+
+  // Driver Card & Rider Payment styles
+  driver_card: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#1f1f1f",
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 10,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  driver_avatar_wrapper: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    overflow: "hidden",
+    backgroundColor: "#2a2a2a",
+  },
+  driver_avatar: {
+    width: "100%",
+    height: "100%",
+  },
+  driver_avatar_placeholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  driver_info_col: {
+    flex: 1,
+    gap: 4,
+  },
+  driver_name_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  driver_name_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 14,
+  },
+  driver_rating_badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#ffc1071e",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  driver_rating_text: {
+    color: "#ffc107",
+    fontFamily: "raleway-bold",
+    fontSize: 11,
+  },
+  driver_sub_text: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-medium",
+    fontSize: 11,
+  },
+  driver_notice_text: {
+    color: "#4caf50",
+    fontFamily: "raleway-semibold",
+    fontSize: 11,
+    marginTop: 2,
+  },
+  pay_rider_btn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#4caf50",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginTop: 8,
+    gap: 6,
+  },
+  pay_rider_btn_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 13,
+  },
+  paid_rider_badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#4caf501c",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginTop: 8,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#4caf5044",
+  },
+  paid_rider_badge_text: {
+    color: "#4caf50",
+    fontFamily: "raleway-bold",
+    fontSize: 12,
+  },
+  search_driver_btn: {
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  search_driver_btn_text: {
+    color: "#121212",
+    fontFamily: "raleway-bold",
+    fontSize: 13,
+  },
+  btn_loading_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 });

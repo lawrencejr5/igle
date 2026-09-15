@@ -349,13 +349,16 @@ const RestaurantHome = () => {
 
               <TouchableOpacity
                 style={styles.tool_card}
-                onPress={() => router.push("/(restaurant)/details" as any)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push("/(restaurant)/deliveries" as any);
+                }}
               >
                 <View style={styles.tool_icon_box}>
-                  <Feather name="settings" size={18} color="#fff" />
+                  <FontAwesome5 name="motorcycle" size={16} color="#fff" />
                 </View>
-                <Text style={styles.tool_title}>Store Profile</Text>
-                <Text style={styles.tool_sub}>Edit banner, info & times</Text>
+                <Text style={styles.tool_title}>Deliveries</Text>
+                <Text style={styles.tool_sub}>View rider dispatches</Text>
               </TouchableOpacity>
             </View>
           </View>

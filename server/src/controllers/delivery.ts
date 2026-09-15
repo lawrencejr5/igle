@@ -689,6 +689,32 @@ export const update_delivery_status = async (
         } as any;
         if (sender_socket)
           io.to(sender_socket).emit("delivery_arrived", { delivery_id });
+
+        // If linked to food order, notify vendor/customer
+        if ((delivery as any).food_order_id) {
+          try {
+            const foodOrder = await FoodOrder.findById((delivery as any).food_order_id);
+            if (foodOrder) {
+              const customerSocket = await get_user_socket_id(foodOrder.customer.toString());
+              if (customerSocket) {
+                io.to(customerSocket).emit("food_order_updated", {
+                  order_id: foodOrder._id,
+                  order_number: foodOrder.order_number,
+                  status: foodOrder.status,
+                  delivery_status: "arrived",
+                  msg: "Rider has arrived at the restaurant! 🏍️",
+                });
+              }
+              io.to(`food_order_${foodOrder._id}`).emit("food_order_updated", {
+                order_id: foodOrder._id,
+                delivery_status: "arrived",
+                msg: "Rider arrived at restaurant",
+              });
+            }
+          } catch (e) {
+            console.error("Error notifying food order of rider arrival:", e);
+          }
+        }
         break;
 
       case "picked_up":

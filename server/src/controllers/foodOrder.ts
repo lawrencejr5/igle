@@ -558,7 +558,7 @@ export const mark_order_ready = async (req: Request, res: Response) => {
         commission,
         distance_km: 0,   // rider uses in-app navigation
         duration_mins: 0,
-        // Auto-paid: customer already paid at order placement
+        // Auto-paid: customer already paid delivery fee at order placement
         payment_status: "paid",
         payment_method: "wallet",
         status: "pending",
@@ -597,9 +597,28 @@ export const mark_order_ready = async (req: Request, res: Response) => {
         if (d && d.status === "pending") {
           d.status = "expired" as any;
           await d.save();
+
           io.emit("delivery_request_expired", {
             delivery_id: new_delivery._id,
+            food_order_id: order._id,
             msg: "Food delivery request expired — no rider accepted in time",
+          });
+
+          const vendorSocket = await get_user_socket_id(restaurant.user);
+          if (vendorSocket) {
+            io.to(vendorSocket).emit("food_order_updated", {
+              order_id: order._id,
+              delivery_id: new_delivery._id,
+              delivery_status: "expired",
+              msg: "No rider was found for your food order. Click to retry search.",
+            });
+          }
+
+          io.to(`food_order_${order._id}`).emit("food_order_updated", {
+            order_id: order._id,
+            delivery_id: new_delivery._id,
+            delivery_status: "expired",
+            msg: "Rider search timed out",
           });
         }
       }, 30000);
@@ -929,6 +948,251 @@ export const get_food_order_delivery_status = async (
       msg: "Server error fetching delivery status",
       error: error.message,
     });
+  }
+};
+
+// 10. Pay Food Delivery Rider (Restaurant Vendor)
+// POST /api/v1/orders/:id/pay-delivery
+export const pay_food_delivery = async (req: Request, res: Response) => {
+  try {
+    const restaurant = await getVendorRestaurant(req, res);
+    if (!restaurant) return;
+
+    const { id } = req.params;
+    const order = await FoodOrder.findOne({
+      _id: id,
+      restaurant: restaurant._id,
+    });
+
+    if (!order) {
+      return res.status(404).json({ msg: "Order not found or does not belong to your restaurant" });
+    }
+
+    if (!(order as any).delivery_id) {
+      return res.status(404).json({ msg: "No linked delivery found for this order" });
+    }
+
+    const delivery = await Delivery.findById((order as any).delivery_id);
+    if (!delivery) {
+      return res.status(404).json({ msg: "Delivery record not found" });
+    }
+
+    if (delivery.payment_status === "paid") {
+      return res.status(400).json({ msg: "Delivery fee has already been paid" });
+    }
+
+    if (delivery.status !== "arrived") {
+      return res.status(400).json({ msg: "Dispatch rider has not arrived yet" });
+    }
+
+    // Debit restaurant vendor's wallet
+    const vendorWallet = await getOrCreateVendorWallet(restaurant._id as any);
+    if ((vendorWallet.balance || 0) < delivery.fare) {
+      return res.status(400).json({
+        msg: `Insufficient vendor wallet balance (₦${(vendorWallet.balance || 0).toLocaleString()}) to pay delivery fee of ₦${delivery.fare.toLocaleString()}`,
+      });
+    }
+
+    vendorWallet.balance -= delivery.fare;
+    await vendorWallet.save();
+
+    await Transaction.create({
+      wallet_id: vendorWallet._id,
+      type: "payout",
+      amount: delivery.fare,
+      status: "success",
+      channel: "wallet",
+      reference: generate_unique_reference(),
+      food_order_id: order._id,
+      metadata: {
+        order_id: order._id,
+        order_number: order.order_number,
+        delivery_id: delivery._id,
+        type: "rider_delivery_payment",
+        description: `Paid ₦${delivery.fare} for rider dispatch on order #${order.order_number}`,
+      },
+    });
+
+    delivery.payment_status = "paid";
+    await delivery.save();
+
+    // Socket Notifications to driver and vendor
+    const driverSocket = delivery.driver ? await get_driver_socket_id(delivery.driver.toString()) : null;
+    if (driverSocket) {
+      io.to(driverSocket).emit("delivery_paid", {
+        delivery_id: delivery._id,
+        msg: "Restaurant vendor has paid the delivery fee!",
+      });
+    }
+
+    io.to(`food_order_${order._id}`).emit("food_order_updated", {
+      order_id: order._id,
+      status: order.status,
+      payment_status: "paid",
+      msg: "Vendor paid delivery fee to rider",
+    });
+
+    return res.status(200).json({
+      msg: "Delivery fee paid to dispatch rider successfully",
+      delivery,
+    });
+  } catch (error: any) {
+    console.error("pay_food_delivery error:", error);
+    return res.status(500).json({ msg: "Server error paying delivery rider", error: error.message });
+  }
+};
+
+// 11. Get All Restaurant Deliveries (Active, Delivered, Cancelled)
+// GET /api/v1/orders/vendor/deliveries
+export const get_restaurant_deliveries = async (req: Request, res: Response) => {
+  try {
+    const restaurant = await getVendorRestaurant(req, res);
+    if (!restaurant) return;
+
+    // Find all food orders for this restaurant that have a delivery_id
+    const ordersWithDelivery = await FoodOrder.find({
+      restaurant: restaurant._id,
+      delivery_id: { $exists: true, $ne: null },
+    }).select("_id order_number delivery_id status items pricing customer");
+
+    const deliveryIds = ordersWithDelivery.map((o) => (o as any).delivery_id);
+
+    // Also include any direct deliveries sent by restaurant user
+    const deliveries = await Delivery.find({
+      $or: [
+        { _id: { $in: deliveryIds } },
+        { sender: restaurant.user },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "driver",
+        select: "user vehicle_type vehicle current_location total_trips rating num_of_reviews",
+        populate: {
+          path: "user",
+          select: "name phone profile_pic",
+        },
+      })
+      .populate({
+        path: "food_order_id",
+        select: "order_number items status pricing customer",
+        populate: {
+          path: "customer",
+          select: "name phone profile_pic",
+        },
+      });
+
+    return res.status(200).json({ msg: "success", rowCount: deliveries.length, deliveries });
+  } catch (error: any) {
+    console.error("get_restaurant_deliveries error:", error);
+    return res.status(500).json({ msg: "Server error fetching restaurant deliveries", error: error.message });
+  }
+};
+
+// 12. Retry Searching for Bike Rider (Restaurant Vendor)
+// POST /api/v1/orders/:id/retry-delivery
+export const retry_food_delivery = async (req: Request, res: Response) => {
+  try {
+    const restaurant = await getVendorRestaurant(req, res);
+    if (!restaurant) return;
+
+    const { id } = req.params;
+    const order = await FoodOrder.findOne({
+      _id: id,
+      restaurant: restaurant._id,
+    });
+
+    if (!order) {
+      return res.status(404).json({ msg: "Order not found or does not belong to your restaurant" });
+    }
+
+    if (!(order as any).delivery_id) {
+      return res.status(400).json({ msg: "No dispatch delivery linked to retry" });
+    }
+
+    const delivery = await Delivery.findById((order as any).delivery_id);
+    if (!delivery) {
+      return res.status(404).json({ msg: "Delivery record not found" });
+    }
+
+    if (delivery.driver) {
+      return res.status(400).json({ msg: "Driver has already accepted this delivery" });
+    }
+
+    // Reset status to pending
+    delivery.status = "pending";
+    await delivery.save();
+
+    // Re-notify online bike drivers
+    const bikeDrivers = await Driver.find({
+      vehicle_type: "bike",
+      is_online: true,
+      is_busy: false,
+    });
+
+    await Promise.all(
+      bikeDrivers.map(async (d: any) => {
+        try {
+          const driverSocket = await get_driver_socket_id(String(d._id));
+          if (driverSocket) {
+            io.to(driverSocket).emit("delivery_request", {
+              delivery_id: delivery._id,
+              msg: "Retrying food delivery request",
+            });
+          }
+        } catch (e) {
+          console.error("Failed to notify bike rider on retry", d._id, e);
+        }
+      })
+    );
+
+    // 30s timeout
+    setTimeout(async () => {
+      const d = await Delivery.findById(delivery._id);
+      if (d && d.status === "pending") {
+        d.status = "expired" as any;
+        await d.save();
+
+        io.emit("delivery_request_expired", {
+          delivery_id: delivery._id,
+          food_order_id: order._id,
+          msg: "Food delivery request expired on retry",
+        });
+
+        const vendorSocket = await get_user_socket_id(restaurant.user);
+        if (vendorSocket) {
+          io.to(vendorSocket).emit("food_order_updated", {
+            order_id: order._id,
+            delivery_id: delivery._id,
+            delivery_status: "expired",
+            msg: "Retry rider search timed out.",
+          });
+        }
+
+        io.to(`food_order_${order._id}`).emit("food_order_updated", {
+          order_id: order._id,
+          delivery_id: delivery._id,
+          delivery_status: "expired",
+          msg: "Retry rider search timed out",
+        });
+      }
+    }, 30000);
+
+    // Socket notification to vendor and tracking room
+    io.to(`food_order_${order._id}`).emit("food_order_updated", {
+      order_id: order._id,
+      delivery_id: delivery._id,
+      delivery_status: "pending",
+      msg: "Retrying driver search...",
+    });
+
+    return res.status(200).json({
+      msg: "Retrying bike rider search...",
+      delivery,
+    });
+  } catch (error: any) {
+    console.error("retry_food_delivery error:", error);
+    return res.status(500).json({ msg: "Server error retrying driver search", error: error.message });
   }
 };
 

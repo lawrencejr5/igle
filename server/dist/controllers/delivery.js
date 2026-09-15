@@ -611,6 +611,32 @@ const update_delivery_status = (req, res) => __awaiter(void 0, void 0, void 0, f
                 delivery.timestamps = Object.assign(Object.assign({}, delivery.timestamps), { arrived_at: new Date() });
                 if (sender_socket)
                     server_1.io.to(sender_socket).emit("delivery_arrived", { delivery_id });
+                // If linked to food order, notify vendor/customer
+                if (delivery.food_order_id) {
+                    try {
+                        const foodOrder = yield foodOrder_1.default.findById(delivery.food_order_id);
+                        if (foodOrder) {
+                            const customerSocket = yield (0, get_id_1.get_user_socket_id)(foodOrder.customer.toString());
+                            if (customerSocket) {
+                                server_1.io.to(customerSocket).emit("food_order_updated", {
+                                    order_id: foodOrder._id,
+                                    order_number: foodOrder.order_number,
+                                    status: foodOrder.status,
+                                    delivery_status: "arrived",
+                                    msg: "Rider has arrived at the restaurant! 🏍️",
+                                });
+                            }
+                            server_1.io.to(`food_order_${foodOrder._id}`).emit("food_order_updated", {
+                                order_id: foodOrder._id,
+                                delivery_status: "arrived",
+                                msg: "Rider arrived at restaurant",
+                            });
+                        }
+                    }
+                    catch (e) {
+                        console.error("Error notifying food order of rider arrival:", e);
+                    }
+                }
                 break;
             case "picked_up":
                 // Only allow marking as picked_up when delivery was accepted
