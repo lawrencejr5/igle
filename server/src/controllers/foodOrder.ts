@@ -890,12 +890,39 @@ export const get_order_by_id = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const order = await FoodOrder.findById(id)
+    let order = await FoodOrder.findById(id)
       .populate("customer", "name phone profile_pic")
-      .populate("restaurant", "name logo phone location category_tags");
+      .populate("restaurant", "name logo phone location category_tags")
+      .populate({
+        path: "driver",
+        select: "user vehicle_type vehicle rating num_of_reviews current_location",
+        populate: {
+          path: "user",
+          select: "name phone profile_pic",
+        },
+      });
 
     if (!order) {
       return res.status(404).json({ msg: "Order not found" });
+    }
+
+    // Fallback: If order.driver is missing but delivery_id has a driver
+    if (!order.driver && (order as any).delivery_id) {
+      try {
+        const del = await Delivery.findById((order as any).delivery_id).populate({
+          path: "driver",
+          select: "user vehicle_type vehicle rating num_of_reviews current_location",
+          populate: {
+            path: "user",
+            select: "name phone profile_pic",
+          },
+        });
+        if (del && del.driver) {
+          (order as any).driver = del.driver;
+        }
+      } catch (e) {
+        console.error("Error populating driver fallback from delivery:", e);
+      }
     }
 
     return res.status(200).json({ order });

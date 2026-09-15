@@ -336,7 +336,10 @@ export const get_user_deliveries = async (
   try {
     const user_id = req.user?.id;
     const { status } = req.query;
-    const queryObj: any = { sender: user_id };
+    const queryObj: any = {
+      sender: user_id,
+      $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
+    };
     if (status) queryObj.status = status as string;
     const deliveries = await Delivery.find(queryObj)
       .sort({ createdAt: -1 })
@@ -367,6 +370,7 @@ export const get_user_in_transit_deliveries = async (
     const deliveries = await Delivery.find({
       sender: user_id,
       status: "in_transit",
+      $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
     })
       .sort({ createdAt: -1 })
       .populate({
@@ -395,6 +399,7 @@ export const get_user_cancelled_deliveries = async (
     const deliveries = await Delivery.find({
       sender: user_id,
       status: "cancelled",
+      $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
     })
       .sort({ createdAt: -1 })
       .populate({
@@ -422,7 +427,8 @@ export const get_user_delivered_deliveries = async (
     const user_id = req.user?.id;
     const deliveries = await Delivery.find({
       sender: user_id,
-      status: "cancelled",
+      status: "delivered",
+      $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
     })
       .sort({ createdAt: -1 })
       .populate({
@@ -461,6 +467,7 @@ export const get_user_active_delivery = async (
           "expired",
         ],
       },
+      $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
     })
       .populate({
         path: "driver",

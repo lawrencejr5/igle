@@ -21,6 +21,7 @@ import {
 } from "../../context/FoodOrderContext";
 import { useMapContext } from "../../context/MapContext";
 import AppLoading from "../../loadings/AppLoading";
+import { getUserSocket } from "../../sockets/socketService";
 
 const parseLatLng = (coords?: [number, number]) => {
   if (!coords || coords.length < 2) return null;
@@ -89,6 +90,37 @@ const TrackFoodOrder = () => {
       isMounted = false;
     };
   }, [targetId]);
+
+  // Real-time Socket Listener for Food Order & Driver Updates
+  useEffect(() => {
+    const currentOrderId = order?._id || targetId;
+    if (!currentOrderId) return;
+
+    const socket = getUserSocket();
+    if (socket) {
+      socket.emit("join_room", `food_order_${currentOrderId}`);
+
+      const handleUpdate = async () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        const updated = await fetchOrderById(currentOrderId);
+        if (updated) {
+          setOrder(updated);
+        }
+      };
+
+      socket.on("food_order_updated", handleUpdate);
+      socket.on("delivery_accepted", handleUpdate);
+      socket.on("delivery_arrived", handleUpdate);
+      socket.on("delivery_in_transit", handleUpdate);
+
+      return () => {
+        socket.off("food_order_updated", handleUpdate);
+        socket.off("delivery_accepted", handleUpdate);
+        socket.off("delivery_arrived", handleUpdate);
+        socket.off("delivery_in_transit", handleUpdate);
+      };
+    }
+  }, [order?._id, targetId]);
 
   // Fetch Route Polyline & Snapped Markers
   useEffect(() => {
@@ -214,9 +246,11 @@ const TrackFoodOrder = () => {
     order.restaurant_address?.address || "Restaurant Address";
 
   // Driver details
-  const driverObj = typeof order.driver === "object" ? order.driver : null;
-  const driverName = driverObj?.name || "Assigning Dispatch Rider...";
-  const driverPhone = driverObj?.phone || "";
+  const driverObj: any = typeof order.driver === "object" ? order.driver : null;
+  const driverUser = driverObj?.user || driverObj;
+  const driverName = driverUser?.name || driverObj?.name || "Assigning Dispatch Rider...";
+  const driverPhone = driverUser?.phone || driverObj?.phone || "";
+  const driverPic = driverUser?.profile_pic || driverObj?.profile_pic;
 
   // Midpoint for rider fallback marker
   const riderCoords =
@@ -516,11 +550,19 @@ const TrackFoodOrder = () => {
 
         {/* ── Dispatch Rider Card ── */}
         <View style={styles.rider_card}>
-          <Image
-            source={require("../../assets/images/user.png")}
-            style={styles.rider_avatar}
-            contentFit="cover"
-          />
+          {driverPic ? (
+            <Image
+              source={{ uri: driverPic }}
+              style={styles.rider_avatar}
+              contentFit="cover"
+            />
+          ) : (
+            <Image
+              source={require("../../assets/images/user.png")}
+              style={styles.rider_avatar}
+              contentFit="cover"
+            />
+          )}
           <View style={{ flex: 1 }}>
             <Text style={styles.rider_name}>{driverName}</Text>
             <Text style={styles.rider_vehicle}>
