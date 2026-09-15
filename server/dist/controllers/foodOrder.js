@@ -492,8 +492,8 @@ const mark_order_ready = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 commission,
                 distance_km: 0, // rider uses in-app navigation
                 duration_mins: 0,
-                // Auto-paid: customer already paid delivery fee at order placement
-                payment_status: "paid",
+                // Payment unpaid until restaurant confirms rider arrival and pays
+                payment_status: "unpaid",
                 payment_method: "wallet",
                 status: "pending",
                 food_order_id: order._id,
@@ -792,11 +792,38 @@ exports.get_vendor_orders = get_vendor_orders;
 const get_order_by_id = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const order = yield foodOrder_1.default.findById(id)
+        let order = yield foodOrder_1.default.findById(id)
             .populate("customer", "name phone profile_pic")
-            .populate("restaurant", "name logo phone location category_tags");
+            .populate("restaurant", "name logo phone location category_tags")
+            .populate({
+            path: "driver",
+            select: "user vehicle_type vehicle rating num_of_reviews current_location",
+            populate: {
+                path: "user",
+                select: "name phone profile_pic",
+            },
+        });
         if (!order) {
             return res.status(404).json({ msg: "Order not found" });
+        }
+        // Fallback: If order.driver is missing but delivery_id has a driver
+        if (!order.driver && order.delivery_id) {
+            try {
+                const del = yield delivery_1.default.findById(order.delivery_id).populate({
+                    path: "driver",
+                    select: "user vehicle_type vehicle rating num_of_reviews current_location",
+                    populate: {
+                        path: "user",
+                        select: "name phone profile_pic",
+                    },
+                });
+                if (del && del.driver) {
+                    order.driver = del.driver;
+                }
+            }
+            catch (e) {
+                console.error("Error populating driver fallback from delivery:", e);
+            }
         }
         return res.status(200).json({ order });
     }
@@ -873,31 +900,7 @@ const pay_food_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (delivery.status !== "arrived") {
             return res.status(400).json({ msg: "Dispatch rider has not arrived yet" });
         }
-        // Debit restaurant vendor's wallet
-        const vendorWallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
-        if ((vendorWallet.balance || 0) < delivery.fare) {
-            return res.status(400).json({
-                msg: `Insufficient vendor wallet balance (₦${(vendorWallet.balance || 0).toLocaleString()}) to pay delivery fee of ₦${delivery.fare.toLocaleString()}`,
-            });
-        }
-        vendorWallet.balance -= delivery.fare;
-        yield vendorWallet.save();
-        yield transaction_1.default.create({
-            wallet_id: vendorWallet._id,
-            type: "payout",
-            amount: delivery.fare,
-            status: "success",
-            channel: "wallet",
-            reference: (0, gen_unique_ref_1.generate_unique_reference)(),
-            food_order_id: order._id,
-            metadata: {
-                order_id: order._id,
-                order_number: order.order_number,
-                delivery_id: delivery._id,
-                type: "rider_delivery_payment",
-                description: `Paid ₦${delivery.fare} for rider dispatch on order #${order.order_number}`,
-            },
-        });
+        // Note: Escrow holds total payment; delivery fee is released to driver on completion.
         delivery.payment_status = "paid";
         yield delivery.save();
         // Socket Notifications to driver and vendor

@@ -7,7 +7,8 @@ import Delivery from "../models/delivery";
 import Transaction from "../models/transaction";
 import User from "../models/user";
 
-import { get_driver_id } from "../utils/get_id";
+import { get_driver_id, get_driver_push_tokens } from "../utils/get_id";
+import { sendNotification } from "../utils/expo_push";
 
 import axios from "axios";
 
@@ -1462,6 +1463,21 @@ export const admin_process_driver_application = async (
         });
       }
 
+      // send push notification to driver
+      try {
+        const driverPushTokens = await get_driver_push_tokens(driver._id as any);
+        if (driverPushTokens && driverPushTokens.length > 0) {
+          await sendNotification(
+            driverPushTokens,
+            "Driver Application Approved! 🎉",
+            "Congratulations! Your driver application has been approved. You can now go online to accept ride and delivery requests.",
+            { type: "driver_approved", driver_id: String(driver._id) }
+          );
+        }
+      } catch (pushErr) {
+        console.error("Error sending driver approval push notification:", pushErr);
+      }
+
       return res
         .status(200)
         .json({ msg: "Driver application approved", driver });
@@ -1470,6 +1486,22 @@ export const admin_process_driver_application = async (
     // reject
     driver.application = "rejected" as any;
     await driver.save();
+
+    // send push notification to driver
+    try {
+      const driverPushTokens = await get_driver_push_tokens(driver._id as any);
+      if (driverPushTokens && driverPushTokens.length > 0) {
+        await sendNotification(
+          driverPushTokens,
+          "Driver Application Update",
+          "Your driver application has been reviewed and was not approved at this time.",
+          { type: "driver_rejected", driver_id: String(driver._id) }
+        );
+      }
+    } catch (pushErr) {
+      console.error("Error sending driver rejection push notification:", pushErr);
+    }
+
     return res.status(200).json({ msg: "Driver application rejected", driver });
   } catch (err) {
     console.error("admin_process_driver_application error:", err);

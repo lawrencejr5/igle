@@ -22,6 +22,8 @@ const wallet_1 = __importDefault(require("../models/wallet"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
+const get_id_1 = require("../utils/get_id");
+const expo_push_1 = require("../utils/expo_push");
 // ─── RESTAURANT ADMIN ────────────────────────────────────────────────────────
 // GET /admin/restaurants
 const admin_get_all_restaurants = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -115,6 +117,18 @@ const admin_approve_restaurant = (req, res) => __awaiter(void 0, void 0, void 0,
                 balance: 0,
             });
         }
+        // Send push notification to restaurant owner
+        if (restaurant.user) {
+            try {
+                const vendorPushTokens = yield (0, get_id_1.get_user_push_tokens)(restaurant.user);
+                if (vendorPushTokens && vendorPushTokens.length > 0) {
+                    yield (0, expo_push_1.sendNotification)(vendorPushTokens, "Restaurant Approved! 🎉", `Congratulations! Your restaurant "${restaurant.name}" has been approved. You can now manage your menu and receive orders.`, { type: "restaurant_approved", restaurant_id: String(restaurant._id) });
+                }
+            }
+            catch (pushErr) {
+                console.error("Error sending restaurant approval push notification:", pushErr);
+            }
+        }
         return res.status(200).json({
             msg: "Restaurant approved successfully",
             restaurant,
@@ -140,6 +154,18 @@ const admin_reject_restaurant = (req, res) => __awaiter(void 0, void 0, void 0, 
         yield user_1.default.findByIdAndUpdate(restaurant.user, {
             restaurant_application: "rejected",
         });
+        // Send push notification to restaurant owner
+        if (restaurant.user) {
+            try {
+                const vendorPushTokens = yield (0, get_id_1.get_user_push_tokens)(restaurant.user);
+                if (vendorPushTokens && vendorPushTokens.length > 0) {
+                    yield (0, expo_push_1.sendNotification)(vendorPushTokens, "Restaurant Application Update", `Your restaurant application for "${restaurant.name}" was not approved.${reason ? ` Reason: ${reason}` : ""}`, { type: "restaurant_rejected", restaurant_id: String(restaurant._id) });
+                }
+            }
+            catch (pushErr) {
+                console.error("Error sending restaurant rejection push notification:", pushErr);
+            }
+        }
         return res.status(200).json({
             msg: "Restaurant application rejected",
             reason: reason || "No reason provided",

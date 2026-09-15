@@ -327,7 +327,10 @@ const get_user_deliveries = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { status } = req.query;
-        const queryObj = { sender: user_id };
+        const queryObj = {
+            sender: user_id,
+            $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
+        };
         if (status)
             queryObj.status = status;
         const deliveries = yield delivery_1.default.find(queryObj)
@@ -357,6 +360,7 @@ const get_user_in_transit_deliveries = (req, res) => __awaiter(void 0, void 0, v
         const deliveries = yield delivery_1.default.find({
             sender: user_id,
             status: "in_transit",
+            $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
         })
             .sort({ createdAt: -1 })
             .populate({
@@ -384,6 +388,7 @@ const get_user_cancelled_deliveries = (req, res) => __awaiter(void 0, void 0, vo
         const deliveries = yield delivery_1.default.find({
             sender: user_id,
             status: "cancelled",
+            $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
         })
             .sort({ createdAt: -1 })
             .populate({
@@ -410,7 +415,8 @@ const get_user_delivered_deliveries = (req, res) => __awaiter(void 0, void 0, vo
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const deliveries = yield delivery_1.default.find({
             sender: user_id,
-            status: "cancelled",
+            status: "delivered",
+            $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
         })
             .sort({ createdAt: -1 })
             .populate({
@@ -447,6 +453,7 @@ const get_user_active_delivery = (req, res) => __awaiter(void 0, void 0, void 0,
                     "expired",
                 ],
             },
+            $or: [{ food_order_id: { $exists: false } }, { food_order_id: null }],
         })
             .populate({
             path: "driver",

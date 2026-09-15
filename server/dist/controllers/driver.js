@@ -53,6 +53,7 @@ const delivery_1 = __importDefault(require("../models/delivery"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const user_1 = __importDefault(require("../models/user"));
 const get_id_1 = require("../utils/get_id");
+const expo_push_1 = require("../utils/expo_push");
 const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -1261,6 +1262,16 @@ const admin_process_driver_application = (req, res) => __awaiter(void 0, void 0,
                     balance: 0,
                 });
             }
+            // send push notification to driver
+            try {
+                const driverPushTokens = yield (0, get_id_1.get_driver_push_tokens)(driver._id);
+                if (driverPushTokens && driverPushTokens.length > 0) {
+                    yield (0, expo_push_1.sendNotification)(driverPushTokens, "Driver Application Approved! 🎉", "Congratulations! Your driver application has been approved. You can now go online to accept ride and delivery requests.", { type: "driver_approved", driver_id: String(driver._id) });
+                }
+            }
+            catch (pushErr) {
+                console.error("Error sending driver approval push notification:", pushErr);
+            }
             return res
                 .status(200)
                 .json({ msg: "Driver application approved", driver });
@@ -1268,6 +1279,16 @@ const admin_process_driver_application = (req, res) => __awaiter(void 0, void 0,
         // reject
         driver.application = "rejected";
         yield driver.save();
+        // send push notification to driver
+        try {
+            const driverPushTokens = yield (0, get_id_1.get_driver_push_tokens)(driver._id);
+            if (driverPushTokens && driverPushTokens.length > 0) {
+                yield (0, expo_push_1.sendNotification)(driverPushTokens, "Driver Application Update", "Your driver application has been reviewed and was not approved at this time.", { type: "driver_rejected", driver_id: String(driver._id) });
+            }
+        }
+        catch (pushErr) {
+            console.error("Error sending driver rejection push notification:", pushErr);
+        }
         return res.status(200).json({ msg: "Driver application rejected", driver });
     }
     catch (err) {

@@ -11,6 +11,8 @@ import {
   settleVendorOrderEarnings,
   cancelVendorOrderPendingEarnings,
 } from "../utils/get_vendor_wallet";
+import { get_user_push_tokens } from "../utils/get_id";
+import { sendNotification } from "../utils/expo_push";
 
 // ─── RESTAURANT ADMIN ────────────────────────────────────────────────────────
 
@@ -129,6 +131,23 @@ export const admin_approve_restaurant = async (req: Request, res: Response) => {
       });
     }
 
+    // Send push notification to restaurant owner
+    if (restaurant.user) {
+      try {
+        const vendorPushTokens = await get_user_push_tokens(restaurant.user);
+        if (vendorPushTokens && vendorPushTokens.length > 0) {
+          await sendNotification(
+            vendorPushTokens,
+            "Restaurant Approved! 🎉",
+            `Congratulations! Your restaurant "${restaurant.name}" has been approved. You can now manage your menu and receive orders.`,
+            { type: "restaurant_approved", restaurant_id: String(restaurant._id) }
+          );
+        }
+      } catch (pushErr) {
+        console.error("Error sending restaurant approval push notification:", pushErr);
+      }
+    }
+
     return res.status(200).json({
       msg: "Restaurant approved successfully",
       restaurant,
@@ -156,6 +175,23 @@ export const admin_reject_restaurant = async (req: Request, res: Response) => {
     await User.findByIdAndUpdate(restaurant.user, {
       restaurant_application: "rejected",
     });
+
+    // Send push notification to restaurant owner
+    if (restaurant.user) {
+      try {
+        const vendorPushTokens = await get_user_push_tokens(restaurant.user);
+        if (vendorPushTokens && vendorPushTokens.length > 0) {
+          await sendNotification(
+            vendorPushTokens,
+            "Restaurant Application Update",
+            `Your restaurant application for "${restaurant.name}" was not approved.${reason ? ` Reason: ${reason}` : ""}`,
+            { type: "restaurant_rejected", restaurant_id: String(restaurant._id) }
+          );
+        }
+      } catch (pushErr) {
+        console.error("Error sending restaurant rejection push notification:", pushErr);
+      }
+    }
 
     return res.status(200).json({
       msg: "Restaurant application rejected",
