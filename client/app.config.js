@@ -49,6 +49,19 @@ module.exports = {
           sounds: ["./assets/sounds/push_alert.wav"],
         },
       ],
+      // --- ADDED FIX HERE ---
+      [
+        "expo-build-properties",
+        {
+          android: {
+            compileSdkVersion: 36,
+            targetSdkVersion: 36,
+            enableMinifyInReleaseBuilds: true,
+            enableShrinkResourcesInReleaseBuilds: true,
+          },
+        },
+      ],
+      // ----------------------
     ],
     splash: {
       image: "./assets/images/splash-icon.png",
