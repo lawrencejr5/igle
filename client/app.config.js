@@ -49,7 +49,6 @@ module.exports = {
           sounds: ["./assets/sounds/push_alert.wav"],
         },
       ],
-      // --- ADDED FIX HERE ---
       [
         "expo-build-properties",
         {
@@ -61,7 +60,6 @@ module.exports = {
           },
         },
       ],
-      // ----------------------
     ],
     splash: {
       image: "./assets/images/splash-icon.png",
