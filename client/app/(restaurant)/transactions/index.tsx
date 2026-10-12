@@ -10,13 +10,17 @@ import {
   Platform,
   Alert,
   RefreshControl,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Feather,
+  FontAwesome,
   FontAwesome5,
   Ionicons,
   MaterialIcons,
@@ -24,6 +28,27 @@ import {
 import * as Haptics from "expo-haptics";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 import { useTransactionContext } from "../../../context/TransactionContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
+import CustomDropdown from "../../../components/CustomDropdown";
+
+const BANK_OPTIONS = [
+  { key: "058", label: "GTBank" },
+  { key: "044", label: "Access Bank" },
+  { key: "057", label: "Zenith Bank" },
+  { key: "033", label: "UBA" },
+  { key: "011", label: "First Bank" },
+  { key: "070", label: "Fidelity Bank" },
+  { key: "076", label: "Polaris Bank" },
+  { key: "035", label: "Wema Bank" },
+  { key: "232", label: "Sterling Bank" },
+  { key: "032", label: "Union Bank" },
+  { key: "50515", label: "Moniepoint MFB" },
+  { key: "999992", label: "OPay (Paycom)" },
+  { key: "999991", label: "PalmPay" },
+  { key: "50211", label: "Kuda Bank" },
+  { key: "214", label: "FCMB" },
+  { key: "221", label: "Stanbic IBTC" },
+];
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -53,7 +78,9 @@ type FilterType = "all" | "in" | "out";
 
 const RestaurantTransactions = () => {
   const insets = useSafeAreaInsets();
-  const { restaurant } = useRestaurantContext();
+  const { restaurant, saveStageBank, fetchRestaurantProfile } =
+    useRestaurantContext();
+  const { showNotification } = useNotificationContext();
   const {
     vendorTransactions: ctxVendorTxns,
     vendorStats,
@@ -71,6 +98,33 @@ const RestaurantTransactions = () => {
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isSubmittingWithdraw, setIsSubmittingWithdraw] = useState(false);
+
+  // Bank Details Modal State
+  const [bankModalVisible, setBankModalVisible] = useState(false);
+  const [bankCode, setBankCode] = useState(
+    restaurant?.bank?.bank_code || "058",
+  );
+  const [bankName, setBankName] = useState(
+    restaurant?.bank?.bank_name || "GTBank",
+  );
+  const [accountNumber, setAccountNumber] = useState(
+    restaurant?.bank?.account_number || "",
+  );
+  const [accountName, setAccountName] = useState(
+    restaurant?.bank?.account_name || "",
+  );
+  const [isSavingBank, setIsSavingBank] = useState(false);
+
+  useEffect(() => {
+    if (restaurant?.bank) {
+      if (restaurant.bank.bank_code) setBankCode(restaurant.bank.bank_code);
+      if (restaurant.bank.bank_name) setBankName(restaurant.bank.bank_name);
+      if (restaurant.bank.account_number)
+        setAccountNumber(restaurant.bank.account_number);
+      if (restaurant.bank.account_name)
+        setAccountName(restaurant.bank.account_name);
+    }
+  }, [restaurant?.bank, bankModalVisible]);
 
   // Transaction Details Modal State
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
@@ -182,11 +236,13 @@ const RestaurantTransactions = () => {
   };
 
   const handleQuickAmount = (amount: number) => {
+    Keyboard.dismiss();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setWithdrawAmount(amount.toString());
   };
 
   const handleConfirmWithdraw = async () => {
+    Keyboard.dismiss();
     const amountNum = Number(withdrawAmount);
     if (!amountNum || amountNum <= 0) return;
 
@@ -197,6 +253,44 @@ const RestaurantTransactions = () => {
     setIsSubmittingWithdraw(false);
     setWithdrawModalVisible(false);
     setWithdrawAmount("");
+  };
+
+  const handleSaveBankDetails = async () => {
+    if (!bankCode || !bankName) {
+      showNotification("Please select your bank", "error");
+      return;
+    }
+    if (!accountNumber.trim() || accountNumber.trim().length !== 10) {
+      showNotification(
+        "Please enter a valid 10-digit account number",
+        "error",
+      );
+      return;
+    }
+    if (!accountName.trim()) {
+      showNotification("Please enter the account name", "error");
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsSavingBank(true);
+    try {
+      const res = await saveStageBank({
+        bank_name: bankName,
+        bank_code: bankCode,
+        account_number: accountNumber.trim(),
+        account_name: accountName.trim(),
+      });
+      if (res?.account_name) {
+        setAccountName(res.account_name);
+      }
+      await fetchRestaurantProfile();
+      setBankModalVisible(false);
+    } catch (err: any) {
+      console.log("Error saving bank details:", err);
+    } finally {
+      setIsSavingBank(false);
+    }
   };
 
   const handleOpenTxnDetails = (txn: RestaurantTransaction) => {
@@ -257,7 +351,16 @@ const RestaurantTransactions = () => {
           </Text>
         </View>
 
-        <View style={{ width: 40 }} />
+        <TouchableOpacity
+          style={styles.nav_icon_btn}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setBankModalVisible(true);
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <FontAwesome5 name="university" size={15} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -317,16 +420,70 @@ const RestaurantTransactions = () => {
             </View>
           </View>
 
-          {/* Withdraw Action Button */}
-          <TouchableOpacity
-            style={styles.withdraw_btn}
-            activeOpacity={0.88}
-            onPress={handleOpenWithdrawModal}
-          >
-            <Feather name="arrow-up-right" size={18} color="#121212" />
-            <Text style={styles.withdraw_btn_text}>Withdraw to Bank</Text>
-          </TouchableOpacity>
+          {/* Action Buttons Row */}
+          <View style={styles.balance_actions_row}>
+            <TouchableOpacity
+              style={styles.withdraw_btn}
+              activeOpacity={0.88}
+              onPress={handleOpenWithdrawModal}
+            >
+              <Feather name="arrow-up-right" size={16} color="#121212" />
+              <Text style={styles.withdraw_btn_text}>Withdraw</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.update_bank_action_btn}
+              activeOpacity={0.88}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setBankModalVisible(true);
+              }}
+            >
+              <FontAwesome5 name="university" size={13} color="#fff" />
+              <Text style={styles.update_bank_action_text}>Update Bank</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* ── Active Payout Bank Card ── */}
+        <TouchableOpacity
+          style={styles.bank_card_banner}
+          activeOpacity={0.88}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setBankModalVisible(true);
+          }}
+        >
+          <View style={styles.bank_card_icon_wrap}>
+            <FontAwesome5 name="university" size={15} color="#4caf50" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.bank_card_header_row}>
+              <Text style={styles.bank_card_title}>PAYOUT DESTINATION</Text>
+              {restaurant?.bank?.account_number ? (
+                <View style={styles.active_pill}>
+                  <Text style={styles.active_pill_text}>Active</Text>
+                </View>
+              ) : (
+                <View style={styles.missing_pill}>
+                  <Text style={styles.missing_pill_text}>Action Required</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.bank_card_name}>
+              {restaurant?.bank?.bank_name || "No Bank Configured"}
+            </Text>
+            <Text style={styles.bank_card_number} numberOfLines={1}>
+              {restaurant?.bank?.account_number
+                ? `${restaurant.bank.account_number} • ${restaurant.bank.account_name || "Verified"}`
+                : "Tap to set up your withdrawal bank account"}
+            </Text>
+          </View>
+          <View style={styles.bank_card_action}>
+            <Feather name="edit-2" size={13} color="#9CA3AF" />
+            <Text style={styles.bank_card_action_text}>Edit</Text>
+          </View>
+        </TouchableOpacity>
 
         {/* ── Search & Filter Controls ── */}
         <View style={styles.filter_section}>
@@ -515,76 +672,237 @@ const RestaurantTransactions = () => {
         visible={withdrawModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setWithdrawModalVisible(false)}
+        onRequestClose={() => {
+          Keyboard.dismiss();
+          setWithdrawModalVisible(false);
+        }}
       >
-        <View style={styles.modal_backdrop}>
-          <View style={styles.modal_card}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            style={styles.modal_backdrop}
+            onPress={Keyboard.dismiss}
+          >
+            <Pressable
+              style={styles.modal_card}
+              onPress={Keyboard.dismiss}
+            >
+              <View style={styles.modal_header}>
+                <Text style={styles.modal_title}>Withdraw to Bank</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setWithdrawModalVisible(false);
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Feather name="x" size={20} color="#aaa" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Bank Preview */}
+              <View style={styles.bank_preview_box}>
+                <FontAwesome5 name="university" size={18} color="#9CA3AF" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bank_name_text}>
+                    {restaurant?.bank?.bank_name || "GTBank"}
+                  </Text>
+                  <Text style={styles.bank_acc_text}>
+                    {restaurant?.bank?.account_number || "0123455821"} •{" "}
+                    {restaurant?.bank?.account_name ||
+                      restaurant?.name ||
+                      "STORE ACCOUNT"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.bank_change_btn}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setWithdrawModalVisible(false);
+                    setBankModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.bank_change_btn_text}>Change</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Input */}
+              <Text style={styles.input_label}>ENTER AMOUNT (₦)</Text>
+              <TextInput
+                style={styles.text_input}
+                placeholder="e.g. 20000"
+                placeholderTextColor="#666"
+                keyboardType="numeric"
+                returnKeyType="done"
+                value={withdrawAmount}
+                onChangeText={setWithdrawAmount}
+                onSubmitEditing={Keyboard.dismiss}
+                blurOnSubmit={true}
+              />
+
+              {/* Quick Amount Chips */}
+              <View style={styles.quick_chip_row}>
+                <TouchableOpacity
+                  style={styles.quick_chip}
+                  onPress={() => handleQuickAmount(10000)}
+                >
+                  <Text style={styles.quick_chip_text}>₦10,000</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quick_chip}
+                  onPress={() => handleQuickAmount(25000)}
+                >
+                  <Text style={styles.quick_chip_text}>₦25,000</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quick_chip}
+                  onPress={() => handleQuickAmount(50000)}
+                >
+                  <Text style={styles.quick_chip_text}>₦50,000</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quick_chip}
+                  onPress={() => handleQuickAmount(withdrawableBalance)}
+                >
+                  <Text style={styles.quick_chip_text}>Max</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modal_footer}>
+                <TouchableOpacity
+                  style={styles.modal_cancel_btn}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setWithdrawModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.modal_cancel_text}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.modal_confirm_btn,
+                    isSubmittingWithdraw && { opacity: 0.6 },
+                  ]}
+                  disabled={isSubmittingWithdraw}
+                  onPress={handleConfirmWithdraw}
+                >
+                  <Text style={styles.modal_confirm_text}>
+                    {isSubmittingWithdraw ? "Processing..." : "Confirm Payout"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Update Bank Details Modal ── */}
+      <Modal
+        visible={bankModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBankModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.modal_backdrop}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setBankModalVisible(false)}
+          />
+          <View style={styles.bank_modal_card}>
+            {/* Header */}
             <View style={styles.modal_header}>
-              <Text style={styles.modal_title}>Withdraw to Bank</Text>
-              <TouchableOpacity onPress={() => setWithdrawModalVisible(false)}>
-                <Feather name="x" size={20} color="#aaa" />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <View style={styles.bank_modal_icon_box}>
+                  <FontAwesome5 name="university" size={16} color="#4caf50" />
+                </View>
+                <View>
+                  <Text style={styles.modal_title}>Withdrawal Bank</Text>
+                  <Text style={styles.modal_subtitle}>
+                    Set payout account for sales earnings
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.modal_close_btn}
+                onPress={() => setBankModalVisible(false)}
+              >
+                <Feather name="x" size={18} color="#aaa" />
               </TouchableOpacity>
             </View>
 
-            {/* Bank Preview */}
-            <View style={styles.bank_preview_box}>
-              <FontAwesome5 name="university" size={18} color="#9CA3AF" />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.bank_name_text}>
-                  {restaurant?.bank?.bank_name || "GTBank"}
-                </Text>
-                <Text style={styles.bank_acc_text}>
-                  {restaurant?.bank?.account_number || "0123455821"} •{" "}
-                  {restaurant?.bank?.account_name ||
-                    restaurant?.name ||
-                    "STORE ACCOUNT"}
+            {/* Current Bank Quick Pill */}
+            {restaurant?.bank?.account_number ? (
+              <View style={styles.current_bank_pill}>
+                <Feather name="check-circle" size={13} color="#4caf50" />
+                <Text style={styles.current_bank_pill_text} numberOfLines={1}>
+                  Current: {restaurant.bank.bank_name} •{" "}
+                  {restaurant.bank.account_number}
                 </Text>
               </View>
+            ) : null}
+
+            {/* Bank Selector */}
+            <Text style={styles.input_label}>SELECT BANK</Text>
+            <View style={styles.dropdown_wrapper}>
+              <CustomDropdown
+                options={BANK_OPTIONS}
+                value={bankCode}
+                onChange={(k) => {
+                  setBankCode(k);
+                  const selected = BANK_OPTIONS.find((b) => b.key === k);
+                  if (selected) setBankName(selected.label);
+                }}
+              />
             </View>
 
-            {/* Input */}
-            <Text style={styles.input_label}>ENTER AMOUNT (₦)</Text>
+            {/* Account Number */}
+            <Text style={styles.input_label}>ACCOUNT NUMBER (10 DIGITS)</Text>
             <TextInput
               style={styles.text_input}
-              placeholder="e.g. 20000"
+              placeholder="e.g. 0123456789"
               placeholderTextColor="#666"
-              keyboardType="numeric"
-              value={withdrawAmount}
-              onChangeText={setWithdrawAmount}
+              keyboardType="number-pad"
+              maxLength={10}
+              value={accountNumber}
+              onChangeText={setAccountNumber}
             />
 
-            {/* Quick Amount Chips */}
-            <View style={styles.quick_chip_row}>
-              <TouchableOpacity
-                style={styles.quick_chip}
-                onPress={() => handleQuickAmount(10000)}
-              >
-                <Text style={styles.quick_chip_text}>₦10,000</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.quick_chip}
-                onPress={() => handleQuickAmount(25000)}
-              >
-                <Text style={styles.quick_chip_text}>₦25,000</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.quick_chip}
-                onPress={() => handleQuickAmount(50000)}
-              >
-                <Text style={styles.quick_chip_text}>₦50,000</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.quick_chip}
-                onPress={() => handleQuickAmount(withdrawableBalance)}
-              >
-                <Text style={styles.quick_chip_text}>Max</Text>
-              </TouchableOpacity>
+            {/* Account Name */}
+            <Text style={styles.input_label}>ACCOUNT NAME</Text>
+            <TextInput
+              style={styles.text_input}
+              placeholder="e.g. Chukwuemeka Foods Ltd"
+              placeholderTextColor="#666"
+              autoCapitalize="words"
+              value={accountName}
+              onChangeText={setAccountName}
+            />
+
+            <View style={styles.bank_notice_box}>
+              <Feather name="shield" size={13} color="#9CA3AF" />
+              <Text style={styles.bank_notice_text}>
+                Verified with Paystack to generate your direct transfer recipient code.
+              </Text>
             </View>
 
+            {/* Modal Actions */}
             <View style={styles.modal_footer}>
               <TouchableOpacity
                 style={styles.modal_cancel_btn}
-                onPress={() => setWithdrawModalVisible(false)}
+                onPress={() => setBankModalVisible(false)}
+                disabled={isSavingBank}
               >
                 <Text style={styles.modal_cancel_text}>Cancel</Text>
               </TouchableOpacity>
@@ -592,18 +910,20 @@ const RestaurantTransactions = () => {
               <TouchableOpacity
                 style={[
                   styles.modal_confirm_btn,
-                  isSubmittingWithdraw && { opacity: 0.6 },
+                  isSavingBank && { opacity: 0.7 },
                 ]}
-                disabled={isSubmittingWithdraw}
-                onPress={handleConfirmWithdraw}
+                disabled={isSavingBank}
+                onPress={handleSaveBankDetails}
               >
-                <Text style={styles.modal_confirm_text}>
-                  {isSubmittingWithdraw ? "Processing..." : "Confirm Payout"}
-                </Text>
+                {isSavingBank ? (
+                  <ActivityIndicator size="small" color="#121212" />
+                ) : (
+                  <Text style={styles.modal_confirm_text}>Save Details</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Transaction Details Modal Sheet ── */}
@@ -898,11 +1218,17 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-bold",
     fontSize: 14,
   },
+  balance_actions_row: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
   withdraw_btn: {
+    flex: 1.2,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 7,
     backgroundColor: "#fff",
     borderRadius: 14,
     paddingVertical: 12,
@@ -911,6 +1237,104 @@ const styles = StyleSheet.create({
     color: "#121212",
     fontFamily: "raleway-bold",
     fontSize: 14,
+  },
+  update_bank_action_btn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    backgroundColor: "#222",
+    borderRadius: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  update_bank_action_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 13,
+  },
+
+  // Active Payout Bank Card Banner
+  bank_card_banner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#262626",
+    gap: 12,
+  },
+  bank_card_icon_wrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#4caf5018",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#4caf5033",
+  },
+  bank_card_header_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 2,
+  },
+  bank_card_title: {
+    color: "#777",
+    fontFamily: "raleway-bold",
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  active_pill: {
+    backgroundColor: "#4caf5020",
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  active_pill_text: {
+    color: "#4caf50",
+    fontFamily: "raleway-bold",
+    fontSize: 9,
+  },
+  missing_pill: {
+    backgroundColor: "#ef535020",
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  missing_pill_text: {
+    color: "#ef5350",
+    fontFamily: "raleway-bold",
+    fontSize: 9,
+  },
+  bank_card_name: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  bank_card_number: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-regular",
+    fontSize: 11,
+  },
+  bank_card_action: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#242424",
+  },
+  bank_card_action_text: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-bold",
+    fontSize: 11,
   },
 
   // Filters & Search
@@ -1184,6 +1608,90 @@ const styles = StyleSheet.create({
     color: "#121212",
     fontFamily: "raleway-bold",
     fontSize: 13,
+  },
+  bank_change_btn: {
+    backgroundColor: "#202020",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  bank_change_btn_text: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 11,
+  },
+  bank_modal_card: {
+    width: "100%",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+    gap: 12,
+  },
+  bank_modal_icon_box: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#4caf5018",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#4caf5033",
+  },
+  modal_subtitle: {
+    color: "#777",
+    fontFamily: "raleway-regular",
+    fontSize: 11,
+    marginTop: 1,
+  },
+  modal_close_btn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#222",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  current_bank_pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#4caf5012",
+    borderWidth: 1,
+    borderColor: "#4caf5030",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  current_bank_pill_text: {
+    color: "#4caf50",
+    fontFamily: "raleway-medium",
+    fontSize: 11,
+    flex: 1,
+  },
+  dropdown_wrapper: {
+    zIndex: 10,
+  },
+  bank_notice_box: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#121212",
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#262626",
+    marginTop: 2,
+  },
+  bank_notice_text: {
+    flex: 1,
+    color: "#888",
+    fontFamily: "raleway-regular",
+    fontSize: 10.5,
+    lineHeight: 14,
   },
 
   // Sheet Modal Details
