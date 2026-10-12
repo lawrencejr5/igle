@@ -19,13 +19,13 @@ const wallet_1 = __importDefault(require("../models/wallet"));
 const user_1 = __importDefault(require("../models/user"));
 const transaction_1 = __importDefault(require("../models/transaction"));
 const driver_1 = __importDefault(require("../models/driver"));
+const restaurant_1 = __importDefault(require("../models/restaurant"));
 const wallet_2 = require("../utils/wallet");
 const get_id_1 = require("../utils/get_id");
 const gen_unique_ref_1 = require("../utils/gen_unique_ref");
 const axios_1 = __importDefault(require("axios"));
 const paystack_1 = require("../utils/paystack");
 const get_vendor_restaurant_1 = require("../utils/get_vendor_restaurant");
-const get_vendor_wallet_1 = require("../utils/get_vendor_wallet");
 const fund_wallet = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -166,6 +166,7 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
             return {
                 transaction: transaction[0],
                 recipient: driver.bank.recipient_code,
+                wallet_id: wallet._id,
             };
         }));
         // 2. NOW CALL PAYSTACK (Outside the DB transaction)
@@ -189,6 +190,15 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
         }
         catch (paystackErr) {
             console.error("Paystack API Error:", (_b = paystackErr.response) === null || _b === void 0 ? void 0 : _b.data);
+            try {
+                yield wallet_1.default.findByIdAndUpdate(result.wallet_id, {
+                    $inc: { balance: amount },
+                });
+                yield transaction_1.default.findByIdAndUpdate(result.transaction._id, {
+                    status: "failed",
+                });
+            }
+            catch (restoreErr) { }
             return res
                 .status(502)
                 .json({ msg: "Bank transfer failed. Balance restored." });
@@ -254,41 +264,127 @@ const get_wallet_balance = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.get_wallet_balance = get_wallet_balance;
 const initiate_vendor_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e;
+    const session = yield mongoose_1.default.startSession();
     try {
         const amount = Number(req.body.amount);
+        if (!amount || amount <= 0) {
+            return res
+                .status(400)
+                .json({ msg: "Please enter a valid withdrawal amount" });
+        }
         const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
         if (!restaurant)
             return;
-        const wallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
-        if (amount <= 0 || wallet.balance < amount) {
-            return res.status(400).json({
-                msg: `Insufficient restaurant wallet balance. Available: ₦${wallet.balance.toLocaleString()}`,
+        // 1. DATABASE WORK FIRST
+        const result = yield session.withTransaction(() => __awaiter(void 0, void 0, void 0, function* () {
+            var _a;
+            const restDoc = yield restaurant_1.default.findById(restaurant._id);
+            let wallet = yield wallet_1.default.findOne({
+                owner_id: restaurant._id,
+                owner_type: "Restaurant",
+            });
+            if (!restDoc)
+                throw new Error("not_found");
+            if (!wallet) {
+                wallet = yield wallet_1.default.create({
+                    owner_id: restaurant._id,
+                    owner_type: "Restaurant",
+                    balance: 0,
+                    pending_balance: 0,
+                });
+            }
+            if (!((_a = restDoc.bank) === null || _a === void 0 ? void 0 : _a.recipient_code))
+                throw new Error("no_bank_info");
+            if (wallet.balance < amount)
+                throw new Error("insufficient");
+            // DEDUCT IMMEDIATELY (Safety first)
+            wallet.balance -= amount;
+            yield wallet.save();
+            const transaction = yield transaction_1.default.create([
+                {
+                    wallet_id: wallet._id,
+                    type: "payout",
+                    status: "pending", // ALWAYS start as pending
+                    amount,
+                    channel: "transfer",
+                    reference: `WD-V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                    metadata: {
+                        restaurant_id: restDoc._id,
+                        restaurant_name: restDoc.name,
+                        type: "vendor_withdrawal",
+                    },
+                },
+            ]);
+            return {
+                transaction: transaction[0],
+                recipient: restDoc.bank.recipient_code,
+                wallet_id: wallet._id,
+                wallet_balance: wallet.balance,
+            };
+        }));
+        // 2. NOW CALL PAYSTACK (Outside the DB transaction)
+        try {
+            const transfer = yield axios_1.default.post("https://api.paystack.co/transfer", {
+                source: "balance",
+                amount: amount * 100, // Paystack amount is in kobo
+                recipient: result.recipient,
+                reason: `Igle Restaurant Payout - ${restaurant.name}`,
+                reference: result.transaction.reference, // Pass the same ref to Paystack
+            }, {
+                headers: {
+                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                },
+            });
+            return res.json({
+                msg: "Withdrawal initiated",
+                transfer: transfer.data.data,
+                transaction: result.transaction,
+                wallet_balance: result.wallet_balance,
             });
         }
-        wallet.balance -= amount;
-        yield wallet.save();
-        const transaction = yield transaction_1.default.create({
-            wallet_id: wallet._id,
-            type: "payout",
-            status: "success",
-            amount,
-            channel: "bank",
-            reference: `WD-V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            metadata: {
-                restaurant_id: restaurant._id,
-                restaurant_name: restaurant.name,
-                type: "vendor_withdrawal",
-            },
-        });
-        return res.status(200).json({
-            msg: "Restaurant withdrawal successful",
-            transaction,
-            wallet_balance: wallet.balance,
-        });
+        catch (paystackErr) {
+            console.error("Paystack API Error:", ((_a = paystackErr.response) === null || _a === void 0 ? void 0 : _a.data) || paystackErr.message);
+            try {
+                yield wallet_1.default.findByIdAndUpdate(result.wallet_id, {
+                    $inc: { balance: amount },
+                });
+                yield transaction_1.default.findByIdAndUpdate(result.transaction._id, {
+                    status: "failed",
+                    "metadata.error": ((_c = (_b = paystackErr.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || "Transfer failed",
+                });
+            }
+            catch (restoreErr) {
+                console.error("Failed to restore vendor wallet balance:", restoreErr);
+            }
+            return res
+                .status(502)
+                .json({
+                msg: ((_e = (_d = paystackErr === null || paystackErr === void 0 ? void 0 : paystackErr.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) ||
+                    "Bank transfer failed. Balance restored.",
+            });
+        }
     }
     catch (err) {
-        console.error("initiate_vendor_withdrawal error:", err);
-        res.status(500).json({ msg: err.message || "Withdrawal failed" });
+        if (err.message === "no_bank_info") {
+            return res.status(400).json({
+                msg: "No bank details or recipient code configured for this restaurant. Please save your bank info first.",
+            });
+        }
+        if (err.message === "insufficient") {
+            return res.status(400).json({
+                msg: "Insufficient restaurant wallet balance.",
+            });
+        }
+        if (err.message === "not_found") {
+            return res.status(404).json({
+                msg: "Restaurant not found.",
+            });
+        }
+        res.status(400).json({ msg: err.message || "Withdrawal failed" });
+    }
+    finally {
+        session.endSession();
     }
 });
 exports.initiate_vendor_withdrawal = initiate_vendor_withdrawal;

@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.get_restaurant_by_id = exports.get_all_restaurants = exports.set_restaurant_online_status = exports.get_restaurant_profile = exports.register_restaurant = exports.submit_restaurant_verification = exports.save_restaurant_bank = exports.save_restaurant_location = exports.save_restaurant_details = void 0;
+const axios_1 = __importDefault(require("axios"));
 const restaurant_1 = __importDefault(require("../models/restaurant"));
 const user_1 = __importDefault(require("../models/user"));
 const upload_1 = require("../middleware/upload");
@@ -172,7 +173,7 @@ exports.save_restaurant_location = save_restaurant_location;
 // ─── Stage 3: Save & Verify Restaurant Bank Account ──────────────────────────
 // POST /api/v1/restaurants/save-bank
 const save_restaurant_bank = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!user_id) {
@@ -202,20 +203,45 @@ const save_restaurant_bank = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 });
             }
         }
+        // Call Paystack to create transfer recipient
+        let recipient_code = "";
+        try {
+            const { data } = yield axios_1.default.post("https://api.paystack.co/transferrecipient", {
+                type: "nuban",
+                name: verified_account_name || account_name,
+                account_number,
+                bank_code,
+                currency: "NGN",
+            }, {
+                headers: {
+                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                },
+            });
+            recipient_code = data.data.recipient_code;
+        }
+        catch (recipientErr) {
+            console.error("Paystack transfer recipient error:", ((_j = recipientErr === null || recipientErr === void 0 ? void 0 : recipientErr.response) === null || _j === void 0 ? void 0 : _j.data) || recipientErr.message);
+            return res.status(400).json({
+                msg: ((_l = (_k = recipientErr === null || recipientErr === void 0 ? void 0 : recipientErr.response) === null || _k === void 0 ? void 0 : _k.data) === null || _l === void 0 ? void 0 : _l.message) ||
+                    "Failed to create transfer recipient with Paystack. Please check bank details.",
+            });
+        }
         let restaurant = yield restaurant_1.default.findOne({ user: user_id });
         if (!restaurant) {
             return res.status(404).json({ msg: "Restaurant profile not found. Please complete previous steps first." });
         }
         restaurant.bank = {
-            bank_name: bank_name || ((_j = restaurant.bank) === null || _j === void 0 ? void 0 : _j.bank_name) || "",
-            account_number: account_number || ((_k = restaurant.bank) === null || _k === void 0 ? void 0 : _k.account_number) || "",
-            account_name: verified_account_name || ((_l = restaurant.bank) === null || _l === void 0 ? void 0 : _l.account_name) || "",
-            bank_code: bank_code || ((_m = restaurant.bank) === null || _m === void 0 ? void 0 : _m.bank_code) || "",
+            bank_name: bank_name || ((_m = restaurant.bank) === null || _m === void 0 ? void 0 : _m.bank_name) || "",
+            account_number: account_number || ((_o = restaurant.bank) === null || _o === void 0 ? void 0 : _o.account_number) || "",
+            account_name: verified_account_name || ((_p = restaurant.bank) === null || _p === void 0 ? void 0 : _p.account_name) || "",
+            bank_code: bank_code || ((_q = restaurant.bank) === null || _q === void 0 ? void 0 : _q.bank_code) || "",
+            recipient_code,
         };
         yield restaurant.save();
         return res.status(200).json({
             msg: "Bank details verified and saved successfully",
             account_name: verified_account_name,
+            recipient_code,
             restaurant,
         });
     }
@@ -276,7 +302,7 @@ exports.submit_restaurant_verification = submit_restaurant_verification;
 // ─── Full Fallback Registration Endpoint ──────────────────────────────────────
 // POST /api/v1/restaurants/register
 const register_restaurant = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     try {
         const user_id = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!user_id) {
@@ -353,6 +379,7 @@ const register_restaurant = (req, res) => __awaiter(void 0, void 0, void 0, func
                     account_number: account_number || ((_g = restaurant.bank) === null || _g === void 0 ? void 0 : _g.account_number) || "",
                     account_name: account_name || ((_h = restaurant.bank) === null || _h === void 0 ? void 0 : _h.account_name) || "",
                     bank_code: bank_code || ((_j = restaurant.bank) === null || _j === void 0 ? void 0 : _j.bank_code) || "",
+                    recipient_code: ((_k = restaurant.bank) === null || _k === void 0 ? void 0 : _k.recipient_code) || "",
                 };
             }
             if (gov_id_url)
