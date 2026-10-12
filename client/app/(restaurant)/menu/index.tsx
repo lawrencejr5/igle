@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -68,11 +69,26 @@ const RestaurantMenu = () => {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItemData[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   React.useEffect(() => {
     fetchVendorCategories();
     fetchVendorMenuItems();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        fetchVendorCategories(),
+        fetchVendorMenuItems(),
+      ]);
+    } catch (e) {
+      console.log("Error refreshing menu:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   React.useEffect(() => {
     if (ctxCategories) {
@@ -605,6 +621,14 @@ const RestaurantMenu = () => {
           styles.scroll_content,
           { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
         ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#fff"
+            colors={["#fff"]}
+          />
+        }
       >
         {selectedCatId !== "all" && (
           <View style={styles.cat_header_banner}>

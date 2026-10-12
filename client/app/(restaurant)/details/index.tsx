@@ -13,6 +13,7 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
+  RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
@@ -66,6 +67,7 @@ const EditRestaurantDetails = () => {
   const { showNotification } = useNotificationContext();
 
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Form State
   const [name, setName] = useState("");
@@ -88,6 +90,17 @@ const EditRestaurantDetails = () => {
   const [activeHourIndex, setActiveHourIndex] = useState<number | null>(null);
   const [activeTimeField, setActiveTimeField] = useState<"open" | "close">("open");
   const [tempTimeInput, setTempTimeInput] = useState("08:00 AM");
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchRestaurantProfile();
+    } catch (e) {
+      console.log("Error refreshing restaurant details:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (restaurant) {
@@ -279,6 +292,14 @@ const EditRestaurantDetails = () => {
             styles.scroll_content,
             { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
           ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#fff"
+              colors={["#fff"]}
+            />
+          }
         >
         {/* ── Banner & Logo Upload Header ── */}
         <View style={styles.hero_card}>

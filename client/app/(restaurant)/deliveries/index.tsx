@@ -217,6 +217,7 @@ const RestaurantDeliveries = () => {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor="#fff"
+            colors={["#fff"]}
           />
         }
       >

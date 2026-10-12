@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -64,6 +65,7 @@ const RestaurantTransactions = () => {
   const [transactions, setTransactions] = useState<RestaurantTransaction[]>([]);
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   // Withdrawal Modal State
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
@@ -80,6 +82,20 @@ const RestaurantTransactions = () => {
     fetchVendorTransactions();
     fetchVendorEarningsStats();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        fetchVendorTransactions(),
+        fetchVendorEarningsStats(),
+      ]);
+    } catch (e) {
+      console.log("Error refreshing transactions:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   React.useEffect(() => {
     if (ctxVendorTxns && Array.isArray(ctxVendorTxns)) {
@@ -250,6 +266,14 @@ const RestaurantTransactions = () => {
           styles.scroll_content,
           { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
         ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#fff"
+            colors={["#fff"]}
+          />
+        }
       >
         {/* ── Withdrawable Balance Hero Card ── */}
         <View style={styles.balance_card}>

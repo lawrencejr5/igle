@@ -10,6 +10,7 @@ import {
   Modal,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useEffect, useMemo } from "react";
@@ -41,13 +42,11 @@ interface ReviewItem {
   createdAt: string;
 }
 
-
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 const StoreReviewsScreen = () => {
   const insets = useSafeAreaInsets();
-  const { restaurant } = useRestaurantContext();
+  const { restaurant, fetchRestaurantProfile } = useRestaurantContext();
   const { showNotification } = useNotificationContext();
   const {
     restaurantReviews: ctxReviews,
@@ -57,12 +56,28 @@ const StoreReviewsScreen = () => {
 
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<number | "ALL">("ALL");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (restaurant?._id) {
       fetchRestaurantRatings(restaurant._id);
     }
   }, [restaurant?._id]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const rest = await fetchRestaurantProfile();
+      const targetId = rest?._id || restaurant?._id;
+      if (targetId) {
+        await fetchRestaurantRatings(targetId);
+      }
+    } catch (e) {
+      console.log("Error refreshing reviews:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (ctxReviews !== null) {
@@ -181,6 +196,14 @@ const StoreReviewsScreen = () => {
           styles.scroll_content,
           { paddingBottom: Platform.OS === "ios" ? insets.bottom + 30 : 40 },
         ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#fff"
+            colors={["#fff"]}
+          />
+        }
       >
         {/* ── Rating Summary & Breakdown Hero Card ── */}
         <View style={styles.hero_rating_card}>

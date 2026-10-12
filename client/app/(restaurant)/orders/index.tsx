@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
@@ -102,6 +103,7 @@ const RestaurantOrders = () => {
   const [deliveriesMap, setDeliveriesMap] = useState<Record<string, any>>({});
   const [searchingMap, setSearchingMap] = useState<Record<string, boolean>>({});
   const [payingMap, setPayingMap] = useState<Record<string, boolean>>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   // Decline Modal State
   const [declineModalVisible, setDeclineModalVisible] = useState(false);
@@ -141,6 +143,17 @@ const RestaurantOrders = () => {
   useEffect(() => {
     fetchVendorOrders();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchVendorOrders();
+    } catch (e) {
+      console.log("Error refreshing vendor orders:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Synchronize context vendorOrders to UI state
   useEffect(() => {
@@ -528,6 +541,14 @@ const RestaurantOrders = () => {
           styles.scroll_content,
           { paddingBottom: Platform.OS === "ios" ? insets.bottom + 40 : 50 },
         ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#fff"
+            colors={["#fff"]}
+          />
+        }
       >
         {/* Urgent New Incoming Orders Highlight Bar */}
         {placedCount > 0 && activeTab === "active" && (

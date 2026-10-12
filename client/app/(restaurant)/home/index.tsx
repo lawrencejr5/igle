@@ -7,6 +7,7 @@ import {
   Pressable,
   Platform,
   Switch,
+  RefreshControl,
 } from "react-native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -35,6 +36,7 @@ const RestaurantHome = () => {
     restaurant?.is_online ?? true,
   );
   const [sideNavOpen, setSideNavOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   React.useEffect(() => {
     fetchRestaurantProfile();
@@ -44,6 +46,26 @@ const RestaurantHome = () => {
       fetchRestaurantRatings(restaurant._id);
     }
   }, [restaurant?._id]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const rest = await fetchRestaurantProfile();
+      const targetId = rest?._id || restaurant?._id;
+      const tasks: Promise<any>[] = [
+        fetchVendorOrders(),
+        fetchVendorEarningsStats(),
+      ];
+      if (targetId) {
+        tasks.push(fetchRestaurantRatings(targetId));
+      }
+      await Promise.all(tasks);
+    } catch (e) {
+      console.log("Error refreshing restaurant home:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const completedTodayCount = React.useMemo(() => {
     const todayStr = new Date().toDateString();
@@ -120,6 +142,14 @@ const RestaurantHome = () => {
             styles.scroll_content,
             { paddingBottom: Platform.OS === "ios" ? insets.bottom + 30 : 40 },
           ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#fff"
+              colors={["#fff"]}
+            />
+          }
         >
           {/* ── Banner & Logo Header (First on Page) ── */}
           <TouchableOpacity
