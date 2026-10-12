@@ -72,7 +72,7 @@ const RestaurantHome = () => {
     null,
   );
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
-  const snapPoints = useMemo(() => ["80%%"], []);
+  const snapPoints = useMemo(() => ["80%"], []);
 
   const processIncomingOrders = useCallback((ordersList: FoodOrderType[]) => {
     if (!ordersList || !Array.isArray(ordersList)) return;

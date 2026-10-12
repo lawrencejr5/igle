@@ -326,6 +326,7 @@ const RestaurantOrders = () => {
         if (del) {
           setDeliveriesMap((prev) => ({ ...prev, [orderId]: del }));
         }
+        await fetchVendorOrders();
       }
     } finally {
       setPayingMap((prev) => ({ ...prev, [orderId]: false }));
@@ -705,6 +706,49 @@ const RestaurantOrders = () => {
                       </Text>
                     </View>
                   ))}
+
+                  {/* Delivery Fee Line (removed once delivery guy is paid) */}
+                  {!(deliveriesMap[order.id]?.payment_status === "paid") &&
+                    (deliveriesMap[order.id]?.fee || order.delivery_fee || 0) >
+                      0 && (
+                      <View
+                        style={[
+                          styles.item_line,
+                          {
+                            borderTopWidth: 1,
+                            borderTopColor: "#222",
+                            paddingTop: 8,
+                            marginTop: 4,
+                          },
+                        ]}
+                      >
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 6,
+                            flex: 1,
+                          }}
+                        >
+                          <Feather name="truck" size={13} color="#fff" />
+                          <Text
+                            style={[styles.item_line_name, { color: "#fff" }]}
+                          >
+                            Delivery Fee
+                          </Text>
+                        </View>
+                        <Text
+                          style={[styles.item_line_price, { color: "#fff" }]}
+                        >
+                          ₦
+                          {(
+                            deliveriesMap[order.id]?.fee ||
+                            order.delivery_fee ||
+                            0
+                          ).toLocaleString()}
+                        </Text>
+                      </View>
+                    )}
                 </View>
 
                 {/* Customer Contact & Delivery Info */}
@@ -807,9 +851,23 @@ const RestaurantOrders = () => {
                 {/* Price & Action Row */}
                 <View style={styles.pricing_footer}>
                   <View>
-                    <Text style={styles.total_label}>TOTAL EARNINGS</Text>
+                    <Text style={styles.total_label}>
+                      {deliveriesMap[order.id]?.payment_status === "paid"
+                        ? "TOTAL (RIDER PAID)"
+                        : "TOTAL"}
+                    </Text>
                     <Text style={styles.total_price_text}>
-                      ₦{order.total.toLocaleString()}
+                      ₦
+                      {(deliveriesMap[order.id]?.payment_status === "paid"
+                        ? Math.max(
+                            0,
+                            order.total -
+                              (deliveriesMap[order.id]?.fee ||
+                                order.delivery_fee ||
+                                0),
+                          )
+                        : order.total
+                      ).toLocaleString()}
                     </Text>
                   </View>
 
@@ -949,7 +1007,13 @@ const RestaurantOrders = () => {
                                     color="#121212"
                                   />
                                   <Text style={styles.search_driver_btn_text}>
-                                    Pay Rider (₦1,500)
+                                    Pay Rider (₦
+                                    {(
+                                      delivery.fee ||
+                                      order.delivery_fee ||
+                                      1500
+                                    ).toLocaleString()}
+                                    )
                                   </Text>
                                 </View>
                               )}
@@ -960,7 +1024,10 @@ const RestaurantOrders = () => {
                         if (delivery.payment_status === "paid") {
                           return (
                             <TouchableOpacity
-                              style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                              style={[
+                                styles.search_driver_btn,
+                                { opacity: 0.6 },
+                              ]}
                               disabled
                             >
                               <View style={styles.btn_loading_row}>
@@ -970,7 +1037,13 @@ const RestaurantOrders = () => {
                                   color="#121212"
                                 />
                                 <Text style={styles.search_driver_btn_text}>
-                                  Rider Paid (₦1,500)
+                                  Rider Paid (₦
+                                  {(
+                                    delivery.fee ||
+                                    order.delivery_fee ||
+                                    1500
+                                  ).toLocaleString()}
+                                  )
                                 </Text>
                               </View>
                             </TouchableOpacity>
@@ -1110,7 +1183,13 @@ const RestaurantOrders = () => {
             >
               {/* Receipt Summary Box */}
               <View style={styles.receipt_card}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <View style={{ flex: 1, marginRight: 10 }}>
                     <Text style={styles.receipt_section_title}>
                       CUSTOMER DETAILS
@@ -1128,7 +1207,9 @@ const RestaurantOrders = () => {
 
                   <TouchableOpacity
                     style={styles.driver_call_btn}
-                    onPress={() => handleCallCustomer(selectedOrder.customer_phone)}
+                    onPress={() =>
+                      handleCallCustomer(selectedOrder.customer_phone)
+                    }
                   >
                     <Feather name="phone-call" size={15} color="#fff" />
                   </TouchableOpacity>
@@ -1172,18 +1253,37 @@ const RestaurantOrders = () => {
                     ₦{selectedOrder.subtotal.toLocaleString()}
                   </Text>
                 </View>
-                <View style={styles.receipt_calc_row}>
-                  <Text style={styles.calc_label}>Flat Delivery Fee</Text>
-                  <Text style={styles.calc_val}>
-                    ₦{selectedOrder.delivery_fee.toLocaleString()}
-                  </Text>
-                </View>
+                {deliveriesMap[selectedOrder.id]?.payment_status !== "paid" && (
+                  <View style={styles.receipt_calc_row}>
+                    <Text style={styles.calc_label}>Flat Delivery Fee</Text>
+                    <Text style={styles.calc_val}>
+                      ₦
+                      {(
+                        deliveriesMap[selectedOrder.id]?.fee ||
+                        selectedOrder.delivery_fee ||
+                        0
+                      ).toLocaleString()}
+                    </Text>
+                  </View>
+                )}
                 <View style={styles.receipt_calc_row_total}>
                   <Text style={styles.calc_label_total}>
-                    Total Paid (Wallet)
+                    {deliveriesMap[selectedOrder.id]?.payment_status === "paid"
+                      ? "Total (Delivery Paid)"
+                      : "Total Paid (Wallet)"}
                   </Text>
                   <Text style={styles.calc_val_total}>
-                    ₦{selectedOrder.total.toLocaleString()}
+                    ₦
+                    {(deliveriesMap[selectedOrder.id]?.payment_status === "paid"
+                      ? Math.max(
+                          0,
+                          selectedOrder.total -
+                            (deliveriesMap[selectedOrder.id]?.fee ||
+                              selectedOrder.delivery_fee ||
+                              0),
+                        )
+                      : selectedOrder.total
+                    ).toLocaleString()}
                   </Text>
                 </View>
               </View>
@@ -1192,7 +1292,8 @@ const RestaurantOrders = () => {
               {deliveriesMap[selectedOrder.id]?.driver && (
                 <View style={styles.driver_card}>
                   <View style={styles.driver_avatar_wrapper}>
-                    {deliveriesMap[selectedOrder.id].driver.user?.profile_pic ? (
+                    {deliveriesMap[selectedOrder.id].driver.user
+                      ?.profile_pic ? (
                       <Image
                         source={{
                           uri: deliveriesMap[selectedOrder.id].driver.user
@@ -1632,6 +1733,12 @@ const styles = StyleSheet.create({
     fontFamily: "raleway-semibold",
     fontSize: 9,
     letterSpacing: 0.5,
+  },
+  delivery_fee_spec_text: {
+    color: "#f59e0b",
+    fontFamily: "raleway-semibold",
+    fontSize: 11,
+    marginBottom: 2,
   },
   total_price_text: {
     color: "#fff",

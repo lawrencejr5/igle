@@ -875,6 +875,7 @@ exports.get_food_order_delivery_status = get_food_order_delivery_status;
 // 10. Pay Food Delivery Rider (Restaurant Vendor)
 // POST /api/v1/orders/:id/pay-delivery
 const pay_food_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     try {
         const restaurant = yield (0, get_vendor_restaurant_1.getVendorRestaurant)(req, res);
         if (!restaurant)
@@ -903,6 +904,48 @@ const pay_food_delivery = (req, res) => __awaiter(void 0, void 0, void 0, functi
         // Note: Escrow holds total payment; delivery fee is released to driver on completion.
         delivery.payment_status = "paid";
         yield delivery.save();
+        // Subtract delivery fee from restaurant's pending_balance
+        const deliveryFee = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.delivery_fee) || delivery.fare || FLAT_DELIVERY_FEE;
+        if (deliveryFee > 0) {
+            try {
+                const vendorWallet = yield (0, get_vendor_wallet_1.getOrCreateVendorWallet)(restaurant._id);
+                vendorWallet.pending_balance = Math.max(0, (vendorWallet.pending_balance || 0) - deliveryFee);
+                yield vendorWallet.save();
+                yield transaction_1.default.create({
+                    wallet_id: vendorWallet._id,
+                    type: "delivery_payment",
+                    amount: deliveryFee,
+                    status: "success",
+                    channel: "wallet",
+                    delivery_id: delivery._id,
+                    food_order_id: order._id,
+                    reference: (0, gen_unique_ref_1.generate_unique_reference)(),
+                    metadata: {
+                        order_id: order._id,
+                        order_number: order.order_number,
+                        restaurant_id: restaurant._id,
+                        description: `Delivery fee paid to rider for order #${order.order_number}`,
+                    },
+                });
+                // Also update pending vendor_earnings transaction amount to reflect remaining food earnings
+                const foodEarnings = ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.restaurant_earnings) ||
+                    ((_c = order.pricing) === null || _c === void 0 ? void 0 : _c.subtotal) ||
+                    Math.max(0, (((_d = order.pricing) === null || _d === void 0 ? void 0 : _d.total) || 0) - deliveryFee);
+                yield transaction_1.default.findOneAndUpdate({
+                    food_order_id: order._id,
+                    wallet_id: vendorWallet._id,
+                    type: "vendor_earnings",
+                    status: "pending",
+                }, {
+                    $set: {
+                        amount: foodEarnings,
+                    },
+                });
+            }
+            catch (wErr) {
+                console.error("Error deducting delivery fee from vendor pending_balance:", wErr);
+            }
+        }
         // Socket Notifications to driver and vendor
         const driverSocket = delivery.driver ? yield (0, get_id_1.get_driver_socket_id)(delivery.driver.toString()) : null;
         if (driverSocket) {

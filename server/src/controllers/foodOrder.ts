@@ -1016,6 +1016,55 @@ export const pay_food_delivery = async (req: Request, res: Response) => {
     delivery.payment_status = "paid";
     await delivery.save();
 
+    // Subtract delivery fee from restaurant's pending_balance
+    const deliveryFee = order.pricing?.delivery_fee || delivery.fare || FLAT_DELIVERY_FEE;
+    if (deliveryFee > 0) {
+      try {
+        const vendorWallet = await getOrCreateVendorWallet(restaurant._id as any);
+        vendorWallet.pending_balance = Math.max(0, (vendorWallet.pending_balance || 0) - deliveryFee);
+        await vendorWallet.save();
+
+        await Transaction.create({
+          wallet_id: vendorWallet._id,
+          type: "delivery_payment",
+          amount: deliveryFee,
+          status: "success",
+          channel: "wallet",
+          delivery_id: delivery._id,
+          food_order_id: order._id,
+          reference: generate_unique_reference(),
+          metadata: {
+            order_id: order._id,
+            order_number: order.order_number,
+            restaurant_id: restaurant._id,
+            description: `Delivery fee paid to rider for order #${order.order_number}`,
+          },
+        });
+
+        // Also update pending vendor_earnings transaction amount to reflect remaining food earnings
+        const foodEarnings =
+          order.pricing?.restaurant_earnings ||
+          order.pricing?.subtotal ||
+          Math.max(0, (order.pricing?.total || 0) - deliveryFee);
+
+        await Transaction.findOneAndUpdate(
+          {
+            food_order_id: order._id,
+            wallet_id: vendorWallet._id,
+            type: "vendor_earnings",
+            status: "pending",
+          },
+          {
+            $set: {
+              amount: foodEarnings,
+            },
+          }
+        );
+      } catch (wErr) {
+        console.error("Error deducting delivery fee from vendor pending_balance:", wErr);
+      }
+    }
+
     // Socket Notifications to driver and vendor
     const driverSocket = delivery.driver ? await get_driver_socket_id(delivery.driver.toString()) : null;
     if (driverSocket) {
