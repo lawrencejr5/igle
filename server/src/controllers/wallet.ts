@@ -6,6 +6,7 @@ import Wallet from "../models/wallet";
 import User from "../models/user";
 import Transaction from "../models/transaction";
 import Driver from "../models/driver";
+import Restaurant from "../models/restaurant";
 
 import { credit_wallet } from "../utils/wallet";
 import { get_driver_id } from "../utils/get_id";
@@ -170,6 +171,7 @@ export const request_withdrawal = async (req: any, res: any) => {
       return {
         transaction: transaction[0],
         recipient: driver.bank.recipient_code,
+        wallet_id: wallet._id,
       };
     });
 
@@ -198,6 +200,15 @@ export const request_withdrawal = async (req: any, res: any) => {
       });
     } catch (paystackErr: any) {
       console.error("Paystack API Error:", paystackErr.response?.data);
+
+      try {
+        await Wallet.findByIdAndUpdate(result.wallet_id, {
+          $inc: { balance: amount },
+        });
+        await Transaction.findByIdAndUpdate(result.transaction._id, {
+          status: "failed",
+        });
+      } catch (restoreErr) {}
 
       return res
         .status(502)
@@ -269,44 +280,137 @@ export const initiate_vendor_withdrawal = async (
   req: any,
   res: any,
 ): Promise<void> => {
+  const session = await mongoose.startSession();
   try {
     const amount = Number(req.body.amount);
+    if (!amount || amount <= 0) {
+      return res
+        .status(400)
+        .json({ msg: "Please enter a valid withdrawal amount" });
+    }
+
     const restaurant = await getVendorRestaurant(req, res);
     if (!restaurant) return;
 
-    const wallet = await getOrCreateVendorWallet(restaurant._id as any);
+    // 1. DATABASE WORK FIRST
+    const result = await session.withTransaction(async () => {
+      const restDoc = await Restaurant.findById(restaurant._id);
+      let wallet = await Wallet.findOne({
+        owner_id: restaurant._id,
+        owner_type: "Restaurant",
+      });
 
-    if (amount <= 0 || wallet.balance < amount) {
+      if (!restDoc) throw new Error("not_found");
+      if (!wallet) {
+        wallet = await Wallet.create({
+          owner_id: restaurant._id,
+          owner_type: "Restaurant",
+          balance: 0,
+          pending_balance: 0,
+        });
+      }
+
+      if (!restDoc.bank?.recipient_code) throw new Error("no_bank_info");
+      if (wallet.balance < amount) throw new Error("insufficient");
+
+      // DEDUCT IMMEDIATELY (Safety first)
+      wallet.balance -= amount;
+      await wallet.save();
+
+      const transaction = await Transaction.create([
+        {
+          wallet_id: wallet._id,
+          type: "payout",
+          status: "pending", // ALWAYS start as pending
+          amount,
+          channel: "transfer",
+          reference: `WD-V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          metadata: {
+            restaurant_id: restDoc._id,
+            restaurant_name: restDoc.name,
+            type: "vendor_withdrawal",
+          },
+        },
+      ]);
+
+      return {
+        transaction: transaction[0],
+        recipient: restDoc.bank.recipient_code,
+        wallet_id: wallet._id,
+        wallet_balance: wallet.balance,
+      };
+    });
+
+    // 2. NOW CALL PAYSTACK (Outside the DB transaction)
+    try {
+      const transfer = await axios.post(
+        "https://api.paystack.co/transfer",
+        {
+          source: "balance",
+          amount: amount * 100, // Paystack amount is in kobo
+          recipient: result.recipient,
+          reason: `Igle Restaurant Payout - ${restaurant.name}`,
+          reference: result.transaction.reference, // Pass the same ref to Paystack
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          },
+        },
+      );
+
+      return res.json({
+        msg: "Withdrawal initiated",
+        transfer: transfer.data.data,
+        transaction: result.transaction,
+        wallet_balance: result.wallet_balance,
+      });
+    } catch (paystackErr: any) {
+      console.error(
+        "Paystack API Error:",
+        paystackErr.response?.data || paystackErr.message
+      );
+
+      try {
+        await Wallet.findByIdAndUpdate(result.wallet_id, {
+          $inc: { balance: amount },
+        });
+        await Transaction.findByIdAndUpdate(result.transaction._id, {
+          status: "failed",
+          "metadata.error":
+            paystackErr.response?.data?.message || "Transfer failed",
+        });
+      } catch (restoreErr) {
+        console.error("Failed to restore vendor wallet balance:", restoreErr);
+      }
+
+      return res
+        .status(502)
+        .json({
+          msg:
+            paystackErr?.response?.data?.message ||
+            "Bank transfer failed. Balance restored.",
+        });
+    }
+  } catch (err: any) {
+    if (err.message === "no_bank_info") {
       return res.status(400).json({
-        msg: `Insufficient restaurant wallet balance. Available: ₦${wallet.balance.toLocaleString()}`,
+        msg: "No bank details or recipient code configured for this restaurant. Please save your bank info first.",
       });
     }
-
-    wallet.balance -= amount;
-    await wallet.save();
-
-    const transaction = await Transaction.create({
-      wallet_id: wallet._id,
-      type: "payout",
-      status: "success",
-      amount,
-      channel: "bank",
-      reference: `WD-V-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      metadata: {
-        restaurant_id: restaurant._id,
-        restaurant_name: restaurant.name,
-        type: "vendor_withdrawal",
-      },
-    });
-
-    return res.status(200).json({
-      msg: "Restaurant withdrawal successful",
-      transaction,
-      wallet_balance: wallet.balance,
-    });
-  } catch (err: any) {
-    console.error("initiate_vendor_withdrawal error:", err);
-    res.status(500).json({ msg: err.message || "Withdrawal failed" });
+    if (err.message === "insufficient") {
+      return res.status(400).json({
+        msg: "Insufficient restaurant wallet balance.",
+      });
+    }
+    if (err.message === "not_found") {
+      return res.status(404).json({
+        msg: "Restaurant not found.",
+      });
+    }
+    res.status(400).json({ msg: err.message || "Withdrawal failed" });
+  } finally {
+    session.endSession();
   }
 };
 

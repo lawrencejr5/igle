@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import axios from "axios";
 import Restaurant from "../models/restaurant";
 import User from "../models/user";
 import { cloudinary } from "../middleware/upload";
@@ -208,6 +209,38 @@ export const save_restaurant_bank = async (req: Request, res: Response) => {
       }
     }
 
+    // Call Paystack to create transfer recipient
+    let recipient_code = "";
+    try {
+      const { data } = await axios.post(
+        "https://api.paystack.co/transferrecipient",
+        {
+          type: "nuban",
+          name: verified_account_name || account_name,
+          account_number,
+          bank_code,
+          currency: "NGN",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          },
+        }
+      );
+
+      recipient_code = data.data.recipient_code;
+    } catch (recipientErr: any) {
+      console.error(
+        "Paystack transfer recipient error:",
+        recipientErr?.response?.data || recipientErr.message
+      );
+      return res.status(400).json({
+        msg:
+          recipientErr?.response?.data?.message ||
+          "Failed to create transfer recipient with Paystack. Please check bank details.",
+      });
+    }
+
     let restaurant = await Restaurant.findOne({ user: user_id });
     if (!restaurant) {
       return res.status(404).json({ msg: "Restaurant profile not found. Please complete previous steps first." });
@@ -218,6 +251,7 @@ export const save_restaurant_bank = async (req: Request, res: Response) => {
       account_number: account_number || restaurant.bank?.account_number || "",
       account_name: verified_account_name || restaurant.bank?.account_name || "",
       bank_code: bank_code || restaurant.bank?.bank_code || "",
+      recipient_code,
     };
 
     await restaurant.save();
@@ -225,6 +259,7 @@ export const save_restaurant_bank = async (req: Request, res: Response) => {
     return res.status(200).json({
       msg: "Bank details verified and saved successfully",
       account_name: verified_account_name,
+      recipient_code,
       restaurant,
     });
   } catch (error: any) {
@@ -386,6 +421,7 @@ export const register_restaurant = async (req: Request, res: Response) => {
           account_number: account_number || restaurant.bank?.account_number || "",
           account_name: account_name || restaurant.bank?.account_name || "",
           bank_code: bank_code || restaurant.bank?.bank_code || "",
+          recipient_code: restaurant.bank?.recipient_code || "",
         };
       }
 
