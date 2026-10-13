@@ -87,6 +87,8 @@ export interface FoodOrderType {
     | "delivered"
     | "cancelled"
     | "rejected";
+  is_self_delivery?: boolean;
+  delivery_type?: "dispatch" | "self";
   cancellation?: {
     cancelled_by?: "customer" | "restaurant" | "driver" | "system" | "admin";
     reason?: string;
@@ -117,6 +119,7 @@ interface FoodOrderContextType {
   acceptOrder: (orderId: string) => Promise<FoodOrderType | null>;
   rejectOrder: (orderId: string, reason?: string) => Promise<FoodOrderType | null>;
   markOrderReady: (orderId: string) => Promise<FoodOrderType | null>;
+  startSelfDelivery: (orderId: string) => Promise<FoodOrderType | null>;
   markOrderDelivered: (orderId: string) => Promise<FoodOrderType | null>;
   payDeliveryRider: (orderId: string) => Promise<boolean>;
   retryDeliveryRider: (orderId: string) => Promise<boolean>;
@@ -279,6 +282,42 @@ export const FoodOrderProvider: FC<{ children: ReactNode }> = ({ children }) => 
       return null;
     } catch (err: any) {
       const msg = err?.response?.data?.msg || err?.message || "Failed to update order status";
+      showNotification(msg, "error");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startSelfDelivery = async (
+    orderId: string
+  ): Promise<FoodOrderType | null> => {
+    setLoading(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error("Auth token missing");
+
+      const { data } = await axios.post(
+        `${API_URLS.orders}/${orderId}/self-deliver`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data?.order) {
+        setVendorOrders((prev) =>
+          prev.map((o) => (o._id === orderId ? data.order : o))
+        );
+        showNotification("Self-delivery started! 🛵", "success");
+        return data.order;
+      }
+      return null;
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Failed to start self delivery";
       showNotification(msg, "error");
       return null;
     } finally {
@@ -543,6 +582,7 @@ export const FoodOrderProvider: FC<{ children: ReactNode }> = ({ children }) => 
         acceptOrder,
         rejectOrder,
         markOrderReady,
+        startSelfDelivery,
         markOrderDelivered,
         payDeliveryRider,
         retryDeliveryRider,

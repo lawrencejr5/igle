@@ -137,6 +137,12 @@ const FoodOrderSchema = new mongoose_1.Schema({
         ],
         default: "placed",
     },
+    is_self_delivery: { type: Boolean, default: false },
+    delivery_type: {
+        type: String,
+        enum: ["dispatch", "self"],
+        default: "dispatch",
+    },
     cancellation: {
         cancelled_by: {
             type: String,

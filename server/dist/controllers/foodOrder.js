@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.retry_food_delivery = exports.get_restaurant_deliveries = exports.pay_food_delivery = exports.get_food_order_delivery_status = exports.get_order_by_id = exports.get_vendor_orders = exports.get_customer_orders = exports.cancel_food_order = exports.mark_order_delivered = exports.mark_order_ready = exports.reject_food_order = exports.accept_food_order = exports.place_food_order = void 0;
+exports.retry_food_delivery = exports.get_restaurant_deliveries = exports.pay_food_delivery = exports.get_food_order_delivery_status = exports.get_order_by_id = exports.get_vendor_orders = exports.get_customer_orders = exports.cancel_food_order = exports.start_self_delivery = exports.mark_order_delivered = exports.mark_order_ready = exports.reject_food_order = exports.accept_food_order = exports.place_food_order = void 0;
 const foodOrder_1 = __importDefault(require("../models/foodOrder"));
 const basket_1 = __importDefault(require("../models/basket"));
 const restaurant_1 = __importDefault(require("../models/restaurant"));
@@ -603,10 +603,11 @@ const mark_order_delivered = (req, res) => __awaiter(void 0, void 0, void 0, fun
         order.status = "delivered";
         order.status_timestamps.delivered_at = new Date();
         yield order.save();
-        // Settle vendor earnings: credits restaurant with subtotal only (delivery_fee goes to rider)
+        // Settle vendor earnings: credits restaurant with subtotal only for dispatch riders,
+        // OR both subtotal + delivery_fee for self-delivered orders!
         yield (0, get_vendor_wallet_1.settleVendorOrderEarnings)(order);
-        // Complete linked delivery (credit bike rider wallet) if one was dispatched
-        if (order.delivery_id) {
+        // Complete linked delivery (credit bike rider wallet) only if one was dispatched and NOT self-delivery
+        if (!order.is_self_delivery && order.delivery_type !== "self" && order.delivery_id) {
             try {
                 const linkedDelivery = yield delivery_1.default.findById(order.delivery_id);
                 if (linkedDelivery && linkedDelivery.status === "in_transit") {
@@ -651,6 +652,78 @@ const mark_order_delivered = (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.mark_order_delivered = mark_order_delivered;
+// 4c. Start Self Delivery (Vendor delivers the order themselves)
+// POST /api/v1/orders/:id/self-deliver
+const start_self_delivery = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const order = yield foodOrder_1.default.findById(id);
+        if (!order) {
+            return res.status(404).json({ msg: "Food order not found" });
+        }
+        if (["delivered", "cancelled", "rejected"].includes(order.status)) {
+            return res.status(400).json({
+                msg: `Cannot self-deliver order with status "${order.status}".`,
+            });
+        }
+        // If an external delivery request exists and is pending/expired, cancel it so drivers don't take it
+        if (order.delivery_id) {
+            try {
+                yield delivery_1.default.findByIdAndUpdate(order.delivery_id, {
+                    status: "cancelled",
+                    cancellation_reason: "Vendor opted for self delivery",
+                });
+            }
+            catch (delErr) {
+                console.error("Error cancelling linked delivery on self delivery:", delErr);
+            }
+        }
+        order.is_self_delivery = true;
+        order.delivery_type = "self";
+        order.status = "in_transit";
+        if (!order.status_timestamps) {
+            order.status_timestamps = {};
+        }
+        if (!order.status_timestamps.preparing_at) {
+            order.status_timestamps.preparing_at = new Date();
+        }
+        order.status_timestamps.in_transit_at = new Date();
+        yield order.save();
+        // Socket notification to Customer
+        const customerSocket = yield (0, get_id_1.get_user_socket_id)(order.customer);
+        if (customerSocket) {
+            server_1.io.to(customerSocket).emit("food_order_updated", {
+                order_id: order._id,
+                order_number: order.order_number,
+                status: "in_transit",
+                is_self_delivery: true,
+                delivery_type: "self",
+                msg: "The restaurant is delivering your order directly! 🛵",
+            });
+        }
+        // Socket notification to Order Room
+        server_1.io.to(`food_order_${order._id}`).emit("food_order_updated", {
+            order_id: order._id,
+            order_number: order.order_number,
+            status: "in_transit",
+            is_self_delivery: true,
+            delivery_type: "self",
+            msg: "Order marked for self-delivery",
+        });
+        return res.status(200).json({
+            msg: "Order switched to self-delivery",
+            order,
+        });
+    }
+    catch (error) {
+        console.error("start_self_delivery error:", error);
+        return res.status(500).json({
+            msg: "Server error starting self delivery",
+            error: error.message,
+        });
+    }
+});
+exports.start_self_delivery = start_self_delivery;
 // 5. Cancel Food Order (Customer)
 // POST /api/v1/orders/:id/cancel
 const cancel_food_order = (req, res) => __awaiter(void 0, void 0, void 0, function* () {

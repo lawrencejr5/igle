@@ -45,17 +45,25 @@ exports.getOrCreateVendorWallet = getOrCreateVendorWallet;
  * If no transaction exists, creates a new one.
  */
 const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c, _d, _e;
     try {
         if (!order || !order.restaurant)
             return false;
-        // Settle only the restaurant's food earnings (subtotal), NOT the delivery_fee.
-        // The delivery_fee (₦1500) is credited to the bike rider via complete_delivery.
-        const earningsAmount = ((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.restaurant_earnings) ||
-            ((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) ||
-            0;
+        const isSelfDelivery = !!(order.is_self_delivery || order.delivery_type === "self");
+        // For self-delivery orders, the restaurant gets both the food subtotal AND the delivery fee!
+        // For dispatch bike driver orders, the restaurant only gets food earnings (subtotal),
+        // while delivery fee is credited to the bike rider via complete_delivery.
+        const earningsAmount = isSelfDelivery
+            ? (((_a = order.pricing) === null || _a === void 0 ? void 0 : _a.total) ||
+                (((_b = order.pricing) === null || _b === void 0 ? void 0 : _b.subtotal) || 0) + (((_c = order.pricing) === null || _c === void 0 ? void 0 : _c.delivery_fee) || 0))
+            : (((_d = order.pricing) === null || _d === void 0 ? void 0 : _d.restaurant_earnings) ||
+                ((_e = order.pricing) === null || _e === void 0 ? void 0 : _e.subtotal) ||
+                0);
         if (earningsAmount <= 0)
             return true;
+        const descriptionText = isSelfDelivery
+            ? `Earnings (food + self-delivery fee) for delivered order #${order.order_number}`
+            : `Earnings for delivered order #${order.order_number}`;
         const wallet = yield (0, exports.getOrCreateVendorWallet)(order.restaurant);
         // Deduct from pending balance, add to withdrawable balance
         wallet.pending_balance = Math.max(0, (wallet.pending_balance || 0) - earningsAmount);
@@ -71,7 +79,8 @@ const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, f
                 amount: earningsAmount,
                 type: "vendor_earnings",
                 "metadata.status": "delivered",
-                "metadata.description": `Earnings for delivered order #${order.order_number}`,
+                "metadata.is_self_delivery": isSelfDelivery,
+                "metadata.description": descriptionText,
             },
         }, { new: true });
         if (!txn) {
@@ -84,7 +93,8 @@ const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, f
                     amount: earningsAmount,
                     type: "vendor_earnings",
                     "metadata.status": "delivered",
-                    "metadata.description": `Earnings for delivered order #${order.order_number}`,
+                    "metadata.is_self_delivery": isSelfDelivery,
+                    "metadata.description": descriptionText,
                 },
             }, { new: true });
         }
@@ -106,7 +116,8 @@ const settleVendorOrderEarnings = (order) => __awaiter(void 0, void 0, void 0, f
                     restaurant_name: (restaurant === null || restaurant === void 0 ? void 0 : restaurant.name) || "Restaurant",
                     type: "food_order_earnings",
                     status: "delivered",
-                    description: `Earnings for delivered order #${order.order_number}`,
+                    is_self_delivery: isSelfDelivery,
+                    description: descriptionText,
                 },
             });
         }

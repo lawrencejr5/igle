@@ -13,6 +13,7 @@ import {
   pay_food_delivery,
   get_restaurant_deliveries,
   retry_food_delivery,
+  start_self_delivery,
 } from "../controllers/foodOrder";
 import { auth } from "../middleware/auth";
 
@@ -31,6 +32,7 @@ FoodOrderRouter.get("/vendor", get_vendor_orders);
 FoodOrderRouter.post("/:id/accept", accept_food_order);
 FoodOrderRouter.post("/:id/reject", reject_food_order);
 FoodOrderRouter.post("/:id/ready", mark_order_ready);
+FoodOrderRouter.post("/:id/self-deliver", start_self_delivery);
 FoodOrderRouter.post("/:id/retry-delivery", retry_food_delivery);
 FoodOrderRouter.post("/:id/pay-delivery", pay_food_delivery);
 FoodOrderRouter.post("/:id/deliver", mark_order_delivered);

@@ -38,14 +38,23 @@ export const getOrCreateVendorWallet = async (
 export const settleVendorOrderEarnings = async (order: any): Promise<boolean> => {
   try {
     if (!order || !order.restaurant) return false;
-    // Settle only the restaurant's food earnings (subtotal), NOT the delivery_fee.
-    // The delivery_fee (₦1500) is credited to the bike rider via complete_delivery.
-    const earningsAmount =
-      order.pricing?.restaurant_earnings ||
-      order.pricing?.subtotal ||
-      0;
+
+    const isSelfDelivery = !!(order.is_self_delivery || order.delivery_type === "self");
+    // For self-delivery orders, the restaurant gets both the food subtotal AND the delivery fee!
+    // For dispatch bike driver orders, the restaurant only gets food earnings (subtotal),
+    // while delivery fee is credited to the bike rider via complete_delivery.
+    const earningsAmount = isSelfDelivery
+      ? (order.pricing?.total ||
+          (order.pricing?.subtotal || 0) + (order.pricing?.delivery_fee || 0))
+      : (order.pricing?.restaurant_earnings ||
+          order.pricing?.subtotal ||
+          0);
+
     if (earningsAmount <= 0) return true;
 
+    const descriptionText = isSelfDelivery
+      ? `Earnings (food + self-delivery fee) for delivered order #${order.order_number}`
+      : `Earnings for delivered order #${order.order_number}`;
 
     const wallet = await getOrCreateVendorWallet(order.restaurant);
 
@@ -66,7 +75,8 @@ export const settleVendorOrderEarnings = async (order: any): Promise<boolean> =>
           amount: earningsAmount,
           type: "vendor_earnings",
           "metadata.status": "delivered",
-          "metadata.description": `Earnings for delivered order #${order.order_number}`,
+          "metadata.is_self_delivery": isSelfDelivery,
+          "metadata.description": descriptionText,
         },
       },
       { new: true }
@@ -84,7 +94,8 @@ export const settleVendorOrderEarnings = async (order: any): Promise<boolean> =>
             amount: earningsAmount,
             type: "vendor_earnings",
             "metadata.status": "delivered",
-            "metadata.description": `Earnings for delivered order #${order.order_number}`,
+            "metadata.is_self_delivery": isSelfDelivery,
+            "metadata.description": descriptionText,
           },
         },
         { new: true }
@@ -109,7 +120,8 @@ export const settleVendorOrderEarnings = async (order: any): Promise<boolean> =>
           restaurant_name: restaurant?.name || "Restaurant",
           type: "food_order_earnings",
           status: "delivered",
-          description: `Earnings for delivered order #${order.order_number}`,
+          is_self_delivery: isSelfDelivery,
+          description: descriptionText,
         },
       });
     }

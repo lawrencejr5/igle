@@ -15,6 +15,7 @@ FoodOrderRouter.get("/vendor", foodOrder_1.get_vendor_orders);
 FoodOrderRouter.post("/:id/accept", foodOrder_1.accept_food_order);
 FoodOrderRouter.post("/:id/reject", foodOrder_1.reject_food_order);
 FoodOrderRouter.post("/:id/ready", foodOrder_1.mark_order_ready);
+FoodOrderRouter.post("/:id/self-deliver", foodOrder_1.start_self_delivery);
 FoodOrderRouter.post("/:id/retry-delivery", foodOrder_1.retry_food_delivery);
 FoodOrderRouter.post("/:id/pay-delivery", foodOrder_1.pay_food_delivery);
 FoodOrderRouter.post("/:id/deliver", foodOrder_1.mark_order_delivered);

@@ -58,6 +58,8 @@ export interface FoodOrderType extends Document {
     | "delivered"
     | "cancelled"
     | "rejected";
+  is_self_delivery?: boolean;
+  delivery_type?: "dispatch" | "self";
   cancellation?: {
     cancelled_by?: "customer" | "restaurant" | "driver" | "system" | "admin";
     reason?: string;
@@ -177,6 +179,12 @@ const FoodOrderSchema = new Schema<FoodOrderType>(
         "rejected",
       ],
       default: "placed",
+    },
+    is_self_delivery: { type: Boolean, default: false },
+    delivery_type: {
+      type: String,
+      enum: ["dispatch", "self"],
+      default: "dispatch",
     },
     cancellation: {
       cancelled_by: {

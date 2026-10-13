@@ -685,11 +685,12 @@ export const mark_order_delivered = async (req: Request, res: Response) => {
     order.status_timestamps.delivered_at = new Date();
     await order.save();
 
-    // Settle vendor earnings: credits restaurant with subtotal only (delivery_fee goes to rider)
+    // Settle vendor earnings: credits restaurant with subtotal only for dispatch riders,
+    // OR both subtotal + delivery_fee for self-delivered orders!
     await settleVendorOrderEarnings(order);
 
-    // Complete linked delivery (credit bike rider wallet) if one was dispatched
-    if ((order as any).delivery_id) {
+    // Complete linked delivery (credit bike rider wallet) only if one was dispatched and NOT self-delivery
+    if (!order.is_self_delivery && order.delivery_type !== "self" && (order as any).delivery_id) {
       try {
         const linkedDelivery = await Delivery.findById((order as any).delivery_id);
         if (linkedDelivery && linkedDelivery.status === "in_transit") {
@@ -735,6 +736,83 @@ export const mark_order_delivered = async (req: Request, res: Response) => {
         msg: "Server error marking order delivered",
         error: error.message,
       });
+  }
+};
+
+// 4c. Start Self Delivery (Vendor delivers the order themselves)
+// POST /api/v1/orders/:id/self-deliver
+export const start_self_delivery = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const order = await FoodOrder.findById(id);
+    if (!order) {
+      return res.status(404).json({ msg: "Food order not found" });
+    }
+
+    if (["delivered", "cancelled", "rejected"].includes(order.status)) {
+      return res.status(400).json({
+        msg: `Cannot self-deliver order with status "${order.status}".`,
+      });
+    }
+
+    // If an external delivery request exists and is pending/expired, cancel it so drivers don't take it
+    if ((order as any).delivery_id) {
+      try {
+        await Delivery.findByIdAndUpdate((order as any).delivery_id, {
+          status: "cancelled",
+          cancellation_reason: "Vendor opted for self delivery",
+        });
+      } catch (delErr) {
+        console.error("Error cancelling linked delivery on self delivery:", delErr);
+      }
+    }
+
+    order.is_self_delivery = true;
+    order.delivery_type = "self";
+    order.status = "in_transit";
+    if (!order.status_timestamps) {
+      (order as any).status_timestamps = {};
+    }
+    if (!order.status_timestamps.preparing_at) {
+      order.status_timestamps.preparing_at = new Date();
+    }
+    order.status_timestamps.in_transit_at = new Date();
+    await order.save();
+
+    // Socket notification to Customer
+    const customerSocket = await get_user_socket_id(order.customer);
+    if (customerSocket) {
+      io.to(customerSocket).emit("food_order_updated", {
+        order_id: order._id,
+        order_number: order.order_number,
+        status: "in_transit",
+        is_self_delivery: true,
+        delivery_type: "self",
+        msg: "The restaurant is delivering your order directly! 🛵",
+      });
+    }
+
+    // Socket notification to Order Room
+    io.to(`food_order_${order._id}`).emit("food_order_updated", {
+      order_id: order._id,
+      order_number: order.order_number,
+      status: "in_transit",
+      is_self_delivery: true,
+      delivery_type: "self",
+      msg: "Order marked for self-delivery",
+    });
+
+    return res.status(200).json({
+      msg: "Order switched to self-delivery",
+      order,
+    });
+  } catch (error: any) {
+    console.error("start_self_delivery error:", error);
+    return res.status(500).json({
+      msg: "Server error starting self delivery",
+      error: error.message,
+    });
   }
 };
 
