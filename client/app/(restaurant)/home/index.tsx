@@ -109,10 +109,8 @@ const RestaurantHome = () => {
   // Open bottom sheet whenever queue has pending orders
   useEffect(() => {
     if (incomingQueue.length > 0) {
-      bottomSheetRef.current?.snapToIndex(0);
       setIsSheetOpen(true);
     } else {
-      bottomSheetRef.current?.close();
       setIsSheetOpen(false);
     }
   }, [incomingQueue.length]);
@@ -341,7 +339,6 @@ const RestaurantHome = () => {
             style={styles.pending_orders_banner}
             activeOpacity={0.9}
             onPress={() => {
-              bottomSheetRef.current?.snapToIndex(0);
               setIsSheetOpen(true);
             }}
           >
@@ -627,21 +624,21 @@ const RestaurantHome = () => {
       />
 
       {/* ── Incoming Order Gorhom Bottom Sheet Modal ── */}
-      <BottomSheet
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        index={-1}
-        enableDynamicSizing={false}
-        enableOverDrag={false}
-        enableContentPanningGesture={true}
-        enableHandlePanningGesture={true}
-        enablePanDownToClose={true}
-        onChange={handleSheetChanges}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={styles.bottom_sheet_bg}
-        handleIndicatorStyle={styles.bottom_sheet_handle}
-      >
-        {incomingQueue.length > 0 && incomingQueue[0] ? (
+      {incomingQueue.length > 0 && incomingQueue[0] && isSheetOpen ? (
+        <BottomSheet
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          index={0}
+          enableDynamicSizing={false}
+          enableOverDrag={false}
+          enableContentPanningGesture={true}
+          enableHandlePanningGesture={true}
+          enablePanDownToClose={true}
+          onChange={handleSheetChanges}
+          backdropComponent={renderBackdrop}
+          backgroundStyle={styles.bottom_sheet_bg}
+          handleIndicatorStyle={styles.bottom_sheet_handle}
+        >
           <BottomSheetView style={styles.sheet_container}>
             {/* ── Header ── */}
             <View style={styles.modal_header_row}>
@@ -892,12 +889,8 @@ const RestaurantHome = () => {
               </TouchableOpacity>
             </View>
           </BottomSheetView>
-        ) : (
-          <BottomSheetView style={{ flex: 1 }}>
-            <View />
-          </BottomSheetView>
-        )}
-      </BottomSheet>
+        </BottomSheet>
+      ) : null}
 
       <ConfirmModal
         visible={!!confirmModalConfig?.visible}

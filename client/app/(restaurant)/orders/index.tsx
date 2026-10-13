@@ -668,6 +668,13 @@ const RestaurantOrders = () => {
           </View>
         ) : (
           filteredOrders.map((order) => {
+            const isFulfillmentChoiceVisible =
+              order.status === "preparing" ||
+              (!order.is_self_delivery &&
+                (order.status === "ready_for_pickup" ||
+                  order.status === "in_transit") &&
+                deliveriesMap[order.id]?.status === "expired");
+
             return (
               <TouchableOpacity
                 key={order.id}
@@ -969,16 +976,16 @@ const RestaurantOrders = () => {
                 {/* Price & Action Row */}
                 <View style={styles.pricing_footer}>
                   {/* Top Row: Total Amount & Single Status Actions */}
-                  <View style={styles.pricing_header_row}>
-                    <View style={styles.total_info_col}>
-                      <Text style={styles.total_label}>
+                  {isFulfillmentChoiceVisible ? (
+                    <View style={styles.fulfillment_total_row}>
+                      <Text style={styles.fulfillment_total_label}>
                         {order.is_self_delivery
-                          ? "TOTAL (INCL. DELIVERY)"
+                          ? "Total (incl. delivery):"
                           : deliveriesMap[order.id]?.payment_status === "paid"
-                            ? "TOTAL (RIDER PAID)"
-                            : "TOTAL"}
+                            ? "Total (rider paid):"
+                            : "Total:"}
                       </Text>
-                      <Text style={styles.total_price_text}>
+                      <Text style={styles.fulfillment_total_price}>
                         ₦
                         {(order.is_self_delivery
                           ? order.total
@@ -994,158 +1001,95 @@ const RestaurantOrders = () => {
                         ).toLocaleString()}
                       </Text>
                     </View>
-
-                    {/* Dynamic Action Buttons based on Status */}
-                    {order.status === "placed" && (
-                      <View style={styles.action_group}>
-                        <TouchableOpacity
-                          style={styles.decline_btn}
-                          onPress={() => handleOpenDeclineModal(order)}
-                        >
-                          <Text style={styles.decline_btn_text}>Decline</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={styles.accept_btn}
-                          onPress={() => handleAcceptOrder(order.id)}
-                        >
-                          <Feather name="check" size={16} color="#121212" />
-                          <Text style={styles.accept_btn_text}>Accept</Text>
-                        </TouchableOpacity>
+                  ) : (
+                    <View style={styles.pricing_header_row}>
+                      <View style={styles.total_info_col}>
+                        <Text style={styles.total_label}>
+                          {order.is_self_delivery
+                            ? "TOTAL (INCL. DELIVERY)"
+                            : deliveriesMap[order.id]?.payment_status === "paid"
+                              ? "TOTAL (RIDER PAID)"
+                              : "TOTAL"}
+                        </Text>
+                        <Text style={styles.total_price_text}>
+                          ₦
+                          {(order.is_self_delivery
+                            ? order.total
+                            : deliveriesMap[order.id]?.payment_status === "paid"
+                              ? Math.max(
+                                  0,
+                                  order.total -
+                                    (deliveriesMap[order.id]?.fee ||
+                                      order.delivery_fee ||
+                                      0),
+                                )
+                              : order.total
+                          ).toLocaleString()}
+                        </Text>
                       </View>
-                    )}
 
-                    {(order.status === "ready_for_pickup" ||
-                      order.status === "in_transit") &&
-                      order.is_self_delivery && (
-                        <TouchableOpacity
-                          style={styles.mark_delivered_btn}
-                          disabled={deliveringDoneMap[order.id]}
-                          onPress={() => handleMarkOrderDelivered(order.id)}
-                        >
-                          {deliveringDoneMap[order.id] ? (
-                            <View style={styles.btn_loading_row}>
-                              <ActivityIndicator size="small" color="#121212" />
-                              <Text style={styles.mark_delivered_btn_text}>
-                                Completing...
-                              </Text>
-                            </View>
-                          ) : (
-                            <View style={styles.btn_loading_row}>
-                              <Feather
-                                name="check-circle"
-                                size={14}
-                                color="#121212"
-                              />
-                              <Text style={styles.mark_delivered_btn_text}>
-                                Mark Delivered
-                              </Text>
-                            </View>
-                          )}
-                        </TouchableOpacity>
+                      {/* Dynamic Action Buttons based on Status */}
+                      {order.status === "placed" && (
+                        <View style={styles.action_group}>
+                          <TouchableOpacity
+                            style={styles.decline_btn}
+                            onPress={() => handleOpenDeclineModal(order)}
+                          >
+                            <Text style={styles.decline_btn_text}>Decline</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.accept_btn}
+                            onPress={() => handleAcceptOrder(order.id)}
+                          >
+                            <Feather name="check" size={16} color="#121212" />
+                            <Text style={styles.accept_btn_text}>Accept</Text>
+                          </TouchableOpacity>
+                        </View>
                       )}
 
-                    {(order.status === "ready_for_pickup" ||
-                      order.status === "in_transit") &&
-                      !order.is_self_delivery &&
-                      (() => {
-                        const delivery = deliveriesMap[order.id];
-                        const isSearching = searchingMap[order.id];
-                        const isPaying = payingMap[order.id];
-
-                        if (isSearching) {
-                          return (
-                            <TouchableOpacity
-                              style={[
-                                styles.search_driver_btn,
-                                { opacity: 0.6 },
-                              ]}
-                              disabled
-                            >
+                      {(order.status === "ready_for_pickup" ||
+                        order.status === "in_transit") &&
+                        order.is_self_delivery && (
+                          <TouchableOpacity
+                            style={styles.mark_delivered_btn}
+                            disabled={deliveringDoneMap[order.id]}
+                            onPress={() => handleMarkOrderDelivered(order.id)}
+                          >
+                            {deliveringDoneMap[order.id] ? (
                               <View style={styles.btn_loading_row}>
                                 <ActivityIndicator
                                   size="small"
                                   color="#121212"
                                 />
-                                <Text style={styles.search_driver_btn_text}>
-                                  Searching...
+                                <Text style={styles.mark_delivered_btn_text}>
+                                  Completing...
                                 </Text>
                               </View>
-                            </TouchableOpacity>
-                          );
-                        }
-
-                        // Expired state is handled below in the dedicated choice row
-                        if (delivery?.status === "expired") {
-                          return null;
-                        }
-
-                        if (!delivery || delivery.status === "pending") {
-                          return (
-                            <TouchableOpacity
-                              style={[
-                                styles.search_driver_btn,
-                                { opacity: 0.6 },
-                              ]}
-                              disabled
-                            >
+                            ) : (
                               <View style={styles.btn_loading_row}>
-                                <ActivityIndicator
-                                  size="small"
+                                <Feather
+                                  name="check-circle"
+                                  size={14}
                                   color="#121212"
                                 />
-                                <Text style={styles.search_driver_btn_text}>
-                                  Searching for Driver...
+                                <Text style={styles.mark_delivered_btn_text}>
+                                  Mark Delivered
                                 </Text>
                               </View>
-                            </TouchableOpacity>
-                          );
-                        }
+                            )}
+                          </TouchableOpacity>
+                        )}
 
-                        if (delivery.driver) {
-                          if (
-                            delivery.status === "arrived" &&
-                            delivery.payment_status !== "paid"
-                          ) {
-                            return (
-                              <TouchableOpacity
-                                style={styles.search_driver_btn}
-                                disabled={isPaying}
-                                onPress={() => handlePayRider(order.id)}
-                              >
-                                {isPaying ? (
-                                  <View style={styles.btn_loading_row}>
-                                    <ActivityIndicator
-                                      size="small"
-                                      color="#121212"
-                                    />
-                                    <Text style={styles.search_driver_btn_text}>
-                                      Paying Rider...
-                                    </Text>
-                                  </View>
-                                ) : (
-                                  <View style={styles.btn_loading_row}>
-                                    <Feather
-                                      name="credit-card"
-                                      size={14}
-                                      color="#121212"
-                                    />
-                                    <Text style={styles.search_driver_btn_text}>
-                                      Pay Rider (₦
-                                      {(
-                                        delivery.fee ||
-                                        order.delivery_fee ||
-                                        1500
-                                      ).toLocaleString()}
-                                      )
-                                    </Text>
-                                  </View>
-                                )}
-                              </TouchableOpacity>
-                            );
-                          }
+                      {(order.status === "ready_for_pickup" ||
+                        order.status === "in_transit") &&
+                        !order.is_self_delivery &&
+                        (() => {
+                          const delivery = deliveriesMap[order.id];
+                          const isSearching = searchingMap[order.id];
+                          const isPaying = payingMap[order.id];
 
-                          if (delivery.payment_status === "paid") {
+                          if (isSearching) {
                             return (
                               <TouchableOpacity
                                 style={[
@@ -1155,56 +1099,149 @@ const RestaurantOrders = () => {
                                 disabled
                               >
                                 <View style={styles.btn_loading_row}>
-                                  <Feather
-                                    name="check-circle"
-                                    size={14}
+                                  <ActivityIndicator
+                                    size="small"
                                     color="#121212"
                                   />
                                   <Text style={styles.search_driver_btn_text}>
-                                    Rider Paid (₦
-                                    {(
-                                      delivery.fee ||
-                                      order.delivery_fee ||
-                                      1500
-                                    ).toLocaleString()}
-                                    )
+                                    Searching...
                                   </Text>
                                 </View>
                               </TouchableOpacity>
                             );
                           }
 
-                          return (
-                            <TouchableOpacity
-                              style={[
-                                styles.search_driver_btn,
-                                { opacity: 0.6 },
-                              ]}
-                              disabled
-                            >
-                              <View style={styles.btn_loading_row}>
-                                <ActivityIndicator
-                                  size="small"
-                                  color="#121212"
-                                />
-                                <Text style={styles.search_driver_btn_text}>
-                                  Rider En Route...
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          );
-                        }
+                          // Expired state is handled below in the dedicated choice row
+                          if (delivery?.status === "expired") {
+                            return null;
+                          }
 
-                        return null;
-                      })()}
-                  </View>
+                          if (!delivery || delivery.status === "pending") {
+                            return (
+                              <TouchableOpacity
+                                style={[
+                                  styles.search_driver_btn,
+                                  { opacity: 0.6 },
+                                ]}
+                                disabled
+                              >
+                                <View style={styles.btn_loading_row}>
+                                  <ActivityIndicator
+                                    size="small"
+                                    color="#121212"
+                                  />
+                                  <Text style={styles.search_driver_btn_text}>
+                                    Searching for Driver...
+                                  </Text>
+                                </View>
+                              </TouchableOpacity>
+                            );
+                          }
+
+                          if (delivery.driver) {
+                            if (
+                              delivery.status === "arrived" &&
+                              delivery.payment_status !== "paid"
+                            ) {
+                              return (
+                                <TouchableOpacity
+                                  style={styles.search_driver_btn}
+                                  disabled={isPaying}
+                                  onPress={() => handlePayRider(order.id)}
+                                >
+                                  {isPaying ? (
+                                    <View style={styles.btn_loading_row}>
+                                      <ActivityIndicator
+                                        size="small"
+                                        color="#121212"
+                                      />
+                                      <Text
+                                        style={styles.search_driver_btn_text}
+                                      >
+                                        Paying Rider...
+                                      </Text>
+                                    </View>
+                                  ) : (
+                                    <View style={styles.btn_loading_row}>
+                                      <Feather
+                                        name="credit-card"
+                                        size={14}
+                                        color="#121212"
+                                      />
+                                      <Text
+                                        style={styles.search_driver_btn_text}
+                                      >
+                                        Pay Rider (₦
+                                        {(
+                                          delivery.fee ||
+                                          order.delivery_fee ||
+                                          1500
+                                        ).toLocaleString()}
+                                        )
+                                      </Text>
+                                    </View>
+                                  )}
+                                </TouchableOpacity>
+                              );
+                            }
+
+                            if (delivery.payment_status === "paid") {
+                              return (
+                                <TouchableOpacity
+                                  style={[
+                                    styles.search_driver_btn,
+                                    { opacity: 0.6 },
+                                  ]}
+                                  disabled
+                                >
+                                  <View style={styles.btn_loading_row}>
+                                    <Feather
+                                      name="check-circle"
+                                      size={14}
+                                      color="#121212"
+                                    />
+                                    <Text style={styles.search_driver_btn_text}>
+                                      Rider Paid (₦
+                                      {(
+                                        delivery.fee ||
+                                        order.delivery_fee ||
+                                        1500
+                                      ).toLocaleString()}
+                                      )
+                                    </Text>
+                                  </View>
+                                </TouchableOpacity>
+                              );
+                            }
+
+                            return (
+                              <TouchableOpacity
+                                style={[
+                                  styles.search_driver_btn,
+                                  { opacity: 0.6 },
+                                ]}
+                                disabled
+                              >
+                                <View style={styles.btn_loading_row}>
+                                  <ActivityIndicator
+                                    size="small"
+                                    color="#121212"
+                                  />
+                                  <Text style={styles.search_driver_btn_text}>
+                                    Rider En Route...
+                                  </Text>
+                                </View>
+                              </TouchableOpacity>
+                            );
+                          }
+
+                          return null;
+                        })()}
+                    </View>
+                  )}
 
                   {/* Dedicated Bottom Row: Fulfillment Selection (Find Driver vs Self Deliver) */}
-                  {(order.status === "preparing" ||
-                    (!order.is_self_delivery &&
-                      (order.status === "ready_for_pickup" ||
-                        order.status === "in_transit") &&
-                      deliveriesMap[order.id]?.status === "expired")) && (
+                  {isFulfillmentChoiceVisible && (
                     <View style={styles.fulfillment_choice_container}>
                       <TouchableOpacity
                         style={styles.find_driver_choice_btn}
@@ -1646,14 +1683,18 @@ const RestaurantOrders = () => {
                   >
                     {deliveringDoneMap[selectedOrder.id] ? (
                       <View style={styles.btn_loading_row}>
-                        <ActivityIndicator size="small" color="#fff" />
+                        <ActivityIndicator size="small" color="#121212" />
                         <Text style={styles.self_delivery_modal_btn_text}>
                           Completing Delivery...
                         </Text>
                       </View>
                     ) : (
                       <View style={styles.btn_loading_row}>
-                        <Feather name="check-circle" size={16} color="#fff" />
+                        <Feather
+                          name="check-circle"
+                          size={16}
+                          color="#121212"
+                        />
                         <Text style={styles.self_delivery_modal_btn_text}>
                           Mark as Delivered (₦
                           {selectedOrder.total.toLocaleString()} to Balance)
@@ -2001,6 +2042,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  fulfillment_total_row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingBottom: 4,
+  },
+  fulfillment_total_label: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-bold",
+    fontSize: 13,
+  },
+  fulfillment_total_price: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+    fontSize: 17,
   },
   total_info_col: {
     justifyContent: "center",
@@ -2444,6 +2502,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     width: "100%",
+    marginTop: 6,
   },
   find_driver_choice_btn: {
     flex: 1,
@@ -2495,7 +2554,7 @@ const styles = StyleSheet.create({
     borderColor: "#10b98144",
   },
   self_delivery_modal_btn: {
-    backgroundColor: "#10b981",
+    backgroundColor: "#fff",
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: "center",
@@ -2503,7 +2562,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   self_delivery_modal_btn_text: {
-    color: "#fff",
+    color: "#121212",
     fontFamily: "raleway-bold",
     fontSize: 13,
   },
