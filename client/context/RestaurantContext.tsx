@@ -132,16 +132,16 @@ interface RestaurantContextType {
   resetRegistrationDraft: () => void;
   populateDraftFromRestaurant: (rest: RestaurantType) => void;
   saveStageDetails: (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ) => Promise<RestaurantType | null>;
   saveStageLocation: (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ) => Promise<RestaurantType | null>;
   saveStageBank: (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ) => Promise<{ restaurant: RestaurantType; account_name: string } | null>;
   submitStageVerification: (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ) => Promise<RestaurantType | null>;
   submitRegistration: () => Promise<void>;
   registerRestaurant: (formData: FormData) => Promise<void>;
@@ -167,7 +167,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     useState<RestaurantRegistrationDraft>(initialRegistrationDraft);
 
   const updateRegistrationDraft = (
-    data: Partial<RestaurantRegistrationDraft>
+    data: Partial<RestaurantRegistrationDraft>,
   ) => {
     setRegistrationDraft((prev) => ({ ...prev, ...data }));
   };
@@ -224,7 +224,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
       if (err?.response?.status !== 404) {
         console.log(
           "fetchRestaurantProfile error:",
-          err?.response?.data || err.message
+          err?.response?.data || err.message,
         );
       }
       return null;
@@ -248,14 +248,14 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (data?.restaurant) {
         setRestaurant(data.restaurant);
         showNotification(
           data.msg || "Restaurant application submitted successfully!",
-          "success"
+          "success",
         );
       }
     } catch (err: any) {
@@ -281,11 +281,11 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     formData.append("description", registrationDraft.description);
     formData.append(
       "category_tags",
-      JSON.stringify(registrationDraft.category_tags)
+      JSON.stringify(registrationDraft.category_tags),
     );
     formData.append(
       "operating_hours",
-      JSON.stringify(registrationDraft.operating_hours)
+      JSON.stringify(registrationDraft.operating_hours),
     );
     formData.append("address", registrationDraft.address);
     formData.append("landmark", registrationDraft.landmark);
@@ -299,7 +299,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 
     formData.append(
       "delivery_radius_km",
-      registrationDraft.delivery_radius_km.toString()
+      registrationDraft.delivery_radius_km.toString(),
     );
 
     formData.append("bank_name", registrationDraft.bank_name);
@@ -310,7 +310,8 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     const appendFile = (fieldName: string, fileUri: string) => {
       if (!fileUri) return;
       // Skip remote http/https URLs if editing
-      if (fileUri.startsWith("http://") || fileUri.startsWith("https://")) return;
+      if (fileUri.startsWith("http://") || fileUri.startsWith("https://"))
+        return;
 
       const filename = fileUri.split("/").pop() || `${fieldName}.jpg`;
       const match = /\.(\w+)$/.exec(filename);
@@ -333,7 +334,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 
   // Stage 1: Save Details
   const saveStageDetails = async (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ): Promise<RestaurantType | null> => {
     setLoading(true);
     try {
@@ -355,13 +356,21 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         const filename = draft.logoUri.split("/").pop() || "logo.jpg";
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image/jpeg`;
-        formData.append("logo", { uri: draft.logoUri, name: filename, type } as any);
+        formData.append("logo", {
+          uri: draft.logoUri,
+          name: filename,
+          type,
+        } as any);
       }
       if (draft.bannerUri && !draft.bannerUri.startsWith("http")) {
         const filename = draft.bannerUri.split("/").pop() || "banner.jpg";
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image/jpeg`;
-        formData.append("banner", { uri: draft.bannerUri, name: filename, type } as any);
+        formData.append("banner", {
+          uri: draft.bannerUri,
+          name: filename,
+          type,
+        } as any);
       }
 
       const { data } = await axios.post(
@@ -372,7 +381,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (data?.restaurant) {
@@ -392,7 +401,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 
   // Stage 2: Save Location
   const saveStageLocation = async (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ): Promise<RestaurantType | null> => {
     setLoading(true);
     try {
@@ -413,7 +422,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (data?.restaurant) {
@@ -433,7 +442,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 
   // Stage 3: Save & Verify Bank Details
   const saveStageBank = async (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ): Promise<{ restaurant: RestaurantType; account_name: string } | null> => {
     setLoading(true);
     try {
@@ -453,7 +462,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (data?.restaurant) {
@@ -463,7 +472,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         }
         showNotification(
           data.msg || "Bank account details verified successfully",
-          "success"
+          "success",
         );
         return { restaurant: data.restaurant, account_name: data.account_name };
       }
@@ -482,7 +491,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 
   // Stage 4: Submit Verification Documents
   const submitStageVerification = async (
-    overrideData?: Partial<RestaurantRegistrationDraft>
+    overrideData?: Partial<RestaurantRegistrationDraft>,
   ): Promise<RestaurantType | null> => {
     setLoading(true);
     try {
@@ -493,17 +502,32 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
       if (!token) throw new Error("Authentication token not found");
 
       const formData = new FormData();
-      if (draft.government_id_uri && !draft.government_id_uri.startsWith("http")) {
-        const filename = draft.government_id_uri.split("/").pop() || "gov_id.jpg";
+      if (
+        draft.government_id_uri &&
+        !draft.government_id_uri.startsWith("http")
+      ) {
+        const filename =
+          draft.government_id_uri.split("/").pop() || "gov_id.jpg";
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image/jpeg`;
-        formData.append("government_id", { uri: draft.government_id_uri, name: filename, type } as any);
+        formData.append("government_id", {
+          uri: draft.government_id_uri,
+          name: filename,
+          type,
+        } as any);
       }
-      if (draft.cac_document_uri && !draft.cac_document_uri.startsWith("http")) {
+      if (
+        draft.cac_document_uri &&
+        !draft.cac_document_uri.startsWith("http")
+      ) {
         const filename = draft.cac_document_uri.split("/").pop() || "cac.jpg";
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image/jpeg`;
-        formData.append("cac_document", { uri: draft.cac_document_uri, name: filename, type } as any);
+        formData.append("cac_document", {
+          uri: draft.cac_document_uri,
+          name: filename,
+          type,
+        } as any);
       }
 
       const { data } = await axios.post(
@@ -514,14 +538,14 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (data?.restaurant) {
         setRestaurant(data.restaurant);
         showNotification(
           data.msg || "Restaurant application submitted successfully!",
-          "success"
+          "success",
         );
         return data.restaurant;
       }
@@ -540,7 +564,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
 
   // Toggle restaurant online/offline status
   const setRestaurantOnlineStatus = async (
-    is_online: boolean
+    is_online: boolean,
   ): Promise<void> => {
     try {
       const token =
@@ -553,12 +577,12 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
         { is_online },
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (data?.restaurant) {
         setRestaurant(data.restaurant);
-        showNotification(data.msg, "success");
+        showNotification(data.msg, is_online ? "success" : "error");
       }
     } catch (err: any) {
       const errorMessage =
@@ -586,7 +610,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     } catch (err: any) {
       console.log(
         "fetchAllRestaurants error:",
-        err?.response?.data || err.message
+        err?.response?.data || err.message,
       );
       return [];
     } finally {
@@ -595,7 +619,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const fetchRestaurantById = async (
-    id: string
+    id: string,
   ): Promise<RestaurantType | null> => {
     try {
       const token =
@@ -609,7 +633,7 @@ export const RestaurantProvider: React.FC<{ children: ReactNode }> = ({
     } catch (err: any) {
       console.log(
         "fetchRestaurantById error:",
-        err?.response?.data || err.message
+        err?.response?.data || err.message,
       );
       return null;
     }
@@ -652,9 +676,8 @@ export const useRestaurantContext = () => {
   const context = useContext(RestaurantContext);
   if (!context) {
     throw new Error(
-      "useRestaurantContext must be used within a RestaurantProvider"
+      "useRestaurantContext must be used within a RestaurantProvider",
     );
   }
   return context;
 };
-

@@ -9,7 +9,6 @@ import {
   Modal,
   Switch,
   Platform,
-  Alert,
   Keyboard,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
@@ -25,6 +24,8 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 import { useMenuContext } from "../../../context/MenuContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ export interface MenuItemData {
 const RestaurantMenu = () => {
   const insets = useSafeAreaInsets();
   const { restaurant } = useRestaurantContext();
+  const { showNotification } = useNotificationContext()!;
   const {
     categories: ctxCategories,
     menuItems: ctxMenuItems,
@@ -233,7 +235,7 @@ const RestaurantMenu = () => {
   // Save Category
   const handleSaveCategory = async () => {
     if (!catNameInput.trim()) {
-      Alert.alert("Required", "Please enter a category name");
+      showNotification("Please enter a category name", "error");
       return;
     }
 
@@ -316,15 +318,15 @@ const RestaurantMenu = () => {
   // Save Item
   const handleSaveItem = async () => {
     if (!itemName.trim()) {
-      Alert.alert("Required", "Please enter a menu item name");
+      showNotification("Please enter a menu item name", "error");
       return;
     }
     if (!itemCategory) {
-      Alert.alert("Required", "Please select a category for this item");
+      showNotification("Please select a category for this item", "error");
       return;
     }
     if (!itemPrice || isNaN(Number(itemPrice))) {
-      Alert.alert("Required", "Please enter a valid price");
+      showNotification("Please enter a valid price", "error");
       return;
     }
 
@@ -1102,56 +1104,25 @@ const RestaurantMenu = () => {
       </Modal>
 
       {/* ── Delete Confirmation Modal ── */}
-      <Modal
+      <ConfirmModal
         visible={!!deleteTarget}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDeleteTarget(null)}
-      >
-        <View style={styles.modal_backdrop}>
-          <View style={styles.modal_card}>
-            <Feather
-              name="alert-triangle"
-              size={32}
-              color="#ef5350"
-              style={{ alignSelf: "center", marginBottom: 10 }}
-            />
-            <Text style={[styles.modal_title, { textAlign: "center" }]}>
-              Confirm Delete
-            </Text>
-            <Text style={styles.delete_confirm_text}>
-              Are you sure you want to delete "{deleteTarget?.name}"?
-              {deleteTarget?.type === "cat" &&
-                " All items in this category will also be removed."}
-            </Text>
-
-            <View style={styles.modal_footer}>
-              <TouchableOpacity
-                style={styles.modal_cancel_btn}
-                onPress={() => setDeleteTarget(null)}
-                disabled={deletingTarget}
-              >
-                <Text style={styles.modal_cancel_text}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.modal_delete_btn,
-                  deletingTarget && { opacity: 0.6 },
-                ]}
-                onPress={confirmDelete}
-                disabled={deletingTarget}
-              >
-                {deletingTarget ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.modal_delete_btn_text}>Delete</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        title="Confirm Delete"
+        message={
+          deleteTarget
+            ? `Are you sure you want to delete "${deleteTarget.name}"?${
+                deleteTarget.type === "cat"
+                  ? " All items in this category will also be removed."
+                  : ""
+              }`
+            : ""
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        icon="trash-2"
+        loading={deletingTarget}
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
     </View>
   );
 };

@@ -9,7 +9,6 @@ import {
   Switch,
   RefreshControl,
   ActivityIndicator,
-  Alert,
   Linking,
 } from "react-native";
 import { Image } from "expo-image";
@@ -36,6 +35,7 @@ import BottomSheet, {
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
 import SideNav from "../../../components/SideNav";
+import ConfirmModal from "../../../components/ConfirmModal";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 import {
   useFoodOrderContext,
@@ -73,6 +73,16 @@ const RestaurantHome = () => {
   );
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
   const snapPoints = useMemo(() => ["80%"], []);
+  const [confirmModalConfig, setConfirmModalConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    icon?: keyof typeof Feather.glyphMap;
+    loading?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
 
   const processIncomingOrders = useCallback((ordersList: FoodOrderType[]) => {
     if (!ordersList || !Array.isArray(ordersList)) return;
@@ -171,40 +181,38 @@ const RestaurantHome = () => {
     if (incomingQueue.length === 0 || isActionLoading) return;
     const current = incomingQueue[0];
 
-    Alert.alert(
-      "Decline Order",
-      `Are you sure you want to decline order #${current.order_number}?`,
-      [
-        { text: "Keep Order", style: "cancel" },
-        {
-          text: "Decline",
-          style: "destructive",
-          onPress: async () => {
-            setIsActionLoading(true);
-            setActionType("decline");
-            try {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              await rejectOrder(current._id, "Declined by restaurant");
-              handledOrderIdsRef.current.add(current._id);
+    setConfirmModalConfig({
+      visible: true,
+      title: "Decline Order",
+      message: `Are you sure you want to decline order #${current.order_number}?`,
+      confirmText: "Decline",
+      cancelText: "Keep Order",
+      icon: "x-circle",
+      onConfirm: async () => {
+        setConfirmModalConfig(null);
+        setIsActionLoading(true);
+        setActionType("decline");
+        try {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          await rejectOrder(current._id, "Declined by restaurant");
+          handledOrderIdsRef.current.add(current._id);
 
-              const remaining = incomingQueue.slice(1);
-              setIncomingQueue(remaining);
+          const remaining = incomingQueue.slice(1);
+          setIncomingQueue(remaining);
 
-              if (remaining.length === 0) {
-                bottomSheetRef.current?.close();
-                setIsSheetOpen(false);
-                router.push("/(restaurant)/orders" as any);
-              }
-            } catch (e) {
-              console.log("Error declining order:", e);
-            } finally {
-              setIsActionLoading(false);
-              setActionType(null);
-            }
-          },
-        },
-      ],
-    );
+          if (remaining.length === 0) {
+            bottomSheetRef.current?.close();
+            setIsSheetOpen(false);
+            router.push("/(restaurant)/orders" as any);
+          }
+        } catch (e) {
+          console.log("Error declining order:", e);
+        } finally {
+          setIsActionLoading(false);
+          setActionType(null);
+        }
+      },
+    });
   };
 
   const handleSheetChanges = useCallback((index: number) => {
@@ -890,6 +898,18 @@ const RestaurantHome = () => {
           </BottomSheetView>
         )}
       </BottomSheet>
+
+      <ConfirmModal
+        visible={!!confirmModalConfig?.visible}
+        title={confirmModalConfig?.title || ""}
+        message={confirmModalConfig?.message || ""}
+        confirmText={confirmModalConfig?.confirmText}
+        cancelText={confirmModalConfig?.cancelText}
+        icon={confirmModalConfig?.icon}
+        loading={confirmModalConfig?.loading}
+        onConfirm={() => confirmModalConfig?.onConfirm()}
+        onClose={() => setConfirmModalConfig(null)}
+      />
     </View>
   );
 };

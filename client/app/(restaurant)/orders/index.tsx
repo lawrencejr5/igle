@@ -8,7 +8,6 @@ import {
   TextInput,
   Modal,
   Platform,
-  Alert,
   Linking,
   Keyboard,
   KeyboardAvoidingView,
@@ -29,7 +28,9 @@ import {
 import * as Haptics from "expo-haptics";
 import { useRestaurantContext } from "../../../context/RestaurantContext";
 import { useFoodOrderContext } from "../../../context/FoodOrderContext";
+import { useNotificationContext } from "../../../context/NotificationContext";
 import { getUserSocket } from "../../../sockets/socketService";
+import ConfirmModal from "../../../components/ConfirmModal";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -107,9 +108,31 @@ const RestaurantOrders = () => {
   const [deliveriesMap, setDeliveriesMap] = useState<Record<string, any>>({});
   const [searchingMap, setSearchingMap] = useState<Record<string, boolean>>({});
   const [payingMap, setPayingMap] = useState<Record<string, boolean>>({});
-  const [selfDeliveringMap, setSelfDeliveringMap] = useState<Record<string, boolean>>({});
-  const [deliveringDoneMap, setDeliveringDoneMap] = useState<Record<string, boolean>>({});
+  const [selfDeliveringMap, setSelfDeliveringMap] = useState<
+    Record<string, boolean>
+  >({});
+  const [deliveringDoneMap, setDeliveringDoneMap] = useState<
+    Record<string, boolean>
+  >({});
   const [refreshing, setRefreshing] = useState(false);
+  const { showNotification } = useNotificationContext()!;
+
+  // Custom Confirmation Modal State
+  const [confirmModalConfig, setConfirmModalConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    icon?: any;
+    loading?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // Decline Modal State
   const [declineModalVisible, setDeclineModalVisible] = useState(false);
@@ -195,8 +218,11 @@ const RestaurantOrders = () => {
           delivery_fee: o.pricing?.delivery_fee || 0,
           total: o.pricing?.total || 0,
           status: o.status,
-          is_self_delivery: !!(o.is_self_delivery || o.delivery_type === "self"),
-          delivery_type: o.delivery_type || (o.is_self_delivery ? "self" : "dispatch"),
+          is_self_delivery: !!(
+            o.is_self_delivery || o.delivery_type === "self"
+          ),
+          delivery_type:
+            o.delivery_type || (o.is_self_delivery ? "self" : "dispatch"),
           payment_method: o.payment?.method || "wallet",
           placed_at: new Date(o.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
@@ -342,54 +368,56 @@ const RestaurantOrders = () => {
   };
 
   const handleStartSelfDeliver = (orderId: string) => {
-    Alert.alert(
-      "Self Deliver Order",
-      "Are you sure you want to self-deliver this order? You will handle delivery directly and keep 100% of the delivery fee in your wallet upon delivery.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Yes, Self Deliver",
-          onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setSelfDeliveringMap((prev) => ({ ...prev, [orderId]: true }));
-            try {
-              const updated = await startSelfDelivery(orderId);
-              if (updated) {
-                await fetchVendorOrders();
-              }
-            } finally {
-              setSelfDeliveringMap((prev) => ({ ...prev, [orderId]: false }));
-            }
-          },
-        },
-      ],
-    );
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setConfirmModalConfig({
+      visible: true,
+      title: "Self Deliver Order",
+      message:
+        "Are you sure you want to self-deliver this order? You will handle delivery directly and keep 100% of the delivery fee in your wallet upon delivery.",
+      confirmText: "Self Deliver",
+      cancelText: "Cancel",
+      icon: "truck",
+      onConfirm: async () => {
+        setConfirmModalConfig((prev) => ({ ...prev, visible: false }));
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setSelfDeliveringMap((prev) => ({ ...prev, [orderId]: true }));
+        try {
+          const updated = await startSelfDelivery(orderId);
+          if (updated) {
+            await fetchVendorOrders();
+          }
+        } finally {
+          setSelfDeliveringMap((prev) => ({ ...prev, [orderId]: false }));
+        }
+      },
+    });
   };
 
   const handleMarkOrderDelivered = (orderId: string) => {
-    Alert.alert(
-      "Confirm Delivery",
-      "Has this order been delivered to the customer? Once confirmed, the order will be marked completed and your earnings (food + delivery fee) will be credited to your available balance.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm Delivered",
-          onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            setDeliveringDoneMap((prev) => ({ ...prev, [orderId]: true }));
-            try {
-              const updated = await markOrderDelivered(orderId);
-              if (updated) {
-                setDetailsModalVisible(false);
-                await fetchVendorOrders();
-              }
-            } finally {
-              setDeliveringDoneMap((prev) => ({ ...prev, [orderId]: false }));
-            }
-          },
-        },
-      ],
-    );
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setConfirmModalConfig({
+      visible: true,
+      title: "Confirm Delivery",
+      message:
+        "Has this order been delivered to the customer? Once confirmed, the order will be marked completed and your earnings (food + delivery fee) will be credited to your available balance.",
+      confirmText: "Confirm Delivered",
+      cancelText: "Cancel",
+      icon: "check-circle",
+      onConfirm: async () => {
+        setConfirmModalConfig((prev) => ({ ...prev, visible: false }));
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        setDeliveringDoneMap((prev) => ({ ...prev, [orderId]: true }));
+        try {
+          const updated = await markOrderDelivered(orderId);
+          if (updated) {
+            setDetailsModalVisible(false);
+            await fetchVendorOrders();
+          }
+        } finally {
+          setDeliveringDoneMap((prev) => ({ ...prev, [orderId]: false }));
+        }
+      },
+    });
   };
 
   const handleOpenDeclineModal = (order: VendorFoodOrder) => {
@@ -419,7 +447,10 @@ const RestaurantOrders = () => {
     setDeclineModalVisible(false);
     setDeclineTargetOrder(null);
     setDeclineReason("");
-    Alert.alert("Order Declined", "Customer has been notified and refunded.");
+    showNotification(
+      "Order Declined: Customer has been notified and refunded.",
+      "info",
+    );
   };
 
   const handleCallCustomer = (phone: string) => {
@@ -717,8 +748,8 @@ const RestaurantOrders = () => {
                         ]}
                       >
                         {order.is_self_delivery
-                          ? "🛵 SELF DELIVERING"
-                          : "🚚 IN TRANSIT"}
+                          ? "SELF DELIVERING"
+                          : "IN TRANSIT"}
                       </Text>
                     </View>
                   )}
@@ -729,8 +760,8 @@ const RestaurantOrders = () => {
                         style={[styles.status_chip_text, { color: "#4caf50" }]}
                       >
                         {order.is_self_delivery
-                          ? "✅ SELF DELIVERED"
-                          : "✅ DELIVERED"}
+                          ? "SELF DELIVERED"
+                          : "DELIVERED"}
                       </Text>
                     </View>
                   )}
@@ -808,33 +839,22 @@ const RestaurantOrders = () => {
                             flex: 1,
                           }}
                         >
-                          <Feather
-                            name={order.is_self_delivery ? "pocket" : "truck"}
-                            size={13}
-                            color={order.is_self_delivery ? "#10b981" : "#fff"}
-                          />
                           <Text
                             style={[
                               styles.item_line_name,
                               {
-                                color: order.is_self_delivery
-                                  ? "#10b981"
-                                  : "#fff",
+                                color: "#fff",
                               },
                             ]}
                           >
-                            {order.is_self_delivery
-                              ? "Delivery Fee (Restaurant Keeps)"
-                              : "Delivery Fee"}
+                            {"Delivery Fee"}
                           </Text>
                         </View>
                         <Text
                           style={[
                             styles.item_line_price,
                             {
-                              color: order.is_self_delivery
-                                ? "#10b981"
-                                : "#fff",
+                              color: "#fff",
                             },
                           ]}
                         >
@@ -955,22 +975,22 @@ const RestaurantOrders = () => {
                         {order.is_self_delivery
                           ? "TOTAL (INCL. DELIVERY)"
                           : deliveriesMap[order.id]?.payment_status === "paid"
-                          ? "TOTAL (RIDER PAID)"
-                          : "TOTAL"}
+                            ? "TOTAL (RIDER PAID)"
+                            : "TOTAL"}
                       </Text>
                       <Text style={styles.total_price_text}>
                         ₦
                         {(order.is_self_delivery
                           ? order.total
                           : deliveriesMap[order.id]?.payment_status === "paid"
-                          ? Math.max(
-                              0,
-                              order.total -
-                                (deliveriesMap[order.id]?.fee ||
-                                  order.delivery_fee ||
-                                  0),
-                            )
-                          : order.total
+                            ? Math.max(
+                                0,
+                                order.total -
+                                  (deliveriesMap[order.id]?.fee ||
+                                    order.delivery_fee ||
+                                    0),
+                              )
+                            : order.total
                         ).toLocaleString()}
                       </Text>
                     </View>
@@ -1005,10 +1025,7 @@ const RestaurantOrders = () => {
                         >
                           {deliveringDoneMap[order.id] ? (
                             <View style={styles.btn_loading_row}>
-                              <ActivityIndicator
-                                size="small"
-                                color="#fff"
-                              />
+                              <ActivityIndicator size="small" color="#121212" />
                               <Text style={styles.mark_delivered_btn_text}>
                                 Completing...
                               </Text>
@@ -1018,10 +1035,10 @@ const RestaurantOrders = () => {
                               <Feather
                                 name="check-circle"
                                 size={14}
-                                color="#fff"
+                                color="#121212"
                               />
                               <Text style={styles.mark_delivered_btn_text}>
-                                Mark Delivered ✅
+                                Mark Delivered
                               </Text>
                             </View>
                           )}
@@ -1039,11 +1056,17 @@ const RestaurantOrders = () => {
                         if (isSearching) {
                           return (
                             <TouchableOpacity
-                              style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                              style={[
+                                styles.search_driver_btn,
+                                { opacity: 0.6 },
+                              ]}
                               disabled
                             >
                               <View style={styles.btn_loading_row}>
-                                <ActivityIndicator size="small" color="#121212" />
+                                <ActivityIndicator
+                                  size="small"
+                                  color="#121212"
+                                />
                                 <Text style={styles.search_driver_btn_text}>
                                   Searching...
                                 </Text>
@@ -1060,11 +1083,17 @@ const RestaurantOrders = () => {
                         if (!delivery || delivery.status === "pending") {
                           return (
                             <TouchableOpacity
-                              style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                              style={[
+                                styles.search_driver_btn,
+                                { opacity: 0.6 },
+                              ]}
                               disabled
                             >
                               <View style={styles.btn_loading_row}>
-                                <ActivityIndicator size="small" color="#121212" />
+                                <ActivityIndicator
+                                  size="small"
+                                  color="#121212"
+                                />
                                 <Text style={styles.search_driver_btn_text}>
                                   Searching for Driver...
                                 </Text>
@@ -1147,11 +1176,17 @@ const RestaurantOrders = () => {
 
                           return (
                             <TouchableOpacity
-                              style={[styles.search_driver_btn, { opacity: 0.6 }]}
+                              style={[
+                                styles.search_driver_btn,
+                                { opacity: 0.6 },
+                              ]}
                               disabled
                             >
                               <View style={styles.btn_loading_row}>
-                                <ActivityIndicator size="small" color="#121212" />
+                                <ActivityIndicator
+                                  size="small"
+                                  color="#121212"
+                                />
                                 <Text style={styles.search_driver_btn_text}>
                                   Rider En Route...
                                 </Text>
@@ -1174,8 +1209,7 @@ const RestaurantOrders = () => {
                       <TouchableOpacity
                         style={styles.find_driver_choice_btn}
                         disabled={
-                          searchingMap[order.id] ||
-                          selfDeliveringMap[order.id]
+                          searchingMap[order.id] || selfDeliveringMap[order.id]
                         }
                         onPress={() =>
                           deliveriesMap[order.id]?.status === "expired"
@@ -1217,8 +1251,7 @@ const RestaurantOrders = () => {
                       <TouchableOpacity
                         style={styles.self_deliver_choice_btn}
                         disabled={
-                          searchingMap[order.id] ||
-                          selfDeliveringMap[order.id]
+                          searchingMap[order.id] || selfDeliveringMap[order.id]
                         }
                         onPress={() => handleStartSelfDeliver(order.id)}
                       >
@@ -1231,7 +1264,11 @@ const RestaurantOrders = () => {
                           </View>
                         ) : (
                           <View style={styles.btn_loading_row}>
-                            <FontAwesome5 name="biking" size={12} color="#9CA3AF" />
+                            <FontAwesome5
+                              name="biking"
+                              size={12}
+                              color="#9CA3AF"
+                            />
                             <Text style={styles.self_deliver_choice_text}>
                               Self Deliver
                             </Text>
@@ -1436,7 +1473,8 @@ const RestaurantOrders = () => {
                     </Text>
                   </View>
                 ) : (
-                  deliveriesMap[selectedOrder.id]?.payment_status !== "paid" && (
+                  deliveriesMap[selectedOrder.id]?.payment_status !==
+                    "paid" && (
                     <View style={styles.receipt_calc_row}>
                       <Text style={styles.calc_label}>Flat Delivery Fee</Text>
                       <Text style={styles.calc_val}>
@@ -1454,23 +1492,25 @@ const RestaurantOrders = () => {
                   <Text style={styles.calc_label_total}>
                     {selectedOrder.is_self_delivery
                       ? "Total Earnings (Food + Delivery)"
-                      : deliveriesMap[selectedOrder.id]?.payment_status === "paid"
-                      ? "Total (Delivery Paid)"
-                      : "Total Paid (Wallet)"}
+                      : deliveriesMap[selectedOrder.id]?.payment_status ===
+                          "paid"
+                        ? "Total (Delivery Paid)"
+                        : "Total Paid (Wallet)"}
                   </Text>
                   <Text style={styles.calc_val_total}>
                     ₦
                     {(selectedOrder.is_self_delivery
                       ? selectedOrder.total
-                      : deliveriesMap[selectedOrder.id]?.payment_status === "paid"
-                      ? Math.max(
-                          0,
-                          selectedOrder.total -
-                            (deliveriesMap[selectedOrder.id]?.fee ||
-                              selectedOrder.delivery_fee ||
-                              0),
-                        )
-                      : selectedOrder.total
+                      : deliveriesMap[selectedOrder.id]?.payment_status ===
+                          "paid"
+                        ? Math.max(
+                            0,
+                            selectedOrder.total -
+                              (deliveriesMap[selectedOrder.id]?.fee ||
+                                selectedOrder.delivery_fee ||
+                                0),
+                          )
+                        : selectedOrder.total
                     ).toLocaleString()}
                   </Text>
                 </View>
@@ -1615,7 +1655,8 @@ const RestaurantOrders = () => {
                       <View style={styles.btn_loading_row}>
                         <Feather name="check-circle" size={16} color="#fff" />
                         <Text style={styles.self_delivery_modal_btn_text}>
-                          Mark as Delivered (₦{selectedOrder.total.toLocaleString()} to Balance)
+                          Mark as Delivered (₦
+                          {selectedOrder.total.toLocaleString()} to Balance)
                         </Text>
                       </View>
                     )}
@@ -1625,6 +1666,21 @@ const RestaurantOrders = () => {
           )}
         </View>
       </Modal>
+
+      {/* ── Custom Confirmation Modal ── */}
+      <ConfirmModal
+        visible={confirmModalConfig.visible}
+        title={confirmModalConfig.title}
+        message={confirmModalConfig.message}
+        confirmText={confirmModalConfig.confirmText}
+        cancelText={confirmModalConfig.cancelText}
+        icon={confirmModalConfig.icon}
+        loading={confirmModalConfig.loading}
+        onClose={() =>
+          setConfirmModalConfig((prev) => ({ ...prev, visible: false }))
+        }
+        onConfirm={confirmModalConfig.onConfirm}
+      />
     </View>
   );
 };
@@ -2420,7 +2476,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   mark_delivered_btn: {
-    backgroundColor: "#10b981",
+    backgroundColor: "#fff",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -2429,7 +2485,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   mark_delivered_btn_text: {
-    color: "#fff",
+    color: "#121212",
     fontFamily: "raleway-bold",
     fontSize: 13,
   },
