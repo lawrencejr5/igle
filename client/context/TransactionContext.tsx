@@ -12,7 +12,12 @@ import { useNotificationContext } from "./NotificationContext";
 
 export type Transaction = {
   _id: string;
-  type: "funding" | "payment" | "payout" | "driver_payment" | "restaurant_payment";
+  type:
+    | "funding"
+    | "payment"
+    | "payout"
+    | "driver_payment"
+    | "restaurant_payment";
   amount: number;
   status: "pending" | "success" | "failed";
   channel: "card" | "transfer" | "cash" | "wallet";
@@ -60,7 +65,9 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
 }) => {
   const { showNotification } = useNotificationContext()!;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [vendorTransactions, setVendorTransactions] = useState<Transaction[]>([]);
+  const [vendorTransactions, setVendorTransactions] = useState<Transaction[]>(
+    [],
+  );
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -152,7 +159,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       const { data } = await axios.post(
         `${API_URLS.transactions}/driver/withdraw`,
         { amount },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       setTransactions((prev) => [data.transaction, ...prev]);
@@ -168,7 +175,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
           errMsg,
         )
       ) {
-        errMsg = "payment unavailable at the moment, try again later";
+        errMsg = "Payment unavailable at the moment, try again later";
       }
       showNotification(errMsg, "error");
     } finally {
@@ -181,14 +188,17 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       const token = await getAuthToken();
       const { data } = await axios.get(
         `${API_URLS.transactions}/driver/earnings-stats`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (data?.stats) {
         setStats(data.stats);
       }
     } catch (error: any) {
-      console.error("fetchEarningsStats error:", error?.response?.data || error.message);
+      console.error(
+        "fetchEarningsStats error:",
+        error?.response?.data || error.message,
+      );
     }
   };
 
@@ -227,7 +237,10 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
             : prev.pendingBalance,
       }));
     } catch (error: any) {
-      console.error("fetchVendorTransactions error:", error?.response?.data || error.message);
+      console.error(
+        "fetchVendorTransactions error:",
+        error?.response?.data || error.message,
+      );
     } finally {
       setLoading(false);
     }
@@ -241,10 +254,13 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       const { data } = await axios.post(
         `${API_URLS.wallet}/vendor/withdraw`,
         { amount },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      showNotification("Vendor withdrawal request submitted successfully", "success");
+      showNotification(
+        "Vendor withdrawal request submitted successfully",
+        "success",
+      );
       fetchVendorTransactions();
       return data;
     } catch (error: any) {
@@ -257,7 +273,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
           errMsg,
         )
       ) {
-        errMsg = "payment unavailable at the moment, try again later";
+        errMsg = "Payment unavailable at the moment, try again later";
       }
       showNotification(errMsg, "error");
       return null;
@@ -274,14 +290,13 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       // 1. Fetch restaurant wallet balance from dedicated restaurant wallet endpoint
       const { data: wData } = await axios.get(
         `${API_URLS.wallet}/balance?owner_type=Restaurant`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       // 2. Fetch vendor orders to calculate accepted sales
-      const { data: orderData } = await axios.get(
-        `${API_URLS.orders}/vendor`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data: orderData } = await axios.get(`${API_URLS.orders}/vendor`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       let walletBalance = wData?.wallet?.balance || 0;
       let pendingBalance = wData?.wallet?.pending_balance || 0;
@@ -291,7 +306,7 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
         const startOfToday = new Date(
           now.getFullYear(),
           now.getMonth(),
-          now.getDate()
+          now.getDate(),
         ).getTime();
 
         const startOfWeekDate = new Date(now);
@@ -363,7 +378,7 @@ export const useTransactionContext = () => {
   const context = useContext(TransactionContext);
   if (!context) {
     throw new Error(
-      "Transaction context can only be used within TransactionContextProvider"
+      "Transaction context can only be used within TransactionContextProvider",
     );
   }
   return context;
