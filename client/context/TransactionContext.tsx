@@ -159,7 +159,17 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       showNotification("Withdrawal initiated successfully", "success");
       return data.transaction;
     } catch (error: any) {
-      const errMsg = error.response?.data?.msg || "Withdrawal failed";
+      let errMsg =
+        error.response?.data?.msg ||
+        error.response?.data?.message ||
+        "Withdrawal failed";
+      if (
+        /insufficient.*(balance|fund)|not enough funds|payment unavailable/i.test(
+          errMsg,
+        )
+      ) {
+        errMsg = "payment unavailable at the moment, try again later";
+      }
       showNotification(errMsg, "error");
     } finally {
       setLoading(false);
@@ -238,7 +248,17 @@ const TransactionContextProvider: FC<{ children: ReactNode }> = ({
       fetchVendorTransactions();
       return data;
     } catch (error: any) {
-      const errMsg = error.response?.data?.msg || "Vendor withdrawal failed";
+      let errMsg =
+        error.response?.data?.msg ||
+        error.response?.data?.message ||
+        "Vendor withdrawal failed";
+      if (
+        /insufficient.*(balance|fund)|not enough funds|payment unavailable/i.test(
+          errMsg,
+        )
+      ) {
+        errMsg = "payment unavailable at the moment, try again later";
+      }
       showNotification(errMsg, "error");
       return null;
     } finally {

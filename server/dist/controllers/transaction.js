@@ -155,7 +155,7 @@ const get_driver_transactions = (req, res) => __awaiter(void 0, void 0, void 0, 
 });
 exports.get_driver_transactions = get_driver_transactions;
 const initiate_driver_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f, _g;
     try {
         const { amount } = req.body;
         if (!amount || amount <= 0) {
@@ -233,9 +233,13 @@ const initiate_driver_withdrawal = (req, res) => __awaiter(void 0, void 0, void 
         }
         catch (paystackError) {
             console.error("Paystack Error:", ((_c = paystackError === null || paystackError === void 0 ? void 0 : paystackError.response) === null || _c === void 0 ? void 0 : _c.data) || paystackError);
+            const paystackMsg = ((_e = (_d = paystackError === null || paystackError === void 0 ? void 0 : paystackError.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || (paystackError === null || paystackError === void 0 ? void 0 : paystackError.message) || "";
+            const isInsufficientPaystackBalance = /insufficient|not enough funds|balance/i.test(paystackMsg);
             res.status(500).json({
-                msg: "Failed to initiate transfer",
-                error: ((_e = (_d = paystackError === null || paystackError === void 0 ? void 0 : paystackError.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || "Paystack transfer failed",
+                msg: isInsufficientPaystackBalance
+                    ? "payment unavailable at the moment, try again later"
+                    : "Failed to initiate transfer",
+                error: ((_g = (_f = paystackError === null || paystackError === void 0 ? void 0 : paystackError.response) === null || _f === void 0 ? void 0 : _f.data) === null || _g === void 0 ? void 0 : _g.message) || "Paystack transfer failed",
             });
         }
     }

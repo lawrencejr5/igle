@@ -263,8 +263,15 @@ export const initiate_driver_withdrawal = async (
         "Paystack Error:",
         paystackError?.response?.data || paystackError
       );
+      const paystackMsg =
+        paystackError?.response?.data?.message || paystackError?.message || "";
+      const isInsufficientPaystackBalance =
+        /insufficient|not enough funds|balance/i.test(paystackMsg);
+
       res.status(500).json({
-        msg: "Failed to initiate transfer",
+        msg: isInsufficientPaystackBalance
+          ? "payment unavailable at the moment, try again later"
+          : "Failed to initiate transfer",
         error:
           paystackError?.response?.data?.message || "Paystack transfer failed",
       });

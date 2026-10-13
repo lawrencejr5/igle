@@ -133,7 +133,7 @@ const verify_payment = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.verify_payment = verify_payment;
 const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c, _d;
     const session = yield mongoose_1.default.startSession();
     try {
         const amount = Number(req.body.amount);
@@ -199,9 +199,15 @@ const request_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 });
             }
             catch (restoreErr) { }
+            const paystackMsg = ((_d = (_c = paystackErr === null || paystackErr === void 0 ? void 0 : paystackErr.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.message) || (paystackErr === null || paystackErr === void 0 ? void 0 : paystackErr.message) || "";
+            const isInsufficientPaystackBalance = /insufficient|not enough funds|balance/i.test(paystackMsg);
             return res
                 .status(502)
-                .json({ msg: "Bank transfer failed. Balance restored." });
+                .json({
+                msg: isInsufficientPaystackBalance
+                    ? "payment unavailable at the moment, try again later"
+                    : "Bank transfer failed. Balance restored.",
+            });
         }
     }
     catch (err) {
@@ -264,7 +270,7 @@ const get_wallet_balance = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.get_wallet_balance = get_wallet_balance;
 const initiate_vendor_withdrawal = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f, _g;
     const session = yield mongoose_1.default.startSession();
     try {
         const amount = Number(req.body.amount);
@@ -357,11 +363,15 @@ const initiate_vendor_withdrawal = (req, res) => __awaiter(void 0, void 0, void 
             catch (restoreErr) {
                 console.error("Failed to restore vendor wallet balance:", restoreErr);
             }
+            const paystackMsg = ((_e = (_d = paystackErr === null || paystackErr === void 0 ? void 0 : paystackErr.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || (paystackErr === null || paystackErr === void 0 ? void 0 : paystackErr.message) || "";
+            const isInsufficientPaystackBalance = /insufficient|not enough funds|balance/i.test(paystackMsg);
             return res
                 .status(502)
                 .json({
-                msg: ((_e = (_d = paystackErr === null || paystackErr === void 0 ? void 0 : paystackErr.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) ||
-                    "Bank transfer failed. Balance restored.",
+                msg: isInsufficientPaystackBalance
+                    ? "payment unavailable at the moment, try again later"
+                    : ((_g = (_f = paystackErr === null || paystackErr === void 0 ? void 0 : paystackErr.response) === null || _f === void 0 ? void 0 : _f.data) === null || _g === void 0 ? void 0 : _g.message) ||
+                        "Bank transfer failed. Balance restored.",
             });
         }
     }

@@ -210,9 +210,18 @@ export const request_withdrawal = async (req: any, res: any) => {
         });
       } catch (restoreErr) {}
 
+      const paystackMsg =
+        paystackErr?.response?.data?.message || paystackErr?.message || "";
+      const isInsufficientPaystackBalance =
+        /insufficient|not enough funds|balance/i.test(paystackMsg);
+
       return res
         .status(502)
-        .json({ msg: "Bank transfer failed. Balance restored." });
+        .json({
+          msg: isInsufficientPaystackBalance
+            ? "payment unavailable at the moment, try again later"
+            : "Bank transfer failed. Balance restored.",
+        });
     }
   } catch (err: any) {
     res.status(400).json({ msg: err.message });
@@ -384,12 +393,18 @@ export const initiate_vendor_withdrawal = async (
         console.error("Failed to restore vendor wallet balance:", restoreErr);
       }
 
+      const paystackMsg =
+        paystackErr?.response?.data?.message || paystackErr?.message || "";
+      const isInsufficientPaystackBalance =
+        /insufficient|not enough funds|balance/i.test(paystackMsg);
+
       return res
         .status(502)
         .json({
-          msg:
-            paystackErr?.response?.data?.message ||
-            "Bank transfer failed. Balance restored.",
+          msg: isInsufficientPaystackBalance
+            ? "payment unavailable at the moment, try again later"
+            : paystackErr?.response?.data?.message ||
+              "Bank transfer failed. Balance restored.",
         });
     }
   } catch (err: any) {
