@@ -13,7 +13,6 @@ import {
   KeyboardAvoidingView,
   Keyboard,
 } from "react-native";
-import { Image } from "expo-image";
 import React, { useState, useEffect } from "react";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -129,6 +128,10 @@ const RestaurantTransactions = () => {
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [selectedTxn, setSelectedTxn] = useState<RestaurantTransaction | null>(
     null,
+  );
+
+  const hasValidBankRecipient = Boolean(
+    restaurant?.bank?.account_number && restaurant?.bank?.recipient_code,
   );
 
   React.useEffect(() => {
@@ -260,10 +263,7 @@ const RestaurantTransactions = () => {
       return;
     }
     if (!accountNumber.trim() || accountNumber.trim().length !== 10) {
-      showNotification(
-        "Please enter a valid 10-digit account number",
-        "error",
-      );
+      showNotification("Please enter a valid 10-digit account number", "error");
       return;
     }
     if (!accountName.trim()) {
@@ -301,7 +301,10 @@ const RestaurantTransactions = () => {
   // ── Filtered Data ───────────────────────────────────────────────────────────
 
   const getFilteredTransactions = (): RestaurantTransaction[] => {
-    let result = [...transactions];
+    // Filter out failed money ins
+    let result = transactions.filter(
+      (t) => !(t.direction === "in" && t.status === "failed"),
+    );
 
     if (filterType === "in") {
       result = result.filter((t) => t.direction === "in");
@@ -422,65 +425,71 @@ const RestaurantTransactions = () => {
           {/* Action Buttons Row */}
           <View style={styles.balance_actions_row}>
             <TouchableOpacity
-              style={styles.withdraw_btn}
+              style={[
+                styles.withdraw_btn,
+                !hasValidBankRecipient && styles.withdraw_btn_disabled,
+              ]}
               activeOpacity={0.88}
+              disabled={!hasValidBankRecipient}
               onPress={handleOpenWithdrawModal}
             >
-              <Feather name="arrow-up-right" size={16} color="#121212" />
-              <Text style={styles.withdraw_btn_text}>Withdraw</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.update_bank_action_btn}
-              activeOpacity={0.88}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setBankModalVisible(true);
-              }}
-            >
-              <FontAwesome5 name="university" size={13} color="#fff" />
-              <Text style={styles.update_bank_action_text}>Update Bank</Text>
+              <Feather
+                name="arrow-up-right"
+                size={16}
+                color={!hasValidBankRecipient ? "#777" : "#121212"}
+              />
+              <Text
+                style={[
+                  styles.withdraw_btn_text,
+                  !hasValidBankRecipient && styles.withdraw_btn_text_disabled,
+                ]}
+              >
+                Withdraw
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── Active Payout Bank Card ── */}
+        {/* ── Payout Bank Card ── */}
         <TouchableOpacity
-          style={styles.bank_card_banner}
-          activeOpacity={0.88}
+          style={styles.bank_card_minimal}
+          activeOpacity={0.85}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setBankModalVisible(true);
           }}
         >
-          <View style={styles.bank_card_icon_wrap}>
-            <FontAwesome5 name="university" size={15} color="#4caf50" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={styles.bank_card_header_row}>
-              <Text style={styles.bank_card_title}>PAYOUT DESTINATION</Text>
-              {restaurant?.bank?.account_number ? (
-                <View style={styles.active_pill}>
-                  <Text style={styles.active_pill_text}>Active</Text>
-                </View>
-              ) : (
-                <View style={styles.missing_pill}>
-                  <Text style={styles.missing_pill_text}>Action Required</Text>
-                </View>
+          <View style={styles.bank_card_header_row}>
+            <View style={styles.bank_card_header_left}>
+              <FontAwesome5 name="university" size={11} color="#9CA3AF" />
+              <Text style={styles.bank_card_header_title}>Payout Bank</Text>
+              {!hasValidBankRecipient && (
+                <Text style={styles.bank_update_required_text}>
+                  (update required)
+                </Text>
               )}
             </View>
-            <Text style={styles.bank_card_name}>
-              {restaurant?.bank?.bank_name || "No Bank Configured"}
-            </Text>
-            <Text style={styles.bank_card_number} numberOfLines={1}>
-              {restaurant?.bank?.account_number
-                ? `${restaurant.bank.account_number} • ${restaurant.bank.account_name || "Verified"}`
-                : "Tap to set up your withdrawal bank account"}
-            </Text>
+            <View style={styles.bank_minimal_edit_wrap}>
+              <Feather name="edit-2" size={11} color="#9CA3AF" />
+            </View>
           </View>
-          <View style={styles.bank_card_action}>
-            <Feather name="edit-2" size={13} color="#9CA3AF" />
-            <Text style={styles.bank_card_action_text}>Edit</Text>
+
+          <View style={styles.bank_card_content_row}>
+            {restaurant?.bank?.account_number ? (
+              <Text style={styles.bank_minimal_text} numberOfLines={1}>
+                <Text style={styles.bank_minimal_name}>
+                  {restaurant?.bank?.bank_name || "Bank"}
+                </Text>
+                <Text style={styles.bank_minimal_dot}> • </Text>
+                <Text style={styles.bank_minimal_acc}>
+                  {restaurant?.bank?.account_number}
+                </Text>
+              </Text>
+            ) : (
+              <Text style={styles.bank_minimal_empty}>
+                Set up withdrawal bank account
+              </Text>
+            )}
           </View>
         </TouchableOpacity>
 
@@ -519,48 +528,61 @@ const RestaurantTransactions = () => {
                   filterType === "all" && styles.filter_chip_text_active,
                 ]}
               >
-                All ({transactions.length})
+                All (
+                {
+                  transactions.filter(
+                    (t) => !(t.direction === "in" && t.status === "failed"),
+                  ).length
+                }
+                )
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.filter_chip,
-                filterType === "in" && styles.filter_chip_active,
+                filterType === "in" && styles.filter_chip_active_in,
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setFilterType("in");
               }}
             >
+              <Feather name="arrow-down" size={12} color="#4caf50" />
               <Text
                 style={[
-                  styles.filter_chip_text,
-                  filterType === "in" && styles.filter_chip_text_active,
+                  styles.filter_chip_text_in,
+                  filterType === "in" && styles.filter_chip_text_in_active,
                 ]}
               >
-                Money In 🟢 (
-                {transactions.filter((t) => t.direction === "in").length})
+                Money In (
+                {
+                  transactions.filter(
+                    (t) => t.direction === "in" && t.status !== "failed",
+                  ).length
+                }
+                )
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.filter_chip,
-                filterType === "out" && styles.filter_chip_active,
+                filterType === "out" && styles.filter_chip_active_out,
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setFilterType("out");
               }}
             >
+              <Feather name="arrow-up" size={12} color="#ef5350" />
               <Text
                 style={[
-                  styles.filter_chip_text,
-                  filterType === "out" && styles.filter_chip_text_active,
+                  styles.filter_chip_text_out,
+                  filterType === "out" && styles.filter_chip_text_out_active,
                 ]}
               >
-                Money Out 🔴 (
+                Money Out (
                 {transactions.filter((t) => t.direction === "out").length})
               </Text>
             </TouchableOpacity>
@@ -640,17 +662,37 @@ const RestaurantTransactions = () => {
                     <Text
                       style={[
                         styles.txn_amount_text,
-                        isPending
-                          ? styles.amount_warning
-                          : isIncome
-                            ? styles.amount_green
-                            : styles.amount_red,
+                        isFailed
+                          ? styles.amount_red
+                          : isPending
+                            ? styles.amount_warning
+                            : isIncome
+                              ? styles.amount_green
+                              : styles.amount_red,
                       ]}
                     >
                       {isIncome ? "+" : "-"}₦{txn.amount.toLocaleString()}
                     </Text>
-                    <View style={[styles.txn_status_badge]}>
-                      <Text style={[styles.txn_status_text]}>
+                    <View
+                      style={[
+                        styles.txn_status_badge,
+                        isFailed
+                          ? styles.txn_badge_failed
+                          : isPending
+                            ? styles.txn_badge_pending
+                            : styles.txn_badge_success,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.txn_status_text,
+                          isFailed
+                            ? styles.status_text_failed
+                            : isPending
+                              ? styles.status_text_pending
+                              : styles.status_text_success,
+                        ]}
+                      >
                         {isPending
                           ? "Pending"
                           : isFailed
@@ -680,14 +722,8 @@ const RestaurantTransactions = () => {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
-          <Pressable
-            style={styles.modal_backdrop}
-            onPress={Keyboard.dismiss}
-          >
-            <Pressable
-              style={styles.modal_card}
-              onPress={Keyboard.dismiss}
-            >
+          <Pressable style={styles.modal_backdrop} onPress={Keyboard.dismiss}>
+            <Pressable style={styles.modal_card} onPress={Keyboard.dismiss}>
               <View style={styles.modal_header}>
                 <Text style={styles.modal_title}>Withdraw to Bank</Text>
                 <TouchableOpacity
@@ -892,7 +928,8 @@ const RestaurantTransactions = () => {
             <View style={styles.bank_notice_box}>
               <Feather name="shield" size={13} color="#9CA3AF" />
               <Text style={styles.bank_notice_text}>
-                Verified with Paystack to generate your direct transfer recipient code.
+                Verified with Paystack to generate your direct transfer
+                recipient code.
               </Text>
             </View>
 
@@ -1000,10 +1037,11 @@ const RestaurantTransactions = () => {
                 <Text
                   style={[
                     styles.receipt_status_tag,
-                    selectedTxn.status === "pending" && {
-                      color: "#ffb74d",
-                      borderColor: "#ff980044",
-                    },
+                    selectedTxn.status === "pending"
+                      ? { color: "#ffb74d", borderColor: "#ff980044" }
+                      : selectedTxn.status === "failed"
+                        ? { color: "#ef5350", borderColor: "#ef535044" }
+                        : { color: "#4caf50", borderColor: "#4caf5044" },
                   ]}
                 >
                   {selectedTxn.status === "pending"
@@ -1232,10 +1270,17 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 12,
   },
+  withdraw_btn_disabled: {
+    opacity: 0.35,
+    backgroundColor: "#fff",
+  },
   withdraw_btn_text: {
     color: "#121212",
     fontFamily: "raleway-bold",
     fontSize: 14,
+  },
+  withdraw_btn_text_disabled: {
+    color: "#777",
   },
   update_bank_action_btn: {
     flex: 1,
@@ -1255,85 +1300,71 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // Active Payout Bank Card Banner
-  bank_card_banner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1a1a1a",
-    borderRadius: 16,
-    padding: 14,
+  // Minimal Payout Bank Card
+  bank_card_minimal: {
+    backgroundColor: "#181818",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: "#262626",
-    gap: 12,
-  },
-  bank_card_icon_wrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "#4caf5018",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#4caf5033",
+    gap: 6,
   },
   bank_card_header_row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 2,
+    justifyContent: "space-between",
   },
-  bank_card_title: {
-    color: "#777",
-    fontFamily: "raleway-bold",
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  active_pill: {
-    backgroundColor: "#4caf5020",
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  active_pill_text: {
-    color: "#4caf50",
-    fontFamily: "raleway-bold",
-    fontSize: 9,
-  },
-  missing_pill: {
-    backgroundColor: "#ef535020",
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  missing_pill_text: {
-    color: "#ef5350",
-    fontFamily: "raleway-bold",
-    fontSize: 9,
-  },
-  bank_card_name: {
-    color: "#fff",
-    fontFamily: "raleway-bold",
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  bank_card_number: {
-    color: "#9CA3AF",
-    fontFamily: "raleway-regular",
-    fontSize: 11,
-  },
-  bank_card_action: {
+  bank_card_header_left: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: "#242424",
+    gap: 6,
+    flex: 1,
   },
-  bank_card_action_text: {
+  bank_card_header_title: {
     color: "#9CA3AF",
     fontFamily: "raleway-bold",
     fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  bank_update_required_text: {
+    color: "#f59e0b",
+    fontFamily: "raleway-bold",
+    fontSize: 10,
+  },
+  bank_card_content_row: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  bank_minimal_text: {
+    fontSize: 13,
+    flex: 1,
+  },
+  bank_minimal_name: {
+    color: "#fff",
+    fontFamily: "raleway-bold",
+  },
+  bank_minimal_dot: {
+    color: "#666",
+  },
+  bank_minimal_acc: {
+    color: "#9CA3AF",
+    fontFamily: "raleway-semibold",
+    letterSpacing: 0.5,
+  },
+  bank_minimal_empty: {
+    color: "#f59e0b",
+    fontFamily: "raleway-semibold",
+    fontSize: 12,
+  },
+  bank_minimal_edit_wrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: "#222",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // Filters & Search
@@ -1362,6 +1393,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filter_chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     backgroundColor: "#1a1a1a",
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -1373,6 +1407,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff20",
     borderColor: "#fff",
   },
+  filter_chip_active_in: {
+    backgroundColor: "#4caf5015",
+    borderColor: "#4caf50",
+  },
+  filter_chip_active_out: {
+    backgroundColor: "#ef535015",
+    borderColor: "#ef5350",
+  },
   filter_chip_text: {
     color: "#9CA3AF",
     fontFamily: "raleway-semibold",
@@ -1380,6 +1422,22 @@ const styles = StyleSheet.create({
   },
   filter_chip_text_active: {
     color: "#fff",
+    fontFamily: "raleway-bold",
+  },
+  filter_chip_text_in: {
+    color: "#4caf50",
+    fontFamily: "raleway-semibold",
+    fontSize: 12,
+  },
+  filter_chip_text_in_active: {
+    fontFamily: "raleway-bold",
+  },
+  filter_chip_text_out: {
+    color: "#ef5350",
+    fontFamily: "raleway-semibold",
+    fontSize: 12,
+  },
+  filter_chip_text_out_active: {
     fontFamily: "raleway-bold",
   },
 
@@ -1490,10 +1548,33 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
   },
+  txn_badge_failed: {
+    backgroundColor: "#ef535018",
+    borderWidth: 1,
+    borderColor: "#ef535033",
+  },
+  txn_badge_pending: {
+    backgroundColor: "#f59e0b18",
+    borderWidth: 1,
+    borderColor: "#f59e0b33",
+  },
+  txn_badge_success: {
+    backgroundColor: "#4caf5018",
+    borderWidth: 1,
+    borderColor: "#4caf5033",
+  },
   txn_status_text: {
-    color: "#9CA3AF",
     fontFamily: "raleway-semibold",
     fontSize: 9,
+  },
+  status_text_failed: {
+    color: "#ef5350",
+  },
+  status_text_pending: {
+    color: "#f59e0b",
+  },
+  status_text_success: {
+    color: "#4caf50",
   },
 
   // Modal Backdrop

@@ -37,6 +37,7 @@ export interface RestaurantBankType {
   account_number: string;
   account_name: string;
   bank_code: string;
+  recipient_code?: string;
 }
 
 // Verification structure
